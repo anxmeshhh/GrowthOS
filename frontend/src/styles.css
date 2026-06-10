@@ -138,3 +138,23 @@
     transform: translateY(18px) scale(1.12);
   }
 }
+
+.roadmap-canvas .react-flow__node {
+  font-family: "Balsamiq Sans", "Varela Round", "Segoe UI", sans-serif;
+}
+
+.roadmap-canvas .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.roadmap-canvas .react-flow__pane {
+  cursor: grab;
+}
+
+.roadmap-canvas .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.roadmap-canvas .roadmap-node-locked {
+  pointer-events: none;
+}

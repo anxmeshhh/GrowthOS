@@ -51,7 +51,7 @@ export interface ProfileInfo {
   theme: "dark" | "light" | "system";
 }
 
-interface GrowthState {
+export interface GrowthState {
   profile: ProfileInfo;
   topics: { [key: string]: TopicProgress };
   projects: { [key: string]: ProjectInfo };
@@ -62,6 +62,7 @@ interface GrowthState {
 
 interface GrowthContextType {
   state: GrowthState;
+  isHydrated: boolean;
   setProfile: (profile: Partial<ProfileInfo>) => void;
   setActivePath: (path: LearningPath) => void;
   updateTopicCheck: (
@@ -247,18 +248,16 @@ function recalculateUnlocks(topics: { [key: string]: TopicProgress }, paths: Lea
 }
 
 function generateActivityDates() {
-  const activityDates: string[] = [];
   const today = new Date();
+  const todayKey = today.toISOString().split("T")[0];
+  const activityDates: string[] = [todayKey];
 
-  for (let index = 0; index < 60; index += 1) {
-    const date = new Date();
-    date.setDate(today.getDate() - Math.floor(Math.random() * 120));
-    const dateKey = date.toISOString().split("T")[0];
-    if (!activityDates.includes(dateKey)) activityDates.push(dateKey);
+  for (let index = 1; index <= 45; index += 1) {
+    const date = new Date(today);
+    date.setUTCDate(today.getUTCDate() - index * 2);
+    activityDates.push(date.toISOString().split("T")[0]);
   }
 
-  const todayKey = today.toISOString().split("T")[0];
-  if (!activityDates.includes(todayKey)) activityDates.push(todayKey);
   return activityDates;
 }
 
@@ -312,22 +311,24 @@ function migrateSavedState(saved: GrowthState): GrowthState {
 const GrowthContext = createContext<GrowthContextType | undefined>(undefined);
 
 export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<GrowthState>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("growthos_state_v1");
-      if (saved) {
-        try {
-          return migrateSavedState(JSON.parse(saved));
-        } catch (error) {
-          console.error("Error parsing GrowthOS state, resetting...", error);
-        }
-      }
-    }
-
-    return getInitialState(["backend"], "backend");
-  });
+  const [state, setState] = useState<GrowthState>(() => getInitialState(["backend"], "backend"));
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
+    const saved = localStorage.getItem("growthos_state_v1");
+    if (saved) {
+      try {
+        setState(migrateSavedState(JSON.parse(saved)));
+      } catch (error) {
+        console.error("Error parsing GrowthOS state, resetting...", error);
+      }
+    }
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
     localStorage.setItem("growthos_state_v1", JSON.stringify(state));
 
     const root = window.document.documentElement;
@@ -339,7 +340,7 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } else {
       root.classList.add(state.profile.theme);
     }
-  }, [state]);
+  }, [state, isHydrated]);
 
   const setProfile = (newProfile: Partial<ProfileInfo>) => {
     setState((previous) => {
@@ -607,6 +608,7 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <GrowthContext.Provider
       value={{
         state,
+        isHydrated,
         setProfile,
         setActivePath,
         updateTopicCheck,

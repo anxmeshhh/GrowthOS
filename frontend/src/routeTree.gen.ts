@@ -11,10 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as ReviewRouteImport } from './routes/review'
+import { Route as ReadinessRouteImport } from './routes/readiness'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as MissionRouteImport } from './routes/mission'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -24,6 +28,16 @@ const SettingsRoute = SettingsRouteImport.update({
 const RoadmapRoute = RoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadinessRoute = ReadinessRouteImport.update({
+  id: '/readiness',
+  path: '/readiness',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -36,6 +50,11 @@ const NotesRoute = NotesRouteImport.update({
   path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MissionRoute = MissionRouteImport.update({
+  id: '/mission',
+  path: '/mission',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssessmentsRoute = AssessmentsRouteImport.update({
   id: '/assessments',
   path: '/assessments',
@@ -46,60 +65,99 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TopicTopicIdRoute = TopicTopicIdRouteImport.update({
+  id: '/topic/$topicId',
+  path: '/topic/$topicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
+  '/mission': typeof MissionRoute
   '/notes': typeof NotesRoute
   '/projects': typeof ProjectsRoute
+  '/readiness': typeof ReadinessRoute
+  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
+  '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
+  '/mission': typeof MissionRoute
   '/notes': typeof NotesRoute
   '/projects': typeof ProjectsRoute
+  '/readiness': typeof ReadinessRoute
+  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
+  '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
+  '/mission': typeof MissionRoute
   '/notes': typeof NotesRoute
   '/projects': typeof ProjectsRoute
+  '/readiness': typeof ReadinessRoute
+  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
+  '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/assessments'
+    | '/mission'
     | '/notes'
     | '/projects'
+    | '/readiness'
+    | '/review'
     | '/roadmap'
     | '/settings'
+    | '/topic/$topicId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/assessments' | '/notes' | '/projects' | '/roadmap' | '/settings'
+  to:
+    | '/'
+    | '/assessments'
+    | '/mission'
+    | '/notes'
+    | '/projects'
+    | '/readiness'
+    | '/review'
+    | '/roadmap'
+    | '/settings'
+    | '/topic/$topicId'
   id:
     | '__root__'
     | '/'
     | '/assessments'
+    | '/mission'
     | '/notes'
     | '/projects'
+    | '/readiness'
+    | '/review'
     | '/roadmap'
     | '/settings'
+    | '/topic/$topicId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssessmentsRoute: typeof AssessmentsRoute
+  MissionRoute: typeof MissionRoute
   NotesRoute: typeof NotesRoute
   ProjectsRoute: typeof ProjectsRoute
+  ReadinessRoute: typeof ReadinessRoute
+  ReviewRoute: typeof ReviewRoute
   RoadmapRoute: typeof RoadmapRoute
   SettingsRoute: typeof SettingsRoute
+  TopicTopicIdRoute: typeof TopicTopicIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -118,6 +176,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoadmapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/readiness': {
+      id: '/readiness'
+      path: '/readiness'
+      fullPath: '/readiness'
+      preLoaderRoute: typeof ReadinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projects': {
       id: '/projects'
       path: '/projects'
@@ -130,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mission': {
+      id: '/mission'
+      path: '/mission'
+      fullPath: '/mission'
+      preLoaderRoute: typeof MissionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assessments': {
@@ -146,16 +225,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/topic/$topicId': {
+      id: '/topic/$topicId'
+      path: '/topic/$topicId'
+      fullPath: '/topic/$topicId'
+      preLoaderRoute: typeof TopicTopicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssessmentsRoute: AssessmentsRoute,
+  MissionRoute: MissionRoute,
   NotesRoute: NotesRoute,
   ProjectsRoute: ProjectsRoute,
+  ReadinessRoute: ReadinessRoute,
+  ReviewRoute: ReviewRoute,
   RoadmapRoute: RoadmapRoute,
   SettingsRoute: SettingsRoute,
+  TopicTopicIdRoute: TopicTopicIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

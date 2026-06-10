@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search, StickyNote } from "lucide-react";
 import { useGrowthState } from "@/hooks/use-growth-state";
@@ -67,9 +67,13 @@ function NotesPage() {
 
       <div className="grid md:grid-cols-2 gap-3">
         {notes.map((note) => (
-          <article
+          <Link
             key={note.id}
-            className="p-4 rounded-md border border-border bg-card hover:bg-[var(--surface-2)] transition-colors"
+            to="/topic/$topicId"
+            params={{ topicId: note.id }}
+            className={`block p-4 rounded-md border border-border bg-card hover:bg-[var(--surface-2)] transition-colors ${
+              note.status === "locked" ? "pointer-events-none opacity-60" : ""
+            }`}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
@@ -87,7 +91,7 @@ function NotesPage() {
               {note.content.trim() ||
                 "No notes yet. Open this topic from the roadmap and write your proof notes."}
             </p>
-          </article>
+          </Link>
         ))}
       </div>
     </div>

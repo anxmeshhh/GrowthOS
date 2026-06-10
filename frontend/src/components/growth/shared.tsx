@@ -8,6 +8,9 @@ import {
   Hammer,
   ClipboardCheck,
   Settings,
+  Target,
+  Brain,
+  TrendingUp,
   CheckCircle2,
   Circle,
   Lock,
@@ -30,6 +33,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getPathTitle, getTopicResourceDirection } from "@/lib/roadmaps";
+import { ProofChecklist } from "@/components/growth/proof-checklist";
+import { getCuratedResources } from "@/lib/mock/topic-resources";
 
 /* ─────────────────── TYPES ─────────────────── */
 export type TopicStatus = "completed" | "in_progress" | "available" | "locked";
@@ -72,10 +77,13 @@ export const TOPICS: Topic[] = [
 /* ─────────────────── SIDEBAR ─────────────────── */
 const NAV: { to: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/mission", label: "Today's Mission", icon: Target },
   { to: "/roadmap", label: "Learning Roadmap", icon: Map },
   { to: "/notes", label: "Smart Notes", icon: StickyNote },
-  { to: "/projects", label: "Project Builder", icon: Hammer },
   { to: "/assessments", label: "Assessments", icon: ClipboardCheck },
+  { to: "/review", label: "Review Queue", icon: Brain },
+  { to: "/projects", label: "Project Builder", icon: Hammer },
+  { to: "/readiness", label: "Career Readiness", icon: TrendingUp },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -318,32 +326,10 @@ export function TopicDrawer({
   const title = topicProgress?.title ?? "Topic Details";
   const status = topicProgress?.status ?? "locked";
 
-  // Resource list
   const resources = useMemo(() => {
-    if (!topic) return [];
-    if (topic === "internet") {
-      return [
-        { title: "How the Internet Works — MDN", dur: "15 min", type: "Article" },
-        { title: "TCP/IP and DNS Explained", dur: "12 min", type: "Video" },
-      ];
-    }
-    if (topic === "http") {
-      return [
-        { title: "HTTP Crash Course — MDN", dur: "24 min", type: "Video" },
-        { title: "REST vs HTTP — high-level", dur: "11 min", type: "Article" },
-      ];
-    }
-    if (topic === "rest") {
-      return [
-        { title: "Designing RESTful APIs — Tutorial", dur: "18 min", type: "Video" },
-        { title: "REST API Best Practices", dur: "15 min", type: "Article" },
-      ];
-    }
-    return [
-      { title: `${title} Introduction Guide`, dur: "10 min", type: "Article" },
-      { title: `${title} Core Tutorial`, dur: "20 min", type: "Video" },
-    ];
-  }, [topic, title]);
+    if (!topic || !topicProgress) return [];
+    return getCuratedResources(state.profile.path, topic, topicProgress.title);
+  }, [topic, topicProgress, state.profile.path]);
 
   return (
     <>
@@ -365,31 +351,46 @@ export function TopicDrawer({
             </span>
             <h2 className="font-semibold text-lg">{title}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md border border-border hover:bg-[var(--surface-2)] cursor-pointer"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {topic ? (
+              <Link
+                to="/topic/$topicId"
+                params={{ topicId: topic }}
+                onClick={onClose}
+                className="text-xs font-medium px-3 py-1.5 rounded-md border border-border hover:bg-[var(--surface-2)]"
+              >
+                Full workspace →
+              </Link>
+            ) : null}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-md border border-border hover:bg-[var(--surface-2)] cursor-pointer"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </header>
 
         <div className="grid md:grid-cols-[380px_1fr] h-[calc(100vh-65px)]">
           <div className="border-r border-border overflow-y-auto p-5 space-y-4">
+            {topic ? <ProofChecklist topicId={topic} onStartQuiz={onStartQuiz} /> : null}
+
             <div>
               <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-3">
-                Resources
+                Best direction · resources
               </h3>
               <div className="space-y-2">
                 {resources.map((r) => (
                   <a
-                    key={r.title}
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
+                    key={r.id}
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
                     className="flex items-start gap-3 p-3 rounded-md border border-border bg-card hover:bg-[var(--surface-2)] transition-colors"
                   >
                     <div className="mt-0.5 w-8 h-8 rounded-md bg-[var(--surface-2)] border border-border grid place-items-center shrink-0">
-                      {r.type === "Video" ? (
+                      {r.type === "video" ? (
                         <Video className="w-4 h-4 text-muted-foreground" />
                       ) : (
                         <FileText className="w-4 h-4 text-muted-foreground" />
@@ -399,11 +400,11 @@ export function TopicDrawer({
                       <div className="text-sm font-medium truncate">{r.title}</div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-mono text-muted-foreground">
-                          {r.type}
+                          {r.source}
                         </span>
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
-                          {r.dur}
+                          {r.minutes} min
                         </span>
                       </div>
                     </div>

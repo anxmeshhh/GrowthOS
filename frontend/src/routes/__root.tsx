@@ -4,7 +4,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -96,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
       { rel: "stylesheet", href: appCss },
     ],
@@ -123,16 +122,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const isRoadmapWorkspace = pathname.startsWith("/roadmap");
 
   return (
     <QueryClientProvider client={queryClient}>
       <GrowthProvider>
         <div className="min-h-screen flex w-full bg-background text-foreground">
-          {!isRoadmapWorkspace && <Sidebar />}
+          <Sidebar />
           <div className="flex-1 min-w-0 flex flex-col">
-            {!isRoadmapWorkspace && <MobileNav />}
+            <MobileNav />
             <main className="flex-1 min-w-0 overflow-x-hidden">
               <Outlet />
             </main>
