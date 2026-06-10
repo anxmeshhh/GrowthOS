@@ -23,6 +23,7 @@ import { ProofChecklist } from "@/components/growth/proof-checklist";
 import { ResourcePanel } from "@/components/growth/resource-panel";
 import { FlashcardsSandbox } from "@/components/growth/flashcards-sandbox";
 import { GitBuildProof } from "@/components/growth/git-build-proof";
+import { QuizSandbox } from "@/components/growth/quiz-sandbox";
 import { SessionStepper } from "@/components/growth/session-stepper";
 import { FlowStrip } from "@/components/growth/direction-card";
 import { inferSessionPhase } from "@/lib/session-phase";
@@ -50,7 +51,7 @@ const MOTIVATIONAL_QUOTES = [
   { text: "Consistency beats intensity. Show up every day.", author: "Unknown" },
 ];
 
-type PageMode = "write" | "sketch" | "capture" | "flashcards" | "build";
+type PageMode = "notes" | "flashcards" | "quiz" | "build";
 
 export function TopicWorkspace({
   topicId,
@@ -61,7 +62,7 @@ export function TopicWorkspace({
   topicId: string;
   backTo?: string;
   roadmapNodeId?: string;
-  initialMode?: PageMode;
+  initialMode?: string;
 }) {
   const {
     state,
@@ -73,7 +74,26 @@ export function TopicWorkspace({
   } = useGrowthState();
 
   const topic = state.topics[topicId];
-  const [pageMode, setPageMode] = useState<PageMode>(initialMode ?? "write");
+  
+  const [pageMode, setPageMode] = useState<PageMode>(() => {
+    if (initialMode) {
+      if (initialMode === "write" || initialMode === "sketch" || initialMode === "capture") {
+        return "notes";
+      }
+      if (["flashcards", "quiz", "build"].includes(initialMode)) {
+        return initialMode as PageMode;
+      }
+    }
+    return "notes";
+  });
+
+  const [notesSubMode, setNotesSubMode] = useState<"write" | "sketch" | "capture" >(() => {
+    if (initialMode === "write" || initialMode === "sketch" || initialMode === "capture") {
+      return initialMode;
+    }
+    return "write";
+  });
+
   const [quizOpen, setQuizOpen] = useState(false);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [focusRunning, setFocusRunning] = useState(false);
@@ -84,7 +104,12 @@ export function TopicWorkspace({
   // Sync initialMode prop when route changes
   useEffect(() => {
     if (initialMode) {
-      setPageMode(initialMode);
+      if (initialMode === "write" || initialMode === "sketch" || initialMode === "capture") {
+        setPageMode("notes");
+        setNotesSubMode(initialMode);
+      } else if (["notes", "flashcards", "quiz", "build"].includes(initialMode)) {
+        setPageMode(initialMode as PageMode);
+      }
     }
   }, [initialMode]);
 
@@ -218,20 +243,30 @@ export function TopicWorkspace({
 
   const handlePhaseChange = (phase: SessionPhase) => {
     setSessionPhase(topicId, phase);
-    if (phase === "check") setQuizOpen(true);
+    if (phase === "read") {
+      setPageMode("write");
+    } else if (phase === "write") {
+      setPageMode("write");
+    } else if (phase === "check") {
+      setPageMode("quiz");
+    } else if (phase === "build") {
+      setPageMode("build");
+    }
   };
 
   const handleProceed = () => {
     if (sessionPhase === "read") {
       updateTopicCheck(topicId, "video", true);
       setSessionPhase(topicId, "write");
+      setPageMode("write");
     } else if (sessionPhase === "write") {
       updateTopicCheck(topicId, "notes", true);
       setSessionPhase(topicId, "check");
-      setQuizOpen(true);
+      setPageMode("quiz");
     } else if (sessionPhase === "check") {
       updateTopicCheck(topicId, "quiz", true);
       setSessionPhase(topicId, "build");
+      setPageMode("build");
     } else if (sessionPhase === "build") {
       updateTopicCheck(topicId, "commit", true);
     }
@@ -306,7 +341,7 @@ export function TopicWorkspace({
             type="button"
             onClick={() => {
               setSessionPhase(topicId, "check");
-              setQuizOpen(true);
+              setPageMode("quiz");
             }}
             disabled={topic.status === "locked"}
             className="text-xs px-3 py-1.5 rounded-md bg-[#f0ebe3] text-[#1c1916] hover:bg-white disabled:opacity-40 font-medium"
@@ -438,66 +473,54 @@ export function TopicWorkspace({
           <div className="flex-1 flex flex-col min-w-0 min-h-0 p-4 md:p-6 overflow-hidden">
             <div className={`flex-1 flex flex-col min-h-0 ${isFocusMode ? "max-w-5xl" : "max-w-4xl"} mx-auto w-full`}>
               <div className="paper-sheet flex-1 flex flex-col min-h-0 overflow-hidden">
-                <div className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-1 border-b border-[var(--paper-line)] flex-wrap">
+                <div className="shrink-0 flex items-center gap-1.5 px-4 pt-3 pb-1 border-b border-[var(--paper-line)] flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setPageMode("write")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors ${
-                      pageMode === "write"
+                    onClick={() => setPageMode("notes")}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      pageMode === "notes"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
                     }`}
                   >
                     <PenLine className="w-3.5 h-3.5" />
-                    Write
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPageMode("sketch")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors ${
-                      pageMode === "sketch"
-                        ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
-                        : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    Sketch
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPageMode("capture")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors ${
-                      pageMode === "capture"
-                        ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
-                        : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    Capture
+                    1. Study Notes
                   </button>
                   <button
                     type="button"
                     onClick={() => setPageMode("flashcards")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                       pageMode === "flashcards"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
                     }`}
                   >
                     <Layers className="w-3.5 h-3.5" />
-                    Flashcards
+                    2. Flashcards
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPageMode("quiz")}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      pageMode === "quiz"
+                        ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
+                        : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
+                    }`}
+                  >
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                    3. Quiz Checkpoint
                   </button>
                   <button
                     type="button"
                     onClick={() => setPageMode("build")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                       pageMode === "build"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
                     }`}
                   >
                     <Github className="w-3.5 h-3.5" />
-                    Build Proof
+                    4. Build Proof
                   </button>
 
                   {!isFocusMode && activeResource && (
@@ -513,27 +536,71 @@ export function TopicWorkspace({
                 </div>
 
                 <div className="flex-1 min-h-[320px] flex flex-col overflow-y-auto">
-                  {pageMode === "write" && (
-                    <>
-                      <NotesEditor topicId={topicId} variant="paper" autoFocus />
-                      {(sessionPhase === "write" || sessionPhase === "read" || isFocusMode) && (
-                        <div className="p-4 border-t border-[var(--paper-line)]">
-                          <ExplainBackCard topicId={topicId} topicTitle={title} />
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {pageMode === "sketch" && <CanvasPad topicId={topicId} variant="paper" />}
-                  {pageMode === "capture" && (
-                    <CaptureDesk
-                      topicId={topicId}
-                      workflow={topic.captureWorkflow}
-                      onSave={(wf) => saveCaptureWorkflow(topicId, wf)}
-                    />
+                  {pageMode === "notes" && (
+                    <div className="flex-1 flex flex-col min-h-0">
+                      <div className="shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 border-b border-[var(--paper-line)]/50 bg-[var(--paper-bg)]/25">
+                        {(["write", "sketch", "capture"] as const).map((sub) => (
+                          <button
+                            key={sub}
+                            type="button"
+                            onClick={() => setNotesSubMode(sub)}
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer border ${
+                              notesSubMode === sub
+                                ? "bg-[var(--paper-ink)] text-[var(--paper-bg)] border-[var(--paper-ink)]"
+                                : "bg-white/40 border-[var(--paper-line)] text-[var(--paper-muted)] hover:text-[var(--paper-ink)] hover:bg-white/70"
+                            }`}
+                          >
+                            {sub === "write" && (
+                              <>
+                                <PenLine className="w-3 h-3" />
+                                Write
+                              </>
+                            )}
+                            {sub === "sketch" && (
+                              <>
+                                <Pencil className="w-3 h-3" />
+                                Sketch
+                              </>
+                            )}
+                            {sub === "capture" && (
+                              <>
+                                <Camera className="w-3 h-3" />
+                                Capture
+                              </>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+                        {notesSubMode === "write" && (
+                          <>
+                            <NotesEditor topicId={topicId} variant="paper" autoFocus />
+                            {(sessionPhase === "write" || sessionPhase === "read" || isFocusMode) && (
+                              <div className="p-4 border-t border-[var(--paper-line)]">
+                                <ExplainBackCard topicId={topicId} topicTitle={title} />
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {notesSubMode === "sketch" && <CanvasPad topicId={topicId} variant="paper" />}
+                        {notesSubMode === "capture" && (
+                          <CaptureDesk
+                            topicId={topicId}
+                            workflow={topic.captureWorkflow}
+                            onSave={(wf) => saveCaptureWorkflow(topicId, wf)}
+                          />
+                        )}
+                      </div>
+                    </div>
                   )}
                   {pageMode === "flashcards" && (
                     <div className="p-5">
                       <FlashcardsSandbox topicId={topicId} topicTitle={title} />
+                    </div>
+                  )}
+                  {pageMode === "quiz" && (
+                    <div className="p-5">
+                      <QuizSandbox topicId={topicId} topicTitle={title} />
                     </div>
                   )}
                   {pageMode === "build" && (
@@ -549,7 +616,14 @@ export function TopicWorkspace({
                   <ProofChecklist
                     topicId={topicId}
                     variant="desk"
-                    onStartQuiz={() => setQuizOpen(true)}
+                    onSelectMode={(mode) => {
+                      if (mode === "write" || mode === "sketch" || mode === "capture") {
+                        setPageMode("notes");
+                        setNotesSubMode(mode as any);
+                      } else {
+                        setPageMode(mode as any);
+                      }
+                    }}
                   />
                 </div>
               )}
@@ -561,7 +635,18 @@ export function TopicWorkspace({
       {!isFocusMode && (
         <div className="md:hidden border-t border-white/5 p-4 space-y-3">
           <UserResourceForm topicId={topicId} />
-          <ProofChecklist topicId={topicId} variant="desk" onStartQuiz={() => setQuizOpen(true)} />
+          <ProofChecklist
+            topicId={topicId}
+            variant="desk"
+            onSelectMode={(mode) => {
+              if (mode === "write" || mode === "sketch" || mode === "capture") {
+                setPageMode("notes");
+                setNotesSubMode(mode as any);
+              } else {
+                setPageMode(mode as any);
+              }
+            }}
+          />
         </div>
       )}
 
@@ -595,7 +680,8 @@ export function TopicWorkspace({
               <button
                 type="button"
                 onClick={() => {
-                  setPageMode("write");
+                  setPageMode("notes");
+                  setNotesSubMode("write");
                   setShowReviewPrompt(false);
                 }}
                 className="flex flex-col items-center justify-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/15 transition-all text-center gap-1.5 group cursor-pointer"
@@ -621,7 +707,7 @@ export function TopicWorkspace({
               <button
                 type="button"
                 onClick={() => {
-                  setQuizOpen(true);
+                  setPageMode("quiz");
                   setShowReviewPrompt(false);
                 }}
                 className="flex flex-col items-center justify-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/15 transition-all text-center gap-1.5 group cursor-pointer"

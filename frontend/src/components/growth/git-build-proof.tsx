@@ -1,50 +1,6 @@
 import { useState, useMemo } from "react";
 import { useGrowthState } from "@/hooks/use-growth-state";
-import { GitBranch, Github, RefreshCw, Terminal, CheckCircle, ShieldAlert, Award, Brain, Code, FileText, Pencil } from "lucide-react";
-
-const ASSIGNMENT_TEMPLATES: Record<string, { easy: string; medium: string; hard: string }> = {
-  css: {
-    easy: "Create a glassmorphic profile card with smooth hover transitions, rounded borders, and custom box-shadows.",
-    medium: "Build a responsive grid-based gallery layout with dynamic media queries and collapsible mobile menus.",
-    hard: "Design a full dashboard shell featuring CSS variables for dark/light themes, custom flex container scrollbars, and fluid scaling fonts."
-  },
-  html: {
-    easy: "Build a semantic HTML5 form containing input validation, radio lists, and accessible fieldsets.",
-    medium: "Construct a multi-page documentation skeleton utilizing native nav, main, section, and article structural components.",
-    hard: "Implement a fully accessible navigation system using correct ARIA properties, keyboard tab-indices, and modal dialogs."
-  },
-  javascript: {
-    easy: "Write a function that parses a list of query string parameters and returns a structured JavaScript object.",
-    medium: "Implement a custom event emitter class supporting subscribe, unsubscribe, and publish patterns.",
-    hard: "Create a virtual DOM render utility that converts virtual nodes into actual DOM trees and supports lightweight updates."
-  },
-  js: {
-    easy: "Write a function that parses a list of query string parameters and returns a structured JavaScript object.",
-    medium: "Implement a custom event emitter class supporting subscribe, unsubscribe, and publish patterns.",
-    hard: "Create a virtual DOM render utility that converts virtual nodes into actual DOM trees and supports lightweight updates."
-  },
-  react: {
-    easy: "Build a custom hook useLocalStorage that synchronizes component state with the browser localStorage API.",
-    medium: "Implement a highly customizable search autocomplete component supporting keyboard navigation, debounce, and cached results.",
-    hard: "Create a lightweight React routing system using history states, route matching, and context providers."
-  },
-  django: {
-    easy: "Create a Django model schema for a task manager supporting status choices, automatically generated timestamps, and user owners.",
-    medium: "Build a custom middleware class that logs path response latencies and limits guest request rates.",
-    hard: "Implement a full JWT auth system with custom Django REST framework validation, token refresh hooks, and blacklisting."
-  },
-  sql: {
-    easy: "Draft a schema for an e-commerce database with clean foreign key links, constraint definitions, and index keys.",
-    medium: "Write a query utilizing nested joins, subqueries, and partition aggregation to locate the highest spending users.",
-    hard: "Implement a database transaction lock sequence to safely transfer funds between user balances and prevent race conditions."
-  }
-};
-
-const DEFAULT_TEMPLATES = {
-  easy: "Create a clean, functional implementation of the topic requirements with comprehensive code comments.",
-  medium: "Implement a modularized service demonstrating proper error handling, unit tests, and solid structure.",
-  hard: "Develop a robust, high-performance architecture covering advanced edge cases, custom helper functions, and build pipelines."
-};
+import { GitBranch, Github, RefreshCw, Terminal, CheckCircle, Brain } from "lucide-react";
 
 export function GitBuildProof({ topicId, topicTitle }: { topicId: string; topicTitle: string }) {
   const { state, connectTopicRepo, runTopicBuildAnalysis } = useGrowthState();
@@ -58,30 +14,6 @@ export function GitBuildProof({ topicId, topicTitle }: { topicId: string; topicT
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [isFetchingCommits, setIsFetchingCommits] = useState(false);
-
-  // Assignment states
-  const [assignmentType, setAssignmentType] = useState<"ai" | "custom">("ai");
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
-  const [customText, setCustomText] = useState("");
-
-  const activeTemplate = useMemo(() => {
-    const slug = topicTitle.toLowerCase();
-    let template = DEFAULT_TEMPLATES;
-    for (const [key, t] of Object.entries(ASSIGNMENT_TEMPLATES)) {
-      if (slug.includes(key)) {
-        template = t;
-        break;
-      }
-    }
-    return template;
-  }, [topicTitle]);
-
-  const activeAssignmentText = useMemo(() => {
-    if (assignmentType === "ai") {
-      return activeTemplate[difficulty];
-    }
-    return customText.trim() || "My custom practical programming build goal.";
-  }, [assignmentType, difficulty, activeTemplate, customText]);
 
   const mockCommits = useMemo(() => {
     return [
@@ -125,13 +57,11 @@ export function GitBuildProof({ topicId, topicTitle }: { topicId: string; topicT
       `Connecting to GitHub repository API...`,
       `Repository: github.com/${inputUrl.replace(/https:\/\/github\.com\//, "")}`,
       `Selected branch: ${branch}`,
-      `Target Assignment: [${assignmentType === "ai" ? `AI ${difficulty.toUpperCase()}` : "CUSTOM"}]`,
-      `Prompt: "${activeAssignmentText.slice(0, 60)}..."`,
-      `Retrieving latest commits...`,
+      `Retrieving latest commits on ${branch}...`,
       `Found commit: a7c2d91 (Author: ${state.profile.githubUser || "anxmeshhh"})`,
       `Found commit: 0d8f3b2 (Author: ${state.profile.githubUser || "anxmeshhh"})`,
-      `Analyzing code diffs & concepts for "${topicTitle}"...`,
-      `Verifying build correctness against selected assignment requirements...`,
+      `Analyzing code diffs & structure for "${topicTitle}"...`,
+      `Verifying build correctness against ${topicTitle} mastery criteria...`,
       `Groq AI code verification initialized...`,
       `Proof approved successfully.`
     ];
@@ -143,9 +73,7 @@ export function GitBuildProof({ topicId, topicTitle }: { topicId: string; topicT
           setTimeout(() => {
             setIsAnalyzing(false);
             const score = 85 + Math.floor(Math.random() * 15);
-            const feedback = `The repository commits successfully resolve the requirements for your ${
-              assignmentType === "ai" ? `${difficulty} level AI` : "custom"
-            } assignment: "${activeAssignmentText}". The commit messages detail a logical progression, and the code adheres to clean architecture principles. Proof approved.`;
+            const feedback = `The repository commits successfully resolve the requirements for your practical implementation of "${topicTitle}". The commit history shows active development, and the code structure conforms to industry best practices. Build proof approved.`;
             runTopicBuildAnalysis(topicId, score, feedback);
           }, 600);
         }
@@ -164,85 +92,11 @@ export function GitBuildProof({ topicId, topicTitle }: { topicId: string; topicT
         </div>
       </div>
 
-      {/* Assignment Setup Mode */}
-      <div className="space-y-3 bg-white/60 p-4 border border-[var(--paper-line)] rounded-xl shadow-sm">
-        <h4 className="text-xs font-semibold text-[var(--paper-ink)]">
-          1. Select Build Assignment
-        </h4>
-        <div className="flex border-b border-[var(--paper-line)]/50 text-[11px] pb-1.5 gap-2">
-          <button
-            type="button"
-            onClick={() => setAssignmentType("ai")}
-            className={`px-3 py-1 rounded-md font-medium cursor-pointer transition-colors ${
-              assignmentType === "ai"
-                ? "bg-amber-700/80 text-white"
-                : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-            }`}
-          >
-            AI Assignment Template
-          </button>
-          <button
-            type="button"
-            onClick={() => setAssignmentType("custom")}
-            className={`px-3 py-1 rounded-md font-medium cursor-pointer transition-colors ${
-              assignmentType === "custom"
-                ? "bg-amber-700/80 text-white"
-                : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-            }`}
-          >
-            Make Your Own Assignment
-          </button>
-        </div>
-
-        {assignmentType === "ai" ? (
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-mono text-[var(--paper-muted)]">DIFFICULTY LEVEL:</span>
-              <div className="flex gap-1">
-                {(["easy", "medium", "hard"] as const).map((lvl) => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => setDifficulty(lvl)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider cursor-pointer border transition-all ${
-                      difficulty === lvl
-                        ? "bg-amber-900 border-amber-950 text-amber-50"
-                        : "bg-white/40 border-[var(--paper-line)] text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
-                  >
-                    {lvl}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="p-3 bg-amber-50/40 border border-amber-200/50 rounded-lg text-xs leading-relaxed text-amber-950 font-serif">
-              <span className="font-semibold block font-mono text-[10px] uppercase text-amber-900/80 mb-1">
-                Assignment Challenge:
-              </span>
-              {activeTemplate[difficulty]}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-mono text-[var(--paper-muted)] block">
-              DESCRIBE YOUR OWN PRACTICAL BUILD OBJECTIVE:
-            </label>
-            <textarea
-              value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
-              placeholder="e.g., Build a local task runner script that connects to the database..."
-              rows={3}
-              className="paper-editor w-full text-xs rounded border border-[var(--paper-line)] bg-white/80 px-3 py-2 text-[var(--paper-ink)] focus:outline-none resize-none"
-            />
-          </div>
-        )}
-      </div>
-
       {/* Repo Link / Verify Action */}
       {!repoUrl ? (
         <form onSubmit={handleLinkRepo} className="space-y-3 bg-white/60 p-4 border border-[var(--paper-line)] rounded-xl shadow-sm">
           <h4 className="text-xs font-semibold text-[var(--paper-ink)]">
-            2. Connect GitHub Repository
+            Connect GitHub Repository
           </h4>
           <p className="text-[11px] text-[var(--paper-muted)]">
             Connect the GitHub repository that holds the practical implementation for this topic.
@@ -293,7 +147,7 @@ export function GitBuildProof({ topicId, topicTitle }: { topicId: string; topicT
         <div className="space-y-4">
           <div className="space-y-2 bg-white/60 p-4 border border-[var(--paper-line)] rounded-xl shadow-sm">
             <h4 className="text-xs font-semibold text-[var(--paper-ink)] mb-1">
-              2. Connected Code Repository
+              Connected Code Repository
             </h4>
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">

@@ -11,10 +11,12 @@ const PROOF_ITEMS = [
 export function ProofChecklist({
   topicId,
   onStartQuiz,
+  onSelectMode,
   variant = "default",
 }: {
   topicId: string;
   onStartQuiz?: () => void;
+  onSelectMode?: (mode: "write" | "sketch" | "capture" | "flashcards" | "build" | "quiz") => void;
   variant?: "default" | "desk";
 }) {
   const { state, updateTopicCheck } = useGrowthState();
@@ -52,11 +54,19 @@ export function ProofChecklist({
               key={item.id}
               type="button"
               onClick={() => {
+                if (onSelectMode) {
+                  if (item.id === "video") onSelectMode("write");
+                  else if (item.id === "notes") onSelectMode("write");
+                  else if (item.id === "quiz") onSelectMode("quiz");
+                  else if (item.id === "commit") onSelectMode("build");
+                }
                 if (item.id === "quiz" && onStartQuiz) {
                   onStartQuiz();
                   return;
                 }
-                updateTopicCheck(topicId, item.id, !done);
+                if (item.id !== "quiz" && item.id !== "commit") {
+                  updateTopicCheck(topicId, item.id, !done);
+                }
               }}
               title={item.hint}
               className={
