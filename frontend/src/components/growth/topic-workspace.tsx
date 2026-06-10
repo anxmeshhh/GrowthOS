@@ -243,10 +243,9 @@ export function TopicWorkspace({
 
   const handlePhaseChange = (phase: SessionPhase) => {
     setSessionPhase(topicId, phase);
-    if (phase === "read") {
-      setPageMode("write");
-    } else if (phase === "write") {
-      setPageMode("write");
+    if (phase === "read" || phase === "write") {
+      setPageMode("notes");
+      setNotesSubMode("write");
     } else if (phase === "check") {
       setPageMode("quiz");
     } else if (phase === "build") {
@@ -258,7 +257,8 @@ export function TopicWorkspace({
     if (sessionPhase === "read") {
       updateTopicCheck(topicId, "video", true);
       setSessionPhase(topicId, "write");
-      setPageMode("write");
+      setPageMode("notes");
+      setNotesSubMode("write");
     } else if (sessionPhase === "write") {
       updateTopicCheck(topicId, "notes", true);
       setSessionPhase(topicId, "check");
