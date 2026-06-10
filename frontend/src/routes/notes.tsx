@@ -1,6 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Download, Search, StickyNote, Trash2, Upload } from "lucide-react";
+import {
+  Download,
+  Search,
+  StickyNote,
+  Trash2,
+  Upload,
+  Layers,
+  Pencil,
+  Camera,
+  FileCode,
+  ExternalLink,
+  Lock,
+  CheckCircle,
+  ClipboardCheck,
+} from "lucide-react";
 import { NotesUploadPanel } from "@/components/growth/notes-upload";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import { ACHIEVEMENTS } from "@/lib/gamification";
@@ -25,16 +39,22 @@ function NotesPage() {
   const topicNotes = useMemo(() => {
     return getFlatTopics(state.profile.path).map((topic) => {
       const progress = state.topics[topic.id];
+      const linkedUploaded = state.uploadedNotes.filter((un) => un.topicId === topic.id);
       return {
         id: topic.id,
         topic: topic.title,
         meta: topic.meta,
         content: progress?.notesText || "",
         status: progress?.status || "locked",
+        canvasData: progress?.canvasData || null,
+        captureWorkflow: progress?.captureWorkflow || null,
+        flashcards: progress?.flashcards || [],
+        quizScore: progress?.quizScore,
+        linkedUploaded,
         kind: "topic" as const,
       };
     });
-  }, [state.profile.path, state.topics]);
+  }, [state.profile.path, state.topics, state.uploadedNotes]);
 
   const uploaded = state.uploadedNotes;
 
@@ -180,37 +200,184 @@ function NotesPage() {
         </section>
       )}
 
-      <section className="space-y-3">
+      <section className="space-y-4">
         <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          Topic notes ({filtered.topicItems.length})
+          Topic notes & study notebooks ({filtered.topicItems.length})
         </h2>
-        <div className="grid md:grid-cols-2 gap-3">
-          {filtered.topicItems.map((note) => (
-            <Link
-              key={note.id}
-              to="/topic/$topicId"
-              params={{ topicId: note.id }}
-              className={`block p-4 rounded-lg border border-border bg-card hover:border-amber-500/30 hover:bg-[var(--surface-2)]/50 transition-all ${
-                note.status === "locked" ? "pointer-events-none opacity-50" : ""
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="grid md:grid-cols-2 gap-4">
+          {filtered.topicItems.map((note) => {
+            const isLocked = note.status === "locked";
+            const hasNotes = !!note.content.trim();
+            const hasCanvas = !!note.canvasData;
+            const hasCapture = !!note.captureWorkflow?.imageData;
+            const hasFlashcards = note.flashcards.length > 0;
+            const hasQuiz = note.quizScore !== undefined;
+
+            return (
+              <div
+                key={note.id}
+                className={`p-5 rounded-lg border border-border bg-card flex flex-col justify-between space-y-4 transition-all relative ${
+                  isLocked ? "opacity-50" : "hover:border-amber-500/30"
+                }`}
+              >
                 <div>
-                  <h3 className="font-medium text-sm flex items-center gap-2">
-                    <StickyNote className="w-3.5 h-3.5 text-amber-400" />
-                    {note.topic}
-                  </h3>
-                  <div className="text-[10px] font-mono text-muted-foreground mt-1">{note.meta}</div>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div>
+                      <h3 className="font-semibold text-sm flex items-center gap-1.5 text-foreground/95">
+                        <StickyNote className="w-4 h-4 text-amber-400" />
+                        {note.topic}
+                      </h3>
+                      <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{note.meta}</div>
+                    </div>
+                    <span className="text-[9px] uppercase font-mono border border-border rounded px-1.5 py-0.5 text-muted-foreground shrink-0">
+                      {note.status}
+                    </span>
+                  </div>
+
+                  {/* Written note content preview */}
+                  <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-line leading-relaxed mb-4">
+                    {note.content.trim() || "No written notes yet — start your focus session."}
+                  </p>
+
+                  {/* Connected System Materials Grid */}
+                  {!isLocked && (
+                    <div className="border-t border-border/50 pt-3 mt-3 space-y-2">
+                      <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">Connected materials</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {/* Notes tab link */}
+                        <Link
+                          to="/topic/$topicId"
+                          params={{ topicId: note.id }}
+                          search={{ mode: "write" }}
+                          className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                            hasNotes
+                              ? "bg-amber-950/20 border-amber-900/40 text-amber-300 hover:bg-amber-950/40"
+                              : "bg-[var(--surface-2)] border-border text-muted-foreground hover:bg-[var(--muted)]"
+                          }`}
+                        >
+                          <FileCode className="w-3 h-3" />
+                          <span>Notes</span>
+                        </Link>
+
+                        {/* Canvas link */}
+                        <Link
+                          to="/topic/$topicId"
+                          params={{ topicId: note.id }}
+                          search={{ mode: "sketch" }}
+                          className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                            hasCanvas
+                              ? "bg-amber-950/20 border-amber-900/40 text-amber-300 hover:bg-amber-950/40"
+                              : "bg-[var(--surface-2)] border-border text-muted-foreground hover:bg-[var(--muted)]"
+                          }`}
+                        >
+                          <Pencil className="w-3 h-3" />
+                          <span>Sketch</span>
+                          {hasCanvas && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                        </Link>
+
+                        {/* Capture link */}
+                        <Link
+                          to="/topic/$topicId"
+                          params={{ topicId: note.id }}
+                          search={{ mode: "capture" }}
+                          className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                            hasCapture
+                              ? "bg-indigo-950/20 border-indigo-900/40 text-indigo-300 hover:bg-indigo-950/40"
+                              : "bg-[var(--surface-2)] border-border text-muted-foreground hover:bg-[var(--muted)]"
+                          }`}
+                        >
+                          <Camera className="w-3 h-3" />
+                          <span>Capture</span>
+                          {hasCapture && (
+                            <span className="text-[9px] font-mono opacity-80">
+                              ({note.captureWorkflow?.regions.length})
+                            </span>
+                          )}
+                        </Link>
+
+                        {/* Flashcards link */}
+                        <Link
+                          to="/topic/$topicId"
+                          params={{ topicId: note.id }}
+                          search={{ mode: "flashcards" }}
+                          className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                            hasFlashcards
+                              ? "bg-emerald-950/20 border-emerald-900/40 text-emerald-300 hover:bg-emerald-950/40"
+                              : "bg-[var(--surface-2)] border-border text-muted-foreground hover:bg-[var(--muted)]"
+                          }`}
+                        >
+                          <Layers className="w-3 h-3" />
+                          <span>Cards</span>
+                          {hasFlashcards && (
+                            <span className="text-[9px] font-mono opacity-80">
+                              ({note.flashcards.length})
+                            </span>
+                          )}
+                        </Link>
+
+                        {/* Quiz stats */}
+                        {hasQuiz && (
+                          <div className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border bg-blue-950/20 border-blue-900/40 text-blue-300">
+                            <ClipboardCheck className="w-3 h-3" />
+                            <span>Quiz: {note.quizScore}%</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Linked Uploaded files list */}
+                      {note.linkedUploaded.length > 0 && (
+                        <div className="space-y-1.5 mt-2 pt-2 border-t border-border/40">
+                          <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">Linked Documents & Capture Files</div>
+                          <div className="space-y-1">
+                            {note.linkedUploaded.map((file) => (
+                              <div
+                                key={file.id}
+                                className="flex items-center justify-between text-xs p-1.5 rounded bg-[var(--surface-2)] border border-border"
+                              >
+                                <span className="font-mono text-[11px] truncate pr-2" title={file.fileName}>
+                                  📎 {file.title || file.fileName}
+                                </span>
+                                <div className="flex gap-1.5 shrink-0">
+                                  {file.kind === "text" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => downloadNote(file.title, file.content, file.fileName)}
+                                      className="text-[10px] text-amber-400/90 hover:underline"
+                                    >
+                                      Download
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteUploadedNote(file.id)}
+                                    className="text-[10px] text-red-400/80 hover:text-red-300"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <span className="text-[9px] uppercase font-mono border border-border rounded px-1.5 py-0.5 text-muted-foreground">
-                  {note.status}
-                </span>
+
+                {/* Primary Desk Button */}
+                <div className="pt-2">
+                  <Link
+                    to="/topic/$topicId"
+                    params={{ topicId: note.id }}
+                    disabled={isLocked}
+                    className="w-full text-xs font-medium px-3 py-2 rounded-md border border-border bg-[var(--surface-2)] hover:bg-[var(--muted)] flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Open Desk Workspace →
+                  </Link>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground line-clamp-4 whitespace-pre-line">
-                {note.content.trim() || "No notes yet — open your desk and write."}
-              </p>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
 

@@ -15,6 +15,7 @@ import {
   Video,
   Layers,
   Github,
+  ClipboardCheck,
 } from "lucide-react";
 import { CaptureDesk } from "@/components/growth/capture-desk";
 import { ExplainBackCard } from "@/components/growth/explain-back-card";
@@ -55,10 +56,12 @@ export function TopicWorkspace({
   topicId,
   backTo = "/roadmap",
   roadmapNodeId,
+  initialMode,
 }: {
   topicId: string;
   backTo?: string;
   roadmapNodeId?: string;
+  initialMode?: PageMode;
 }) {
   const {
     state,
@@ -69,19 +72,36 @@ export function TopicWorkspace({
     incrementStudySessionsCount,
   } = useGrowthState();
 
-  const [pageMode, setPageMode] = useState<PageMode>("write");
+  const topic = state.topics[topicId];
+  const [pageMode, setPageMode] = useState<PageMode>(initialMode ?? "write");
   const [quizOpen, setQuizOpen] = useState(false);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [focusRunning, setFocusRunning] = useState(false);
   const [guidesOpen, setGuidesOpen] = useState(true);
   const [resourcePanelOpen, setResourcePanelOpen] = useState(true);
+  const [showReviewPrompt, setShowReviewPrompt] = useState(topic?.status === "completed");
+
+  // Sync initialMode prop when route changes
+  useEffect(() => {
+    if (initialMode) {
+      setPageMode(initialMode);
+    }
+  }, [initialMode]);
+
+  // Sync review prompt when active topic changes
+  useEffect(() => {
+    if (topic?.status === "completed") {
+      setShowReviewPrompt(true);
+    } else {
+      setShowReviewPrompt(false);
+    }
+  }, [topicId, topic?.status]);
 
   // Focus Mode & Quote States
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [activeQuote, setActiveQuote] = useState<{ text: string; author: string } | null>(null);
   const [showQuote, setShowQuote] = useState(false);
 
-  const topic = state.topics[topicId];
   const direction = getTopicResourceDirection(state.profile.path, topicId);
   const title = topic?.title ?? "Topic";
   const resources = useMemo(
@@ -402,7 +422,7 @@ export function TopicWorkspace({
         )}
 
         <main className="flex-1 flex min-w-0 min-h-0">
-          {!isFocusMode && resourcePanelOpen && sessionPhase === "read" && activeResource && (
+          {!isFocusMode && resourcePanelOpen && activeResource && (
             <div
               className="shrink-0 hidden lg:flex flex-col min-h-0 border-r border-white/5"
               style={{ width: `${resourcePanelWidth}%`, maxWidth: "480px", minWidth: "240px" }}
@@ -546,6 +566,97 @@ export function TopicWorkspace({
       )}
 
       <QuizDrawer open={quizOpen} onClose={() => setQuizOpen(false)} topicId={topicId} />
+
+      {/* Mastery Review prompt modal */}
+      {showReviewPrompt && topic && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[#1c1916] border border-white/10 rounded-lg max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">Topic Mastery Achieved</span>
+                <h3 className="font-semibold text-lg text-[#f0ebe3] mt-1">
+                  Review: {topic.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReviewPrompt(false)}
+                className="text-white/40 hover:text-white text-xs p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              You completed this topic! Would you like to review your flashcards, read your notes, inspect your build proof, or retake the practice quiz?
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPageMode("write");
+                  setShowReviewPrompt(false);
+                }}
+                className="flex flex-col items-center justify-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/15 transition-all text-center gap-1.5 group cursor-pointer"
+              >
+                <PenLine className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium text-[#e8e4dc]">Written Notes</span>
+                <span className="text-[9px] text-muted-foreground">Read & edit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPageMode("flashcards");
+                  setShowReviewPrompt(false);
+                }}
+                className="flex flex-col items-center justify-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/15 transition-all text-center gap-1.5 group cursor-pointer"
+              >
+                <Layers className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium text-[#e8e4dc]">Flashcards</span>
+                <span className="text-[9px] text-muted-foreground">Practice SM-2</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setQuizOpen(true);
+                  setShowReviewPrompt(false);
+                }}
+                className="flex flex-col items-center justify-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/15 transition-all text-center gap-1.5 group cursor-pointer"
+              >
+                <ClipboardCheck className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium text-[#e8e4dc]">Retake Quiz</span>
+                <span className="text-[9px] text-muted-foreground">Test understanding</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPageMode("build");
+                  setShowReviewPrompt(false);
+                }}
+                className="flex flex-col items-center justify-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/15 transition-all text-center gap-1.5 group cursor-pointer"
+              >
+                <Github className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium text-[#e8e4dc]">Build Proof</span>
+                <span className="text-[9px] text-muted-foreground">Inspect repository</span>
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowReviewPrompt(false)}
+                className="px-4 py-2 text-xs border border-white/10 rounded-md hover:bg-white/5 text-[#c4bdb3] cursor-pointer"
+              >
+                Go directly to Workspace
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Motivational Quote Toast (top right) */}
       {showQuote && activeQuote && (
