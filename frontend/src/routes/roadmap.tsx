@@ -14,10 +14,15 @@ import { RoadmapViewer } from "@/components/roadmap/RoadmapViewer";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import { hasVisualRoadmap } from "@/lib/roadmap-layout/bookmarks";
 import { loadRoadmapDocument } from "@/lib/roadmap-layout/load-roadmap";
+import { buildNodeTopicLookup, loadRoadmapMap } from "@/lib/roadmap-layout/load-map";
 import type { RoadmapDocument, RoadmapFlowNode } from "@/lib/roadmap-layout/types";
+import type { GrowthTopicStatus } from "@/lib/roadmap-layout/types";
 import { getFlatTopics, LEARNING_PATHS, type LearningPath } from "@/lib/roadmaps";
 
 export const Route = createFileRoute("/roadmap")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    highlight: typeof search.highlight === "string" ? search.highlight : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Learning Roadmap · GrowthOS" },
@@ -31,10 +36,14 @@ export const Route = createFileRoute("/roadmap")({
 });
 
 function RoadmapPage() {
-  const { state, setActivePath, openTopicFromNode } = useGrowthState();
+  const { state, setActivePath, openTopicFromNode, openTopicFromNodeId } = useGrowthState();
   const navigate = useNavigate();
-  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+  const { highlight } = Route.useSearch();
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(
+    () => highlight || sessionStorage.getItem(`growthos_active_node_${state.profile.path}`) || null,
+  );
   const [roadmapDoc, setRoadmapDoc] = useState<RoadmapDocument | null>(null);
+  const [nodeToTopicId, setNodeToTopicId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const activePath = LEARNING_PATHS[state.profile.path];
@@ -52,18 +61,47 @@ function RoadmapPage() {
   const readiness = Math.round((completedCount / Math.max(flatTopics.length, 1)) * 100);
   const visualAvailable = hasVisualRoadmap(state.profile.path);
 
-  const topicStatusesByLabel = useMemo(() => {
-    const map: Record<string, TopicStatus> = {};
-    flatTopics.forEach((topic) => {
-      map[topic.title.trim().toLowerCase()] = state.topics[topic.id]?.status ?? "locked";
+  const topicStatusesByNodeId = useMemo(() => {
+    const map: Record<string, GrowthTopicStatus> = {};
+    Object.entries(nodeToTopicId).forEach(([nodeId, topicId]) => {
+      const status = state.topics[topicId]?.status ?? "locked";
+      map[nodeId] = status as GrowthTopicStatus;
     });
     return map;
-  }, [flatTopics, state.topics]);
+  }, [nodeToTopicId, state.topics]);
+
+  const topicProofByNodeId = useMemo(() => {
+    const map: Record<string, number> = {};
+    Object.entries(nodeToTopicId).forEach(([nodeId, topicId]) => {
+      const topic = state.topics[topicId];
+      if (!topic) return;
+      map[nodeId] = Object.values(topic.checks).filter(Boolean).length;
+    });
+    return map;
+  }, [nodeToTopicId, state.topics]);
+
+  const topicExtrasByNodeId = useMemo(() => {
+    const map: Record<string, { userResources: number; hasCapture: boolean }> = {};
+    Object.entries(nodeToTopicId).forEach(([nodeId, topicId]) => {
+      const topic = state.topics[topicId];
+      if (!topic) return;
+      map[nodeId] = {
+        userResources: topic.userResources?.length ?? 0,
+        hasCapture: Boolean(topic.captureWorkflow?.regions?.length),
+      };
+    });
+    return map;
+  }, [nodeToTopicId, state.topics]);
+
+  useEffect(() => {
+    if (highlight) setActiveNodeId(highlight);
+  }, [highlight]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setRoadmapDoc(null);
+    setNodeToTopicId({});
 
     if (!visualAvailable) {
       setLoading(false);
@@ -72,11 +110,21 @@ function RoadmapPage() {
       };
     }
 
-    loadRoadmapDocument(state.profile.path).then((doc) => {
-      if (!cancelled) {
-        setRoadmapDoc(doc);
-        setLoading(false);
+    Promise.all([
+      loadRoadmapDocument(state.profile.path),
+      loadRoadmapMap(state.profile.path),
+    ]).then(([doc, manifest]) => {
+      if (cancelled) return;
+      setRoadmapDoc(doc);
+      if (manifest) {
+        const { nodeToTopic } = buildNodeTopicLookup(manifest);
+        const lookup: Record<string, string> = {};
+        nodeToTopic.forEach((topicId, nodeId) => {
+          lookup[nodeId] = topicId;
+        });
+        setNodeToTopicId(lookup);
       }
+      setLoading(false);
     });
 
     return () => {
@@ -84,12 +132,21 @@ function RoadmapPage() {
     };
   }, [state.profile.path, visualAvailable]);
 
-  const handleNodeClick = (node: RoadmapFlowNode) => {
+  const handleNodeClick = (node: RoadmapFlowNode, mappedTopicId: string | null) => {
     setActiveNodeId(node.id);
+    sessionStorage.setItem(`growthos_active_node_${state.profile.path}`, node.id);
     const label = node.data?.label?.trim();
     if (!label) return;
-    const topicId = openTopicFromNode(label);
-    navigate({ to: "/topic/$topicId", params: { topicId }, search: { from: "/roadmap" } });
+
+    const topicId = mappedTopicId
+      ? openTopicFromNodeId(mappedTopicId, label, node.id)
+      : openTopicFromNode(label);
+
+    navigate({
+      to: "/topic/$topicId",
+      params: { topicId },
+      search: { from: "/roadmap", nodeId: node.id },
+    });
   };
 
   const handlePathSelect = (path: LearningPath) => {
@@ -207,7 +264,7 @@ function RoadmapPage() {
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               {visualAvailable
-                ? "Yellow nodes are main topics, peach nodes are subtopics. Colors reflect your GrowthOS progress."
+                ? "Dark canvas with your progress on every mapped node. Hover for preview, click to open your desk."
                 : "This path is tracked as ordered topics. A visual map will be added when the layout is available."}
             </p>
           </div>
@@ -217,14 +274,18 @@ function RoadmapPage() {
         </div>
 
         {loading ? (
-          <div className="grid min-h-[560px] place-items-center bg-[#f8f8f5] text-sm font-medium text-muted-foreground">
+          <div className="grid min-h-[560px] place-items-center bg-[var(--background)] text-sm font-medium text-muted-foreground">
             Loading roadmap…
           </div>
         ) : roadmapDoc ? (
           <RoadmapViewer
             document={roadmapDoc}
-            topicStatusesByLabel={topicStatusesByLabel}
+            topicStatusesByNodeId={topicStatusesByNodeId}
+            nodeToTopicId={nodeToTopicId}
+            topicProofByNodeId={topicProofByNodeId}
+            topicExtrasByNodeId={topicExtrasByNodeId}
             activeNodeId={activeNodeId}
+            pathKey={state.profile.path}
             onNodeClick={handleNodeClick}
           />
         ) : (

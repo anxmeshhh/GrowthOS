@@ -486,7 +486,7 @@ export function NotesEditor({
   variant?: "default" | "paper";
   autoFocus?: boolean;
 }) {
-  const { state, updateTopicNotes, updateTopicCheck } = useGrowthState();
+  const { state, updateTopicNotes } = useGrowthState();
   const [text, setText] = useState("");
   const [preview, setPreview] = useState(false);
   const [savedStatus, setSavedStatus] = useState("Saved");
@@ -508,9 +508,6 @@ export function NotesEditor({
     setText(val);
     setSavedStatus("Saving...");
     updateTopicNotes(topicId, val);
-    if (val.trim().length >= 80) {
-      updateTopicCheck(topicId, "notes", true);
-    }
     setTimeout(() => setSavedStatus("Saved"), 400);
   };
 

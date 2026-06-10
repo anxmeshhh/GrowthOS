@@ -10,6 +10,40 @@ import { isLeafTopicId, resolveTopicIdFromLabel } from "@/lib/roadmap-layout/res
 
 export type { LearningPath, LearningRole, TopicStatus } from "@/lib/roadmaps";
 
+export type SessionPhase = "read" | "write" | "check" | "build" | "done";
+
+export type UserResource = {
+  id: string;
+  title: string;
+  url: string;
+  type: "video" | "article" | "course" | "other";
+  addedAt: string;
+};
+
+export type ExplainBackAnswer = {
+  promptId: string;
+  answer: string;
+  done: boolean;
+};
+
+export type CaptureRegion = {
+  id: string;
+  kind: "box" | "arrow";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  x2?: number;
+  y2?: number;
+  label: string;
+};
+
+export type CaptureWorkflow = {
+  imageData: string | null;
+  regions: CaptureRegion[];
+  updatedAt: string;
+};
+
 export interface TopicProgress {
   id: string;
   title: string;
@@ -24,6 +58,12 @@ export interface TopicProgress {
   notesText: string;
   canvasData: string | null;
   quizScore?: number;
+  userResources: UserResource[];
+  explainBack: ExplainBackAnswer[];
+  sessionPhase: SessionPhase;
+  captureWorkflow: CaptureWorkflow | null;
+  activeResourceUrl: string | null;
+  roadmapNodeId: string | null;
 }
 
 export interface ProjectInfo {
@@ -67,6 +107,7 @@ interface GrowthContextType {
   setProfile: (profile: Partial<ProfileInfo>) => void;
   setActivePath: (path: LearningPath) => void;
   openTopicFromNode: (label: string) => string;
+  openTopicFromNodeId: (topicId: string, label: string, nodeId?: string) => string;
   updateTopicCheck: (
     topicId: string,
     checkKey: "video" | "notes" | "quiz" | "commit",
@@ -74,6 +115,15 @@ interface GrowthContextType {
   ) => void;
   updateTopicNotes: (topicId: string, notesText: string) => void;
   updateTopicCanvas: (topicId: string, canvasData: string | null) => void;
+  addUserResource: (
+    topicId: string,
+    resource: Omit<UserResource, "id" | "addedAt">,
+  ) => void;
+  removeUserResource: (topicId: string, resourceId: string) => void;
+  setActiveResource: (topicId: string, url: string | null) => void;
+  setSessionPhase: (topicId: string, phase: SessionPhase) => void;
+  saveExplainBack: (topicId: string, promptId: string, answer: string) => void;
+  saveCaptureWorkflow: (topicId: string, workflow: CaptureWorkflow) => void;
   completeTopicQuiz: (topicId: string, score: number) => void;
   completeTopic: (topicId: string) => void;
   connectProjectRepo: (projectName: string, repoUrl: string) => void;
@@ -167,14 +217,46 @@ function normalizeActivePath(path: LearningPath | undefined, paths: LearningPath
   return path && paths.includes(path) ? path : paths[0];
 }
 
+function defaultTopicFields(): Pick<
+  TopicProgress,
+  "userResources" | "explainBack" | "sessionPhase" | "captureWorkflow" | "activeResourceUrl" | "roadmapNodeId"
+> {
+  return {
+    userResources: [],
+    explainBack: [],
+    sessionPhase: "read",
+    captureWorkflow: null,
+    activeResourceUrl: null,
+    roadmapNodeId: null,
+  };
+}
+
+function normalizeTopic(topic: TopicProgress): TopicProgress {
+  const defaults = defaultTopicFields();
+  return {
+    ...defaults,
+    ...topic,
+    userResources: topic.userResources ?? defaults.userResources,
+    explainBack: topic.explainBack ?? defaults.explainBack,
+    sessionPhase: topic.sessionPhase ?? defaults.sessionPhase,
+    captureWorkflow: topic.captureWorkflow ?? defaults.captureWorkflow,
+    activeResourceUrl: topic.activeResourceUrl ?? defaults.activeResourceUrl,
+    roadmapNodeId: topic.roadmapNodeId ?? defaults.roadmapNodeId,
+  };
+}
+
 function buildTopics(paths: LearningPath[], existingTopics: { [key: string]: TopicProgress } = {}) {
-  const topics: { [key: string]: TopicProgress } = { ...existingTopics };
+  const topics: { [key: string]: TopicProgress } = {};
+
+  Object.entries(existingTopics).forEach(([id, topic]) => {
+    topics[id] = normalizeTopic(topic);
+  });
 
   paths.forEach((path) => {
     getFlatTopics(path).forEach((topic, index) => {
       if (topics[topic.id]) return;
 
-      topics[topic.id] = {
+      topics[topic.id] = normalizeTopic({
         id: topic.id,
         title: topic.title,
         status: index === 0 ? "in_progress" : index === 1 ? "available" : "locked",
@@ -187,7 +269,8 @@ function buildTopics(paths: LearningPath[], existingTopics: { [key: string]: Top
         },
         notesText: "",
         canvasData: null,
-      };
+        ...defaultTopicFields(),
+      });
     });
   });
 
@@ -392,17 +475,28 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const openTopicFromNode = (label: string): string => {
     const path = state.profile.path;
     const topicId = resolveTopicIdFromLabel(path, label);
+    return openTopicFromNodeId(topicId, label);
+  };
 
+  const openTopicFromNodeId = (topicId: string, label: string, nodeId?: string): string => {
     setState((previous) => {
       if (previous.topics[topicId]) {
-        const existing = previous.topics[topicId];
+        const existing = normalizeTopic(previous.topics[topicId]);
+        const updates: Partial<TopicProgress> = {};
+        if (nodeId) updates.roadmapNodeId = nodeId;
         if (existing.status === "locked" && isLeafTopicId(topicId)) {
           return {
             ...previous,
             topics: {
               ...previous.topics,
-              [topicId]: { ...existing, status: "available" },
+              [topicId]: { ...existing, ...updates, status: "available" },
             },
+          };
+        }
+        if (Object.keys(updates).length) {
+          return {
+            ...previous,
+            topics: { ...previous.topics, [topicId]: { ...existing, ...updates } },
           };
         }
         return previous;
@@ -412,15 +506,17 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         ...previous,
         topics: {
           ...previous.topics,
-          [topicId]: {
+          [topicId]: normalizeTopic({
             id: topicId,
             title: label.trim(),
             status: "in_progress",
-            meta: `Roadmap node · ${LEARNING_PATHS[path].title}`,
+            meta: `Roadmap node · ${LEARNING_PATHS[state.profile.path].title}`,
             checks: { video: false, notes: false, quiz: false, commit: false },
             notesText: "",
             canvasData: null,
-          },
+            roadmapNodeId: nodeId ?? null,
+            ...defaultTopicFields(),
+          }),
         },
       };
     });
@@ -461,14 +557,19 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setState((previous) => {
       const topic = previous.topics[topicId];
       if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const explainDone = normalized.explainBack.filter((e) => e.done && e.answer.trim().length >= 20).length;
 
       const topics = recalculateUnlocks(
         {
           ...previous.topics,
           [topicId]: {
-            ...topic,
+            ...normalized,
             notesText,
-            checks: { ...topic.checks, notes: notesText.trim().length > 10 || topic.checks.notes },
+            checks: {
+              ...normalized.checks,
+              notes: explainDone >= 2 || normalized.checks.notes,
+            },
           },
         },
         previous.profile.paths,
@@ -477,6 +578,139 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { ...previous, topics };
     });
 
+    registerActivityToday();
+  };
+
+  const addUserResource = (
+    topicId: string,
+    resource: Omit<UserResource, "id" | "addedAt">,
+  ) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const entry: UserResource = {
+        ...resource,
+        id: `ur-${Date.now()}`,
+        addedAt: new Date().toISOString(),
+      };
+      return {
+        ...previous,
+        topics: {
+          ...previous.topics,
+          [topicId]: {
+            ...normalized,
+            userResources: [entry, ...normalized.userResources],
+            activeResourceUrl: resource.url,
+          },
+        },
+      };
+    });
+    registerActivityToday();
+  };
+
+  const removeUserResource = (topicId: string, resourceId: string) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      return {
+        ...previous,
+        topics: {
+          ...previous.topics,
+          [topicId]: {
+            ...normalized,
+            userResources: normalized.userResources.filter((r) => r.id !== resourceId),
+          },
+        },
+      };
+    });
+  };
+
+  const setActiveResource = (topicId: string, url: string | null) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      return {
+        ...previous,
+        topics: {
+          ...previous.topics,
+          [topicId]: { ...normalizeTopic(topic), activeResourceUrl: url },
+        },
+      };
+    });
+  };
+
+  const setSessionPhase = (topicId: string, phase: SessionPhase) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      return {
+        ...previous,
+        topics: {
+          ...previous.topics,
+          [topicId]: { ...normalizeTopic(topic), sessionPhase: phase },
+        },
+      };
+    });
+  };
+
+  const saveExplainBack = (topicId: string, promptId: string, answer: string) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const existing = normalized.explainBack.filter((e) => e.promptId !== promptId);
+      const entry: ExplainBackAnswer = {
+        promptId,
+        answer,
+        done: answer.trim().length >= 20,
+      };
+      const explainBack = [...existing, entry];
+      const explainDone = explainBack.filter((e) => e.done).length;
+
+      const topics = recalculateUnlocks(
+        {
+          ...previous.topics,
+          [topicId]: {
+            ...normalized,
+            explainBack,
+            checks: {
+              ...normalized.checks,
+              notes: explainDone >= 2,
+            },
+          },
+        },
+        previous.profile.paths,
+      );
+
+      return { ...previous, topics };
+    });
+    registerActivityToday();
+  };
+
+  const saveCaptureWorkflow = (topicId: string, workflow: CaptureWorkflow) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const hasLabeledRegions = workflow.regions.filter((r) => r.label.trim()).length >= 2;
+      const topics = recalculateUnlocks(
+        {
+          ...previous.topics,
+          [topicId]: {
+            ...normalized,
+            captureWorkflow: workflow,
+            checks: {
+              ...normalized.checks,
+              commit: hasLabeledRegions || normalized.checks.commit,
+            },
+          },
+        },
+        previous.profile.paths,
+      );
+      return { ...previous, topics };
+    });
     registerActivityToday();
   };
 
@@ -654,9 +888,16 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setProfile,
         setActivePath,
         openTopicFromNode,
+        openTopicFromNodeId,
         updateTopicCheck,
         updateTopicNotes,
         updateTopicCanvas,
+        addUserResource,
+        removeUserResource,
+        setActiveResource,
+        setSessionPhase,
+        saveExplainBack,
+        saveCaptureWorkflow,
         completeTopicQuiz,
         completeTopic,
         connectProjectRepo,

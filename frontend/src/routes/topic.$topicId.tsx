@@ -4,6 +4,7 @@ import { TopicWorkspace } from "@/components/growth/topic-workspace";
 export const Route = createFileRoute("/topic/$topicId")({
   validateSearch: (search: Record<string, unknown>) => ({
     from: typeof search.from === "string" ? search.from : "/roadmap",
+    nodeId: typeof search.nodeId === "string" ? search.nodeId : undefined,
   }),
   head: ({ params }) => ({
     meta: [
@@ -16,6 +17,6 @@ export const Route = createFileRoute("/topic/$topicId")({
 
 function TopicPage() {
   const { topicId } = Route.useParams();
-  const { from } = Route.useSearch();
-  return <TopicWorkspace topicId={topicId} backTo={from} />;
+  const { from, nodeId } = Route.useSearch();
+  return <TopicWorkspace topicId={topicId} backTo={from} roadmapNodeId={nodeId} />;
 }
