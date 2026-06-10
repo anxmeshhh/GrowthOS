@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useMemo, useState, useEffect, type ReactNode, useRef } from "react";
+import { useMemo, useState, useEffect, type ReactNode, useRef, useCallback } from "react";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import {
   LayoutDashboard,
@@ -31,7 +31,17 @@ import {
   Clock,
   Terminal,
   type LucideIcon,
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  ChevronLeft,
+  Play,
+  Plus,
+  Trash2,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
+import { useHandTracker } from "@/hooks/use-hand-tracker";
 import { getPathTitle, getTopicResourceDirection } from "@/lib/roadmaps";
 import { ProofChecklist } from "@/components/growth/proof-checklist";
 import { XpBar } from "@/components/growth/reward-toast";
@@ -836,6 +846,8 @@ export function CanvasPad({
   const defaultDots = "#27272a";
   const [color, setColor] = useState(isPaper ? "#1e3a5f" : "#f4f4f5");
 
+  const handTracker = useHandTracker();
+
   const topicData = state.topics[topicId];
   const savedData = topicData?.canvasData;
   const bgColor = isPaper ? paperBg : defaultBg;
@@ -876,70 +888,90 @@ export function CanvasPad({
     }
   }, [topicId, savedData, isPaper]);
 
-  const startDrawing = (
-    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
-  ) => {
+  const drawAtPoint = useCallback((x: number, y: number, isStarting: boolean) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let clientX = 0;
-    let clientY = 0;
-
-    if ("touches" in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
+    if (isStarting) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineWidth = tool === "eraser" ? 24 : 3;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = tool === "eraser" ? bgColor : color;
+      setIsDrawing(true);
     } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
+      ctx.lineTo(x, y);
+      ctx.stroke();
     }
+  }, [tool, bgColor, color]);
 
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineWidth = tool === "eraser" ? 24 : 3;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = tool === "eraser" ? bgColor : color;
-    setIsDrawing(true);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let clientX = 0;
-    let clientY = 0;
-
-    if ("touches" in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-
-  const stopDrawing = () => {
+  const stopDrawing = useCallback(() => {
     if (!isDrawing) return;
     setIsDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
       updateTopicCanvas(topicId, canvas.toDataURL());
     }
+  }, [isDrawing, topicId, updateTopicCanvas]);
+
+  useEffect(() => {
+    if (!handTracker.isTracking || !handTracker.gestureState.isActive) {
+      if (isDrawing) stopDrawing();
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    
+    const x = handTracker.gestureState.pointerX * rect.width;
+    const y = handTracker.gestureState.pointerY * rect.height;
+
+    if (handTracker.gestureState.isPinching) {
+      drawAtPoint(x, y, !isDrawing);
+    } else {
+      if (isDrawing) stopDrawing();
+    }
+  }, [handTracker.isTracking, handTracker.gestureState, isDrawing, drawAtPoint, stopDrawing]);
+
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+  ) => {
+    if (handTracker.isTracking) return; // Ignore mouse if tracking
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let clientX = 0, clientY = 0;
+
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    drawAtPoint(clientX - rect.left, clientY - rect.top, true);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || handTracker.isTracking) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let clientX = 0, clientY = 0;
+
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    drawAtPoint(clientX - rect.left, clientY - rect.top, false);
   };
 
   const clearCanvas = () => {
@@ -1007,6 +1039,34 @@ export function CanvasPad({
             ))}
           </div>
         )}
+        
+        {/* Air Draw Toggle */}
+        <button
+          type="button"
+          onClick={() => {
+            if (handTracker.isTracking) {
+              handTracker.stopTracking();
+            } else {
+              handTracker.startTracking();
+            }
+          }}
+          disabled={handTracker.isLoading}
+          className={`flex items-center gap-1.5 px-2.5 py-1 ml-4 rounded text-[11px] uppercase tracking-wider font-semibold transition-all ${
+            handTracker.isTracking
+              ? "bg-amber-500/20 text-amber-500 border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+              : "border border-[var(--paper-line)] text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
+          }`}
+        >
+          {handTracker.isLoading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="w-3.5 h-3.5" />
+          )}
+          {handTracker.isTracking ? "Air Draw On" : "Air Draw"}
+        </button>
+        {handTracker.error && (
+          <span className="text-[10px] text-red-500 ml-2">{handTracker.error}</span>
+        )}
         <button
           type="button"
           onClick={clearCanvas}
@@ -1019,7 +1079,35 @@ export function CanvasPad({
           Clear page
         </button>
       </div>
-      <div className="flex-1 relative min-h-0">
+      <div className="flex-1 relative min-h-0 overflow-hidden">
+        {/* Air Gestures Custom Cursor */}
+        {handTracker.isTracking && handTracker.gestureState.isActive && (
+          <div
+            className="absolute z-50 rounded-full pointer-events-none transition-transform duration-75"
+            style={{
+              left: `${handTracker.gestureState.pointerX * 100}%`,
+              top: `${handTracker.gestureState.pointerY * 100}%`,
+              width: handTracker.gestureState.isPinching ? "8px" : "16px",
+              height: handTracker.gestureState.isPinching ? "8px" : "16px",
+              transform: "translate(-50%, -50%)",
+              backgroundColor: handTracker.gestureState.isPinching ? color : "transparent",
+              border: `2px solid ${handTracker.gestureState.isPinching ? "white" : color}`,
+              boxShadow: "0 0 12px rgba(0,0,0,0.3)"
+            }}
+          />
+        )}
+        
+        {/* Hidden Video Feed for tracking */}
+        {handTracker.isTracking && (
+          <video
+            ref={handTracker.videoRef}
+            className="absolute bottom-4 right-4 w-40 h-30 rounded-lg shadow-xl border border-white/20 object-cover pointer-events-none z-40 opacity-50"
+            autoPlay
+            playsInline
+            muted
+          />
+        )}
+
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
@@ -1029,7 +1117,7 @@ export function CanvasPad({
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className={`w-full h-full cursor-crosshair block ${isPaper ? "" : "bg-[#121214]"}`}
+          className={`w-full h-full block ${handTracker.isTracking ? 'cursor-none' : 'cursor-crosshair'} ${isPaper ? "" : "bg-[#121214]"}`}
           style={isPaper ? { backgroundColor: paperBg } : undefined}
         />
       </div>
