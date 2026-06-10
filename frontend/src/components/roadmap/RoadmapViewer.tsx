@@ -41,8 +41,7 @@ function toFlowNodes(
 ): Node[] {
   return nodes.map((node) => {
     const growthStatus = resolveGrowthStatus(node, topicStatusesByLabel);
-    const isClickable =
-      ["topic", "subtopic"].includes(node.type) && growthStatus !== "locked";
+    const isClickable = ["topic", "subtopic", "button"].includes(node.type);
 
     return {
       id: node.id,
@@ -67,7 +66,7 @@ function toFlowNodes(
       draggable: false,
       selectable: isClickable,
       selected: activeNodeId === node.id,
-      className: growthStatus === "locked" ? "roadmap-node-locked" : undefined,
+      className: undefined,
     };
   });
 }
@@ -127,7 +126,8 @@ function RoadmapCanvas({
   const handleNodeClick: NodeMouseHandler = useCallback(
     (_, node) => {
       const original = visibleNodes.find((item) => item.id === node.id);
-      if (!original || !node.data?.clickable) return;
+      if (!original?.data?.label?.trim()) return;
+      if (!["topic", "subtopic", "button"].includes(original.type)) return;
       onNodeClick?.(original);
     },
     [visibleNodes, onNodeClick],

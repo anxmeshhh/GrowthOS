@@ -2,10 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TopicWorkspace } from "@/components/growth/topic-workspace";
 
 export const Route = createFileRoute("/topic/$topicId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    from: typeof search.from === "string" ? search.from : "/roadmap",
+  }),
   head: ({ params }) => ({
     meta: [
-      { title: `Topic · ${params.topicId} · GrowthOS` },
-      { name: "description", content: "Study, capture notes, and complete proof for this topic." },
+      { title: `Focus Workspace · GrowthOS` },
+      { name: "description", content: "Highly productive study workspace for this roadmap node." },
     ],
   }),
   component: TopicPage,
@@ -13,5 +16,6 @@ export const Route = createFileRoute("/topic/$topicId")({
 
 function TopicPage() {
   const { topicId } = Route.useParams();
-  return <TopicWorkspace topicId={topicId} />;
+  const { from } = Route.useSearch();
+  return <TopicWorkspace topicId={topicId} backTo={from} />;
 }

@@ -73,6 +73,15 @@
   --completed: #10b981;
   --in-progress: #3b82f6;
   --locked: #71717a;
+
+  /* Roadmap canvas (full dark) */
+  --roadmap-topic: #1f1f23;
+  --roadmap-subtopic: #27272a;
+  --roadmap-section: #18181b;
+  --roadmap-section-border: #3f3f46;
+  --roadmap-button: #1e3a5f;
+  --roadmap-edge: #3f3f46;
+  --roadmap-edge-active: #3b82f6;
 }
 
 .dark {
@@ -140,11 +149,31 @@
 }
 
 .roadmap-canvas .react-flow__node {
-  font-family: "Balsamiq Sans", "Varela Round", "Segoe UI", sans-serif;
+  font-family: Inter, system-ui, sans-serif;
 }
 
 .roadmap-canvas .react-flow__edge-path {
   stroke-linecap: round;
+  stroke: var(--roadmap-edge);
+}
+
+.roadmap-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--roadmap-edge-active);
+}
+
+.roadmap-canvas .react-flow__minimap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+
+.roadmap-canvas .react-flow__minimap-mask {
+  fill: rgba(9, 9, 11, 0.75);
+}
+
+.roadmap-canvas .react-flow__minimap-node {
+  fill: var(--roadmap-subtopic);
+  stroke: var(--border);
 }
 
 .roadmap-canvas .react-flow__pane {
@@ -157,4 +186,64 @@
 
 .roadmap-canvas .roadmap-node-locked {
   pointer-events: none;
+}
+
+/* ── Paper desk (pen & paper learning surface) ── */
+.desk-shell {
+  --paper-bg: #faf6ee;
+  --paper-line: #e8dfd0;
+  --paper-margin: #f0c8c8;
+  --paper-ink: #2c2825;
+  --paper-muted: #6b6560;
+  --desk-bg: #141210;
+  --desk-surface: #1c1916;
+  background: var(--desk-bg);
+  color: #e8e4dc;
+}
+
+.paper-sheet {
+  background-color: var(--paper-bg);
+  color: var(--paper-ink);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    0 24px 48px rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+}
+
+.paper-lined {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 31px,
+    var(--paper-line) 31px,
+    var(--paper-line) 32px
+  );
+  background-attachment: local;
+}
+
+.paper-margin {
+  border-left: 2px solid var(--paper-margin);
+  padding-left: 1.25rem;
+}
+
+.paper-editor {
+  font-family: "Lora", Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 2rem;
+  color: var(--paper-ink);
+}
+
+.paper-editor::placeholder {
+  color: var(--paper-muted);
+  font-style: italic;
+}
+
+.desk-panel {
+  background: var(--desk-surface);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.desk-quiet {
+  color: #9c958c;
 }

@@ -13,7 +13,7 @@ import { StatCard, StatusBadge, type TopicStatus } from "@/components/growth/sha
 import { RoadmapViewer } from "@/components/roadmap/RoadmapViewer";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import { hasVisualRoadmap } from "@/lib/roadmap-layout/bookmarks";
-import { findTopicIdByLabel, loadRoadmapDocument } from "@/lib/roadmap-layout/load-roadmap";
+import { loadRoadmapDocument } from "@/lib/roadmap-layout/load-roadmap";
 import type { RoadmapDocument, RoadmapFlowNode } from "@/lib/roadmap-layout/types";
 import { getFlatTopics, LEARNING_PATHS, type LearningPath } from "@/lib/roadmaps";
 
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/roadmap")({
 });
 
 function RoadmapPage() {
-  const { state, setActivePath } = useGrowthState();
+  const { state, setActivePath, openTopicFromNode } = useGrowthState();
   const navigate = useNavigate();
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [roadmapDoc, setRoadmapDoc] = useState<RoadmapDocument | null>(null);
@@ -86,11 +86,10 @@ function RoadmapPage() {
 
   const handleNodeClick = (node: RoadmapFlowNode) => {
     setActiveNodeId(node.id);
-    if (!node.data.label) return;
-    const topicId = findTopicIdByLabel(state.profile.path, node.data.label);
-    if (topicId) {
-      navigate({ to: "/topic/$topicId", params: { topicId } });
-    }
+    const label = node.data?.label?.trim();
+    if (!label) return;
+    const topicId = openTopicFromNode(label);
+    navigate({ to: "/topic/$topicId", params: { topicId }, search: { from: "/roadmap" } });
   };
 
   const handlePathSelect = (path: LearningPath) => {

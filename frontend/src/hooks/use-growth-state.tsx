@@ -6,6 +6,7 @@ import {
   type LearningRole,
   type TopicStatus,
 } from "@/lib/roadmaps";
+import { isLeafTopicId, resolveTopicIdFromLabel } from "@/lib/roadmap-layout/resolve-topic";
 
 export type { LearningPath, LearningRole, TopicStatus } from "@/lib/roadmaps";
 
@@ -65,6 +66,7 @@ interface GrowthContextType {
   isHydrated: boolean;
   setProfile: (profile: Partial<ProfileInfo>) => void;
   setActivePath: (path: LearningPath) => void;
+  openTopicFromNode: (label: string) => string;
   updateTopicCheck: (
     topicId: string,
     checkKey: "video" | "notes" | "quiz" | "commit",
@@ -387,6 +389,46 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   };
 
+  const openTopicFromNode = (label: string): string => {
+    const path = state.profile.path;
+    const topicId = resolveTopicIdFromLabel(path, label);
+
+    setState((previous) => {
+      if (previous.topics[topicId]) {
+        const existing = previous.topics[topicId];
+        if (existing.status === "locked" && isLeafTopicId(topicId)) {
+          return {
+            ...previous,
+            topics: {
+              ...previous.topics,
+              [topicId]: { ...existing, status: "available" },
+            },
+          };
+        }
+        return previous;
+      }
+
+      return {
+        ...previous,
+        topics: {
+          ...previous.topics,
+          [topicId]: {
+            id: topicId,
+            title: label.trim(),
+            status: "in_progress",
+            meta: `Roadmap node · ${LEARNING_PATHS[path].title}`,
+            checks: { video: false, notes: false, quiz: false, commit: false },
+            notesText: "",
+            canvasData: null,
+          },
+        },
+      };
+    });
+
+    registerActivityToday();
+    return topicId;
+  };
+
   const updateTopicCheck = (
     topicId: string,
     checkKey: "video" | "notes" | "quiz" | "commit",
@@ -611,6 +653,7 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isHydrated,
         setProfile,
         setActivePath,
+        openTopicFromNode,
         updateTopicCheck,
         updateTopicNotes,
         updateTopicCanvas,

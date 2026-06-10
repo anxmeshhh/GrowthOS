@@ -477,26 +477,45 @@ function TabBtn({
   );
 }
 
-export function NotesEditor({ topicId }: { topicId: string }) {
-  const { state, updateTopicNotes } = useGrowthState();
+export function NotesEditor({
+  topicId,
+  variant = "default",
+  autoFocus = false,
+}: {
+  topicId: string;
+  variant?: "default" | "paper";
+  autoFocus?: boolean;
+}) {
+  const { state, updateTopicNotes, updateTopicCheck } = useGrowthState();
   const [text, setText] = useState("");
   const [preview, setPreview] = useState(false);
   const [savedStatus, setSavedStatus] = useState("Saved");
   const savedNotesText = state.topics[topicId]?.notesText || "";
+  const isPaper = variant === "paper";
+  const textareaId = isPaper ? `notes-textarea-${topicId}` : "notes-textarea";
 
   useEffect(() => {
     setText(savedNotesText);
   }, [savedNotesText, topicId]);
 
+  useEffect(() => {
+    if (!autoFocus || !isPaper) return;
+    const el = document.getElementById(textareaId) as HTMLTextAreaElement | null;
+    el?.focus();
+  }, [autoFocus, isPaper, textareaId, topicId]);
+
   const handleChange = (val: string) => {
     setText(val);
     setSavedStatus("Saving...");
     updateTopicNotes(topicId, val);
+    if (val.trim().length >= 80) {
+      updateTopicCheck(topicId, "notes", true);
+    }
     setTimeout(() => setSavedStatus("Saved"), 400);
   };
 
   const insertFormatting = (prefix: string, suffix: string = "") => {
-    const textarea = document.getElementById("notes-textarea") as HTMLTextAreaElement;
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
@@ -561,6 +580,35 @@ export function NotesEditor({ topicId }: { topicId: string }) {
       );
     });
   };
+
+  if (isPaper) {
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--paper-line)]">
+          <button
+            type="button"
+            onClick={() => insertFormatting("- ", "")}
+            className="p-1 rounded text-[var(--paper-muted)] hover:text-[var(--paper-ink)] cursor-pointer"
+            title="Bullet list"
+          >
+            <List className="w-4 h-4" />
+          </button>
+          <span className="text-[11px] text-[var(--paper-muted)] italic ml-auto">
+            {savedStatus === "Saved" ? "Saved automatically" : savedStatus}
+          </span>
+        </div>
+        <div className="flex-1 overflow-y-auto paper-lined paper-margin px-4 py-3">
+          <textarea
+            id={textareaId}
+            value={text}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder="Start writing — like you would in a notebook."
+            className="paper-editor w-full h-full min-h-[360px] resize-none bg-transparent focus:outline-none"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-background">
@@ -631,7 +679,7 @@ export function NotesEditor({ topicId }: { topicId: string }) {
           <article className="max-w-2xl mx-auto py-2 space-y-1">{renderMarkdown(text)}</article>
         ) : (
           <textarea
-            id="notes-textarea"
+            id={textareaId}
             value={text}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="Type your notes here in Markdown... e.g. # REST APIs notes"
@@ -643,15 +691,42 @@ export function NotesEditor({ topicId }: { topicId: string }) {
   );
 }
 
-export function CanvasPad({ topicId }: { topicId: string }) {
+export function CanvasPad({
+  topicId,
+  variant = "default",
+}: {
+  topicId: string;
+  variant?: "default" | "paper";
+}) {
   const { state, updateTopicCanvas } = useGrowthState();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
-  const [color, setColor] = useState("#f4f4f5");
+  const isPaper = variant === "paper";
+  const paperBg = "#faf6ee";
+  const paperDots = "#e8e0d0";
+  const defaultBg = "#121214";
+  const defaultDots = "#27272a";
+  const [color, setColor] = useState(isPaper ? "#1e3a5f" : "#f4f4f5");
 
   const topicData = state.topics[topicId];
   const savedData = topicData?.canvasData;
+  const bgColor = isPaper ? paperBg : defaultBg;
+  const dotColor = isPaper ? paperDots : defaultDots;
+  const penColors = isPaper
+    ? ["#1e3a5f", "#2c2825", "#c45c26", "#2d6a4f"]
+    : ["#f4f4f5", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+
+  const paintBackground = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = dotColor;
+    for (let x = 15; x < width; x += 30) {
+      for (let y = 15; y < height; y += 30) {
+        ctx.fillRect(x, y, 1.5, 1.5);
+      }
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -659,24 +734,12 @@ export function CanvasPad({ topicId }: { topicId: string }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Adjust canvas dimensions dynamically to container size
     const rect = canvas.parentElement?.getBoundingClientRect();
     canvas.width = rect?.width || 700;
     canvas.height = rect?.height || 450;
 
-    // Fill background dark
-    ctx.fillStyle = "#121214";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    paintBackground(ctx, canvas.width, canvas.height);
 
-    // Draw grid dots
-    ctx.fillStyle = "#27272a";
-    for (let x = 15; x < canvas.width; x += 30) {
-      for (let y = 15; y < canvas.height; y += 30) {
-        ctx.fillRect(x, y, 1.5, 1.5);
-      }
-    }
-
-    // Load saved image
     if (savedData) {
       const img = new Image();
       img.src = savedData;
@@ -684,7 +747,7 @@ export function CanvasPad({ topicId }: { topicId: string }) {
         ctx.drawImage(img, 0, 0);
       };
     }
-  }, [topicId, savedData]);
+  }, [topicId, savedData, isPaper]);
 
   const startDrawing = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
@@ -713,7 +776,7 @@ export function CanvasPad({ topicId }: { topicId: string }) {
     ctx.moveTo(x, y);
     ctx.lineWidth = tool === "eraser" ? 24 : 3;
     ctx.lineCap = "round";
-    ctx.strokeStyle = tool === "eraser" ? "#121214" : color;
+    ctx.strokeStyle = tool === "eraser" ? bgColor : color;
     setIsDrawing(true);
   };
 
@@ -758,52 +821,59 @@ export function CanvasPad({ topicId }: { topicId: string }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#121214";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#27272a";
-    for (let x = 15; x < canvas.width; x += 30) {
-      for (let y = 15; y < canvas.height; y += 30) {
-        ctx.fillRect(x, y, 1.5, 1.5);
-      }
-    }
-
+    paintBackground(ctx, canvas.width, canvas.height);
     updateTopicCanvas(topicId, null);
   };
 
+  const toolbarBtn = (active: boolean) =>
+    isPaper
+      ? `flex items-center gap-1.5 px-2.5 py-1 rounded text-xs cursor-pointer ${
+          active
+            ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
+            : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
+        }`
+      : `flex items-center gap-1.5 px-2.5 py-1 rounded text-xs border cursor-pointer ${
+          active
+            ? "bg-[var(--surface-2)] text-foreground border-border"
+            : "text-muted-foreground border-transparent hover:text-foreground"
+        }`;
+
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[var(--surface)]">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-[var(--surface)]">
-        <button
-          onClick={() => setTool("pen")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs border cursor-pointer ${
-            tool === "pen"
-              ? "bg-[var(--surface-2)] text-foreground border-border"
-              : "text-muted-foreground border-transparent hover:text-foreground"
-          }`}
-        >
+    <div className={`flex-1 flex flex-col min-h-0 ${isPaper ? "" : "bg-[var(--surface)]"}`}>
+      <div
+        className={`flex items-center gap-2 px-3 py-2 ${
+          isPaper ? "border-b border-[var(--paper-line)]" : "border-b border-border bg-[var(--surface)]"
+        }`}
+      >
+        <button type="button" onClick={() => setTool("pen")} className={toolbarBtn(tool === "pen")}>
           <Pen className="w-3 h-3" />
-          Pen
+          {isPaper ? "Pen" : "Pen"}
         </button>
         <button
+          type="button"
           onClick={() => setTool("eraser")}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs border cursor-pointer ${
-            tool === "eraser"
-              ? "bg-[var(--surface-2)] text-foreground border-border"
-              : "text-muted-foreground border-transparent hover:text-foreground"
-          }`}
+          className={toolbarBtn(tool === "eraser")}
         >
           <Eraser className="w-3 h-3" />
           Eraser
         </button>
         {tool === "pen" && (
-          <div className="flex items-center gap-1 border-l border-border pl-2">
-            {["#f4f4f5", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"].map((c) => (
+          <div
+            className={`flex items-center gap-1 pl-2 ${
+              isPaper ? "border-l border-[var(--paper-line)]" : "border-l border-border"
+            }`}
+          >
+            {penColors.map((c) => (
               <button
                 key={c}
+                type="button"
                 onClick={() => setColor(c)}
                 className={`w-3.5 h-3.5 rounded-full border cursor-pointer ${
-                  color === c ? "border-foreground scale-110" : "border-transparent"
+                  color === c
+                    ? isPaper
+                      ? "border-[var(--paper-ink)] scale-110"
+                      : "border-foreground scale-110"
+                    : "border-transparent"
                 }`}
                 style={{ backgroundColor: c }}
               />
@@ -811,10 +881,15 @@ export function CanvasPad({ topicId }: { topicId: string }) {
           </div>
         )}
         <button
+          type="button"
           onClick={clearCanvas}
-          className="ml-auto text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
+          className={`ml-auto text-xs px-2 py-1 rounded transition-colors cursor-pointer ${
+            isPaper
+              ? "text-[var(--paper-muted)] hover:text-red-700"
+              : "text-muted-foreground hover:text-destructive hover:bg-[var(--surface-2)]"
+          }`}
         >
-          Clear
+          Clear page
         </button>
       </div>
       <div className="flex-1 relative min-h-0">
@@ -827,7 +902,8 @@ export function CanvasPad({ topicId }: { topicId: string }) {
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className="w-full h-full cursor-crosshair block bg-[#121214]"
+          className={`w-full h-full cursor-crosshair block ${isPaper ? "" : "bg-[#121214]"}`}
+          style={isPaper ? { backgroundColor: paperBg } : undefined}
         />
       </div>
     </div>

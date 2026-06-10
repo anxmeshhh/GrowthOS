@@ -70,7 +70,7 @@ function Dashboard() {
         </div>
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" suppressHydrationWarning>
           {isHydrated ? greeting : "Welcome"}, {state.profile.name}.{" "}
-          <span className="text-muted-foreground">One mission. Real proof.</span>
+          <span className="text-muted-foreground">Your desk for learning.</span>
         </h1>
       </header>
 
@@ -79,7 +79,7 @@ function Dashboard() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="text-[11px] uppercase tracking-wider font-mono text-[var(--in-progress)] mb-1">
-                After roadmap selection · your direction
+                Pick a topic on the roadmap · open your desk
               </div>
               <h2 className="text-lg font-semibold">What to do next on {activePath.shortTitle}</h2>
               <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{mission.reason}</p>
