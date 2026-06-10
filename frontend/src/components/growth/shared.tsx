@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { getPathTitle, getTopicResourceDirection } from "@/lib/roadmaps";
 import { ProofChecklist } from "@/components/growth/proof-checklist";
+import { XpBar } from "@/components/growth/reward-toast";
 import { getCuratedResources } from "@/lib/mock/topic-resources";
 
 /* ─────────────────── TYPES ─────────────────── */
@@ -75,16 +76,45 @@ export const TOPICS: Topic[] = [
 ];
 
 /* ─────────────────── SIDEBAR ─────────────────── */
-const NAV: { to: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/mission", label: "Today's Mission", icon: Target },
-  { to: "/roadmap", label: "Learning Roadmap", icon: Map },
-  { to: "/notes", label: "Smart Notes", icon: StickyNote },
-  { to: "/assessments", label: "Assessments", icon: ClipboardCheck },
-  { to: "/review", label: "Review Queue", icon: Brain },
-  { to: "/projects", label: "Project Builder", icon: Hammer },
-  { to: "/readiness", label: "Career Readiness", icon: TrendingUp },
-  { to: "/settings", label: "Settings", icon: Settings },
+const NAV_GROUPS: {
+  label: string;
+  items: { to: string; label: string; icon: LucideIcon; exact?: boolean }[];
+}[] = [
+  {
+    label: "Today",
+    items: [
+      { to: "/", label: "Home", icon: LayoutDashboard, exact: true },
+      { to: "/mission", label: "Mission", icon: Target },
+    ],
+  },
+  {
+    label: "Learn",
+    items: [
+      { to: "/roadmap", label: "Roadmap", icon: Map },
+      { to: "/notes", label: "Notes", icon: StickyNote },
+      { to: "/review", label: "Review", icon: Brain },
+    ],
+  },
+  {
+    label: "Build",
+    items: [
+      { to: "/projects", label: "Projects", icon: Hammer },
+      { to: "/assessments", label: "Quizzes", icon: ClipboardCheck },
+      { to: "/readiness", label: "Readiness", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Account",
+    items: [{ to: "/settings", label: "Settings", icon: Settings }],
+  },
+];
+
+const MOBILE_NAV = [
+  { to: "/", label: "Home", icon: LayoutDashboard, exact: true },
+  { to: "/mission", label: "Mission", icon: Target },
+  { to: "/roadmap", label: "Map", icon: Map },
+  { to: "/notes", label: "Notes", icon: StickyNote },
+  { to: "/review", label: "Review", icon: Brain },
 ];
 
 export function Sidebar() {
@@ -104,59 +134,72 @@ export function Sidebar() {
   const pathLabel = getPathTitle(path);
 
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border bg-[var(--surface)] sticky top-0 h-screen">
-      <div className="px-5 py-5 flex items-center gap-2 border-b border-border">
-        <div className="w-8 h-8 rounded-md bg-foreground text-background grid place-items-center">
-          <Terminal className="w-4 h-4" />
+    <aside className="hidden md:flex w-[17rem] shrink-0 flex-col border-r border-border/80 bg-[var(--surface)] sticky top-0 h-screen">
+      <div className="px-5 py-4 flex items-center gap-3 border-b border-border/80">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500/90 to-orange-600 grid place-items-center shadow-lg shadow-amber-900/20">
+          <Terminal className="w-4 h-4 text-zinc-950" />
         </div>
         <div>
-          <div className="text-sm font-semibold tracking-tight">GrowthOS</div>
-          <div className="text-[11px] text-muted-foreground font-mono">v0.1 · personal</div>
+          <div className="text-sm font-bold tracking-tight">GrowthOS</div>
+          <div className="text-[10px] text-muted-foreground font-mono">proof-based learning</div>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map((it) => {
-          const Icon = it.icon;
-          const isActive = it.exact ? pathname === it.to : pathname.startsWith(it.to);
-          return (
-            <Link
-              key={it.to}
-              to={it.to}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                isActive
-                  ? "bg-[var(--surface-2)] text-foreground border border-border"
-                  : "text-muted-foreground hover:text-foreground hover:bg-[var(--surface-2)] border border-transparent"
-              }`}
-            >
-              <Icon className="w-4 h-4" strokeWidth={1.75} />
-              <span>{it.label}</span>
-            </Link>
-          );
-        })}
+      <div className="px-3 pt-3">
+        <XpBar />
+      </div>
+
+      <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label}>
+            <div className="px-3 mb-1.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70">
+              {group.label}
+            </div>
+            <div className="space-y-0.5">
+              {group.items.map((it) => {
+                const Icon = it.icon;
+                const isActive = it.exact ? pathname === it.to : pathname.startsWith(it.to);
+                return (
+                  <Link
+                    key={it.to}
+                    to={it.to}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+                      isActive
+                        ? "bg-[var(--surface-2)] text-foreground border border-border shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-[var(--surface-2)]/60 border border-transparent"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-4 h-4 ${isActive ? "text-amber-400" : ""}`}
+                      strokeWidth={1.75}
+                    />
+                    <span className="font-medium">{it.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      <div className="m-3 p-3 rounded-md border border-border bg-[var(--surface-2)]">
+      <div className="m-3 p-3 rounded-lg border border-border/80 bg-[var(--surface-2)]/80">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 grid place-items-center text-sm font-semibold uppercase">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-800 grid place-items-center text-sm font-bold uppercase ring-2 ring-amber-500/20">
             {name ? name[0] : "A"}
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium truncate">{name}</div>
-            <div className="text-[11px] text-muted-foreground font-mono truncate">{pathLabel}</div>
+            <div className="text-[10px] text-muted-foreground font-mono truncate">{pathLabel}</div>
           </div>
-        </div>
-        <div className="mt-2 text-[10px] font-mono text-muted-foreground">
-          {state.profile.paths.length} selected path{state.profile.paths.length === 1 ? "" : "s"}
         </div>
         <div className="mt-3">
-          <div className="flex justify-between text-[11px] text-muted-foreground font-mono mb-1.5">
-            <span>Today's goal</span>
+          <div className="flex justify-between text-[10px] text-muted-foreground font-mono mb-1">
+            <span>Today&apos;s goal</span>
             <span>
-              {currentHours.toFixed(1)} / {dailyGoalHours} hrs
+              {currentHours.toFixed(1)} / {dailyGoalHours}h
             </span>
           </div>
-          <div className="h-1.5 rounded-full bg-[var(--muted)] overflow-hidden">
+          <div className="h-1 rounded-full bg-[var(--muted)] overflow-hidden">
             <div
               className="h-full bg-[var(--in-progress)] transition-all"
               style={{ width: `${progressPercent}%` }}
@@ -168,36 +211,30 @@ export function Sidebar() {
   );
 }
 
-/* mobile top bar with nav links so routes are reachable on small screens */
+/* mobile bottom nav — thumb-friendly */
 export function MobileNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <div className="md:hidden sticky top-0 z-30 bg-[var(--surface)] border-b border-border">
-      <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
-        <div className="w-7 h-7 rounded-md bg-foreground text-background grid place-items-center">
-          <Terminal className="w-3.5 h-3.5" />
-        </div>
-        <div className="text-sm font-semibold tracking-tight">GrowthOS</div>
-      </div>
-      <nav className="flex overflow-x-auto gap-1 px-2 py-2">
-        {NAV.map((it) => {
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/80 bg-[var(--surface)]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+      <div className="flex items-stretch justify-around px-1 pt-1">
+        {MOBILE_NAV.map((it) => {
+          const Icon = it.icon;
           const isActive = it.exact ? pathname === it.to : pathname.startsWith(it.to);
           return (
             <Link
               key={it.to}
               to={it.to}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-md text-xs border ${
-                isActive
-                  ? "bg-[var(--surface-2)] text-foreground border-border"
-                  : "text-muted-foreground border-transparent"
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg min-w-[3.5rem] transition-colors ${
+                isActive ? "text-amber-400" : "text-muted-foreground"
               }`}
             >
-              {it.label}
+              <Icon className="w-5 h-5" strokeWidth={isActive ? 2.25 : 1.75} />
+              <span className="text-[10px] font-medium">{it.label}</span>
             </Link>
           );
         })}
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }
 

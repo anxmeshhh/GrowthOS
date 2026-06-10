@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Clock, Target } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Sparkles, Target } from "lucide-react";
 import { PageHeader } from "@/components/growth/page-header";
 import { StatCard } from "@/components/growth/shared";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import { getTodayMission } from "@/lib/mock/daily-mission";
+import { inferSessionPhase } from "@/lib/session-phase";
 
 export const Route = createFileRoute("/mission")({
   head: () => ({
@@ -38,6 +39,7 @@ function MissionPage() {
   }
 
   const { topic } = mission;
+  const phase = inferSessionPhase(topic.checks);
 
   return (
     <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 space-y-8">
@@ -49,9 +51,11 @@ function MissionPage() {
           <Link
             to="/topic/$topicId"
             params={{ topicId: topic.id }}
-            className="text-xs font-medium px-3 py-2 rounded-md border border-border bg-[var(--surface-2)] hover:bg-[var(--muted)] inline-flex items-center gap-1.5"
+            className="text-sm font-semibold px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-zinc-950 inline-flex items-center gap-2 shadow-lg shadow-amber-900/20"
           >
-            Open workspace <ArrowRight className="w-3.5 h-3.5" />
+            <Sparkles className="w-4 h-4" />
+            Continue · {phase}
+            <ArrowRight className="w-4 h-4" />
           </Link>
         }
       />

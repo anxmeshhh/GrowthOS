@@ -7,8 +7,31 @@ import {
   type TopicStatus,
 } from "@/lib/roadmaps";
 import { isLeafTopicId, resolveTopicIdFromLabel } from "@/lib/roadmap-layout/resolve-topic";
+import type { GamificationState } from "@/lib/gamification";
+import {
+  migrateGamification,
+  onCaptureSave,
+  onExplainBack,
+  onNoteUpload,
+  onProofStep,
+  onQuizPass,
+  onTopicComplete,
+} from "@/lib/gamification-engine";
 
 export type { LearningPath, LearningRole, TopicStatus } from "@/lib/roadmaps";
+export type { GamificationState } from "@/lib/gamification";
+
+export type UploadedNote = {
+  id: string;
+  title: string;
+  fileName: string;
+  mimeType: string;
+  content: string;
+  topicId: string | null;
+  uploadedAt: string;
+  sizeBytes: number;
+  kind: "text" | "image";
+};
 
 export type SessionPhase = "read" | "write" | "check" | "build" | "done";
 
@@ -96,6 +119,8 @@ export interface GrowthState {
   profile: ProfileInfo;
   topics: { [key: string]: TopicProgress };
   projects: { [key: string]: ProjectInfo };
+  uploadedNotes: UploadedNote[];
+  gamification: GamificationState;
   streak: number;
   longestStreak: number;
   activityDates: string[];
@@ -131,6 +156,9 @@ interface GrowthContextType {
   runProjectAIReview: (projectName: string) => Promise<void>;
   resetAll: () => void;
   registerActivityToday: () => void;
+  uploadNote: (file: File, topicId: string | null) => Promise<void>;
+  deleteUploadedNote: (noteId: string) => void;
+  dismissReward: () => void;
 }
 
 const PROJECT_NAMES: Record<LearningPath, string[]> = {
@@ -367,6 +395,8 @@ function getInitialState(
     },
     topics: buildTopics(normalizedPaths),
     projects: buildProjects(normalizedPaths),
+    uploadedNotes: [],
+    gamification: migrateGamification(),
     streak: 12,
     longestStreak: 21,
     activityDates: generateActivityDates(),
@@ -390,6 +420,8 @@ function migrateSavedState(saved: GrowthState): GrowthState {
     },
     topics,
     projects,
+    uploadedNotes: saved.uploadedNotes ?? [],
+    gamification: migrateGamification(saved.gamification),
   };
 }
 
@@ -534,20 +566,32 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const topic = previous.topics[topicId];
       if (!topic) return previous;
 
+      const wasDone = topic.checks[checkKey];
       const checks = { ...topic.checks, [checkKey]: value };
+      const updatedTopic = {
+        ...topic,
+        checks,
+        status: Object.values(checks).every(Boolean) ? ("completed" as const) : topic.status,
+      };
       const topics = recalculateUnlocks(
-        {
-          ...previous.topics,
-          [topicId]: {
-            ...topic,
-            checks,
-            status: Object.values(checks).every(Boolean) ? "completed" : topic.status,
-          },
-        },
+        { ...previous.topics, [topicId]: updatedTopic },
         previous.profile.paths,
       );
 
-      return { ...previous, topics };
+      let gamification = previous.gamification;
+      if (value && !wasDone) {
+        gamification = onProofStep(gamification, previous, updatedTopic);
+      }
+      if (
+        value &&
+        !wasDone &&
+        Object.values(checks).every(Boolean) &&
+        topic.status !== "completed"
+      ) {
+        gamification = onTopicComplete(gamification, previous);
+      }
+
+      return { ...previous, topics, gamification };
     });
 
     registerActivityToday();
@@ -669,22 +713,25 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const explainBack = [...existing, entry];
       const explainDone = explainBack.filter((e) => e.done).length;
 
-      const topics = recalculateUnlocks(
-        {
-          ...previous.topics,
-          [topicId]: {
-            ...normalized,
-            explainBack,
-            checks: {
-              ...normalized.checks,
-              notes: explainDone >= 2,
-            },
-          },
+      const updatedTopic = {
+        ...normalized,
+        explainBack,
+        checks: {
+          ...normalized.checks,
+          notes: explainDone >= 2,
         },
+      };
+      const topics = recalculateUnlocks(
+        { ...previous.topics, [topicId]: updatedTopic },
         previous.profile.paths,
       );
 
-      return { ...previous, topics };
+      let gamification = previous.gamification;
+      if (entry.done) {
+        gamification = onExplainBack(gamification, previous, updatedTopic);
+      }
+
+      return { ...previous, topics, gamification };
     });
     registerActivityToday();
   };
@@ -695,6 +742,7 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!topic) return previous;
       const normalized = normalizeTopic(topic);
       const hasLabeledRegions = workflow.regions.filter((r) => r.label.trim()).length >= 2;
+      const hadCapture = Boolean(normalized.captureWorkflow?.regions?.length);
       const topics = recalculateUnlocks(
         {
           ...previous.topics,
@@ -709,7 +757,11 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
         previous.profile.paths,
       );
-      return { ...previous, topics };
+      let gamification = previous.gamification;
+      if (!hadCapture && workflow.regions.length > 0) {
+        gamification = onCaptureSave(gamification, previous);
+      }
+      return { ...previous, topics, gamification };
     });
     registerActivityToday();
   };
@@ -736,19 +788,22 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const topic = previous.topics[topicId];
       if (!topic) return previous;
 
+      const updatedTopic = {
+        ...topic,
+        quizScore: score,
+        checks: { ...topic.checks, quiz: score >= 70 },
+      };
       const topics = recalculateUnlocks(
-        {
-          ...previous.topics,
-          [topicId]: {
-            ...topic,
-            quizScore: score,
-            checks: { ...topic.checks, quiz: score >= 70 },
-          },
-        },
+        { ...previous.topics, [topicId]: updatedTopic },
         previous.profile.paths,
       );
 
-      return { ...previous, topics };
+      let gamification = previous.gamification;
+      if (score >= 70 && !topic.checks.quiz) {
+        gamification = onQuizPass(gamification, previous, score, updatedTopic);
+      }
+
+      return { ...previous, topics, gamification };
     });
 
     registerActivityToday();
@@ -880,6 +935,74 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setState(getInitialState(state.profile.paths, state.profile.path));
   };
 
+  const dismissReward = () => {
+    setState((previous) => ({
+      ...previous,
+      gamification: { ...previous.gamification, lastReward: null },
+    }));
+  };
+
+  const uploadNote = async (file: File, topicId: string | null) => {
+    const isImage = file.type.startsWith("image/");
+    let content: string;
+    if (isImage) {
+      content = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    } else {
+      content = await file.text();
+    }
+
+    const title = file.name.replace(/\.[^.]+$/, "");
+
+    setState((previous) => {
+      const entry: UploadedNote = {
+        id: `un-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        title,
+        fileName: file.name,
+        mimeType: file.type || "text/plain",
+        content,
+        topicId,
+        uploadedAt: new Date().toISOString(),
+        sizeBytes: file.size,
+        kind: isImage ? "image" : "text",
+      };
+
+      let topics = previous.topics;
+      if (topicId && topics[topicId] && !isImage) {
+        const topic = normalizeTopic(topics[topicId]);
+        const merged = topic.notesText
+          ? `${topic.notesText}\n\n---\n## ${title}\n${content}`
+          : content;
+        topics = {
+          ...topics,
+          [topicId]: { ...topic, notesText: merged },
+        };
+      }
+
+      const gamification = onNoteUpload(previous.gamification, previous);
+
+      return {
+        ...previous,
+        uploadedNotes: [entry, ...previous.uploadedNotes],
+        topics,
+        gamification,
+      };
+    });
+
+    registerActivityToday();
+  };
+
+  const deleteUploadedNote = (noteId: string) => {
+    setState((previous) => ({
+      ...previous,
+      uploadedNotes: previous.uploadedNotes.filter((n) => n.id !== noteId),
+    }));
+  };
+
   return (
     <GrowthContext.Provider
       value={{
@@ -905,6 +1028,9 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         runProjectAIReview,
         resetAll,
         registerActivityToday,
+        uploadNote,
+        deleteUploadedNote,
+        dismissReward,
       }}
     >
       {children}

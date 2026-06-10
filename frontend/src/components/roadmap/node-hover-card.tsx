@@ -1,6 +1,6 @@
 import type { GrowthTopicStatus } from "@/lib/roadmap-layout/types";
 import { StatusBadge } from "@/components/growth/shared";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Lock } from "lucide-react";
 
 export type HoverNodeInfo = {
   nodeId: string;
@@ -52,27 +52,39 @@ export function NodeHoverCard({
           {info.extras.hasCapture && "capture workflow saved"}
         </div>
       )}
-      <button
-        type="button"
-        onClick={onOpenDesk}
-        className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-md bg-[var(--in-progress)] text-white hover:opacity-90"
-      >
-        Open desk
-        <ExternalLink className="w-3 h-3" />
-      </button>
+      {info.status === "locked" ? (
+        <p className="mt-3 flex items-start gap-2 rounded-md border border-border bg-[var(--surface-2)] px-3 py-2 text-[11px] leading-snug text-muted-foreground">
+          <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Finish the previous topic&apos;s proof (Read → Write → Check → Build) to unlock this one.
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Opens your desk — complete all four proof checks to unlock what&apos;s next.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenDesk}
+            className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-md bg-[var(--in-progress)] text-white hover:opacity-90"
+          >
+            Open desk
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
 export function RoadmapLegend() {
   return (
-    <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-600">
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-3 w-5 rounded border border-border bg-[var(--roadmap-topic)]" />
+        <span className="h-3 w-5 rounded border-2 border-black bg-[#ffffa5]" />
         Topic
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-3 w-5 rounded border border-border bg-[var(--roadmap-subtopic)]" />
+        <span className="h-3 w-5 rounded border-2 border-black bg-[#ffe8a3]" />
         Subtopic
       </span>
       <span className="inline-flex items-center gap-1.5">

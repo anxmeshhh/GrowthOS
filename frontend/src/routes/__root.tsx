@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Sidebar, MobileNav } from "@/components/growth/shared";
+import { RewardToast } from "@/components/growth/reward-toast";
 import { GrowthProvider } from "@/hooks/use-growth-state";
 
 function NotFoundComponent() {
@@ -133,10 +134,13 @@ function RootComponent() {
           {!isFocusWorkspace && <Sidebar />}
           <div className="flex-1 min-w-0 flex flex-col">
             {!isFocusWorkspace && <MobileNav />}
-            <main className={`flex-1 min-w-0 ${isFocusWorkspace ? "overflow-hidden" : "overflow-x-hidden"}`}>
+            <main
+              className={`flex-1 min-w-0 ${isFocusWorkspace ? "overflow-hidden" : "overflow-x-hidden pb-20 md:pb-0"}`}
+            >
               <Outlet />
             </main>
           </div>
+          <RewardToast />
         </div>
       </GrowthProvider>
     </QueryClientProvider>

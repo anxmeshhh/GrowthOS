@@ -10,6 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { StatCard, StatusBadge, type TopicStatus } from "@/components/growth/shared";
+import { RoadmapFlowGuide } from "@/components/roadmap/roadmap-flow-guide";
 import { RoadmapViewer } from "@/components/roadmap/RoadmapViewer";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import { hasVisualRoadmap } from "@/lib/roadmap-layout/bookmarks";
@@ -58,6 +59,28 @@ function RoadmapPage() {
   const inProgressTopic = flatTopics.find(
     (topic) => state.topics[topic.id]?.status === "in_progress",
   );
+  const nextAvailableTopic = flatTopics.find(
+    (topic) => state.topics[topic.id]?.status === "available",
+  );
+  const focusFlatTopic = inProgressTopic ?? nextAvailableTopic ?? null;
+  const focusTopic = focusFlatTopic
+    ? {
+        id: focusFlatTopic.id,
+        title: focusFlatTopic.title,
+        roadmapNodeId: state.topics[focusFlatTopic.id]?.roadmapNodeId,
+        checks: state.topics[focusFlatTopic.id]?.checks ?? {
+          video: false,
+          notes: false,
+          quiz: false,
+          commit: false,
+        },
+        status: (state.topics[focusFlatTopic.id]?.status ?? "locked") as
+          | "in_progress"
+          | "available"
+          | "completed"
+          | "locked",
+      }
+    : null;
   const readiness = Math.round((completedCount / Math.max(flatTopics.length, 1)) * 100);
   const visualAvailable = hasVisualRoadmap(state.profile.path);
 
@@ -137,6 +160,8 @@ function RoadmapPage() {
     sessionStorage.setItem(`growthos_active_node_${state.profile.path}`, node.id);
     const label = node.data?.label?.trim();
     if (!label) return;
+
+    if (mappedTopicId && state.topics[mappedTopicId]?.status === "locked") return;
 
     const topicId = mappedTopicId
       ? openTopicFromNodeId(mappedTopicId, label, node.id)
@@ -252,6 +277,12 @@ function RoadmapPage() {
         />
       </section>
 
+      <RoadmapFlowGuide
+        focusTopic={focusTopic}
+        visualMap={visualAvailable}
+        completedCount={completedCount}
+      />
+
       <section className="rounded-lg border border-border bg-card overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4">
           <div>
@@ -264,17 +295,21 @@ function RoadmapPage() {
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               {visualAvailable
-                ? "Dark canvas with your progress on every mapped node. Hover for preview, click to open your desk."
-                : "This path is tracked as ordered topics. A visual map will be added when the layout is available."}
+                ? "Follow the arrows left-to-right. Scroll on the map to zoom · drag to pan."
+                : "Topics unlock in order — open the next available one when you're ready."}
             </p>
           </div>
-          {inProgressTopic && (
-            <StatusBadge status={state.topics[inProgressTopic.id]?.status ?? "in_progress"} />
+          {focusTopic && (
+            <StatusBadge
+              status={
+                focusTopic.status === "locked" ? "available" : focusTopic.status
+              }
+            />
           )}
         </div>
 
         {loading ? (
-          <div className="grid min-h-[560px] place-items-center bg-[var(--background)] text-sm font-medium text-muted-foreground">
+          <div className="grid h-[min(720px,calc(100dvh-14rem))] min-h-[480px] place-items-center bg-[#f8f8f5] text-sm font-medium text-muted-foreground">
             Loading roadmap…
           </div>
         ) : roadmapDoc ? (
