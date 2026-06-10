@@ -277,32 +277,112 @@ export function StatCard({
 /* ─────────────────── HEATMAP ─────────────────── */
 export function Heatmap() {
   const { state } = useGrowthState();
-  const cells = useMemo(() => {
-    const arr: number[] = [];
-    const today = new Date();
-    // Generate dates for the last 168 days (24 weeks)
-    for (let i = 167; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
 
-      if (state.activityDates.includes(dateStr)) {
-        // Base value on day of week or string character code to vary grid colors
-        const seed = (dateStr.charCodeAt(dateStr.length - 1) % 4) + 1; // 1-4 level
-        arr.push(seed);
-      } else {
-        arr.push(0);
+  const { cells, months } = useMemo(() => {
+    const arr: { dateStr: string; dateObj: Date; level: number; isFuture: boolean }[] = [];
+    const today = new Date();
+    const todayDay = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const saturdayOffset = 6 - todayDay;
+    
+    const totalDays = 168; // 24 weeks
+    const monthHeaders: { label: string; colIndex: number }[] = [];
+    let lastMonth = -1;
+
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + saturdayOffset - i);
+      
+      const dateStr = d.toISOString().split("T")[0];
+      const isFuture = d > today;
+      
+      let level = 0;
+      if (!isFuture) {
+        const count = state.activityLogs?.[dateStr] ?? (state.activityDates.includes(dateStr) ? 1 : 0);
+        level = Math.min(4, count);
+      }
+
+      arr.push({ dateStr, dateObj: d, level: isFuture ? -1 : level, isFuture });
+
+      // Calculate month label column index
+      const colIndex = Math.floor((totalDays - 1 - i) / 7);
+      const m = d.getMonth();
+      if (m !== lastMonth && colIndex < 24) {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        monthHeaders.push({ label: monthNames[m], colIndex });
+        lastMonth = m;
       }
     }
-    return arr;
-  }, [state.activityDates]);
+    
+    return { cells: arr, months: monthHeaders };
+  }, [state.activityDates, state.activityLogs]);
 
   return (
-    <div className="overflow-x-auto">
-      <div className="inline-grid grid-flow-col grid-rows-7 gap-1">
-        {cells.map((v, i) => (
-          <div key={i} className={`w-3 h-3 rounded-[3px] heat-${v}`} />
+    <div className="space-y-2.5">
+      {/* Month Headers */}
+      <div className="relative h-4 text-[10px] text-muted-foreground font-mono ml-8 select-none">
+        {months.map((m, idx) => (
+          <span
+            key={idx}
+            className="absolute"
+            style={{ left: `${m.colIndex * 16}px` }}
+          >
+            {m.label}
+          </span>
         ))}
+      </div>
+
+      <div className="flex gap-2 items-start overflow-x-auto pb-1 scrollbar-thin">
+        {/* Day Labels */}
+        <div className="grid grid-rows-7 gap-1 text-[9px] text-muted-foreground font-mono pt-[3px] h-[105px] justify-items-end select-none pr-1">
+          <span></span>
+          <span>Mon</span>
+          <span></span>
+          <span>Wed</span>
+          <span></span>
+          <span>Fri</span>
+          <span></span>
+        </div>
+
+        {/* Heatmap Grid */}
+        <div className="grid grid-flow-col grid-rows-7 gap-1 shrink-0">
+          {cells.map((cell, i) => {
+            const count = cell.isFuture ? 0 : (state.activityLogs?.[cell.dateStr] ?? (state.activityDates.includes(cell.dateStr) ? 1 : 0));
+            const formattedDate = cell.dateObj.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+            const tooltipText = cell.isFuture
+              ? `Future: ${formattedDate}`
+              : `${count === 0 ? "No" : count} ${count === 1 ? "activity" : "activities"} on ${formattedDate}`;
+
+            return (
+              <div
+                key={i}
+                title={tooltipText}
+                className={`w-3 h-3 rounded-[2px] transition-all relative group ${
+                  cell.isFuture 
+                    ? "bg-transparent border border-dashed border-white/5" 
+                    : `heat-${cell.level} hover:ring-1 hover:ring-white/30 cursor-pointer`
+                }`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Heatmap Legend */}
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono pt-1.5 border-t border-white/5">
+        <span className="text-[9px] text-muted-foreground/80">Hover over cells to see activity details</span>
+        <div className="flex items-center gap-1.5">
+          <span>Less</span>
+          <div className="w-2.5 h-2.5 rounded-[1px] heat-0" title="0 activities" />
+          <div className="w-2.5 h-2.5 rounded-[1px] heat-1" title="1 activity" />
+          <div className="w-2.5 h-2.5 rounded-[1px] heat-2" title="2 activities" />
+          <div className="w-2.5 h-2.5 rounded-[1px] heat-3" title="3 activities" />
+          <div className="w-2.5 h-2.5 rounded-[1px] heat-4" title="4+ activities" />
+          <span>More</span>
+        </div>
       </div>
     </div>
   );
@@ -365,7 +445,18 @@ export function TopicDrawer({
 
   const resources = useMemo(() => {
     if (!topic || !topicProgress) return [];
-    return getCuratedResources(state.profile.path, topic, topicProgress.title);
+    const userRes = (topicProgress.userResources ?? []).map((r) => ({
+      id: r.id,
+      title: r.title,
+      url: r.url,
+      type: r.type as "video" | "article" | "docs" | "course" | "official",
+      source: "Custom link",
+      minutes: 15,
+    }));
+    return [
+      ...userRes,
+      ...getCuratedResources(state.profile.path, topic, topicProgress.title),
+    ];
   }, [topic, topicProgress, state.profile.path]);
 
   return (
@@ -415,38 +506,40 @@ export function TopicDrawer({
 
             <div>
               <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-3">
-                Best direction · resources
+                Study resources
               </h3>
               <div className="space-y-2">
-                {resources.map((r) => (
-                  <a
-                    key={r.id}
-                    href={r.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-start gap-3 p-3 rounded-md border border-border bg-card hover:bg-[var(--surface-2)] transition-colors"
-                  >
-                    <div className="mt-0.5 w-8 h-8 rounded-md bg-[var(--surface-2)] border border-border grid place-items-center shrink-0">
-                      {r.type === "video" ? (
-                        <Video className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <FileText className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{r.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-mono text-muted-foreground">
-                          {r.source}
-                        </span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-2.5 h-2.5" />
-                          {r.minutes} min
-                        </span>
+                {resources.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic bg-card p-4 rounded-md border border-border">
+                    No custom links added yet. Open the Full Workspace to add study links or references.
+                  </p>
+                ) : (
+                  resources.map((r) => (
+                    <a
+                      key={r.id}
+                      href={r.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-start gap-3 p-3 rounded-md border border-border bg-card hover:bg-[var(--surface-2)] transition-colors animate-in fade-in"
+                    >
+                      <div className="mt-0.5 w-8 h-8 rounded-md bg-[var(--surface-2)] border border-border grid place-items-center shrink-0">
+                        {r.type === "video" ? (
+                          <Video className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
-                    </div>
-                  </a>
-                ))}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{r.title}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-mono text-muted-foreground">
+                            {r.source}
+                          </span>
+                        </div>
+                      </div>
+                    </a>
+                  ))
+                )}
               </div>
             </div>
 

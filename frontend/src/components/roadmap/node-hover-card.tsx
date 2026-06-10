@@ -65,7 +65,7 @@ export function NodeHoverCard({
           <button
             type="button"
             onClick={onOpenDesk}
-            className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-md bg-[var(--in-progress)] text-white hover:opacity-90"
+            className="mt-2 w-full btn-mission btn-mission-sm justify-center"
           >
             Open desk
             <ExternalLink className="w-3 h-3" />

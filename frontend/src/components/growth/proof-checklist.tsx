@@ -2,10 +2,10 @@ import { CheckCircle2, Circle } from "lucide-react";
 import { useGrowthState } from "@/hooks/use-growth-state";
 
 const PROOF_ITEMS = [
-  { id: "video" as const, label: "Read & watch", hint: "Open a resource" },
-  { id: "notes" as const, label: "Write it down", hint: "Your own words" },
-  { id: "quiz" as const, label: "Quick check", hint: "70% to pass" },
-  { id: "commit" as const, label: "Build something", hint: "Small proof" },
+  { id: "video" as const, label: "Study topic", hint: "Review guides & resources" },
+  { id: "notes" as const, label: "Write notes", hint: "Explain in your own words" },
+  { id: "quiz" as const, label: "Take quiz", hint: "70% score to pass" },
+  { id: "commit" as const, label: "Build proof", hint: "Small practical code build" },
 ];
 
 export function ProofChecklist({

@@ -9,10 +9,14 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import { StatCard, StatusBadge, type TopicStatus } from "@/components/growth/shared";
+import { DirectionCard } from "@/components/growth/direction-card";
+import { PageHeader } from "@/components/growth/page-header";
+import { StatCard, StatusBadge } from "@/components/growth/shared";
 import { RoadmapFlowGuide } from "@/components/roadmap/roadmap-flow-guide";
 import { RoadmapViewer } from "@/components/roadmap/RoadmapViewer";
 import { useGrowthState } from "@/hooks/use-growth-state";
+import { getFocusTopic } from "@/lib/focus-topic";
+import { getTodayMission } from "@/lib/mock/daily-mission";
 import { hasVisualRoadmap } from "@/lib/roadmap-layout/bookmarks";
 import { loadRoadmapDocument } from "@/lib/roadmap-layout/load-roadmap";
 import { buildNodeTopicLookup, loadRoadmapMap } from "@/lib/roadmap-layout/load-map";
@@ -21,7 +25,7 @@ import type { GrowthTopicStatus } from "@/lib/roadmap-layout/types";
 import { getFlatTopics, LEARNING_PATHS, type LearningPath } from "@/lib/roadmaps";
 
 export const Route = createFileRoute("/roadmap")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { highlight?: string } => ({
     highlight: typeof search.highlight === "string" ? search.highlight : undefined,
   }),
   head: () => ({
@@ -56,31 +60,11 @@ function RoadmapPage() {
   const completedCount = flatTopics.filter(
     (topic) => state.topics[topic.id]?.status === "completed",
   ).length;
-  const inProgressTopic = flatTopics.find(
-    (topic) => state.topics[topic.id]?.status === "in_progress",
+  const focusTopic = useMemo(
+    () => getFocusTopic(state, state.profile.path),
+    [state, state.profile.path],
   );
-  const nextAvailableTopic = flatTopics.find(
-    (topic) => state.topics[topic.id]?.status === "available",
-  );
-  const focusFlatTopic = inProgressTopic ?? nextAvailableTopic ?? null;
-  const focusTopic = focusFlatTopic
-    ? {
-        id: focusFlatTopic.id,
-        title: focusFlatTopic.title,
-        roadmapNodeId: state.topics[focusFlatTopic.id]?.roadmapNodeId,
-        checks: state.topics[focusFlatTopic.id]?.checks ?? {
-          video: false,
-          notes: false,
-          quiz: false,
-          commit: false,
-        },
-        status: (state.topics[focusFlatTopic.id]?.status ?? "locked") as
-          | "in_progress"
-          | "available"
-          | "completed"
-          | "locked",
-      }
-    : null;
+  const mission = getTodayMission(state);
   const readiness = Math.round((completedCount / Math.max(flatTopics.length, 1)) * 100);
   const visualAvailable = hasVisualRoadmap(state.profile.path);
 
@@ -180,100 +164,48 @@ function RoadmapPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 md:px-10 py-8 space-y-8">
-      <header>
-        <div className="text-xs font-mono text-[var(--in-progress)] font-bold tracking-wider mb-2">
-          LEARNING ROADMAP
-        </div>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              {activePath.title}{" "}
-              <span className="text-muted-foreground">· your path, your proof.</span>
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{activePath.summary}</p>
-          </div>
-          <Link
-            to="/settings"
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-md border border-border bg-[var(--surface-2)] hover:bg-[var(--muted)] transition-colors"
-          >
+    <div className="growth-page space-y-8">
+      <PageHeader
+        label="LEARNING ROADMAP"
+        title={`${activePath.title} · your compass`}
+        description="See the full path, know exactly what to do next, and prove each step before moving on."
+        action={
+          <Link to="/settings" className="btn-ghost">
             <Settings2 className="w-3.5 h-3.5" />
             Manage paths
           </Link>
-        </div>
-      </header>
+        }
+      />
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <BookMarked className="w-4 h-4" />
-            Selected paths
-          </div>
-          <span className="text-[11px] font-mono text-muted-foreground">
-            {selectedPaths.length} active in workspace
-          </span>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {selectedPaths.map((path) => {
-            const selected = state.profile.path === path.id;
-            const count = getFlatTopics(path.id).length;
-            const visual = hasVisualRoadmap(path.id);
-            return (
-              <button
-                key={path.id}
-                type="button"
-                onClick={() => handlePathSelect(path.id)}
-                className={`min-h-[58px] rounded-md border px-4 py-3 text-left transition-colors ${
-                  selected
-                    ? "border-[var(--in-progress)] bg-[var(--surface-2)]"
-                    : "border-border bg-card hover:bg-[var(--surface-2)]"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm md:text-base">{path.title}</span>
-                  <BookMarked
-                    className={`w-4 h-4 shrink-0 ${
-                      selected ? "text-[var(--in-progress)] fill-[var(--in-progress)]" : "text-muted-foreground"
-                    }`}
-                  />
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
-                  <span>
-                    {path.modules.length} modules · {count} topics
-                  </span>
-                  {visual ? (
-                    <span className="text-[var(--completed)]">visual map</span>
-                  ) : (
-                    <span>list view</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      <DirectionCard
+        focusTopic={focusTopic}
+        reason={mission?.reason}
+        pathTitle={activePath.shortTitle}
+        estimatedMinutes={mission?.estimatedMinutes}
+        label="Your next move"
+      />
 
       <section className="grid sm:grid-cols-3 gap-3">
         <StatCard
           icon={Target}
-          label="Topics done"
+          label="Topics cleared"
           value={`${completedCount} / ${flatTopics.length}`}
           progress={completedCount / Math.max(flatTopics.length, 1)}
-          accent="var(--in-progress)"
+          accent="var(--completed)"
         />
         <StatCard
           icon={Compass}
           label="Current focus"
-          value={inProgressTopic?.title ?? "Not started"}
-          sub={inProgressTopic ? "In progress" : "Pick a topic from the map"}
-          accent="var(--available)"
+          value={focusTopic?.title ?? "Pick a topic"}
+          sub={focusTopic ? "On your path" : "Start from the map"}
+          accent="var(--mission)"
         />
         <StatCard
           icon={TrendingUp}
           label="Path readiness"
           value={`${readiness}%`}
           progress={readiness / 100}
-          accent="var(--completed)"
+          accent="var(--in-progress)"
         />
       </section>
 
@@ -283,11 +215,11 @@ function RoadmapPage() {
         completedCount={completedCount}
       />
 
-      <section className="rounded-lg border border-border bg-card overflow-hidden">
+      <section className="section-card overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-md border border-border bg-[var(--surface)] px-3 py-1 text-sm">
-              <Map className="w-3.5 h-3.5 text-[var(--in-progress)]" />
+              <Map className="w-3.5 h-3.5 text-[var(--mission)]" />
               {visualAvailable ? "Visual roadmap" : "Topic list"}
             </div>
             <h2 className="mt-3 text-lg md:text-xl font-semibold tracking-tight">
@@ -295,16 +227,12 @@ function RoadmapPage() {
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               {visualAvailable
-                ? "Follow the arrows left-to-right. Scroll on the map to zoom · drag to pan."
-                : "Topics unlock in order — open the next available one when you're ready."}
+                ? "Yellow = topics, peach = subtopics. Scroll to zoom · drag to pan."
+                : "Topics unlock in order — one proof at a time."}
             </p>
           </div>
-          {focusTopic && (
-            <StatusBadge
-              status={
-                focusTopic.status === "locked" ? "available" : focusTopic.status
-              }
-            />
+          {focusTopic && focusTopic.status !== "locked" && (
+            <StatusBadge status={focusTopic.status} />
           )}
         </div>
 
@@ -327,6 +255,56 @@ function RoadmapPage() {
           <ListRoadmapFallback path={state.profile.path} />
         )}
       </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <BookMarked className="w-4 h-4" />
+            Switch path
+          </div>
+          <span className="text-[11px] font-mono text-muted-foreground">
+            {selectedPaths.length} in workspace
+          </span>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {selectedPaths.map((path) => {
+            const selected = state.profile.path === path.id;
+            const count = getFlatTopics(path.id).length;
+            const visual = hasVisualRoadmap(path.id);
+            return (
+              <button
+                key={path.id}
+                type="button"
+                onClick={() => handlePathSelect(path.id)}
+                className={`min-h-[58px] rounded-lg border px-4 py-3 text-left transition-colors ${
+                  selected
+                    ? "border-amber-500/40 bg-amber-950/20"
+                    : "border-border bg-card hover:bg-[var(--surface-2)]"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm md:text-base">{path.title}</span>
+                  <BookMarked
+                    className={`w-4 h-4 shrink-0 ${
+                      selected ? "text-amber-400 fill-amber-400" : "text-muted-foreground"
+                    }`}
+                  />
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                  <span>
+                    {path.modules.length} modules · {count} topics
+                  </span>
+                  {visual ? (
+                    <span className="text-[var(--completed)]">visual map</span>
+                  ) : (
+                    <span>list view</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
@@ -346,6 +324,7 @@ function ListRoadmapFallback({ path }: { path: LearningPath }) {
             key={topic.id}
             to="/topic/$topicId"
             params={{ topicId: topic.id }}
+            search={{ from: "/roadmap" }}
             disabled={disabled}
             className={`flex w-full items-center justify-between gap-4 px-5 py-3 text-left transition-colors ${
               disabled ? "pointer-events-none opacity-60" : "hover:bg-[var(--surface-2)]"

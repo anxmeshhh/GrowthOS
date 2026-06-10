@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BookOpen,
@@ -7,10 +6,11 @@ import {
   ChevronDown,
   ChevronUp,
   MapPin,
-  Sparkles,
   Unlock,
 } from "lucide-react";
+import { FlowStrip, MissionButton } from "@/components/growth/direction-card";
 import { inferSessionPhase } from "@/lib/session-phase";
+import type { FocusTopic } from "@/lib/focus-topic";
 import type { SessionPhase } from "@/hooks/use-growth-state";
 
 const COMPACT_KEY = "growthos_roadmap_flow_compact";
@@ -46,16 +46,8 @@ const STEPS = [
   },
 ] as const;
 
-export type RoadmapFlowTopic = {
-  id: string;
-  title: string;
-  roadmapNodeId?: string | null;
-  checks: { video: boolean; notes: boolean; quiz: boolean; commit: boolean };
-  status: "in_progress" | "available" | "completed" | "locked";
-};
-
 type RoadmapFlowGuideProps = {
-  focusTopic: RoadmapFlowTopic | null;
+  focusTopic: FocusTopic | null;
   visualMap: boolean;
   completedCount: number;
 };
@@ -65,15 +57,15 @@ export function RoadmapFlowGuide({
   visualMap,
   completedCount,
 }: RoadmapFlowGuideProps) {
-  const [compact, setCompact] = useState(() => {
-    if (typeof window === "undefined") return false;
-    if (completedCount === 0) return false;
-    return localStorage.getItem(COMPACT_KEY) === "1";
+  const [expanded, setExpanded] = useState(() => {
+    if (typeof window === "undefined") return completedCount === 0;
+    if (completedCount === 0) return true;
+    return localStorage.getItem(COMPACT_KEY) !== "1";
   });
 
-  const setCompactMode = (value: boolean) => {
-    setCompact(value);
-    localStorage.setItem(COMPACT_KEY, value ? "1" : "0");
+  const setExpandedMode = (value: boolean) => {
+    setExpanded(value);
+    localStorage.setItem(COMPACT_KEY, value ? "0" : "1");
   };
 
   const phase = focusTopic ? inferSessionPhase(focusTopic.checks) : null;
@@ -90,73 +82,54 @@ export function RoadmapFlowGuide({
       : step,
   );
 
-  if (compact) {
+  if (!expanded) {
     return (
-      <section className="rounded-lg border border-border bg-[var(--surface)] px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="font-mono uppercase tracking-wider text-[10px] text-[var(--in-progress)]">
-              Flow
-            </span>
-            {listSteps.map((step, index) => (
-              <span key={step.title} className="inline-flex items-center gap-2">
-                {index > 0 && <ArrowRight className="h-3 w-3 opacity-40" />}
-                <span className="inline-flex items-center gap-1 font-medium text-foreground/80">
-                  <step.icon className="h-3.5 w-3.5 text-[var(--in-progress)]" />
-                  {step.title.replace(" a topic", "").replace(" your desk", "").replace(" proof", "")}
-                </span>
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            {focusTopic && ctaLabel && (
-              <Link
-                to="/topic/$topicId"
-                params={{ topicId: focusTopic.id }}
-                search={
-                  focusTopic.roadmapNodeId
-                    ? { from: "/roadmap", nodeId: focusTopic.roadmapNodeId }
-                    : { from: "/roadmap" }
-                }
-                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--in-progress)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                {ctaLabel}
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => setCompactMode(false)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      <section className="section-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <FlowStrip compact />
+        <div className="flex items-center gap-2">
+          {focusTopic && ctaLabel && (
+            <MissionButton
+              to="/topic/$topicId"
+              params={{ topicId: focusTopic.id }}
+              search={
+                focusTopic.roadmapNodeId
+                  ? { from: "/roadmap", nodeId: focusTopic.roadmapNodeId }
+                  : { from: "/roadmap" }
+              }
+              size="sm"
             >
-              How it works
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-          </div>
+              {ctaLabel}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </MissionButton>
+          )}
+          <button
+            type="button"
+            onClick={() => setExpandedMode(true)}
+            className="btn-ghost text-muted-foreground hover:text-foreground"
+          >
+            How it works
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="rounded-lg border border-[var(--in-progress)]/25 bg-gradient-to-br from-[var(--surface-2)] via-card to-card p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+    <section className="section-card p-5 md:p-6">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--in-progress)] mb-1">
-            How GrowthOS works
-          </div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            Map → Desk → Proof → Next topic
-          </h2>
+          <div className="mission-label mb-1">How GrowthOS works</div>
+          <h2 className="text-lg font-semibold tracking-tight">Map → Desk → Proof → Next</h2>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            The roadmap is your compass. Each node opens a desk where you prove you learned it —
-            then the path unlocks forward.
+            One direction at a time. The map shows where you are; proof — not passive watching —
+            builds real confidence.
           </p>
         </div>
         <button
           type="button"
-          onClick={() => setCompactMode(true)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground shrink-0"
+          onClick={() => setExpandedMode(false)}
+          className="btn-ghost text-muted-foreground hover:text-foreground shrink-0"
         >
           Collapse
           <ChevronUp className="h-3.5 w-3.5" />
@@ -165,15 +138,12 @@ export function RoadmapFlowGuide({
 
       <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {listSteps.map((step, index) => (
-          <li
-            key={step.title}
-            className="relative rounded-md border border-border bg-card/80 p-4"
-          >
+          <li key={step.title} className="rounded-lg border border-border bg-[var(--surface)] p-4">
             <div className="mb-2 flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-[var(--in-progress)]/15 text-[11px] font-bold text-[var(--in-progress)]">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-500/15 text-[11px] font-bold text-amber-400">
                 {index + 1}
               </span>
-              <step.icon className="h-4 w-4 text-[var(--in-progress)]" />
+              <step.icon className="h-4 w-4 text-amber-400/90" />
               <span className="text-sm font-semibold">{step.title}</span>
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">{step.detail}</p>
@@ -181,13 +151,13 @@ export function RoadmapFlowGuide({
         ))}
       </ol>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-[var(--surface)] px-4 py-3">
-        <div className="text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Proof checklist: </span>
-          Read resource · Write notes · Quick quiz · Build something small
-        </div>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-[var(--surface-2)] px-4 py-3">
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Proof = confidence: </span>
+          read a resource · write it in your words · pass a quick check · build something small
+        </p>
         {focusTopic && ctaLabel ? (
-          <Link
+          <MissionButton
             to="/topic/$topicId"
             params={{ topicId: focusTopic.id }}
             search={
@@ -195,18 +165,20 @@ export function RoadmapFlowGuide({
                 ? { from: "/roadmap", nodeId: focusTopic.roadmapNodeId }
                 : { from: "/roadmap" }
             }
-            className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background hover:opacity-90"
+            size="sm"
           >
-            <Sparkles className="h-4 w-4" />
             {ctaLabel}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </MissionButton>
         ) : (
           <span className="text-xs font-medium text-muted-foreground">
-            {visualMap ? "Click a node on the map to begin" : "Open the first unlocked topic below"}
+            {visualMap ? "Click a node on the map below" : "Open the first unlocked topic"}
           </span>
         )}
       </div>
     </section>
   );
 }
+
+// Re-export for roadmap page typing compatibility
+export type { FocusTopic as RoadmapFlowTopic };

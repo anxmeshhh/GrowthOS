@@ -67,6 +67,16 @@ export type CaptureWorkflow = {
   updatedAt: string;
 };
 
+export type Flashcard = {
+  id: string;
+  front: string;
+  back: string;
+  easeFactor: number;
+  intervalDays: number;
+  repetitions: number;
+  nextReviewDate: string;
+};
+
 export interface TopicProgress {
   id: string;
   title: string;
@@ -87,6 +97,9 @@ export interface TopicProgress {
   captureWorkflow: CaptureWorkflow | null;
   activeResourceUrl: string | null;
   roadmapNodeId: string | null;
+  flashcards?: Flashcard[];
+  repoUrl?: string;
+  buildAnalysis?: { score: number; feedback: string; analyzedAt: string };
 }
 
 export interface ProjectInfo {
@@ -124,6 +137,8 @@ export interface GrowthState {
   streak: number;
   longestStreak: number;
   activityDates: string[];
+  studySessionsCount: number;
+  activityLogs?: Record<string, number>;
 }
 
 interface GrowthContextType {
@@ -159,6 +174,19 @@ interface GrowthContextType {
   uploadNote: (file: File, topicId: string | null) => Promise<void>;
   deleteUploadedNote: (noteId: string) => void;
   dismissReward: () => void;
+  incrementStudySessionsCount: () => void;
+  addFlashcard: (topicId: string, front: string, back: string) => void;
+  updateFlashcardReview: (
+    topicId: string,
+    cardId: string,
+    easeFactor: number,
+    intervalDays: number,
+    repetitions: number,
+    nextReviewDate: string,
+  ) => void;
+  deleteFlashcard: (topicId: string, cardId: string) => void;
+  connectTopicRepo: (topicId: string, repoUrl: string) => void;
+  runTopicBuildAnalysis: (topicId: string, score: number, feedback: string) => void;
 }
 
 const PROJECT_NAMES: Record<LearningPath, string[]> = {
@@ -247,7 +275,7 @@ function normalizeActivePath(path: LearningPath | undefined, paths: LearningPath
 
 function defaultTopicFields(): Pick<
   TopicProgress,
-  "userResources" | "explainBack" | "sessionPhase" | "captureWorkflow" | "activeResourceUrl" | "roadmapNodeId"
+  "userResources" | "explainBack" | "sessionPhase" | "captureWorkflow" | "activeResourceUrl" | "roadmapNodeId" | "flashcards"
 > {
   return {
     userResources: [],
@@ -256,6 +284,7 @@ function defaultTopicFields(): Pick<
     captureWorkflow: null,
     activeResourceUrl: null,
     roadmapNodeId: null,
+    flashcards: [],
   };
 }
 
@@ -270,6 +299,9 @@ function normalizeTopic(topic: TopicProgress): TopicProgress {
     captureWorkflow: topic.captureWorkflow ?? defaults.captureWorkflow,
     activeResourceUrl: topic.activeResourceUrl ?? defaults.activeResourceUrl,
     roadmapNodeId: topic.roadmapNodeId ?? defaults.roadmapNodeId,
+    flashcards: topic.flashcards ?? defaults.flashcards,
+    repoUrl: topic.repoUrl,
+    buildAnalysis: topic.buildAnalysis,
   };
 }
 
@@ -374,6 +406,14 @@ function generateActivityDates() {
   return activityDates;
 }
 
+function generateActivityLogs(dates: string[]): Record<string, number> {
+  const logs: Record<string, number> = {};
+  dates.forEach((d) => {
+    logs[d] = (d.charCodeAt(d.length - 1) % 4) + 1;
+  });
+  return logs;
+}
+
 function getInitialState(
   paths: LearningPath[] = ["backend"],
   activePath?: LearningPath,
@@ -400,6 +440,8 @@ function getInitialState(
     streak: 12,
     longestStreak: 21,
     activityDates: generateActivityDates(),
+    activityLogs: generateActivityLogs(generateActivityDates()),
+    studySessionsCount: 0,
   };
 }
 
@@ -422,6 +464,8 @@ function migrateSavedState(saved: GrowthState): GrowthState {
     projects,
     uploadedNotes: saved.uploadedNotes ?? [],
     gamification: migrateGamification(saved.gamification),
+    studySessionsCount: saved.studySessionsCount ?? 0,
+    activityLogs: saved.activityLogs ?? generateActivityLogs(saved.activityDates ?? []),
   };
 }
 
@@ -492,14 +536,27 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const todayKey = new Date().toISOString().split("T")[0];
 
     setState((previous) => {
-      if (previous.activityDates.includes(todayKey)) return previous;
+      const logs = previous.activityLogs ?? {};
+      const currentCount = logs[todayKey] ?? 0;
+      const newLogs = {
+        ...logs,
+        [todayKey]: currentCount + 1,
+      };
 
-      const streak = previous.streak + 1;
+      const activityDates = previous.activityDates.includes(todayKey)
+        ? previous.activityDates
+        : [...previous.activityDates, todayKey];
+
+      const streak = previous.activityDates.includes(todayKey)
+        ? previous.streak
+        : previous.streak + 1;
+
       return {
         ...previous,
         streak,
         longestStreak: Math.max(streak, previous.longestStreak),
-        activityDates: [...previous.activityDates, todayKey],
+        activityDates,
+        activityLogs: newLogs,
       };
     });
   };
@@ -539,6 +596,7 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         topics: {
           ...previous.topics,
           [topicId]: normalizeTopic({
+            ...defaultTopicFields(),
             id: topicId,
             title: label.trim(),
             status: "in_progress",
@@ -547,7 +605,6 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             notesText: "",
             canvasData: null,
             roadmapNodeId: nodeId ?? null,
-            ...defaultTopicFields(),
           }),
         },
       };
@@ -712,13 +769,14 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
       const explainBack = [...existing, entry];
       const explainDone = explainBack.filter((e) => e.done).length;
+      const isFeynmanDone = explainBack.some((e) => e.promptId === "feynman" && e.done);
 
       const updatedTopic = {
         ...normalized,
         explainBack,
         checks: {
           ...normalized.checks,
-          notes: explainDone >= 2,
+          notes: isFeynmanDone || explainDone >= 2,
         },
       };
       const topics = recalculateUnlocks(
@@ -1003,6 +1061,121 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
 
+  const addFlashcard = (topicId: string, front: string, back: string) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const newCard: Flashcard = {
+        id: Math.random().toString(36).substring(2, 9),
+        front: front.trim(),
+        back: back.trim(),
+        easeFactor: 2.5,
+        intervalDays: 0,
+        repetitions: 0,
+        nextReviewDate: new Date().toISOString().split("T")[0],
+      };
+      const flashcards = [...(normalized.flashcards ?? []), newCard];
+      const topics = {
+        ...previous.topics,
+        [topicId]: { ...normalized, flashcards },
+      };
+      return { ...previous, topics };
+    });
+    registerActivityToday();
+  };
+
+  const updateFlashcardReview = (
+    topicId: string,
+    cardId: string,
+    easeFactor: number,
+    intervalDays: number,
+    repetitions: number,
+    nextReviewDate: string,
+  ) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const flashcards = (normalized.flashcards ?? []).map((card) => {
+        if (card.id !== cardId) return card;
+        return {
+          ...card,
+          easeFactor,
+          intervalDays,
+          repetitions,
+          nextReviewDate,
+        };
+      });
+      const topics = {
+        ...previous.topics,
+        [topicId]: { ...normalized, flashcards },
+      };
+      return { ...previous, topics };
+    });
+    registerActivityToday();
+  };
+
+  const deleteFlashcard = (topicId: string, cardId: string) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const flashcards = (normalized.flashcards ?? []).filter((card) => card.id !== cardId);
+      const topics = {
+        ...previous.topics,
+        [topicId]: { ...normalized, flashcards },
+      };
+      return { ...previous, topics };
+    });
+    registerActivityToday();
+  };
+
+  const connectTopicRepo = (topicId: string, repoUrl: string) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      const topics = {
+        ...previous.topics,
+        [topicId]: { ...normalized, repoUrl },
+      };
+      return { ...previous, topics };
+    });
+    registerActivityToday();
+  };
+
+  const runTopicBuildAnalysis = (topicId: string, score: number, feedback: string) => {
+    setState((previous) => {
+      const topic = previous.topics[topicId];
+      if (!topic) return previous;
+      const normalized = normalizeTopic(topic);
+      
+      const buildAnalysis = {
+        score,
+        feedback,
+        analyzedAt: new Date().toISOString(),
+      };
+      
+      const topics = recalculateUnlocks(
+        {
+          ...previous.topics,
+          [topicId]: {
+            ...normalized,
+            buildAnalysis,
+            checks: {
+              ...normalized.checks,
+              commit: score >= 70,
+            },
+          },
+        },
+        previous.profile.paths,
+      );
+      return { ...previous, topics };
+    });
+    registerActivityToday();
+  };
+
   return (
     <GrowthContext.Provider
       value={{
@@ -1031,6 +1204,17 @@ export const GrowthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         uploadNote,
         deleteUploadedNote,
         dismissReward,
+        incrementStudySessionsCount: () => {
+          setState((prev) => ({
+            ...prev,
+            studySessionsCount: (prev.studySessionsCount ?? 0) + 1,
+          }));
+        },
+        addFlashcard,
+        updateFlashcardReview,
+        deleteFlashcard,
+        connectTopicRepo,
+        runTopicBuildAnalysis,
       }}
     >
       {children}

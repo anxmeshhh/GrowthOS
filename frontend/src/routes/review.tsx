@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Brain, Calendar, RotateCcw } from "lucide-react";
+import { Brain, Calendar, RotateCcw, Layers } from "lucide-react";
 import { PageHeader } from "@/components/growth/page-header";
 import { useGrowthState } from "@/hooks/use-growth-state";
 import { getReviewQueue } from "@/lib/mock/review-queue";
@@ -27,6 +27,11 @@ function ReviewPage() {
   const due = items.filter((item) => item.status === "due");
   const scheduled = items.filter((item) => item.status === "scheduled");
 
+  const activeDecks = Object.values(state.topics).filter(
+    (topic) => topic.flashcards && topic.flashcards.length > 0
+  );
+  const todayStr = new Date().toISOString().split("T")[0];
+
   return (
     <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 space-y-8">
       <PageHeader
@@ -44,6 +49,44 @@ function ReviewPage() {
           <div className="text-2xl font-semibold">{scheduled.length}</div>
           <div className="text-xs font-mono text-muted-foreground uppercase mt-1">Scheduled</div>
         </div>
+      </section>
+
+      {/* Active Decks Section */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Layers className="w-4 h-4 text-amber-500" />
+          Active Recall Flashcard Decks
+        </h2>
+        {activeDecks.length === 0 ? (
+          <p className="text-sm text-muted-foreground p-4 rounded-md border border-border bg-card">
+            No active decks yet. Create flashcards inside your topic study workspace to begin spaced repetition!
+          </p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-3">
+            {activeDecks.map((deck) => {
+              const totalCards = deck.flashcards?.length ?? 0;
+              const dueCardsCount = deck.flashcards?.filter((c) => c.nextReviewDate <= todayStr).length ?? 0;
+              return (
+                <div key={deck.id} className="p-4 rounded-md border border-border bg-card flex flex-col justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-sm">{deck.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {dueCardsCount} due cards · {totalCards} total cards
+                    </p>
+                  </div>
+                  <Link
+                    to="/topic/$topicId"
+                    params={{ topicId: deck.id }}
+                    className="w-full text-center text-xs font-semibold px-3 py-2 rounded-md bg-amber-700 hover:bg-amber-800 text-amber-50 inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    Review deck
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="space-y-3">
