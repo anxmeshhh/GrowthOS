@@ -74,7 +74,7 @@ export function TopicWorkspace({
   } = useGrowthState();
 
   const topic = state.topics[topicId];
-  
+
   const [pageMode, setPageMode] = useState<PageMode>(() => {
     if (initialMode) {
       if (initialMode === "write" || initialMode === "sketch" || initialMode === "capture") {
@@ -87,7 +87,7 @@ export function TopicWorkspace({
     return "notes";
   });
 
-  const [notesSubMode, setNotesSubMode] = useState<"write" | "sketch" | "capture" >(() => {
+  const [notesSubMode, setNotesSubMode] = useState<"write" | "sketch" | "capture">(() => {
     if (initialMode === "write" || initialMode === "sketch" || initialMode === "capture") {
       return initialMode;
     }
@@ -97,7 +97,7 @@ export function TopicWorkspace({
   const [quizOpen, setQuizOpen] = useState(false);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [focusRunning, setFocusRunning] = useState(false);
-  const [guidesOpen, setGuidesOpen] = useState(true);
+  const [guidesOpen, setGuidesOpen] = useState(false);
   const [resourcePanelOpen, setResourcePanelOpen] = useState(true);
   const [showReviewPrompt, setShowReviewPrompt] = useState(topic?.status === "completed");
 
@@ -276,7 +276,7 @@ export function TopicWorkspace({
 
   return (
     <div className="desk-shell min-h-screen flex flex-col relative">
-      <header className="shrink-0 px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-white/5">
+      <header className="shrink-0 px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-white/5 bg-[#1c1916]/80 backdrop-blur-md z-10">
         <Link
           to={backTo}
           search={topic.roadmapNodeId ? { highlight: topic.roadmapNodeId } : undefined}
@@ -287,18 +287,12 @@ export function TopicWorkspace({
         </Link>
         <div className="h-4 w-px bg-white/10 hidden sm:block" />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-widest desk-quiet">Map → Desk → Proof</p>
           <h1 className="text-sm md:text-base font-medium truncate text-[#f0ebe3]">
             {topic.title}
             {isFocusMode && <span className="ml-2 text-xs font-normal text-amber-400">(Focus Mode)</span>}
           </h1>
-          {!isFocusMode && (
-            <div className="hidden md:block mt-0.5 opacity-60 scale-[0.92] origin-left">
-              <FlowStrip compact />
-            </div>
-          )}
         </div>
-        
+
         {/* Study Sessions Count */}
         <div className="flex items-center gap-1 text-[11px] font-mono text-amber-300/80 px-2 py-0.5 rounded bg-white/5 border border-white/5">
           <span>Sessions: {state.studySessionsCount ?? 0}</span>
@@ -327,11 +321,10 @@ export function TopicWorkspace({
               triggerMotivationalQuote();
             }
           }}
-          className={`px-2.5 py-1 rounded text-[10px] uppercase tracking-wide font-medium transition-colors ${
-            isFocusMode
+          className={`px-2.5 py-1 rounded text-[10px] uppercase tracking-wide font-medium transition-colors ${isFocusMode
               ? "bg-amber-700 text-amber-50 hover:bg-amber-600"
               : "border border-white/10 hover:bg-white/5 text-[#c4bdb3]"
-          }`}
+            }`}
         >
           {isFocusMode ? "Exit Focus" : "Zen Focus"}
         </button>
@@ -363,9 +356,8 @@ export function TopicWorkspace({
       <div className="flex-1 flex min-h-0">
         {!isFocusMode && (
           <aside
-            className={`shrink-0 border-r border-white/5 transition-all duration-200 overflow-hidden hidden md:flex flex-col ${
-              guidesOpen ? "w-64" : "w-10"
-            }`}
+            className={`shrink-0 border-r border-white/5 transition-all duration-200 overflow-hidden hidden md:flex flex-col ${guidesOpen ? "w-64" : "w-10"
+              }`}
           >
             <button
               type="button"
@@ -403,11 +395,10 @@ export function TopicWorkspace({
                             key={resource.id}
                             type="button"
                             onClick={() => openResource(resource.url, index === 0 && !resource.isUser)}
-                            className={`w-full text-left px-2.5 py-2 rounded text-xs transition-colors ${
-                              isActive
+                            className={`w-full text-left px-2.5 py-2 rounded text-xs transition-colors ${isActive
                                 ? "bg-amber-900/30 text-amber-100 border border-amber-700/40"
                                 : "text-[#c4bdb3] hover:bg-white/5 border border-transparent"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-start gap-2">
                               {resource.type === "video" ? (
@@ -470,18 +461,17 @@ export function TopicWorkspace({
             </div>
           )}
 
-          <div className="flex-1 flex flex-col min-w-0 min-h-0 p-4 md:p-6 overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 p-3 md:p-4 overflow-hidden">
             <div className={`flex-1 flex flex-col min-h-0 ${isFocusMode ? "max-w-5xl" : "max-w-4xl"} mx-auto w-full`}>
-              <div className="paper-sheet flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="paper-sheet flex-1 flex flex-col min-h-0 overflow-hidden shadow-xl border border-white/5">
                 <div className="shrink-0 flex items-center gap-1.5 px-4 pt-3 pb-1 border-b border-[var(--paper-line)] flex-wrap">
                   <button
                     type="button"
                     onClick={() => setPageMode("notes")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      pageMode === "notes"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${pageMode === "notes"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
+                      }`}
                   >
                     <PenLine className="w-3.5 h-3.5" />
                     1. Study Notes
@@ -489,11 +479,10 @@ export function TopicWorkspace({
                   <button
                     type="button"
                     onClick={() => setPageMode("flashcards")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      pageMode === "flashcards"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${pageMode === "flashcards"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
+                      }`}
                   >
                     <Layers className="w-3.5 h-3.5" />
                     2. Flashcards
@@ -501,11 +490,10 @@ export function TopicWorkspace({
                   <button
                     type="button"
                     onClick={() => setPageMode("quiz")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      pageMode === "quiz"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${pageMode === "quiz"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
+                      }`}
                   >
                     <ClipboardCheck className="w-3.5 h-3.5" />
                     3. Quiz Checkpoint
@@ -513,11 +501,10 @@ export function TopicWorkspace({
                   <button
                     type="button"
                     onClick={() => setPageMode("build")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      pageMode === "build"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${pageMode === "build"
                         ? "bg-[var(--paper-line)] text-[var(--paper-ink)]"
                         : "text-[var(--paper-muted)] hover:text-[var(--paper-ink)]"
-                    }`}
+                      }`}
                   >
                     <Github className="w-3.5 h-3.5" />
                     4. Build Proof
@@ -544,11 +531,10 @@ export function TopicWorkspace({
                             key={sub}
                             type="button"
                             onClick={() => setNotesSubMode(sub)}
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer border ${
-                              notesSubMode === sub
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer border ${notesSubMode === sub
                                 ? "bg-[var(--paper-ink)] text-[var(--paper-bg)] border-[var(--paper-ink)]"
                                 : "bg-white/40 border-[var(--paper-line)] text-[var(--paper-muted)] hover:text-[var(--paper-ink)] hover:bg-white/70"
-                            }`}
+                              }`}
                           >
                             {sub === "write" && (
                               <>
