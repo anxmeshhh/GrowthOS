@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Map, BookOpen, ClipboardCheck, Github, TrendingUp, Settings, Flame, Menu, X } from "lucide-react";
+import { LayoutDashboard, Compass, Map, BookOpen, ClipboardCheck, Github, TrendingUp, Settings, Flame, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
 import { PATHS } from "@/lib/growth-data";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/discover", label: "Discover", icon: Compass },
   { to: "/roadmap", label: "Roadmap", icon: Map },
   { to: "/notes", label: "Notes", icon: BookOpen },
   { to: "/assessments", label: "Assessments", icon: ClipboardCheck },

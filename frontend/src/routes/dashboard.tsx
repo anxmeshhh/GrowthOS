@@ -43,6 +43,58 @@ function StreakGrid({ activeDays }: { activeDays: string[] }) {
   );
 }
 
+import { useQuery } from "@tanstack/react-query";
+import { ActivityCalendar } from "react-activity-calendar";
+
+function GithubHeatmap() {
+  const { data: heatmapData = [], isLoading } = useQuery({
+    queryKey: ['heatmap'],
+    queryFn: async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/heatmap/");
+        if (!res.ok) throw new Error("Network response was not ok");
+        const json = await res.json();
+        return json.map((d: any) => {
+          let level = 0;
+          if (d.count > 0 && d.count <= 2) level = 1;
+          else if (d.count > 2 && d.count <= 4) level = 2;
+          else if (d.count > 4 && d.count <= 6) level = 3;
+          else if (d.count > 6) level = 4;
+          return { date: d.date, count: d.count, level };
+        });
+      } catch (err) {
+        console.error("Failed to fetch heatmap", err);
+        return [];
+      }
+    }
+  });
+
+  // react-activity-calendar requires at least one year's worth of data or the year boundaries
+  // If data is empty or too small, we just pad it with today's date so it renders nicely
+  const today = new Date().toISOString().split('T')[0];
+  const displayData = heatmapData.length > 0 ? heatmapData : [{ date: today, count: 0, level: 0 }];
+
+  return (
+    <div className="text-xs overflow-x-auto w-full py-2">
+      {isLoading ? (
+        <div className="h-[120px] flex items-center justify-center text-[#666]">Loading heatmap...</div>
+      ) : (
+        <ActivityCalendar
+          data={displayData}
+          theme={{
+            light: ['#1a1a1a', '#14532d', '#16a34a', '#22c55e', '#4ade80'],
+            dark: ['#1a1a1a', '#14532d', '#16a34a', '#22c55e', '#4ade80'],
+          }}
+          colorScheme="dark"
+          labels={{
+            totalCount: "{{count}} contributions in the last year",
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 function DashboardPage() {
   const { state } = useGrowth();
   const path = PATHS.find((p) => p.id === state.settings.pathId)!;
@@ -156,10 +208,10 @@ function DashboardPage() {
       {/* Streak heatmap */}
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Target size={14} className="text-[#666]" />
-          <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666]">Last 30 Days</div>
+          <Github size={16} className="text-[#666]" />
+          <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666]">Contribution Graph</div>
         </div>
-        <StreakGrid activeDays={state.activeDays} />
+        <GithubHeatmap />
       </Card>
     </PageShell>
   );

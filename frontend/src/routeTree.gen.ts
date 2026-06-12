@@ -9,16 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -42,6 +50,16 @@ const ProgressRoute = ProgressRouteImport.update({
 const NotesRoute = NotesRouteImport.update({
   id: '/notes',
   path: '/notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -69,22 +87,28 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
   '/dashboard': typeof DashboardRoute
+  '/discover': typeof DiscoverRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
   '/dashboard': typeof DashboardRoute
+  '/discover': typeof DiscoverRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRoutesById {
@@ -92,11 +116,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
   '/dashboard': typeof DashboardRoute
+  '/discover': typeof DiscoverRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRouteTypes {
@@ -105,33 +132,42 @@ export interface FileRouteTypes {
     | '/'
     | '/assessments'
     | '/dashboard'
+    | '/discover'
+    | '/login'
     | '/notes'
     | '/progress'
     | '/projects'
     | '/roadmap'
     | '/settings'
+    | '/signup'
     | '/topic/$topicId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/assessments'
     | '/dashboard'
+    | '/discover'
+    | '/login'
     | '/notes'
     | '/progress'
     | '/projects'
     | '/roadmap'
     | '/settings'
+    | '/signup'
     | '/topic/$topicId'
   id:
     | '__root__'
     | '/'
     | '/assessments'
     | '/dashboard'
+    | '/discover'
+    | '/login'
     | '/notes'
     | '/progress'
     | '/projects'
     | '/roadmap'
     | '/settings'
+    | '/signup'
     | '/topic/$topicId'
   fileRoutesById: FileRoutesById
 }
@@ -139,16 +175,26 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssessmentsRoute: typeof AssessmentsRoute
   DashboardRoute: typeof DashboardRoute
+  DiscoverRoute: typeof DiscoverRoute
+  LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProgressRoute: typeof ProgressRoute
   ProjectsRoute: typeof ProjectsRoute
   RoadmapRoute: typeof RoadmapRoute
   SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   TopicTopicIdRoute: typeof TopicTopicIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -182,6 +228,20 @@ declare module '@tanstack/react-router' {
       path: '/notes'
       fullPath: '/notes'
       preLoaderRoute: typeof NotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -219,11 +279,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssessmentsRoute: AssessmentsRoute,
   DashboardRoute: DashboardRoute,
+  DiscoverRoute: DiscoverRoute,
+  LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProgressRoute: ProgressRoute,
   ProjectsRoute: ProjectsRoute,
   RoadmapRoute: RoadmapRoute,
   SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   TopicTopicIdRoute: TopicTopicIdRoute,
 }
 export const routeTree = rootRouteImport

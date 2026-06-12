@@ -125,14 +125,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const path = router.state.location.pathname;
+  const isAuthRoute = path === "/login" || path === "/signup" || path === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
       <GrowthProvider>
         <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row">
-          <Sidebar />
+          {!isAuthRoute && <Sidebar />}
           <div className="flex-1 min-w-0 flex flex-col">
-            <MobileTopBar />
+            {!isAuthRoute && <MobileTopBar />}
             {/* Required: nested routes render here. */}
             <Outlet />
           </div>
