@@ -4,7 +4,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,9 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Sidebar, MobileNav } from "@/components/growth/shared";
-import { RewardToast } from "@/components/growth/reward-toast";
-import { GrowthProvider } from "@/hooks/use-growth-state";
+import { GrowthProvider } from "../lib/growth-store";
+import { Sidebar, MobileTopBar } from "../components/growth-sidebar";
 
 function NotFoundComponent() {
   return (
@@ -81,25 +79,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GrowthOS — Personal Growth OS for Developers" },
-      {
-        name: "description",
-        content:
-          "Direction-first learning dashboard. See where you are, what's next, and how far you've come.",
-      },
-      { property: "og:title", content: "GrowthOS" },
-      { property: "og:description", content: "A personal growth operating system for developers." },
+      { title: "GrowthOS — Developer Learning Operating System" },
+      { name: "description", content: "A serious learning OS for self-taught developers. Roadmaps, notes, quizzes, and build proof in one workspace." },
+      { name: "author", content: "GrowthOS" },
+      { property: "og:title", content: "GrowthOS — Developer Learning OS" },
+      { property: "og:description", content: "A serious learning OS for self-taught developers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "GrowthOS — Developer Learning OS" },
     ],
     links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap",
+        href: appCss,
       },
-      { rel: "stylesheet", href: appCss },
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -124,23 +125,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isFocusWorkspace = pathname.startsWith("/topic/");
 
   return (
     <QueryClientProvider client={queryClient}>
       <GrowthProvider>
-        <div className="min-h-screen flex w-full bg-background text-foreground">
-          {!isFocusWorkspace && <Sidebar />}
+        <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row">
+          <Sidebar />
           <div className="flex-1 min-w-0 flex flex-col">
-            {!isFocusWorkspace && <MobileNav />}
-            <main
-              className={`flex-1 min-w-0 ${isFocusWorkspace ? "overflow-hidden" : "overflow-x-hidden pb-20 md:pb-0"}`}
-            >
-              <Outlet />
-            </main>
+            <MobileTopBar />
+            {/* Required: nested routes render here. */}
+            <Outlet />
           </div>
-          <RewardToast />
         </div>
       </GrowthProvider>
     </QueryClientProvider>

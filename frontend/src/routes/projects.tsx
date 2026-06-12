@@ -1,237 +1,168 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Github, Play, GitCommit, FileCode, CheckCircle, RefreshCw } from "lucide-react";
-import { StatusBadge } from "@/components/growth/shared";
-import { useGrowthState } from "@/hooks/use-growth-state";
+import { useMemo, useState } from "react";
+import { Check, Lock, ExternalLink } from "lucide-react";
+import { PageShell, PageHeader, Card, Btn, Badge } from "@/components/growth-ui";
+import { useGrowth } from "@/lib/growth-store";
+import { PROJECTS, TOPICS } from "@/lib/growth-data";
 
 export const Route = createFileRoute("/projects")({
-  head: () => ({
-    meta: [
-      { title: "Project Builder · GrowthOS" },
-      { name: "description", content: "Milestone projects to prove your skills." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Projects — GrowthOS" }, { name: "description", content: "Build proof. Real shipped code, verified skills." }] }),
   component: ProjectsPage,
 });
 
+type Tab = "available" | "submissions" | "skills";
+
 function ProjectsPage() {
-  const { state, connectProjectRepo, disconnectProjectRepo, runProjectAIReview } = useGrowthState();
-  const [connectModalProjectName, setConnectModalProjectName] = useState<string | null>(null);
-  const [repoInput, setRepoInput] = useState("");
-  const [loadingProjectName, setLoadingProjectName] = useState<string | null>(null);
+  const { state, update } = useGrowth();
+  const [tab, setTab] = useState<Tab>("available");
 
-  const handleConnect = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!connectModalProjectName || !repoInput.trim()) return;
-    connectProjectRepo(connectModalProjectName, repoInput.trim());
-    setRepoInput("");
-    setConnectModalProjectName(null);
-  };
+  const readiness = useMemo(() => {
+    const total = PROJECTS.length;
+    const verified = state.submissions.filter((s) => s.status === "Verified").length;
+    return Math.round((verified / total) * 100);
+  }, [state.submissions]);
 
-  const handleRunReview = (projectName: string) => {
-    setLoadingProjectName(projectName);
-    runProjectAIReview(projectName).finally(() => {
-      setLoadingProjectName(null);
-    });
-  };
+  // verified skills come from completed topics
+  const verifiedSkills = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of TOPICS) {
+      const p = state.progress[t.id];
+      if (p && p.resourceDone && p.notesDone && p.quizDone && p.buildDone) {
+        // crude: derive from title
+        for (const w of t.title.split(/\W+/)) if (w.length > 2) set.add(w);
+      }
+    }
+    return Array.from(set);
+  }, [state.progress]);
 
-  const projectsList = Object.values(state.projects);
+  const ALL_SKILLS = ["HTTP", "REST", "Git", "GitHub", "DNS", "Python", "SQL", "Indexing", "Auth", "JWT", "Docker", "Redis", "WebSockets"];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 md:px-10 py-8 space-y-8">
-      <header className="mb-6">
-        <div className="text-xs font-mono text-[var(--in-progress)] font-bold tracking-wider mb-2">
-          PROJECT BUILDER
+    <PageShell>
+      <PageHeader kicker="Build Proof" title="Projects" subtitle="Career evidence through real code." />
+
+      {/* Readiness */}
+      <Card className="p-5 mb-6 flex items-center gap-5">
+        <div className="relative h-20 w-20 shrink-0">
+          <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
+            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#222" strokeWidth="2" />
+            <circle
+              cx="18" cy="18" r="15.9155" fill="none" stroke="#22c55e" strokeWidth="2"
+              strokeDasharray={`${readiness} ${100 - readiness}`} strokeLinecap="round"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center text-lg font-semibold font-mono">{readiness}%</div>
         </div>
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Build to prove it</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Milestone projects unlocked by your roadmap progress. Connect your GitHub repository to
-          trigger reviews.
-        </p>
-      </header>
+        <div>
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Portfolio Readiness</div>
+          <div className="text-sm text-[#999] mt-1">Ship more verified projects to climb the score.</div>
+        </div>
+      </Card>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {projectsList.map((p) => {
-          const isConnected = !!p.repoUrl;
-          const review = p.aiReview;
-          const isReviewLoading = loadingProjectName === p.name;
-
-          return (
-            <div
-              key={p.name}
-              className="p-5 rounded-lg border border-border bg-card flex flex-col justify-between space-y-4"
-            >
-              <div>
-                <div className="flex items-start justify-between mb-2 gap-3">
-                  <h3 className="font-semibold text-base">{p.name}</h3>
-                  <StatusBadge status={p.status} />
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">{p.desc}</p>
-
-                {isConnected && (
-                  <div className="bg-[var(--surface)] p-3 rounded-md border border-border space-y-2 mt-2">
-                    <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                      <Github className="w-3.5 h-3.5" />
-                      <span className="text-foreground truncate">{p.repoUrl}</span>
-                    </div>
-
-                    {/* Commit Stream */}
-                    <div className="border-t border-border/40 pt-2 space-y-1.5">
-                      <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                        <GitCommit className="w-3 h-3 text-[var(--in-progress)] animate-pulse" />{" "}
-                        Latest Commit
-                      </div>
-                      {p.commits && p.commits.length > 0 ? (
-                        <>
-                          <div className="text-xs font-mono truncate text-foreground/90">
-                            {p.commits[0].message}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground font-mono">
-                            {p.commits[0].date} by {state.profile.name}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="text-xs font-mono truncate text-foreground/90">
-                            feat: connected repo & configured workflow
-                          </div>
-                          <div className="text-[10px] text-muted-foreground font-mono">
-                            Just now by {state.profile.name}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* AI Review Report Display */}
-                {review && (
-                  <div className="mt-3 bg-[var(--surface-2)] p-3 rounded-md border border-border text-xs space-y-2">
-                    <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
-                      <span className="font-semibold flex items-center gap-1">
-                        <FileCode className="w-3.5 h-3.5 text-[var(--in-progress)]" /> AI Review
-                        Grade:
-                      </span>
-                      <span
-                        className={`font-mono font-bold uppercase ${review.score >= 80 ? "text-[var(--completed)]" : "text-destructive"}`}
-                      >
-                        {review.score}%
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground text-[11px] leading-relaxed italic mb-2">
-                      "{review.feedback}"
-                    </p>
-                    <div className="space-y-1 text-muted-foreground border-t border-border/40 pt-2">
-                      {review.details.map((item, idx) => (
-                        <div key={idx} className="flex flex-col gap-0.5 pb-1">
-                          <div className="flex items-center justify-between font-mono text-[10px]">
-                            <span className="text-foreground">{item.category}</span>
-                            <span className="text-[var(--completed)]">{item.rating}/10</span>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">{item.text}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-2">
-                {!isConnected ? (
-                  <button
-                    disabled={p.status === "locked"}
-                    onClick={() => setConnectModalProjectName(p.name)}
-                    className="w-full text-xs font-medium px-3 py-2 rounded-md border border-border bg-[var(--surface-2)] hover:bg-[var(--muted)] flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    <Github className="w-3.5 h-3.5" /> Connect repo
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleRunReview(p.name)}
-                      disabled={isReviewLoading || p.status === "completed"}
-                      className="flex-1 text-xs font-semibold px-3 py-2 rounded-md bg-foreground text-background hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                    >
-                      {isReviewLoading ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin animate-duration-1000" />
-                          Analyzing Code...
-                        </>
-                      ) : p.status === "completed" ? (
-                        <>
-                          <CheckCircle className="w-3.5 h-3.5 text-background" />
-                          Passed & Mastery Unlocked
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          Run AI Code Review
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => disconnectProjectRepo(p.name)}
-                      className="text-xs font-medium p-2 rounded-md border border-border bg-[var(--surface-2)] hover:bg-destructive hover:text-white text-muted-foreground transition-colors cursor-pointer"
-                      title="Disconnect Repository"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex border-b border-[#222] mb-4">
+        {(["available", "submissions", "skills"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={"px-4 py-2.5 text-sm capitalize border-b-2 transition-colors " + (tab === t ? "border-[#22c55e] text-[#f0f0f0]" : "border-transparent text-[#666] hover:text-[#f0f0f0]")}
+          >
+            {t === "available" ? "Available Projects" : t === "submissions" ? "My Submissions" : "Skills Verified"}
+          </button>
+        ))}
       </div>
 
-      {/* GitHub Repo Connection Modal Overlay */}
-      {connectModalProjectName && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-          <div className="bg-card border border-border rounded-lg max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Github className="w-5 h-5 text-[var(--in-progress)]" />
-                Connect Repository
-              </h3>
-              <button
-                onClick={() => setConnectModalProjectName(null)}
-                className="text-muted-foreground hover:text-foreground text-xs"
-              >
-                ✕ Close
-              </button>
-            </div>
-            <form onSubmit={handleConnect} className="space-y-4 text-sm">
-              <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-mono uppercase block">
-                  Repository URL / Path
-                </label>
-                <input
-                  required
-                  value={repoInput}
-                  onChange={(e) => setRepoInput(e.target.value)}
-                  placeholder="e.g. https://github.com/animesh/url-shortener"
-                  className="w-full bg-[var(--surface-2)] border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[var(--in-progress)]"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setConnectModalProjectName(null)}
-                  className="px-4 py-2 text-xs border border-border rounded-md hover:bg-[var(--surface-2)]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs bg-foreground text-background font-semibold rounded-md hover:opacity-90"
-                >
-                  Save Connection
-                </button>
-              </div>
-            </form>
-          </div>
+      {tab === "available" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {PROJECTS.map((p) => {
+            const submitted = state.submissions.some((s) => s.projectId === p.id);
+            return (
+              <Card key={p.id} className="p-5">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="font-semibold tracking-tight">{p.title}</h3>
+                  <Badge tone={p.difficulty === "EASY" ? "green" : p.difficulty === "MEDIUM" ? "amber" : "red"}>{p.difficulty}</Badge>
+                </div>
+                <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-3">Backend Developer Path</div>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {p.skills.map((s) => <Badge key={s} tone="blue">{s}</Badge>)}
+                </div>
+                <p className="text-sm text-[#999] mb-4">{p.description}</p>
+                <div className="flex justify-end">
+                  <Btn
+                    size="sm"
+                    onClick={() => {
+                      if (submitted) return;
+                      const url = prompt("GitHub URL for this submission:");
+                      if (!url) return;
+                      update((s) => ({ ...s, submissions: [...s.submissions, { id: `sub-${Date.now()}`, projectId: p.id, githubUrl: url, status: "Submitted", submittedAt: new Date().toISOString() }] }));
+                    }}
+                  >
+                    {submitted ? "Submitted ✓" : "Start →"}
+                  </Btn>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
-    </div>
+
+      {tab === "submissions" && (
+        <Card className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#0f0f0f] text-[10px] uppercase font-mono tracking-wider text-[#666]">
+              <tr>
+                <th className="text-left px-4 py-3">Project</th>
+                <th className="text-left px-4 py-3">Status</th>
+                <th className="text-left px-4 py-3">GitHub</th>
+                <th className="text-left px-4 py-3">Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.submissions.map((s) => {
+                const proj = PROJECTS.find((p) => p.id === s.projectId);
+                return (
+                  <tr key={s.id} className="border-t border-[#222]">
+                    <td className="px-4 py-3">{proj?.title ?? s.projectId}</td>
+                    <td className="px-4 py-3">
+                      <Badge tone={s.status === "Verified" ? "green" : s.status === "Under Review" ? "amber" : "blue"}>{s.status}</Badge>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs">
+                      <a href={s.githubUrl} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:underline inline-flex items-center gap-1">
+                        Open <ExternalLink size={11} />
+                      </a>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-[#999]">{new Date(s.submittedAt).toLocaleDateString()}</td>
+                  </tr>
+                );
+              })}
+              {state.submissions.length === 0 ? (
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-[#666] text-sm">No submissions yet.</td></tr>
+              ) : null}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {tab === "skills" && (
+        <Card className="p-5">
+          <div className="flex flex-wrap gap-2">
+            {ALL_SKILLS.map((s) => {
+              const verified = verifiedSkills.some((v) => v.toLowerCase() === s.toLowerCase());
+              return (
+                <span
+                  key={s}
+                  className={
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono " +
+                    (verified ? "border-[#22c55e]/40 bg-[#0d1a0d] text-[#22c55e]" : "border-[#222] bg-[#0f0f0f] text-[#666]")
+                  }
+                >
+                  {verified ? <Check size={12} /> : <Lock size={11} />}
+                  {s}
+                </span>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+    </PageShell>
   );
 }

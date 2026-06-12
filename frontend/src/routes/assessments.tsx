@@ -1,92 +1,104 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Lock, RotateCcw } from "lucide-react";
-import { QuizDrawer, StatusBadge } from "@/components/growth/shared";
-import { useGrowthState } from "@/hooks/use-growth-state";
-import { getFlatTopics, LEARNING_PATHS } from "@/lib/roadmaps";
+import { PageShell, PageHeader, Card, StatCard, Btn, Badge } from "@/components/growth-ui";
+import { useGrowth } from "@/lib/growth-store";
+import { TOPICS } from "@/lib/growth-data";
 
 export const Route = createFileRoute("/assessments")({
-  head: () => ({
-    meta: [
-      { title: "Assessments · GrowthOS" },
-      { name: "description", content: "Validate your understanding with proof-based checkpoints." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Assessments — GrowthOS" }, { name: "description", content: "Quizzes, attempts and review queue." }] }),
   component: AssessmentsPage,
 });
 
-function AssessmentsPage() {
-  const { state } = useGrowthState();
-  const [quizTopic, setQuizTopic] = useState<string | null>(null);
-  const activePath = LEARNING_PATHS[state.profile.path];
+type Tab = "available" | "attempted" | "review";
 
-  const assessments = useMemo(
-    () =>
-      getFlatTopics(state.profile.path).map((topic) => ({
-        ...topic,
-        progress: state.topics[topic.id],
-      })),
-    [state.profile.path, state.topics],
-  );
+function AssessmentsPage() {
+  const { state } = useGrowth();
+  const [tab, setTab] = useState<Tab>("available");
+
+  const stats = useMemo(() => {
+    const attempts = Object.values(state.progress).filter((p) => p.quizScore != null);
+    const avg = attempts.length ? Math.round(attempts.reduce((a, p) => a + (p.quizScore ?? 0), 0) / attempts.length) : 0;
+    const review = attempts.filter((p) => (p.quizScore ?? 0) < 80).length;
+    return { taken: attempts.length, avg, review };
+  }, [state.progress]);
+
+  const quizTopics = TOPICS.filter((t) => t.quiz.length > 0);
+  const available = quizTopics.filter((t) => state.progress[t.id]?.quizScore == null);
+  const attempted = quizTopics
+    .map((t) => ({ t, p: state.progress[t.id] }))
+    .filter((r) => r.p?.quizScore != null);
+  const review = attempted.filter((r) => (r.p.quizScore ?? 0) < 80);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 space-y-6">
-      <header>
-        <div className="text-xs font-mono text-[var(--in-progress)] font-bold tracking-wider mb-2">
-          ASSESSMENTS
-        </div>
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Checkpoints</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Validate topics from {activePath.title}. Passing scores create quiz proof.
-        </p>
-      </header>
+    <PageShell>
+      <PageHeader kicker="Assessments" title="Quizzes & Reviews" subtitle="Prove what you've learned. Re-review where you wobbled." />
 
-      <div className="space-y-2">
-        {assessments.map((assessment) => {
-          const status = assessment.progress?.status || "locked";
-          const locked = status === "locked";
-          return (
-            <div
-              key={assessment.id}
-              className="flex items-center justify-between p-4 rounded-md border border-border bg-card gap-3"
-            >
-              <div className="min-w-0">
-                <div className="font-medium text-sm flex items-center gap-2">
-                  <ClipboardCheck className="w-4 h-4 text-[var(--in-progress)]" />
-                  {assessment.title}
-                </div>
-                <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                  {Math.max(3, Math.round(assessment.minutes / 20))} questions · ~10 min
-                  {assessment.progress?.quizScore !== undefined
-                    ? ` · last score ${assessment.progress.quizScore}%`
-                    : ""}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <StatusBadge status={status} />
-                <button
-                  onClick={() => setQuizTopic(assessment.id)}
-                  disabled={locked}
-                  className="text-xs font-medium px-3 py-2 rounded-md border border-border bg-[var(--surface-2)] hover:bg-[var(--muted)] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
-                >
-                  {locked ? (
-                    <Lock className="w-3.5 h-3.5" />
-                  ) : (
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  )}
-                  {assessment.progress?.quizScore !== undefined ? "Retake" : "Start"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <StatCard label="Quizzes Taken" value={<span className="font-mono">{stats.taken}</span>} />
+        <StatCard label="Average Score" value={<span className="font-mono">{stats.avg}%</span>} accent={stats.avg >= 70} />
+        <StatCard label="Topics Needing Review" value={<span className="font-mono">{stats.review}</span>} />
       </div>
 
-      <QuizDrawer
-        open={!!quizTopic}
-        onClose={() => setQuizTopic(null)}
-        topicId={quizTopic || undefined}
-      />
-    </div>
+      <div className="flex border-b border-[#222] mb-4">
+        {(["available", "attempted", "review"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={"px-4 py-2.5 text-sm capitalize border-b-2 transition-colors " + (tab === t ? "border-[#22c55e] text-[#f0f0f0]" : "border-transparent text-[#666] hover:text-[#f0f0f0]")}
+          >
+            {t === "review" ? "Review Queue" : t}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        {tab === "available" && available.map((t) => (
+          <Card key={t.id} className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{t.title}</div>
+              <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mt-0.5 flex items-center gap-2">
+                <Badge>{t.quiz.length} questions</Badge>
+                <Badge tone={t.quiz.length > 3 ? "amber" : "blue"}>{t.quiz.length > 3 ? "Medium" : "Easy"}</Badge>
+              </div>
+            </div>
+            <Link to="/topic/$topicId" params={{ topicId: t.id }}><Btn size="sm">Start quiz →</Btn></Link>
+          </Card>
+        ))}
+
+        {tab === "attempted" && attempted.map(({ t, p }) => {
+          const score = p.quizScore ?? 0;
+          const passed = score >= 70;
+          return (
+            <Card key={t.id} className="p-4 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-medium truncate">{t.title}</div>
+                <div className="mt-0.5 text-xs font-mono">
+                  <span className={passed ? "text-[#22c55e]" : "text-[#ef4444]"}>{Math.round(score / 100 * t.quiz.length)} / {t.quiz.length} · {score}%</span>
+                  <span className="text-[#666] mx-2">·</span>
+                  <Badge tone={passed ? "green" : "red"}>{passed ? "Pass" : "Fail"}</Badge>
+                </div>
+              </div>
+              <Link to="/topic/$topicId" params={{ topicId: t.id }}><Btn variant="outline" size="sm">Retake</Btn></Link>
+            </Card>
+          );
+        })}
+
+        {tab === "review" && review.map(({ t, p }) => (
+          <Card key={t.id} className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{t.title}</div>
+              <div className="text-xs text-[#999] mt-0.5">Low score on last attempt — re-read the basics, then retake.</div>
+            </div>
+            <Link to="/topic/$topicId" params={{ topicId: t.id }}><Btn size="sm">Review now →</Btn></Link>
+          </Card>
+        ))}
+
+        {((tab === "available" && available.length === 0) ||
+          (tab === "attempted" && attempted.length === 0) ||
+          (tab === "review" && review.length === 0)) && (
+          <div className="text-sm text-[#666] py-6 text-center">Nothing here yet.</div>
+        )}
+      </div>
+    </PageShell>
   );
 }

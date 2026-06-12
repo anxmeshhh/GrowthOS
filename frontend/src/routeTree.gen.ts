@@ -11,11 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
-import { Route as ReviewRouteImport } from './routes/review'
-import { Route as ReadinessRouteImport } from './routes/readiness'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as NotesRouteImport } from './routes/notes'
-import { Route as MissionRouteImport } from './routes/mission'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
@@ -30,19 +29,14 @@ const RoadmapRoute = RoadmapRouteImport.update({
   path: '/roadmap',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReviewRoute = ReviewRouteImport.update({
-  id: '/review',
-  path: '/review',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReadinessRoute = ReadinessRouteImport.update({
-  id: '/readiness',
-  path: '/readiness',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotesRoute = NotesRouteImport.update({
@@ -50,9 +44,9 @@ const NotesRoute = NotesRouteImport.update({
   path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MissionRoute = MissionRouteImport.update({
-  id: '/mission',
-  path: '/mission',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssessmentsRoute = AssessmentsRouteImport.update({
@@ -74,11 +68,10 @@ const TopicTopicIdRoute = TopicTopicIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
-  '/mission': typeof MissionRoute
+  '/dashboard': typeof DashboardRoute
   '/notes': typeof NotesRoute
+  '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
-  '/readiness': typeof ReadinessRoute
-  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
@@ -86,11 +79,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
-  '/mission': typeof MissionRoute
+  '/dashboard': typeof DashboardRoute
   '/notes': typeof NotesRoute
+  '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
-  '/readiness': typeof ReadinessRoute
-  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
@@ -99,11 +91,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
-  '/mission': typeof MissionRoute
+  '/dashboard': typeof DashboardRoute
   '/notes': typeof NotesRoute
+  '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
-  '/readiness': typeof ReadinessRoute
-  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
@@ -113,11 +104,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/assessments'
-    | '/mission'
+    | '/dashboard'
     | '/notes'
+    | '/progress'
     | '/projects'
-    | '/readiness'
-    | '/review'
     | '/roadmap'
     | '/settings'
     | '/topic/$topicId'
@@ -125,11 +115,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/assessments'
-    | '/mission'
+    | '/dashboard'
     | '/notes'
+    | '/progress'
     | '/projects'
-    | '/readiness'
-    | '/review'
     | '/roadmap'
     | '/settings'
     | '/topic/$topicId'
@@ -137,11 +126,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/assessments'
-    | '/mission'
+    | '/dashboard'
     | '/notes'
+    | '/progress'
     | '/projects'
-    | '/readiness'
-    | '/review'
     | '/roadmap'
     | '/settings'
     | '/topic/$topicId'
@@ -150,11 +138,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssessmentsRoute: typeof AssessmentsRoute
-  MissionRoute: typeof MissionRoute
+  DashboardRoute: typeof DashboardRoute
   NotesRoute: typeof NotesRoute
+  ProgressRoute: typeof ProgressRoute
   ProjectsRoute: typeof ProjectsRoute
-  ReadinessRoute: typeof ReadinessRoute
-  ReviewRoute: typeof ReviewRoute
   RoadmapRoute: typeof RoadmapRoute
   SettingsRoute: typeof SettingsRoute
   TopicTopicIdRoute: typeof TopicTopicIdRoute
@@ -176,25 +163,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoadmapRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/review': {
-      id: '/review'
-      path: '/review'
-      fullPath: '/review'
-      preLoaderRoute: typeof ReviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/readiness': {
-      id: '/readiness'
-      path: '/readiness'
-      fullPath: '/readiness'
-      preLoaderRoute: typeof ReadinessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/projects': {
       id: '/projects'
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notes': {
@@ -204,11 +184,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mission': {
-      id: '/mission'
-      path: '/mission'
-      fullPath: '/mission'
-      preLoaderRoute: typeof MissionRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assessments': {
@@ -238,11 +218,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssessmentsRoute: AssessmentsRoute,
-  MissionRoute: MissionRoute,
+  DashboardRoute: DashboardRoute,
   NotesRoute: NotesRoute,
+  ProgressRoute: ProgressRoute,
   ProjectsRoute: ProjectsRoute,
-  ReadinessRoute: ReadinessRoute,
-  ReviewRoute: ReviewRoute,
   RoadmapRoute: RoadmapRoute,
   SettingsRoute: SettingsRoute,
   TopicTopicIdRoute: TopicTopicIdRoute,

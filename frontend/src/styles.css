@@ -4,11 +4,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,350 +45,110 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-available: var(--available);
-  --color-completed: var(--completed);
-  --color-in-progress: var(--in-progress);
-  --color-locked: var(--locked);
-
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 :root {
+  /* GrowthOS — serious dark developer workspace */
   --radius: 0.5rem;
-
-  /* Dark, humanized base */
-  --background: #09090b;
-  --surface: #121214;
-  --surface-2: #18181b;
-  --foreground: #f4f4f5;
-
-  --card: #18181b;
-  --card-foreground: #f4f4f5;
-  --popover: #18181b;
-  --popover-foreground: #f4f4f5;
-
-  --primary: #f4f4f5;
-  --primary-foreground: #09090b;
-  --secondary: #27272a;
-  --secondary-foreground: #f4f4f5;
-  --muted: #1f1f23;
-  --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #f4f4f5;
-  --destructive: #ef4444;
-  --destructive-foreground: #f4f4f5;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #3f3f46;
-
-  /* Status accents */
-  --available: #f59e0b;
-  --completed: #10b981;
-  --in-progress: #3b82f6;
-  --locked: #71717a;
-
-  /* Mission / direction — warm action color (confidence + clarity) */
-  --mission: #f59e0b;
-  --mission-foreground: #09090b;
-
-  /* Roadmap canvas (full dark) */
-  --roadmap-topic: #1f1f23;
-  --roadmap-subtopic: #27272a;
-  --roadmap-section: #18181b;
-  --roadmap-section-border: #3f3f46;
-  --roadmap-button: #1e3a5f;
-  --roadmap-edge: #3f3f46;
-  --roadmap-edge-active: #3b82f6;
+  --background: oklch(0.145 0 0);          /* #0a0a0a */
+  --foreground: oklch(0.95 0 0);           /* #f0f0f0 */
+  --card: oklch(0.18 0 0);                 /* #111111 */
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.205 0 0);             /* #161616 */
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.72 0.18 145);         /* green-500 */
+  --primary-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.205 0 0);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.205 0 0);
+  --muted-foreground: oklch(0.55 0 0);     /* #666 */
+  --accent: oklch(0.205 0 0);
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.65 0.22 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.25 0 0);               /* #222 */
+  --input: oklch(0.25 0 0);
+  --ring: oklch(0.72 0.18 145);
+  --chart-1: oklch(0.72 0.18 145);
+  --chart-2: oklch(0.65 0.18 75);
+  --chart-3: oklch(0.6 0.2 250);
+  --chart-4: oklch(0.65 0.22 27);
+  --chart-5: oklch(0.55 0 0);
+  --sidebar: oklch(0.18 0 0);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.72 0.18 145);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.205 0 0);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.25 0 0);
+  --sidebar-ring: oklch(0.72 0.18 145);
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
   }
-  html,
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-sans);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-}
 
-/* Heatmap level utilities */
-@utility heat-0 {
-  background-color: #1f1f23;
-}
-@utility heat-1 {
-  background-color: #14532d;
-}
-@utility heat-2 {
-  background-color: #166534;
-}
-@utility heat-3 {
-  background-color: #15803d;
-}
-@utility heat-4 {
-  background-color: #10b981;
-}
-
-.roadmap-flow {
-  stroke-dasharray: 24 22;
-  animation: roadmap-flow 1.25s linear infinite;
-}
-
-.roadmap-runner {
-  animation: roadmap-runner 1.8s ease-in-out infinite;
-}
-
-.roadmap-scroll {
-  scrollbar-color: #94a3b8 #e5e7eb;
-}
-
-@keyframes roadmap-flow {
-  to {
-    stroke-dashoffset: -46;
+  html {
+    color-scheme: dark;
   }
 }
 
-@keyframes roadmap-runner {
-  0%,
-  100% {
-    transform: translateY(-10px) scale(0.92);
-  }
-  50% {
-    transform: translateY(18px) scale(1.12);
-  }
-}
-
-/* Roadmap canvas — isolated zoom/pan, original light theme */
-.roadmap-canvas-shell {
-  overscroll-behavior: contain;
-  isolation: isolate;
-}
-
-.roadmap-canvas {
-  touch-action: none;
-}
-
-.roadmap-canvas .react-flow__node {
-  font-family: "Balsamiq Sans", "Varela Round", "Segoe UI", sans-serif;
-}
-
-.roadmap-canvas .react-flow__viewport {
-  transform-origin: 0 0;
-}
-
-.roadmap-canvas .react-flow__edge-path {
-  stroke-linecap: round;
-}
-
-.roadmap-canvas .react-flow__pane {
-  cursor: grab;
-}
-
-.roadmap-canvas .react-flow__pane:active {
-  cursor: grabbing;
-}
-
-.roadmap-canvas .react-flow__renderer {
-  width: 100%;
-  height: 100%;
-}
-
-.roadmap-canvas .roadmap-node-locked {
-  pointer-events: none;
-}
-
-/* ── Paper desk (pen & paper learning surface) ── */
-.desk-shell {
-  --paper-bg: #faf6ee;
-  --paper-line: #e8dfd0;
-  --paper-margin: #f0c8c8;
-  --paper-ink: #2c2825;
-  --paper-muted: #6b6560;
-  --desk-bg: #141210;
-  --desk-surface: #1c1916;
-  background: var(--desk-bg);
-  color: #e8e4dc;
-}
-
-.paper-sheet {
-  background-color: var(--paper-bg);
-  color: var(--paper-ink);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 8px 24px rgba(0, 0, 0, 0.18),
-    0 24px 48px rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
-}
-
-.paper-lined {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 31px,
-    var(--paper-line) 31px,
-    var(--paper-line) 32px
-  );
-  background-attachment: local;
-}
-
-.paper-margin {
-  border-left: 2px solid var(--paper-margin);
-  padding-left: 1.25rem;
-}
-
-.paper-editor {
-  font-family: "Lora", Georgia, "Times New Roman", serif;
-  font-size: 1.05rem;
-  line-height: 2rem;
-  color: var(--paper-ink);
-}
-
-.paper-editor::placeholder {
-  color: var(--paper-muted);
-  font-style: italic;
-}
-
-.desk-panel {
-  background: var(--desk-surface);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.desk-quiet {
-  color: #9c958c;
-}
-
-/* Subtle page polish */
-@keyframes glow-pulse {
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.glow-accent {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-/* Reward toast entrance */
-@keyframes slide-up-fade {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-in {
-  animation: slide-up-fade 0.35s ease-out;
-}
-
-/* ── GrowthOS shell: consistent page + mission surfaces ── */
-.growth-page {
-  max-width: 72rem;
-  margin-inline: auto;
-  padding: 2rem 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .growth-page {
-    padding-inline: 2.5rem;
-  }
-}
-
-.section-card {
-  border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--card);
-}
-
-.mission-card {
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, var(--mission) 28%, transparent);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--mission) 12%, var(--card)) 0%,
-    var(--card) 45%,
-    var(--background) 100%
-  );
-}
-
-.mission-card-glow {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 16rem;
-  height: 16rem;
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--mission) 8%, transparent);
-  filter: blur(48px);
-  transform: translate(30%, -40%);
-}
-
-.mission-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--mission) 85%, white);
-}
-
-.btn-mission {
-  padding: 0.875rem 1.5rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--mission-foreground);
-  background: linear-gradient(to right, #f59e0b, #f97316);
-  box-shadow: 0 10px 25px -8px color-mix(in srgb, var(--mission) 45%, transparent);
-  transition: opacity 0.15s ease;
-}
-
-.btn-mission:hover {
-  opacity: 0.92;
-}
-
-.btn-mission-sm {
-  padding: 0.375rem 0.875rem;
-  font-size: 0.75rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--mission) 40%, transparent);
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--foreground);
-  transition: background-color 0.15s ease;
-}
-
-.btn-ghost:hover {
-  background: var(--muted);
-}
+/* Force dark globally — GrowthOS is dark-only */
+:root { color-scheme: dark; }
