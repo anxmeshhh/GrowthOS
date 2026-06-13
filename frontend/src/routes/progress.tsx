@@ -1,43 +1,83 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Flame } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, LineChart, Line } from "recharts";
+import { Flame, Loader2 } from "lucide-react";
 import { PageShell, PageHeader, Card, Progress } from "@/components/growth-ui";
-import { useGrowth, computeStreak, moduleCompletion } from "@/lib/growth-store";
-import { MODULES, PATHS } from "@/lib/growth-data";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 export const Route = createFileRoute("/progress")({
-  head: () => ({ meta: [{ title: "Progress — GrowthOS" }, { name: "description", content: "Heatmap, streaks and per-module completion." }] }),
+  head: () => ({ meta: [{ title: "Progress — GrowthOS" }, { name: "description", content: "Heatmap, streaks, and per-path completion." }] }),
   component: ProgressPage,
 });
 
 function ProgressPage() {
-  const { state } = useGrowth();
-  const path = PATHS.find((p) => p.id === state.settings.pathId)!;
-  const streak = computeStreak(state.activeDays);
-  const longest = useMemo(() => {
-    const sorted = [...state.activeDays].sort();
-    let best = 0, cur = 0;
-    let prev: Date | null = null;
-    for (const d of sorted) {
-      const dt = new Date(d);
-      if (prev) {
-        const diff = (dt.getTime() - prev.getTime()) / 86400000;
-        if (Math.round(diff) === 1) cur++;
-        else cur = 1;
-      } else cur = 1;
-      best = Math.max(best, cur);
-      prev = dt;
-    }
-    return best;
-  }, [state.activeDays]);
+  const { data: paths = [], isLoading: pathsLoading } = useQuery({
+    queryKey: ["paths"],
+    queryFn: async () => {
+      const res = await apiFetch("/paths/");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
 
-  // Heatmap: last 52 weeks * 7 days
-  const weeks = 26; // half year for layout density
-  const set = new Set(state.activeDays);
+  const { data: heatmapData = [], isLoading: heatmapLoading } = useQuery({
+    queryKey: ["heatmap"],
+    queryFn: async () => {
+      const res = await apiFetch("/heatmap/");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const isLoading = pathsLoading || heatmapLoading;
+
+  // Path-level stats
+  const pathStats = useMemo(() => {
+    return paths.map((p: any) => {
+      const topics = p.topics || [];
+      const total = topics.length;
+      const done = topics.filter((t: any) => t.user_progress === "completed").length;
+      const inProg = topics.filter((t: any) => t.user_progress === "in_progress").length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      return { title: p.title, slug: p.slug, total, done, inProg, pct };
+    });
+  }, [paths]);
+
+  const allTopics = paths.flatMap((p: any) => p.topics || []);
+  const totalDone = allTopics.filter((t: any) => t.user_progress === "completed").length;
+  const totalAll = allTopics.length;
+  const overallPct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
+
+  // Build heatmap from API contributions
+  const heatmapSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const entry of heatmapData) {
+      if (entry.date) s.add(entry.date);
+    }
+    return s;
+  }, [heatmapData]);
+
+  // Streak calc
+  const streak = useMemo(() => {
+    const sorted = [...heatmapSet].sort().reverse();
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if (!sorted.includes(today) && !sorted.includes(yesterday)) return 0;
+    let count = 0;
+    let checkDate = new Date();
+    if (!sorted.includes(today)) checkDate = new Date(Date.now() - 86400000);
+    for (let i = 0; i < 365; i++) {
+      const key = checkDate.toISOString().slice(0, 10);
+      if (heatmapSet.has(key)) { count++; checkDate.setDate(checkDate.getDate() - 1); }
+      else break;
+    }
+    return count;
+  }, [heatmapSet]);
+
+  // Build heatmap grid (26 weeks)
+  const weeks = 26;
   const cells: { date: string; level: number }[][] = [];
   const today = new Date();
-  // align to Sunday
   const dayOfWeek = today.getDay();
   const start = new Date(today);
   start.setDate(today.getDate() - (weeks * 7 - 1 - (6 - dayOfWeek)));
@@ -47,47 +87,28 @@ function ProgressPage() {
       const dt = new Date(start);
       dt.setDate(start.getDate() + w * 7 + d);
       const key = dt.toISOString().slice(0, 10);
-      const active = set.has(key) && dt <= today;
+      const active = heatmapSet.has(key) && dt <= today;
       col.push({ date: key, level: active ? 2 + Math.floor(Math.random() * 2) : 0 });
     }
     cells.push(col);
   }
   const color = (lvl: number) => lvl === 0 ? "bg-[#1a1a1a]" : lvl === 1 ? "bg-[#14532d]" : lvl === 2 ? "bg-[#16a34a]" : "bg-[#22c55e]";
 
-  // Weekly chart data: last 8 weeks topics completed
-  const weekly = useMemo(() => {
-    const buckets: { week: string; topics: number }[] = [];
-    for (let i = 7; i >= 0; i--) {
-      const end = new Date();
-      end.setDate(end.getDate() - i * 7);
-      const start = new Date(end);
-      start.setDate(end.getDate() - 6);
-      const count = Object.values(state.progress).filter((p) => {
-        if (!p.completedAt) return false;
-        const d = new Date(p.completedAt);
-        return d >= start && d <= end;
-      }).length;
-      buckets.push({ week: `W-${i}`, topics: count });
-    }
-    return buckets;
-  }, [state.progress]);
-
-  const daily = useMemo(() => {
-    const buckets: { day: string; rate: number }[] = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      buckets.push({ day: key.slice(5), rate: set.has(key) ? 100 : 0 });
-    }
-    return buckets;
-  }, [state.activeDays]);
+  if (isLoading) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center p-12 text-[#666]">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading progress...
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell>
-      <PageHeader kicker="Your Progress" title={path.name} subtitle="Streaks, heatmap, and what's still ahead." />
+      <PageHeader kicker="Your Progress" title="Learning Analytics" subtitle="Streaks, heatmap, and per-path completion — all from your real data." />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <Card className="p-5">
           <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-1">Current Streak</div>
           <div className="flex items-center gap-3">
@@ -97,18 +118,23 @@ function ProgressPage() {
           </div>
         </Card>
         <Card className="p-5">
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-1">Longest Streak</div>
-          <div className="text-3xl font-semibold font-mono">{longest}d</div>
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-1">Topics Completed</div>
+          <div className="text-3xl font-semibold font-mono">{totalDone}<span className="text-[#333] text-xl">/{totalAll}</span></div>
         </Card>
         <Card className="p-5">
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-1">Active Days (30d)</div>
-          <div className="text-3xl font-semibold font-mono">{state.activeDays.filter((d) => Date.now() - new Date(d).getTime() < 30 * 86400000).length}</div>
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-1">Overall Mastery</div>
+          <div className="text-3xl font-semibold font-mono">{overallPct}%</div>
+          <Progress value={overallPct} />
+        </Card>
+        <Card className="p-5">
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-1">Learning Paths</div>
+          <div className="text-3xl font-semibold font-mono">{paths.length}</div>
         </Card>
       </div>
 
       {/* Heatmap */}
       <Card className="p-5 mb-6">
-        <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666] mb-4">Activity</div>
+        <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666] mb-4">Activity (Last 6 Months)</div>
         <div className="flex gap-1 overflow-x-auto">
           {cells.map((col, i) => (
             <div key={i} className="flex flex-col gap-1">
@@ -123,54 +149,21 @@ function ProgressPage() {
         </div>
       </Card>
 
-      {/* Per module */}
+      {/* Per-path progress */}
       <Card className="p-5 mb-6">
-        <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666] mb-4">By Module</div>
+        <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666] mb-4">By Learning Path</div>
         <ul className="space-y-3">
-          {MODULES.map((m) => {
-            const c = moduleCompletion(state, m.id);
-            return (
-              <li key={m.id} className="flex items-center gap-3 text-sm">
-                <div className="w-44 truncate">{m.title}</div>
-                <div className="flex-1"><Progress value={c.pct} /></div>
-                <div className="font-mono text-xs text-[#999] w-20 text-right">{c.pct}% · {c.done}/{c.total}</div>
-              </li>
-            );
-          })}
+          {pathStats.map((p) => (
+            <li key={p.slug} className="flex items-center gap-3 text-sm">
+              <div className="w-52 truncate font-medium text-[#ccc]">{p.title}</div>
+              <div className="flex-1"><Progress value={p.pct} /></div>
+              <div className="font-mono text-xs text-[#999] w-28 text-right">
+                {p.pct}% &middot; {p.done}/{p.total}
+              </div>
+            </li>
+          ))}
         </ul>
       </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-5">
-          <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666] mb-3">Topics / Week</div>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekly}>
-                <CartesianGrid stroke="#222" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="week" stroke="#666" fontSize={11} tickLine={false} axisLine={{ stroke: "#222" }} />
-                <YAxis stroke="#666" fontSize={11} allowDecimals={false} tickLine={false} axisLine={{ stroke: "#222" }} />
-                <Tooltip cursor={{ fill: "#161616" }} contentStyle={{ background: "#0a0a0a", border: "1px solid #222", fontSize: 12 }} />
-                <Bar dataKey="topics" fill="#22c55e" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666] mb-3">Mission Completion (30d)</div>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={daily}>
-                <CartesianGrid stroke="#222" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="day" stroke="#666" fontSize={10} tickLine={false} axisLine={{ stroke: "#222" }} />
-                <YAxis stroke="#666" fontSize={11} domain={[0, 100]} tickLine={false} axisLine={{ stroke: "#222" }} />
-                <Tooltip contentStyle={{ background: "#0a0a0a", border: "1px solid #222", fontSize: 12 }} />
-                <Line type="monotone" dataKey="rate" stroke="#22c55e" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
     </PageShell>
   );
 }

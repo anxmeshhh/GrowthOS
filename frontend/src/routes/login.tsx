@@ -89,10 +89,35 @@ function LoginPage() {
             </div>
           </div>
 
-          <form className="mt-6 space-y-5" onSubmit={(e) => { e.preventDefault(); window.location.href = '/dashboard'; }}>
+          <form className="mt-6 space-y-5" onSubmit={async (e) => { 
+            e.preventDefault(); 
+            const formData = new FormData(e.currentTarget);
+            const email = formData.get('email') as string;
+            // The default Django User auth checks username and password, but SimpleJWT by default expects username.
+            // Since we use email as the primary login in the UI, we'll pass email as username.
+            // In a real app we might configure Django to use email, but let's pass it as username for now.
+            try {
+              const res = await fetch("http://127.0.0.1:8000/api/auth/login/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: email.split('@')[0], password: "password" }) // Mocking password since we only have email input in UI
+              });
+              if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem("access_token", data.access);
+                localStorage.setItem("refresh_token", data.refresh);
+                window.location.href = '/dashboard';
+              } else {
+                alert("Login failed. Make sure you registered.");
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Error connecting to server.");
+            }
+          }}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[#ccc]">
-                Email address
+                Email address (used as username prefix)
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

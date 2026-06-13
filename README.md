@@ -1204,3 +1204,27 @@ The strongest version of GrowthOS is a system learners trust every morning:
 ## License
 
 This project is currently intended for active development. Add or update license details before public distribution.
+
+
+
+Here's the full picture and the plan, no auth currently exists despite login/signup pages, and the backend has no Bookmark, custom-path, file-upload, or AI-verification models — these need to be added.
+Architecture (backend additions):
+
+Bookmark (user, path, created_at)
+LearningPath: add is_custom, created_by (FK User, null for system paths)
+Topic: add created_by (null for system topics, set for custom-path topics)
+TopicMaterial (user, topic, file, uploaded_at, ai_status: pending/verified/rejected, ai_feedback)
+TopicProgress: already has status; will be driven by material verification
+Auth: djangorestframework-simplejwt — register/login/refresh endpoints to match existing login.tsx/signup.tsx
+
+New API endpoints:
+
+POST /api/auth/register/, POST /api/auth/login/, POST /api/auth/refresh/
+GET /api/paths/ — all system paths + user's custom paths, each with is_bookmarked
+POST /api/paths/{slug}/bookmark/ — toggle
+GET /api/bookmarks/ — user's bookmarked paths
+POST /api/paths/custom/ — create custom path + topics list
+GET /api/topics/{id}/ — detail + user's progress + materials
+PATCH /api/topics/{id}/progress/
+POST /api/topics/{id}/materials/ — upload file (multipart)
+POST /api/materials/{id}/verify/ — runs AI check against topic, updates progress to completed if passed, unlocks next topic

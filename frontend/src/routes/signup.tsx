@@ -63,7 +63,39 @@ function SignupPage() {
             </div>
           </div>
 
-          <form className="mt-6 space-y-4" onSubmit={(e) => { e.preventDefault(); window.location.href = '/dashboard'; }}>
+          <form className="mt-6 space-y-4" onSubmit={async (e) => { 
+            e.preventDefault(); 
+            const formData = new FormData(e.currentTarget);
+            const name = formData.get('name') as string;
+            const email = formData.get('email') as string;
+            try {
+              const res = await fetch("http://127.0.0.1:8000/api/auth/register/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                // We use the email prefix as a unique username and a dummy password since we only collect name/email in this mock UI
+                body: JSON.stringify({ username: email.split('@')[0], email, password: "password" })
+              });
+              if (res.ok || res.status === 201) {
+                // Auto-login after register
+                const loginRes = await fetch("http://127.0.0.1:8000/api/auth/login/", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ username: email.split('@')[0], password: "password" })
+                });
+                if (loginRes.ok) {
+                  const data = await loginRes.json();
+                  localStorage.setItem("access_token", data.access);
+                  localStorage.setItem("refresh_token", data.refresh);
+                  window.location.href = '/dashboard';
+                }
+              } else {
+                alert("Failed to register. Username/email may already exist.");
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Error connecting to server.");
+            }
+          }}>
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-[#ccc]">
                 Full name

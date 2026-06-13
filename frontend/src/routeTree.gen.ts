@@ -21,6 +21,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
+import { Route as PathsCreateRouteImport } from './routes/paths.create'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -82,6 +83,11 @@ const TopicTopicIdRoute = TopicTopicIdRouteImport.update({
   path: '/topic/$topicId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PathsCreateRoute = PathsCreateRouteImport.update({
+  id: '/paths/create',
+  path: '/paths/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/paths/create': typeof PathsCreateRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/paths/create': typeof PathsCreateRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/paths/create': typeof PathsCreateRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/settings'
     | '/signup'
+    | '/paths/create'
     | '/topic/$topicId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/settings'
     | '/signup'
+    | '/paths/create'
     | '/topic/$topicId'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/settings'
     | '/signup'
+    | '/paths/create'
     | '/topic/$topicId'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   RoadmapRoute: typeof RoadmapRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  PathsCreateRoute: typeof PathsCreateRoute
   TopicTopicIdRoute: typeof TopicTopicIdRoute
 }
 
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TopicTopicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/paths/create': {
+      id: '/paths/create'
+      path: '/paths/create'
+      fullPath: '/paths/create'
+      preLoaderRoute: typeof PathsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   RoadmapRoute: RoadmapRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  PathsCreateRoute: PathsCreateRoute,
   TopicTopicIdRoute: TopicTopicIdRoute,
 }
 export const routeTree = rootRouteImport

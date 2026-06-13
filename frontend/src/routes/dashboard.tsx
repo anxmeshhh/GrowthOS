@@ -95,20 +95,48 @@ function GithubHeatmap() {
   );
 }
 
+import { apiFetch } from "@/lib/api-client";
+
 function DashboardPage() {
   const { state } = useGrowth();
-  const path = PATHS.find((p) => p.id === state.settings.pathId)!;
-  const today = pickTodayTopic(state);
-  const todayProgress = today ? state.progress[today.id] ?? { resourceDone: false, notesDone: false, quizDone: false, buildDone: false } : null;
-  const completion = pathCompletion(state, state.settings.pathId);
+  
+  // Fetch paths
+  const { data: paths = [], isLoading: pathsLoading } = useQuery({
+    queryKey: ['paths'],
+    queryFn: async () => {
+      const res = await apiFetch("/paths/");
+      if (!res.ok) return [];
+      return res.json();
+    }
+  });
+
+  const activePath = paths.find((p: any) => p.is_bookmarked) || paths[0] || null;
+  const topics = activePath?.topics || [];
+  const nextTopic = topics.find((t: any) => t.user_progress !== 'completed') || topics[0] || null;
+  const today = nextTopic; 
+  
+  // Calculate completion
+  let completedCount = 0;
+  topics.forEach((t: any) => {
+    if (t.user_progress === 'completed') completedCount++;
+  });
+  const completion = { 
+    done: completedCount, 
+    total: topics.length, 
+    pct: topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0 
+  };
   const streak = computeStreak(state.activeDays);
+
+  if (pathsLoading) {
+    return <PageShell><div className="p-8 text-[#999]">Loading dashboard...</div></PageShell>;
+  }
 
   return (
     <PageShell>
       <PageHeader
         kicker="Today"
-        title={`Welcome back, ${state.settings.displayName}.`}
-        subtitle={`${path.name} · ${state.settings.dailyMinutes} min daily budget`}
+        title={`Welcome back.`}
+        subtitle={activePath ? `${activePath.title} Path` : "No active path selected"}
       />
 
       {/* Today's Mission */}
@@ -116,7 +144,7 @@ function DashboardPage() {
         <div className="border border-[#22c55e]/30 bg-[#0d1a0d] rounded-lg p-5 sm:p-6 mb-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#22c55e]">Today's Mission</div>
-            <Link to="/topic/$topicId" params={{ topicId: today.id }}>
+            <Link to="/topic/$topicId" params={{ topicId: String(today.id) }}>
               <Btn size="sm">
                 Start Session <ArrowRight size={14} />
               </Btn>
@@ -124,26 +152,11 @@ function DashboardPage() {
           </div>
           <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">{today.title}</h2>
           <div className="text-xs text-[#999] mt-1 font-mono">
-            Est. {today.estMinutes} min · {path.name} Path
+            {activePath.title} Path
           </div>
-          <ol className="mt-5 space-y-2 text-sm">
-            <li className="flex items-center gap-3 text-[#ccc]">
-              <span className="font-mono text-[#666] text-xs w-5">①</span>
-              <span>Watch: {today.resources[0]?.title ?? "Pick a resource"}{today.resources[0]?.duration ? ` (${today.resources[0].duration} min)` : ""}</span>
-            </li>
-            <li className="flex items-center gap-3 text-[#ccc]">
-              <span className="font-mono text-[#666] text-xs w-5">②</span>
-              <span>Write notes on the core concepts</span>
-            </li>
-            <li className="flex items-center gap-3 text-[#ccc]">
-              <span className="font-mono text-[#666] text-xs w-5">③</span>
-              <span>Pass the quiz: score ≥ 70%</span>
-            </li>
-            <li className="flex items-center gap-3 text-[#ccc]">
-              <span className="font-mono text-[#666] text-xs w-5">④</span>
-              <span>Commit: {today.buildChallenge}</span>
-            </li>
-          </ol>
+          <p className="mt-4 text-sm text-[#ccc] leading-relaxed">
+            {today.summary || "Upload a proof of work to complete this topic and gain your daily contribution."}
+          </p>
         </div>
       ) : null}
 
@@ -155,7 +168,7 @@ function DashboardPage() {
           sub={<Progress value={completion.pct} />}
         />
         <StatCard label="Current Streak" value={<span className="flex items-center gap-2"><Flame size={20} className="text-[#22c55e]" />{streak}d</span>} sub={<span className="text-[#666] font-mono text-[10px] uppercase tracking-wider">keep it alive</span>} />
-        <StatCard label="Today's Focus" value={<span className="text-base">{today?.title ?? "—"}</span>} sub={<Badge tone={todayProgress && (todayProgress.resourceDone || todayProgress.notesDone) ? "amber" : "green"}>{todayProgress && (todayProgress.resourceDone || todayProgress.notesDone) ? "In Progress" : "Ready"}</Badge>} />
+        <StatCard label="Today's Focus" value={<span className="text-base truncate block">{today?.title ?? "—"}</span>} sub={<Badge tone="green">Ready</Badge>} />
         <StatCard label="Path Readiness" value={<span className="font-mono">{completion.pct}%</span>} sub={<Progress value={completion.pct} />} />
       </div>
 
@@ -166,16 +179,15 @@ function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#666]">Proof Checklist</div>
-                <div className="text-sm text-[#f0f0f0] mt-1">{today.title}</div>
+                <div className="text-sm text-[#f0f0f0] mt-1 truncate">{today.title}</div>
               </div>
-              <Link to="/topic/$topicId" params={{ topicId: today.id }} className="text-xs text-[#22c55e] hover:underline">Open workspace →</Link>
+              <Link to="/topic/$topicId" params={{ topicId: String(today.id) }} className="text-xs text-[#22c55e] hover:underline">Open workspace →</Link>
             </div>
             <ul className="space-y-2.5">
               {[
-                { label: "Resource watched", done: !!todayProgress?.resourceDone, icon: BookOpen },
-                { label: "Notes written", done: !!todayProgress?.notesDone, icon: BookOpen },
-                { label: "Quiz passed", done: !!todayProgress?.quizDone, icon: ClipboardCheck },
-                { label: "Build committed", done: !!todayProgress?.buildDone, icon: Github },
+                { label: "Understand the core concepts", done: false, icon: BookOpen },
+                { label: "Prepare a proof of work (PDF/DOCX)", done: false, icon: ClipboardCheck },
+                { label: "Submit to AI for Verification", done: false, icon: Target },
               ].map((row) => (
                 <li key={row.label} className="flex items-center gap-3 text-sm py-2 px-3 border border-[#222] rounded">
                   <row.icon size={14} className="text-[#666]" />

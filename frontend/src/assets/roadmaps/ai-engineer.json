@@ -1,0 +1,1936 @@
+{
+    "nodes": [
+        {
+            "id": "what-is-an-ai-engineer",
+            "label": "What is an AI Engineer?",
+            "x": 0,
+            "y": 0,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "roles-and-responsibilities",
+            "label": "Roles and Responsibilities",
+            "x": 0,
+            "y": 45,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ai-engineer-vs-ml-engineer",
+            "label": "AI Engineer vs ML Engineer",
+            "x": 0,
+            "y": 90,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "impact-on-product-development",
+            "label": "Impact on Product Development",
+            "x": 0,
+            "y": 135,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ai-vs-agi",
+            "label": "AI vs AGI",
+            "x": 0,
+            "y": 180,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "common-terminology",
+            "label": "Common Terminology",
+            "x": 0,
+            "y": 245,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "llms",
+            "label": "LLMs",
+            "x": 0,
+            "y": 290,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "inference",
+            "label": "Inference",
+            "x": 0,
+            "y": 335,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "training",
+            "label": "Training",
+            "x": 0,
+            "y": 380,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "embeddings",
+            "label": "Embeddings",
+            "x": 0,
+            "y": 425,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "vector-databases",
+            "label": "Vector Databases",
+            "x": 0,
+            "y": 470,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ai-agents",
+            "label": "AI Agents",
+            "x": 0,
+            "y": 515,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rag",
+            "label": "RAG",
+            "x": 0,
+            "y": 560,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "prompt-engineering",
+            "label": "Prompt Engineering",
+            "x": 0,
+            "y": 605,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "pre-trained-models",
+            "label": "Pre-trained Models",
+            "x": 0,
+            "y": 670,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "using-pre-trained-models",
+            "label": "Using Pre-trained Models",
+            "x": 0,
+            "y": 715,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "benefits-of-pre-trained-models",
+            "label": "Benefits of Pre-trained Models",
+            "x": 0,
+            "y": 760,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "limitations-and-considerations",
+            "label": "Limitations and Considerations",
+            "x": 0,
+            "y": 805,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "popular-ai-models",
+            "label": "Popular AI Models",
+            "x": 0,
+            "y": 870,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "openai-models",
+            "label": "OpenAI Models",
+            "x": 0,
+            "y": 915,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "capabilities-context-length",
+            "label": "Capabilities / Context Length",
+            "x": 0,
+            "y": 960,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "cut-off-dates-knowledge",
+            "label": "Cut-off Dates / Knowledge",
+            "x": 0,
+            "y": 1005,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "anthropic-s-claude",
+            "label": "Anthropic's Claude",
+            "x": 0,
+            "y": 1050,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "google-s-gemini",
+            "label": "Google's Gemini",
+            "x": 0,
+            "y": 1095,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "azure-ai",
+            "label": "Azure AI",
+            "x": 0,
+            "y": 1140,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "aws-sagemaker",
+            "label": "AWS Sagemaker",
+            "x": 0,
+            "y": 1185,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "mistral-ai",
+            "label": "Mistral AI",
+            "x": 0,
+            "y": 1230,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "cohere",
+            "label": "Cohere",
+            "x": 0,
+            "y": 1275,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "replicate",
+            "label": "Replicate",
+            "x": 0,
+            "y": 1320,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "openai-api",
+            "label": "OpenAI API",
+            "x": 0,
+            "y": 1385,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "chat-completions-api",
+            "label": "Chat Completions API",
+            "x": 0,
+            "y": 1430,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "open-ai-playground",
+            "label": "Open AI Playground",
+            "x": 0,
+            "y": 1475,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "fine-tuning",
+            "label": "Fine-tuning",
+            "x": 0,
+            "y": 1520,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "managing-tokens",
+            "label": "Managing Tokens",
+            "x": 0,
+            "y": 1585,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "writing-prompts",
+            "label": "Writing Prompts",
+            "x": 0,
+            "y": 1630,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "maximum-tokens",
+            "label": "Maximum Tokens",
+            "x": 0,
+            "y": 1675,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "token-counting",
+            "label": "Token Counting",
+            "x": 0,
+            "y": 1720,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "pricing-considerations",
+            "label": "Pricing Considerations",
+            "x": 0,
+            "y": 1765,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "prompt-engineering-2",
+            "label": "Prompt Engineering",
+            "x": 0,
+            "y": 1830,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "robust-prompt-engineering",
+            "label": "Robust prompt engineering",
+            "x": 0,
+            "y": 1875,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "react-prompting",
+            "label": "ReAct Prompting",
+            "x": 0,
+            "y": 1920,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "prompt-engineering-roadmap",
+            "label": "Prompt Engineering Roadmap",
+            "x": 0,
+            "y": 1965,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ai-safety-and-ethics",
+            "label": "AI Safety and Ethics",
+            "x": 0,
+            "y": 2030,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "security-and-privacy-concerns",
+            "label": "Security and Privacy Concerns",
+            "x": 0,
+            "y": 2075,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "bias-and-fairness",
+            "label": "Bias and Fairness",
+            "x": 0,
+            "y": 2120,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "understanding-ai-safety-issues",
+            "label": "Understanding AI Safety Issues",
+            "x": 0,
+            "y": 2165,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "openai-moderation-api",
+            "label": "OpenAI Moderation API",
+            "x": 0,
+            "y": 2210,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "adding-end-user-ids-in-prompts",
+            "label": "Adding end-user IDs in prompts",
+            "x": 0,
+            "y": 2255,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "prompt-injection-attacks",
+            "label": "Prompt Injection Attacks",
+            "x": 0,
+            "y": 2300,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "conducting-adversarial-testing",
+            "label": "Conducting adversarial testing",
+            "x": 0,
+            "y": 2345,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "opensource-ai",
+            "label": "OpenSource AI",
+            "x": 0,
+            "y": 2410,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "open-vs-closed-source-models",
+            "label": "Open vs Closed Source Models",
+            "x": 0,
+            "y": 2455,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "popular-open-source-models",
+            "label": "Popular Open Source Models",
+            "x": 0,
+            "y": 2500,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "finding-open-source-models",
+            "label": "Finding Open Source Models",
+            "x": 0,
+            "y": 2545,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "hugging-face",
+            "label": "Hugging Face",
+            "x": 0,
+            "y": 2610,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "hugging-face-hub",
+            "label": "Hugging Face Hub",
+            "x": 0,
+            "y": 2655,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "hugging-face-tasks",
+            "label": "Hugging Face Tasks",
+            "x": 0,
+            "y": 2700,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "hugging-face-models",
+            "label": "Hugging Face Models",
+            "x": 0,
+            "y": 2745,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "sentence-transformers",
+            "label": "Sentence Transformers",
+            "x": 0,
+            "y": 2790,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "models-on-hugging-face",
+            "label": "Models on Hugging Face",
+            "x": 0,
+            "y": 2835,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "inference-sdk",
+            "label": "Inference SDK",
+            "x": 0,
+            "y": 2880,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "transformers-js",
+            "label": "Transformers.js",
+            "x": 0,
+            "y": 2925,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ollama",
+            "label": "Ollama",
+            "x": 0,
+            "y": 2990,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ollama-models",
+            "label": "Ollama Models",
+            "x": 0,
+            "y": 3035,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ollama-sdk",
+            "label": "Ollama SDK",
+            "x": 0,
+            "y": 3080,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "using-open-source-models",
+            "label": "Using Open Source Models",
+            "x": 0,
+            "y": 3125,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "embeddings-vector-databases",
+            "label": "Embeddings & Vector Databases",
+            "x": 0,
+            "y": 3190,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "what-are-embeddings",
+            "label": "What are Embeddings",
+            "x": 0,
+            "y": 3235,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "open-ai-embedding-models",
+            "label": "Open AI Embedding Models",
+            "x": 0,
+            "y": 3280,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "open-ai-embeddings-api",
+            "label": "Open AI Embeddings API",
+            "x": 0,
+            "y": 3325,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "open-source-embeddings",
+            "label": "Open-Source Embeddings",
+            "x": 0,
+            "y": 3370,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "embeddings-vector-databases-pricing-considerations",
+            "label": "Pricing Considerations",
+            "x": 0,
+            "y": 3415,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "use-cases-for-embeddings",
+            "label": "Use Cases for Embeddings",
+            "x": 0,
+            "y": 3480,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "semantic-search",
+            "label": "Semantic Search",
+            "x": 0,
+            "y": 3525,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-classification",
+            "label": "Data Classification",
+            "x": 0,
+            "y": 3570,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "recommendation-systems",
+            "label": "Recommendation Systems",
+            "x": 0,
+            "y": 3615,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "anomaly-detection",
+            "label": "Anomaly Detection",
+            "x": 0,
+            "y": 3660,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "vector-databases-2",
+            "label": "Vector Databases",
+            "x": 0,
+            "y": 3725,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "purpose-and-functionality",
+            "label": "Purpose and Functionality",
+            "x": 0,
+            "y": 3770,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "chroma",
+            "label": "Chroma",
+            "x": 0,
+            "y": 3815,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "pinecone",
+            "label": "Pinecone",
+            "x": 0,
+            "y": 3860,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "weaviate",
+            "label": "Weaviate",
+            "x": 0,
+            "y": 3905,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "faiss",
+            "label": "FAISS",
+            "x": 0,
+            "y": 3950,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "lancedb",
+            "label": "LanceDB",
+            "x": 0,
+            "y": 3995,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "qdrant",
+            "label": "Qdrant",
+            "x": 0,
+            "y": 4040,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "supabase",
+            "label": "Supabase",
+            "x": 0,
+            "y": 4085,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "mongodb-atlas",
+            "label": "MongoDB Atlas",
+            "x": 0,
+            "y": 4130,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rag-implementation",
+            "label": "RAG & Implementation",
+            "x": 0,
+            "y": 4195,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rag-vs-fine-tuning",
+            "label": "RAG vs Fine-tuning",
+            "x": 0,
+            "y": 4240,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "implementing-rag",
+            "label": "Implementing RAG",
+            "x": 0,
+            "y": 4285,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "chunking",
+            "label": "Chunking",
+            "x": 0,
+            "y": 4330,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "embedding",
+            "label": "Embedding",
+            "x": 0,
+            "y": 4375,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "vector-database",
+            "label": "Vector Database",
+            "x": 0,
+            "y": 4420,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "retrieval-process",
+            "label": "Retrieval Process",
+            "x": 0,
+            "y": 4465,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "generation",
+            "label": "Generation",
+            "x": 0,
+            "y": 4510,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "using-sdks-directly",
+            "label": "Using SDKs Directly",
+            "x": 0,
+            "y": 4555,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "langchain",
+            "label": "Langchain",
+            "x": 0,
+            "y": 4600,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "llama-index",
+            "label": "Llama Index",
+            "x": 0,
+            "y": 4645,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "implementing-vector-search",
+            "label": "Implementing Vector Search",
+            "x": 0,
+            "y": 4690,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "indexing-embeddings",
+            "label": "Indexing Embeddings",
+            "x": 0,
+            "y": 4735,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "performing-similarity-search",
+            "label": "Performing Similarity Search",
+            "x": 0,
+            "y": 4780,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rag-alternative",
+            "label": "RAG Alternative",
+            "x": 0,
+            "y": 4825,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "open-ai-assistant-api",
+            "label": "Open AI Assistant API",
+            "x": 0,
+            "y": 4870,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ai-agents-2",
+            "label": "AI Agents",
+            "x": 0,
+            "y": 4935,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "agents-usecases",
+            "label": "Agents Usecases",
+            "x": 0,
+            "y": 4980,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "know-your-customers-usecases",
+            "label": "Know your Customers / Usecases",
+            "x": 0,
+            "y": 5025,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "constraining-outputs-and-inputs",
+            "label": "Constraining outputs and inputs",
+            "x": 0,
+            "y": 5070,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "safety-best-practices",
+            "label": "Safety Best Practices",
+            "x": 0,
+            "y": 5115,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "building-ai-agents",
+            "label": "Building AI Agents",
+            "x": 0,
+            "y": 5160,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "manual-implementation",
+            "label": "Manual Implementation",
+            "x": 0,
+            "y": 5205,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "openai-functions-tools",
+            "label": "OpenAI Functions / Tools",
+            "x": 0,
+            "y": 5250,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "openai-assistant-api",
+            "label": "OpenAI Assistant API",
+            "x": 0,
+            "y": 5295,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "development-tools",
+            "label": "Development Tools",
+            "x": 0,
+            "y": 5360,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ai-code-editors",
+            "label": "AI Code Editors",
+            "x": 0,
+            "y": 5405,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "code-completion-tools",
+            "label": "Code Completion Tools",
+            "x": 0,
+            "y": 5450,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "multimodal-ai",
+            "label": "Multimodal AI",
+            "x": 0,
+            "y": 5515,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "image-understanding",
+            "label": "Image Understanding",
+            "x": 0,
+            "y": 5560,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "image-generation",
+            "label": "Image Generation",
+            "x": 0,
+            "y": 5605,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "video-understanding",
+            "label": "Video Understanding",
+            "x": 0,
+            "y": 5650,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "audio-processing",
+            "label": "Audio Processing",
+            "x": 0,
+            "y": 5695,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "text-to-speech",
+            "label": "Text-to-Speech",
+            "x": 0,
+            "y": 5740,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "speech-to-text",
+            "label": "Speech-to-Text",
+            "x": 0,
+            "y": 5785,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "openai-vision-api",
+            "label": "OpenAI Vision API",
+            "x": 0,
+            "y": 5830,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "dall-e-api",
+            "label": "DALL-E API",
+            "x": 0,
+            "y": 5875,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "whisper-api",
+            "label": "Whisper API",
+            "x": 0,
+            "y": 5920,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "multimodal-ai-hugging-face-models",
+            "label": "Hugging Face Models",
+            "x": 0,
+            "y": 5965,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "langchain-for-multimodal-apps",
+            "label": "LangChain for Multimodal Apps",
+            "x": 0,
+            "y": 6010,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "llamaindex-for-multimodal-apps",
+            "label": "LlamaIndex for Multimodal Apps",
+            "x": 0,
+            "y": 6055,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "implementing-multimodal-ai",
+            "label": "Implementing Multimodal AI",
+            "x": 0,
+            "y": 6100,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        }
+    ],
+    "edges": [
+        {
+            "id": "e-what-is-an-ai-engineer-roles-and-responsibilities",
+            "source": "what-is-an-ai-engineer",
+            "target": "roles-and-responsibilities"
+        },
+        {
+            "id": "e-what-is-an-ai-engineer-ai-engineer-vs-ml-engineer",
+            "source": "what-is-an-ai-engineer",
+            "target": "ai-engineer-vs-ml-engineer"
+        },
+        {
+            "id": "e-what-is-an-ai-engineer-impact-on-product-development",
+            "source": "what-is-an-ai-engineer",
+            "target": "impact-on-product-development"
+        },
+        {
+            "id": "e-what-is-an-ai-engineer-ai-vs-agi",
+            "source": "what-is-an-ai-engineer",
+            "target": "ai-vs-agi"
+        },
+        {
+            "id": "e-what-is-an-ai-engineer-common-terminology",
+            "source": "what-is-an-ai-engineer",
+            "target": "common-terminology"
+        },
+        {
+            "id": "e-common-terminology-llms",
+            "source": "common-terminology",
+            "target": "llms"
+        },
+        {
+            "id": "e-common-terminology-inference",
+            "source": "common-terminology",
+            "target": "inference"
+        },
+        {
+            "id": "e-common-terminology-training",
+            "source": "common-terminology",
+            "target": "training"
+        },
+        {
+            "id": "e-common-terminology-embeddings",
+            "source": "common-terminology",
+            "target": "embeddings"
+        },
+        {
+            "id": "e-common-terminology-vector-databases",
+            "source": "common-terminology",
+            "target": "vector-databases"
+        },
+        {
+            "id": "e-common-terminology-ai-agents",
+            "source": "common-terminology",
+            "target": "ai-agents"
+        },
+        {
+            "id": "e-common-terminology-rag",
+            "source": "common-terminology",
+            "target": "rag"
+        },
+        {
+            "id": "e-common-terminology-prompt-engineering",
+            "source": "common-terminology",
+            "target": "prompt-engineering"
+        },
+        {
+            "id": "e-common-terminology-pre-trained-models",
+            "source": "common-terminology",
+            "target": "pre-trained-models"
+        },
+        {
+            "id": "e-pre-trained-models-using-pre-trained-models",
+            "source": "pre-trained-models",
+            "target": "using-pre-trained-models"
+        },
+        {
+            "id": "e-pre-trained-models-benefits-of-pre-trained-models",
+            "source": "pre-trained-models",
+            "target": "benefits-of-pre-trained-models"
+        },
+        {
+            "id": "e-pre-trained-models-limitations-and-considerations",
+            "source": "pre-trained-models",
+            "target": "limitations-and-considerations"
+        },
+        {
+            "id": "e-pre-trained-models-popular-ai-models",
+            "source": "pre-trained-models",
+            "target": "popular-ai-models"
+        },
+        {
+            "id": "e-popular-ai-models-openai-models",
+            "source": "popular-ai-models",
+            "target": "openai-models"
+        },
+        {
+            "id": "e-popular-ai-models-capabilities-context-length",
+            "source": "popular-ai-models",
+            "target": "capabilities-context-length"
+        },
+        {
+            "id": "e-popular-ai-models-cut-off-dates-knowledge",
+            "source": "popular-ai-models",
+            "target": "cut-off-dates-knowledge"
+        },
+        {
+            "id": "e-popular-ai-models-anthropic-s-claude",
+            "source": "popular-ai-models",
+            "target": "anthropic-s-claude"
+        },
+        {
+            "id": "e-popular-ai-models-google-s-gemini",
+            "source": "popular-ai-models",
+            "target": "google-s-gemini"
+        },
+        {
+            "id": "e-popular-ai-models-azure-ai",
+            "source": "popular-ai-models",
+            "target": "azure-ai"
+        },
+        {
+            "id": "e-popular-ai-models-aws-sagemaker",
+            "source": "popular-ai-models",
+            "target": "aws-sagemaker"
+        },
+        {
+            "id": "e-popular-ai-models-mistral-ai",
+            "source": "popular-ai-models",
+            "target": "mistral-ai"
+        },
+        {
+            "id": "e-popular-ai-models-cohere",
+            "source": "popular-ai-models",
+            "target": "cohere"
+        },
+        {
+            "id": "e-popular-ai-models-replicate",
+            "source": "popular-ai-models",
+            "target": "replicate"
+        },
+        {
+            "id": "e-popular-ai-models-openai-api",
+            "source": "popular-ai-models",
+            "target": "openai-api"
+        },
+        {
+            "id": "e-openai-api-chat-completions-api",
+            "source": "openai-api",
+            "target": "chat-completions-api"
+        },
+        {
+            "id": "e-openai-api-open-ai-playground",
+            "source": "openai-api",
+            "target": "open-ai-playground"
+        },
+        {
+            "id": "e-openai-api-fine-tuning",
+            "source": "openai-api",
+            "target": "fine-tuning"
+        },
+        {
+            "id": "e-openai-api-managing-tokens",
+            "source": "openai-api",
+            "target": "managing-tokens"
+        },
+        {
+            "id": "e-managing-tokens-writing-prompts",
+            "source": "managing-tokens",
+            "target": "writing-prompts"
+        },
+        {
+            "id": "e-managing-tokens-maximum-tokens",
+            "source": "managing-tokens",
+            "target": "maximum-tokens"
+        },
+        {
+            "id": "e-managing-tokens-token-counting",
+            "source": "managing-tokens",
+            "target": "token-counting"
+        },
+        {
+            "id": "e-managing-tokens-pricing-considerations",
+            "source": "managing-tokens",
+            "target": "pricing-considerations"
+        },
+        {
+            "id": "e-managing-tokens-prompt-engineering-2",
+            "source": "managing-tokens",
+            "target": "prompt-engineering-2"
+        },
+        {
+            "id": "e-prompt-engineering-2-robust-prompt-engineering",
+            "source": "prompt-engineering-2",
+            "target": "robust-prompt-engineering"
+        },
+        {
+            "id": "e-prompt-engineering-2-react-prompting",
+            "source": "prompt-engineering-2",
+            "target": "react-prompting"
+        },
+        {
+            "id": "e-prompt-engineering-2-prompt-engineering-roadmap",
+            "source": "prompt-engineering-2",
+            "target": "prompt-engineering-roadmap"
+        },
+        {
+            "id": "e-prompt-engineering-2-ai-safety-and-ethics",
+            "source": "prompt-engineering-2",
+            "target": "ai-safety-and-ethics"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-security-and-privacy-concerns",
+            "source": "ai-safety-and-ethics",
+            "target": "security-and-privacy-concerns"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-bias-and-fairness",
+            "source": "ai-safety-and-ethics",
+            "target": "bias-and-fairness"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-understanding-ai-safety-issues",
+            "source": "ai-safety-and-ethics",
+            "target": "understanding-ai-safety-issues"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-openai-moderation-api",
+            "source": "ai-safety-and-ethics",
+            "target": "openai-moderation-api"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-adding-end-user-ids-in-prompts",
+            "source": "ai-safety-and-ethics",
+            "target": "adding-end-user-ids-in-prompts"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-prompt-injection-attacks",
+            "source": "ai-safety-and-ethics",
+            "target": "prompt-injection-attacks"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-conducting-adversarial-testing",
+            "source": "ai-safety-and-ethics",
+            "target": "conducting-adversarial-testing"
+        },
+        {
+            "id": "e-ai-safety-and-ethics-opensource-ai",
+            "source": "ai-safety-and-ethics",
+            "target": "opensource-ai"
+        },
+        {
+            "id": "e-opensource-ai-open-vs-closed-source-models",
+            "source": "opensource-ai",
+            "target": "open-vs-closed-source-models"
+        },
+        {
+            "id": "e-opensource-ai-popular-open-source-models",
+            "source": "opensource-ai",
+            "target": "popular-open-source-models"
+        },
+        {
+            "id": "e-opensource-ai-finding-open-source-models",
+            "source": "opensource-ai",
+            "target": "finding-open-source-models"
+        },
+        {
+            "id": "e-opensource-ai-hugging-face",
+            "source": "opensource-ai",
+            "target": "hugging-face"
+        },
+        {
+            "id": "e-hugging-face-hugging-face-hub",
+            "source": "hugging-face",
+            "target": "hugging-face-hub"
+        },
+        {
+            "id": "e-hugging-face-hugging-face-tasks",
+            "source": "hugging-face",
+            "target": "hugging-face-tasks"
+        },
+        {
+            "id": "e-hugging-face-hugging-face-models",
+            "source": "hugging-face",
+            "target": "hugging-face-models"
+        },
+        {
+            "id": "e-hugging-face-sentence-transformers",
+            "source": "hugging-face",
+            "target": "sentence-transformers"
+        },
+        {
+            "id": "e-hugging-face-models-on-hugging-face",
+            "source": "hugging-face",
+            "target": "models-on-hugging-face"
+        },
+        {
+            "id": "e-hugging-face-inference-sdk",
+            "source": "hugging-face",
+            "target": "inference-sdk"
+        },
+        {
+            "id": "e-hugging-face-transformers-js",
+            "source": "hugging-face",
+            "target": "transformers-js"
+        },
+        {
+            "id": "e-hugging-face-ollama",
+            "source": "hugging-face",
+            "target": "ollama"
+        },
+        {
+            "id": "e-ollama-ollama-models",
+            "source": "ollama",
+            "target": "ollama-models"
+        },
+        {
+            "id": "e-ollama-ollama-sdk",
+            "source": "ollama",
+            "target": "ollama-sdk"
+        },
+        {
+            "id": "e-ollama-using-open-source-models",
+            "source": "ollama",
+            "target": "using-open-source-models"
+        },
+        {
+            "id": "e-ollama-embeddings-vector-databases",
+            "source": "ollama",
+            "target": "embeddings-vector-databases"
+        },
+        {
+            "id": "e-embeddings-vector-databases-what-are-embeddings",
+            "source": "embeddings-vector-databases",
+            "target": "what-are-embeddings"
+        },
+        {
+            "id": "e-embeddings-vector-databases-open-ai-embedding-models",
+            "source": "embeddings-vector-databases",
+            "target": "open-ai-embedding-models"
+        },
+        {
+            "id": "e-embeddings-vector-databases-open-ai-embeddings-api",
+            "source": "embeddings-vector-databases",
+            "target": "open-ai-embeddings-api"
+        },
+        {
+            "id": "e-embeddings-vector-databases-open-source-embeddings",
+            "source": "embeddings-vector-databases",
+            "target": "open-source-embeddings"
+        },
+        {
+            "id": "e-embeddings-vector-databases-embeddings-vector-databases-pricing-considerations",
+            "source": "embeddings-vector-databases",
+            "target": "embeddings-vector-databases-pricing-considerations"
+        },
+        {
+            "id": "e-embeddings-vector-databases-use-cases-for-embeddings",
+            "source": "embeddings-vector-databases",
+            "target": "use-cases-for-embeddings"
+        },
+        {
+            "id": "e-use-cases-for-embeddings-semantic-search",
+            "source": "use-cases-for-embeddings",
+            "target": "semantic-search"
+        },
+        {
+            "id": "e-use-cases-for-embeddings-data-classification",
+            "source": "use-cases-for-embeddings",
+            "target": "data-classification"
+        },
+        {
+            "id": "e-use-cases-for-embeddings-recommendation-systems",
+            "source": "use-cases-for-embeddings",
+            "target": "recommendation-systems"
+        },
+        {
+            "id": "e-use-cases-for-embeddings-anomaly-detection",
+            "source": "use-cases-for-embeddings",
+            "target": "anomaly-detection"
+        },
+        {
+            "id": "e-use-cases-for-embeddings-vector-databases-2",
+            "source": "use-cases-for-embeddings",
+            "target": "vector-databases-2"
+        },
+        {
+            "id": "e-vector-databases-2-purpose-and-functionality",
+            "source": "vector-databases-2",
+            "target": "purpose-and-functionality"
+        },
+        {
+            "id": "e-vector-databases-2-chroma",
+            "source": "vector-databases-2",
+            "target": "chroma"
+        },
+        {
+            "id": "e-vector-databases-2-pinecone",
+            "source": "vector-databases-2",
+            "target": "pinecone"
+        },
+        {
+            "id": "e-vector-databases-2-weaviate",
+            "source": "vector-databases-2",
+            "target": "weaviate"
+        },
+        {
+            "id": "e-vector-databases-2-faiss",
+            "source": "vector-databases-2",
+            "target": "faiss"
+        },
+        {
+            "id": "e-vector-databases-2-lancedb",
+            "source": "vector-databases-2",
+            "target": "lancedb"
+        },
+        {
+            "id": "e-vector-databases-2-qdrant",
+            "source": "vector-databases-2",
+            "target": "qdrant"
+        },
+        {
+            "id": "e-vector-databases-2-supabase",
+            "source": "vector-databases-2",
+            "target": "supabase"
+        },
+        {
+            "id": "e-vector-databases-2-mongodb-atlas",
+            "source": "vector-databases-2",
+            "target": "mongodb-atlas"
+        },
+        {
+            "id": "e-vector-databases-2-rag-implementation",
+            "source": "vector-databases-2",
+            "target": "rag-implementation"
+        },
+        {
+            "id": "e-rag-implementation-rag-vs-fine-tuning",
+            "source": "rag-implementation",
+            "target": "rag-vs-fine-tuning"
+        },
+        {
+            "id": "e-rag-implementation-implementing-rag",
+            "source": "rag-implementation",
+            "target": "implementing-rag"
+        },
+        {
+            "id": "e-rag-implementation-chunking",
+            "source": "rag-implementation",
+            "target": "chunking"
+        },
+        {
+            "id": "e-rag-implementation-embedding",
+            "source": "rag-implementation",
+            "target": "embedding"
+        },
+        {
+            "id": "e-rag-implementation-vector-database",
+            "source": "rag-implementation",
+            "target": "vector-database"
+        },
+        {
+            "id": "e-rag-implementation-retrieval-process",
+            "source": "rag-implementation",
+            "target": "retrieval-process"
+        },
+        {
+            "id": "e-rag-implementation-generation",
+            "source": "rag-implementation",
+            "target": "generation"
+        },
+        {
+            "id": "e-rag-implementation-using-sdks-directly",
+            "source": "rag-implementation",
+            "target": "using-sdks-directly"
+        },
+        {
+            "id": "e-rag-implementation-langchain",
+            "source": "rag-implementation",
+            "target": "langchain"
+        },
+        {
+            "id": "e-rag-implementation-llama-index",
+            "source": "rag-implementation",
+            "target": "llama-index"
+        },
+        {
+            "id": "e-rag-implementation-implementing-vector-search",
+            "source": "rag-implementation",
+            "target": "implementing-vector-search"
+        },
+        {
+            "id": "e-rag-implementation-indexing-embeddings",
+            "source": "rag-implementation",
+            "target": "indexing-embeddings"
+        },
+        {
+            "id": "e-rag-implementation-performing-similarity-search",
+            "source": "rag-implementation",
+            "target": "performing-similarity-search"
+        },
+        {
+            "id": "e-rag-implementation-rag-alternative",
+            "source": "rag-implementation",
+            "target": "rag-alternative"
+        },
+        {
+            "id": "e-rag-implementation-open-ai-assistant-api",
+            "source": "rag-implementation",
+            "target": "open-ai-assistant-api"
+        },
+        {
+            "id": "e-rag-implementation-ai-agents-2",
+            "source": "rag-implementation",
+            "target": "ai-agents-2"
+        },
+        {
+            "id": "e-ai-agents-2-agents-usecases",
+            "source": "ai-agents-2",
+            "target": "agents-usecases"
+        },
+        {
+            "id": "e-ai-agents-2-know-your-customers-usecases",
+            "source": "ai-agents-2",
+            "target": "know-your-customers-usecases"
+        },
+        {
+            "id": "e-ai-agents-2-constraining-outputs-and-inputs",
+            "source": "ai-agents-2",
+            "target": "constraining-outputs-and-inputs"
+        },
+        {
+            "id": "e-ai-agents-2-safety-best-practices",
+            "source": "ai-agents-2",
+            "target": "safety-best-practices"
+        },
+        {
+            "id": "e-ai-agents-2-building-ai-agents",
+            "source": "ai-agents-2",
+            "target": "building-ai-agents"
+        },
+        {
+            "id": "e-ai-agents-2-manual-implementation",
+            "source": "ai-agents-2",
+            "target": "manual-implementation"
+        },
+        {
+            "id": "e-ai-agents-2-openai-functions-tools",
+            "source": "ai-agents-2",
+            "target": "openai-functions-tools"
+        },
+        {
+            "id": "e-ai-agents-2-openai-assistant-api",
+            "source": "ai-agents-2",
+            "target": "openai-assistant-api"
+        },
+        {
+            "id": "e-ai-agents-2-development-tools",
+            "source": "ai-agents-2",
+            "target": "development-tools"
+        },
+        {
+            "id": "e-development-tools-ai-code-editors",
+            "source": "development-tools",
+            "target": "ai-code-editors"
+        },
+        {
+            "id": "e-development-tools-code-completion-tools",
+            "source": "development-tools",
+            "target": "code-completion-tools"
+        },
+        {
+            "id": "e-development-tools-multimodal-ai",
+            "source": "development-tools",
+            "target": "multimodal-ai"
+        },
+        {
+            "id": "e-multimodal-ai-image-understanding",
+            "source": "multimodal-ai",
+            "target": "image-understanding"
+        },
+        {
+            "id": "e-multimodal-ai-image-generation",
+            "source": "multimodal-ai",
+            "target": "image-generation"
+        },
+        {
+            "id": "e-multimodal-ai-video-understanding",
+            "source": "multimodal-ai",
+            "target": "video-understanding"
+        },
+        {
+            "id": "e-multimodal-ai-audio-processing",
+            "source": "multimodal-ai",
+            "target": "audio-processing"
+        },
+        {
+            "id": "e-multimodal-ai-text-to-speech",
+            "source": "multimodal-ai",
+            "target": "text-to-speech"
+        },
+        {
+            "id": "e-multimodal-ai-speech-to-text",
+            "source": "multimodal-ai",
+            "target": "speech-to-text"
+        },
+        {
+            "id": "e-multimodal-ai-openai-vision-api",
+            "source": "multimodal-ai",
+            "target": "openai-vision-api"
+        },
+        {
+            "id": "e-multimodal-ai-dall-e-api",
+            "source": "multimodal-ai",
+            "target": "dall-e-api"
+        },
+        {
+            "id": "e-multimodal-ai-whisper-api",
+            "source": "multimodal-ai",
+            "target": "whisper-api"
+        },
+        {
+            "id": "e-multimodal-ai-multimodal-ai-hugging-face-models",
+            "source": "multimodal-ai",
+            "target": "multimodal-ai-hugging-face-models"
+        },
+        {
+            "id": "e-multimodal-ai-langchain-for-multimodal-apps",
+            "source": "multimodal-ai",
+            "target": "langchain-for-multimodal-apps"
+        },
+        {
+            "id": "e-multimodal-ai-llamaindex-for-multimodal-apps",
+            "source": "multimodal-ai",
+            "target": "llamaindex-for-multimodal-apps"
+        },
+        {
+            "id": "e-multimodal-ai-implementing-multimodal-ai",
+            "source": "multimodal-ai",
+            "target": "implementing-multimodal-ai"
+        }
+    ]
+}

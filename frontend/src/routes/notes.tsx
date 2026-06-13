@@ -1,128 +1,215 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, Plus, X } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Search, FileText, Video, ExternalLink, BookOpen, Loader2 } from "lucide-react";
 import { PageShell, PageHeader, Card, Btn, Badge } from "@/components/growth-ui";
-import { useGrowth } from "@/lib/growth-store";
-import { TOPICS } from "@/lib/growth-data";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 export const Route = createFileRoute("/notes")({
-  head: () => ({ meta: [{ title: "Notes — GrowthOS" }, { name: "description", content: "Your study notes, searchable and tagged by topic." }] }),
+  head: () => ({ meta: [{ title: "Notes — GrowthOS" }, { name: "description", content: "All your study notes, documents, and references in one place." }] }),
   component: NotesPage,
 });
 
 function NotesPage() {
-  const { state, update } = useGrowth();
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<string>("all");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [filterPath, setFilterPath] = useState<string>("all");
 
-  const tags = useMemo(() => {
-    const set = new Map<string, string>();
-    for (const n of state.notes) {
-      const t = TOPICS.find((x) => x.id === n.topicId);
-      if (t) set.set(t.id, t.title);
+  // Fetch all learning paths with topics
+  const { data: paths = [], isLoading: pathsLoading } = useQuery({
+    queryKey: ["paths"],
+    queryFn: async () => {
+      const res = await apiFetch("/paths/");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  // Fetch all notes across topics
+  const { data: allNotes = [], isLoading: notesLoading } = useQuery({
+    queryKey: ["all-notes"],
+    queryFn: async () => {
+      const res = await apiFetch("/all-notes/");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  // Fetch all note documents across topics
+  const { data: allDocs = [], isLoading: docsLoading } = useQuery({
+    queryKey: ["all-note-documents"],
+    queryFn: async () => {
+      const res = await apiFetch("/all-note-documents/");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const isLoading = pathsLoading || notesLoading || docsLoading;
+
+  // Group notes and docs by topic
+  const topicMap = new Map<string, { pathTitle: string; topicTitle: string; topicSlug: string; topicId: string; notes: any[]; docs: any[] }>();
+
+  for (const note of allNotes) {
+    const key = String(note.topic);
+    if (!topicMap.has(key)) {
+      // Find topic info from paths
+      let pathTitle = "Unknown Path";
+      let topicTitle = `Topic #${note.topic}`;
+      let topicSlug = String(note.topic);
+      for (const p of paths) {
+        const t = p.topics?.find((t: any) => String(t.id) === key);
+        if (t) { pathTitle = p.title; topicTitle = t.title; topicSlug = t.slug || String(t.id); break; }
+      }
+      topicMap.set(key, { pathTitle, topicTitle, topicSlug, topicId: key, notes: [], docs: [] });
     }
-    return Array.from(set.entries());
-  }, [state.notes]);
+    topicMap.get(key)!.notes.push(note);
+  }
 
-  const filtered = state.notes.filter((n) => {
-    if (filter !== "all" && n.topicId !== filter) return false;
-    if (q && !(n.title.toLowerCase().includes(q.toLowerCase()) || n.body.toLowerCase().includes(q.toLowerCase()))) return false;
+  for (const doc of allDocs) {
+    const key = String(doc.topic);
+    if (!topicMap.has(key)) {
+      let pathTitle = "Unknown Path";
+      let topicTitle = `Topic #${doc.topic}`;
+      let topicSlug = String(doc.topic);
+      for (const p of paths) {
+        const t = p.topics?.find((t: any) => String(t.id) === key);
+        if (t) { pathTitle = p.title; topicTitle = t.title; topicSlug = t.slug || String(t.id); break; }
+      }
+      topicMap.set(key, { pathTitle, topicTitle, topicSlug, topicId: key, notes: [], docs: [] });
+    }
+    topicMap.get(key)!.docs.push(doc);
+  }
+
+  // Get unique path titles for filter
+  const pathTitles = [...new Set([...topicMap.values()].map(v => v.pathTitle))];
+
+  // Filter and search
+  const filteredTopics = [...topicMap.values()].filter(item => {
+    if (filterPath !== "all" && item.pathTitle !== filterPath) return false;
+    if (q) {
+      const lower = q.toLowerCase();
+      const matchTitle = item.topicTitle.toLowerCase().includes(lower);
+      const matchNotes = item.notes.some(n => n.content?.toLowerCase().includes(lower));
+      const matchDocs = item.docs.some(d => d.filename?.toLowerCase().includes(lower));
+      if (!matchTitle && !matchNotes && !matchDocs) return false;
+    }
     return true;
   });
 
-  const newNote = () => {
-    const id = `n-${Date.now()}`;
-    update((s) => ({ ...s, notes: [{ id, topicId: TOPICS[0].id, title: "Untitled note", body: "", updatedAt: new Date().toISOString() }, ...s.notes] }));
-    setOpenId(id);
-  };
-
-  const open = state.notes.find((n) => n.id === openId);
+  if (isLoading) {
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center p-12 text-[#666]">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading notes...
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell>
       <PageHeader
         kicker="Library"
-        title="Notes"
-        subtitle={`${state.notes.length} saved · searchable across topics`}
-        actions={<Btn size="sm" onClick={newNote}><Plus size={14} /> New note</Btn>}
+        title="Notes & Documents"
+        subtitle={`${allNotes.length} notes · ${allDocs.length} documents across ${topicMap.size} topics`}
       />
 
+      {/* Search */}
       <Card className="p-3 mb-4">
         <div className="flex items-center gap-2">
           <Search size={14} className="text-[#666] ml-1" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search notes…"
+            placeholder="Search notes, documents..."
             className="flex-1 bg-transparent outline-none text-sm text-[#f0f0f0] placeholder:text-[#666]"
           />
         </div>
       </Card>
 
-      <div className="flex gap-2 flex-wrap mb-4">
-        <Pill active={filter === "all"} onClick={() => setFilter("all")}>All Topics</Pill>
-        {tags.map(([id, name]) => (
-          <Pill key={id} active={filter === id} onClick={() => setFilter(id)}>{name}</Pill>
+      {/* Path filter pills */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        <Pill active={filterPath === "all"} onClick={() => setFilterPath("all")}>All Paths</Pill>
+        {pathTitles.map(pt => (
+          <Pill key={pt} active={filterPath === pt} onClick={() => setFilterPath(pt)}>{pt}</Pill>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {filtered.map((n) => {
-          const t = TOPICS.find((x) => x.id === n.topicId);
-          return (
-            <Card key={n.id} className="p-4 hover:bg-[#161616] transition-colors cursor-pointer" >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-semibold tracking-tight text-[#f0f0f0]">{n.title}</h3>
-                <Badge>{t?.title ?? "Untagged"}</Badge>
+      {/* Notes grouped by topic */}
+      {filteredTopics.length === 0 ? (
+        <div className="text-center py-12 text-[#666]">
+          <BookOpen size={32} className="mx-auto mb-3 opacity-50" />
+          <div className="text-sm">No notes found. Start studying a topic to create notes!</div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredTopics.map(item => (
+            <Card key={item.topicId} className="p-0 overflow-hidden">
+              {/* Topic header */}
+              <div className="px-5 py-3 border-b border-[#1a1a1a] flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-[#f0f0f0]">{item.topicTitle}</div>
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mt-0.5">{item.pathTitle}</div>
+                </div>
+                <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }}>
+                  <Btn variant="outline" size="sm">Open Workspace</Btn>
+                </Link>
               </div>
-              <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-2">{timeAgo(n.updatedAt)}</div>
-              <p className="text-sm text-[#999] line-clamp-3 whitespace-pre-wrap">{n.body || "Empty note."}</p>
-              <div className="mt-3 flex justify-end">
-                <Btn variant="outline" size="sm" onClick={() => setOpenId(n.id)}>Open</Btn>
+
+              <div className="p-5 space-y-4">
+                {/* Text notes */}
+                {item.notes.map(note => (
+                  note.content && (
+                    <div key={note.id}>
+                      <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-1.5 flex items-center gap-1">
+                        <BookOpen size={10} /> Written Notes
+                      </div>
+                      <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-lg p-4 text-sm text-[#ccc] leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">
+                        {note.content}
+                      </div>
+                      <div className="text-[10px] font-mono text-[#444] mt-1">
+                        Updated {new Date(note.updated_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  )
+                ))}
+
+                {/* Uploaded documents */}
+                {item.docs.length > 0 && (
+                  <div>
+                    <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-1.5 flex items-center gap-1">
+                      <FileText size={10} /> Uploaded Documents ({item.docs.length})
+                    </div>
+                    <div className="space-y-1.5">
+                      {item.docs.map((doc: any) => (
+                        <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg border border-[#1a1a1a] bg-[#0d0d0d]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText size={14} className="shrink-0 text-[#22c55e]" />
+                            <span className="text-sm text-[#ccc] truncate">{doc.filename}</span>
+                          </div>
+                          <a
+                            href={doc.file_url || doc.file}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-[#22c55e] hover:text-[#4ade80] ml-2 shrink-0"
+                          >
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {item.notes.every(n => !n.content) && item.docs.length === 0 && (
+                  <div className="text-xs text-[#555] py-2">No content yet.</div>
+                )}
               </div>
             </Card>
-          );
-        })}
-        {filtered.length === 0 ? <div className="text-sm text-[#666] col-span-full">No notes match your filter.</div> : null}
-      </div>
-
-      {/* Drawer */}
-      {open ? (
-        <div className="fixed inset-0 z-40 flex">
-          <div className="flex-1 bg-black/60" onClick={() => setOpenId(null)} />
-          <div className="w-full sm:w-[480px] bg-[#0a0a0a] border-l border-[#222] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#222]">
-              <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Edit note</div>
-              <button className="text-[#666] hover:text-[#f0f0f0]" onClick={() => setOpenId(null)}><X size={16} /></button>
-            </div>
-            <div className="p-4 space-y-3 overflow-y-auto flex-1">
-              <input
-                value={open.title}
-                onChange={(e) => update((s) => ({ ...s, notes: s.notes.map((n) => n.id === open.id ? { ...n, title: e.target.value, updatedAt: new Date().toISOString() } : n) }))}
-                className="w-full text-lg font-semibold tracking-tight bg-transparent outline-none border-b border-[#222] pb-2"
-              />
-              <select
-                value={open.topicId}
-                onChange={(e) => update((s) => ({ ...s, notes: s.notes.map((n) => n.id === open.id ? { ...n, topicId: e.target.value, updatedAt: new Date().toISOString() } : n) }))}
-                className="text-xs font-mono uppercase tracking-wider bg-[#0f0f0f] border border-[#222] rounded px-2 py-1.5 text-[#999]"
-              >
-                {TOPICS.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-              </select>
-              <textarea
-                value={open.body}
-                onChange={(e) => update((s) => ({ ...s, notes: s.notes.map((n) => n.id === open.id ? { ...n, body: e.target.value, updatedAt: new Date().toISOString() } : n) }))}
-                placeholder="Write everything you learned…"
-                className="w-full min-h-[300px] font-mono text-sm bg-[#0f0f0f] border border-[#222] rounded p-3 leading-7 outline-none focus:border-[#22c55e]/50"
-              />
-            </div>
-            <div className="border-t border-[#222] p-3 flex justify-between">
-              <Btn variant="ghost" tone="red" size="sm" onClick={() => { update((s) => ({ ...s, notes: s.notes.filter((n) => n.id !== open.id) })); setOpenId(null); }}>Delete</Btn>
-              <Btn size="sm" onClick={() => setOpenId(null)}>Done</Btn>
-            </div>
-          </div>
+          ))}
         </div>
-      ) : null}
+      )}
     </PageShell>
   );
 }
@@ -139,12 +226,4 @@ function Pill({ children, active, onClick }: { children: React.ReactNode; active
       {children}
     </button>
   );
-}
-
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const d = Math.floor(diff / 86400000);
-  if (d === 0) return "today";
-  if (d === 1) return "yesterday";
-  return `${d} days ago`;
 }

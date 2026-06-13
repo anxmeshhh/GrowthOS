@@ -1,0 +1,1711 @@
+{
+    "nodes": [
+        {
+            "id": "learn-the-basics",
+            "label": "Learn the Basics",
+            "x": 0,
+            "y": 0,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "what-are-relational-databases",
+            "label": "What are Relational Databases?",
+            "x": 0,
+            "y": 45,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rdbms-benefits-and-limitations",
+            "label": "RDBMS Benefits and Limitations",
+            "x": 0,
+            "y": 90,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "sql-vs-nosql-databases",
+            "label": "SQL vs NoSQL Databases",
+            "x": 0,
+            "y": 135,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "basic-sql-syntax",
+            "label": "Basic SQL Syntax",
+            "x": 0,
+            "y": 180,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "sql-keywords",
+            "label": "SQL Keywords",
+            "x": 0,
+            "y": 225,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-types",
+            "label": "Data Types",
+            "x": 0,
+            "y": 270,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "operators",
+            "label": "Operators",
+            "x": 0,
+            "y": 315,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-definition-language-ddl",
+            "label": "Data Definition Language (DDL)",
+            "x": 0,
+            "y": 380,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "create-table",
+            "label": "Create Table",
+            "x": 0,
+            "y": 425,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "alter-table",
+            "label": "Alter Table",
+            "x": 0,
+            "y": 470,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "drop-table",
+            "label": "Drop Table",
+            "x": 0,
+            "y": 515,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "truncate-table",
+            "label": "Truncate Table",
+            "x": 0,
+            "y": 560,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-manipulation-language-dml",
+            "label": "Data Manipulation Language (DML)",
+            "x": 0,
+            "y": 625,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "select",
+            "label": "SELECT",
+            "x": 0,
+            "y": 670,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "insert",
+            "label": "INSERT",
+            "x": 0,
+            "y": 715,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "update",
+            "label": "UPDATE",
+            "x": 0,
+            "y": 760,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "delete",
+            "label": "DELETE",
+            "x": 0,
+            "y": 805,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-constraints",
+            "label": "Data Constraints",
+            "x": 0,
+            "y": 870,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "primary-key",
+            "label": "Primary Key",
+            "x": 0,
+            "y": 915,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "foreign-key",
+            "label": "Foreign Key",
+            "x": 0,
+            "y": 960,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "unique",
+            "label": "Unique",
+            "x": 0,
+            "y": 1005,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "not-null",
+            "label": "NOT NULL",
+            "x": 0,
+            "y": 1050,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "check",
+            "label": "CHECK",
+            "x": 0,
+            "y": 1095,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "statements",
+            "label": "Statements",
+            "x": 0,
+            "y": 1160,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "from",
+            "label": "FROM",
+            "x": 0,
+            "y": 1205,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "where",
+            "label": "WHERE",
+            "x": 0,
+            "y": 1250,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "group-by",
+            "label": "GROUP BY",
+            "x": 0,
+            "y": 1295,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "order-by",
+            "label": "ORDER BY",
+            "x": 0,
+            "y": 1340,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "having",
+            "label": "HAVING",
+            "x": 0,
+            "y": 1385,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "aggregate-queries",
+            "label": "Aggregate Queries",
+            "x": 0,
+            "y": 1450,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "sum",
+            "label": "SUM",
+            "x": 0,
+            "y": 1495,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "count",
+            "label": "COUNT",
+            "x": 0,
+            "y": 1540,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "avg",
+            "label": "AVG",
+            "x": 0,
+            "y": 1585,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "min",
+            "label": "MIN",
+            "x": 0,
+            "y": 1630,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "max",
+            "label": "MAX",
+            "x": 0,
+            "y": 1675,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "join-queries",
+            "label": "JOIN Queries",
+            "x": 0,
+            "y": 1740,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "inner-join",
+            "label": "INNER JOIN",
+            "x": 0,
+            "y": 1785,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "left-join",
+            "label": "LEFT JOIN",
+            "x": 0,
+            "y": 1830,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "right-join",
+            "label": "RIGHT JOIN",
+            "x": 0,
+            "y": 1875,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "full-outer-join",
+            "label": "FULL OUTER JOIN",
+            "x": 0,
+            "y": 1920,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "self-join",
+            "label": "Self Join",
+            "x": 0,
+            "y": 1965,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "cross-join",
+            "label": "Cross Join",
+            "x": 0,
+            "y": 2010,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "subqueries",
+            "label": "Subqueries",
+            "x": 0,
+            "y": 2075,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "nested-subqueries",
+            "label": "Nested Subqueries",
+            "x": 0,
+            "y": 2120,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "correlated-subqueries",
+            "label": "Correlated Subqueries",
+            "x": 0,
+            "y": 2165,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "different-types",
+            "label": "Different Types",
+            "x": 0,
+            "y": 2210,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "scalar",
+            "label": "Scalar",
+            "x": 0,
+            "y": 2255,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "column",
+            "label": "Column",
+            "x": 0,
+            "y": 2300,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "row",
+            "label": "Row",
+            "x": 0,
+            "y": 2345,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "table",
+            "label": "Table",
+            "x": 0,
+            "y": 2390,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "string-functions",
+            "label": "String Functions",
+            "x": 0,
+            "y": 2455,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "concat",
+            "label": "CONCAT",
+            "x": 0,
+            "y": 2500,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "length",
+            "label": "LENGTH",
+            "x": 0,
+            "y": 2545,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "substring",
+            "label": "SUBSTRING",
+            "x": 0,
+            "y": 2590,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "replace",
+            "label": "REPLACE",
+            "x": 0,
+            "y": 2635,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "upper",
+            "label": "UPPER",
+            "x": 0,
+            "y": 2680,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "lower",
+            "label": "LOWER",
+            "x": 0,
+            "y": 2725,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "numeric-functions",
+            "label": "Numeric Functions",
+            "x": 0,
+            "y": 2790,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "abs",
+            "label": "ABS",
+            "x": 0,
+            "y": 2835,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "round",
+            "label": "ROUND",
+            "x": 0,
+            "y": 2880,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "ceiling",
+            "label": "CEILING",
+            "x": 0,
+            "y": 2925,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "floor",
+            "label": "FLOOR",
+            "x": 0,
+            "y": 2970,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "mod",
+            "label": "MOD",
+            "x": 0,
+            "y": 3015,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "date-and-time",
+            "label": "Date and Time",
+            "x": 0,
+            "y": 3080,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "date",
+            "label": "DATE",
+            "x": 0,
+            "y": 3125,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "time",
+            "label": "TIME",
+            "x": 0,
+            "y": 3170,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "timestamp",
+            "label": "TIMESTAMP",
+            "x": 0,
+            "y": 3215,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "datepart",
+            "label": "DATEPART",
+            "x": 0,
+            "y": 3260,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "dateadd",
+            "label": "DATEADD",
+            "x": 0,
+            "y": 3305,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "conditional",
+            "label": "Conditional",
+            "x": 0,
+            "y": 3370,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "case",
+            "label": "CASE",
+            "x": 0,
+            "y": 3415,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "nullif",
+            "label": "NULLIF",
+            "x": 0,
+            "y": 3460,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "coalesce",
+            "label": "COALESCE",
+            "x": 0,
+            "y": 3505,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "advanced-functions",
+            "label": "Advanced Functions",
+            "x": 0,
+            "y": 3570,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "window-functions",
+            "label": "Window Functions",
+            "x": 0,
+            "y": 3615,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rank",
+            "label": "rank",
+            "x": 0,
+            "y": 3660,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "dense-rank",
+            "label": "dense_rank",
+            "x": 0,
+            "y": 3705,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "lead",
+            "label": "lead",
+            "x": 0,
+            "y": 3750,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "lag",
+            "label": "lag",
+            "x": 0,
+            "y": 3795,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "row-number",
+            "label": "Row_number",
+            "x": 0,
+            "y": 3840,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "views",
+            "label": "Views",
+            "x": 0,
+            "y": 3905,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "creating-views",
+            "label": "Creating Views",
+            "x": 0,
+            "y": 3950,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "modifying-views",
+            "label": "Modifying Views",
+            "x": 0,
+            "y": 3995,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "dropping-views",
+            "label": "Dropping Views",
+            "x": 0,
+            "y": 4040,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "indexes",
+            "label": "Indexes",
+            "x": 0,
+            "y": 4105,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "managing-indexes",
+            "label": "Managing Indexes",
+            "x": 0,
+            "y": 4150,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "query-optimization",
+            "label": "Query Optimization",
+            "x": 0,
+            "y": 4195,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "stored-procedures-functions",
+            "label": "Stored Procedures & Functions",
+            "x": 0,
+            "y": 4260,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "creating-procedures",
+            "label": "Creating Procedures",
+            "x": 0,
+            "y": 4305,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "parameters",
+            "label": "Parameters",
+            "x": 0,
+            "y": 4350,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "transactions",
+            "label": "Transactions",
+            "x": 0,
+            "y": 4415,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "begin",
+            "label": "BEGIN",
+            "x": 0,
+            "y": 4460,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "commit",
+            "label": "COMMIT",
+            "x": 0,
+            "y": 4505,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "rollback",
+            "label": "ROLLBACK",
+            "x": 0,
+            "y": 4550,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "savepoint",
+            "label": "SAVEPOINT",
+            "x": 0,
+            "y": 4595,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "acid",
+            "label": "ACID",
+            "x": 0,
+            "y": 4640,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "transaction-isolation-levels",
+            "label": "Transaction Isolation Levels",
+            "x": 0,
+            "y": 4685,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-integrity-security",
+            "label": "Data Integrity & Security",
+            "x": 0,
+            "y": 4750,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "data-integrity-constraints",
+            "label": "Data Integrity Constraints",
+            "x": 0,
+            "y": 4795,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "grant-and-revoke",
+            "label": "GRANT and Revoke",
+            "x": 0,
+            "y": 4840,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "db-security-best-practices",
+            "label": "DB Security Best Practices",
+            "x": 0,
+            "y": 4885,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "performance-optimization",
+            "label": "Performance Optimization",
+            "x": 0,
+            "y": 4950,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "query-analysis-techniques",
+            "label": "Query Analysis Techniques",
+            "x": 0,
+            "y": 4995,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "using-indexes",
+            "label": "Using Indexes",
+            "x": 0,
+            "y": 5040,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "optimizing-joins",
+            "label": "Optimizing Joins",
+            "x": 0,
+            "y": 5085,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "reducing-subqueries",
+            "label": "Reducing Subqueries",
+            "x": 0,
+            "y": 5130,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "selective-projection",
+            "label": "Selective Projection",
+            "x": 0,
+            "y": 5175,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "query-optimization-techniques",
+            "label": "Query Optimization Techniques",
+            "x": 0,
+            "y": 5220,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "advanced-sql",
+            "label": "Advanced SQL",
+            "x": 0,
+            "y": 5285,
+            "width": 240,
+            "height": 40,
+            "bgColor": "#ffee55",
+            "textColor": "#000000"
+        },
+        {
+            "id": "recursive-queries",
+            "label": "Recursive Queries",
+            "x": 0,
+            "y": 5330,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "pivot-unpivot-operations",
+            "label": "Pivot / Unpivot Operations",
+            "x": 0,
+            "y": 5375,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "common-table-expressions",
+            "label": "Common Table Expressions",
+            "x": 0,
+            "y": 5420,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        },
+        {
+            "id": "dynamic-sql",
+            "label": "Dynamic SQL",
+            "x": 0,
+            "y": 5465,
+            "width": 180,
+            "height": 40,
+            "bgColor": "#ffdfb3",
+            "textColor": "#000000"
+        }
+    ],
+    "edges": [
+        {
+            "id": "e-learn-the-basics-what-are-relational-databases",
+            "source": "learn-the-basics",
+            "target": "what-are-relational-databases"
+        },
+        {
+            "id": "e-learn-the-basics-rdbms-benefits-and-limitations",
+            "source": "learn-the-basics",
+            "target": "rdbms-benefits-and-limitations"
+        },
+        {
+            "id": "e-learn-the-basics-sql-vs-nosql-databases",
+            "source": "learn-the-basics",
+            "target": "sql-vs-nosql-databases"
+        },
+        {
+            "id": "e-learn-the-basics-basic-sql-syntax",
+            "source": "learn-the-basics",
+            "target": "basic-sql-syntax"
+        },
+        {
+            "id": "e-learn-the-basics-sql-keywords",
+            "source": "learn-the-basics",
+            "target": "sql-keywords"
+        },
+        {
+            "id": "e-learn-the-basics-data-types",
+            "source": "learn-the-basics",
+            "target": "data-types"
+        },
+        {
+            "id": "e-learn-the-basics-operators",
+            "source": "learn-the-basics",
+            "target": "operators"
+        },
+        {
+            "id": "e-learn-the-basics-data-definition-language-ddl",
+            "source": "learn-the-basics",
+            "target": "data-definition-language-ddl"
+        },
+        {
+            "id": "e-data-definition-language-ddl-create-table",
+            "source": "data-definition-language-ddl",
+            "target": "create-table"
+        },
+        {
+            "id": "e-data-definition-language-ddl-alter-table",
+            "source": "data-definition-language-ddl",
+            "target": "alter-table"
+        },
+        {
+            "id": "e-data-definition-language-ddl-drop-table",
+            "source": "data-definition-language-ddl",
+            "target": "drop-table"
+        },
+        {
+            "id": "e-data-definition-language-ddl-truncate-table",
+            "source": "data-definition-language-ddl",
+            "target": "truncate-table"
+        },
+        {
+            "id": "e-data-definition-language-ddl-data-manipulation-language-dml",
+            "source": "data-definition-language-ddl",
+            "target": "data-manipulation-language-dml"
+        },
+        {
+            "id": "e-data-manipulation-language-dml-select",
+            "source": "data-manipulation-language-dml",
+            "target": "select"
+        },
+        {
+            "id": "e-data-manipulation-language-dml-insert",
+            "source": "data-manipulation-language-dml",
+            "target": "insert"
+        },
+        {
+            "id": "e-data-manipulation-language-dml-update",
+            "source": "data-manipulation-language-dml",
+            "target": "update"
+        },
+        {
+            "id": "e-data-manipulation-language-dml-delete",
+            "source": "data-manipulation-language-dml",
+            "target": "delete"
+        },
+        {
+            "id": "e-data-manipulation-language-dml-data-constraints",
+            "source": "data-manipulation-language-dml",
+            "target": "data-constraints"
+        },
+        {
+            "id": "e-data-constraints-primary-key",
+            "source": "data-constraints",
+            "target": "primary-key"
+        },
+        {
+            "id": "e-data-constraints-foreign-key",
+            "source": "data-constraints",
+            "target": "foreign-key"
+        },
+        {
+            "id": "e-data-constraints-unique",
+            "source": "data-constraints",
+            "target": "unique"
+        },
+        {
+            "id": "e-data-constraints-not-null",
+            "source": "data-constraints",
+            "target": "not-null"
+        },
+        {
+            "id": "e-data-constraints-check",
+            "source": "data-constraints",
+            "target": "check"
+        },
+        {
+            "id": "e-data-constraints-statements",
+            "source": "data-constraints",
+            "target": "statements"
+        },
+        {
+            "id": "e-statements-from",
+            "source": "statements",
+            "target": "from"
+        },
+        {
+            "id": "e-statements-where",
+            "source": "statements",
+            "target": "where"
+        },
+        {
+            "id": "e-statements-group-by",
+            "source": "statements",
+            "target": "group-by"
+        },
+        {
+            "id": "e-statements-order-by",
+            "source": "statements",
+            "target": "order-by"
+        },
+        {
+            "id": "e-statements-having",
+            "source": "statements",
+            "target": "having"
+        },
+        {
+            "id": "e-statements-aggregate-queries",
+            "source": "statements",
+            "target": "aggregate-queries"
+        },
+        {
+            "id": "e-aggregate-queries-sum",
+            "source": "aggregate-queries",
+            "target": "sum"
+        },
+        {
+            "id": "e-aggregate-queries-count",
+            "source": "aggregate-queries",
+            "target": "count"
+        },
+        {
+            "id": "e-aggregate-queries-avg",
+            "source": "aggregate-queries",
+            "target": "avg"
+        },
+        {
+            "id": "e-aggregate-queries-min",
+            "source": "aggregate-queries",
+            "target": "min"
+        },
+        {
+            "id": "e-aggregate-queries-max",
+            "source": "aggregate-queries",
+            "target": "max"
+        },
+        {
+            "id": "e-aggregate-queries-join-queries",
+            "source": "aggregate-queries",
+            "target": "join-queries"
+        },
+        {
+            "id": "e-join-queries-inner-join",
+            "source": "join-queries",
+            "target": "inner-join"
+        },
+        {
+            "id": "e-join-queries-left-join",
+            "source": "join-queries",
+            "target": "left-join"
+        },
+        {
+            "id": "e-join-queries-right-join",
+            "source": "join-queries",
+            "target": "right-join"
+        },
+        {
+            "id": "e-join-queries-full-outer-join",
+            "source": "join-queries",
+            "target": "full-outer-join"
+        },
+        {
+            "id": "e-join-queries-self-join",
+            "source": "join-queries",
+            "target": "self-join"
+        },
+        {
+            "id": "e-join-queries-cross-join",
+            "source": "join-queries",
+            "target": "cross-join"
+        },
+        {
+            "id": "e-join-queries-subqueries",
+            "source": "join-queries",
+            "target": "subqueries"
+        },
+        {
+            "id": "e-subqueries-nested-subqueries",
+            "source": "subqueries",
+            "target": "nested-subqueries"
+        },
+        {
+            "id": "e-subqueries-correlated-subqueries",
+            "source": "subqueries",
+            "target": "correlated-subqueries"
+        },
+        {
+            "id": "e-subqueries-different-types",
+            "source": "subqueries",
+            "target": "different-types"
+        },
+        {
+            "id": "e-subqueries-scalar",
+            "source": "subqueries",
+            "target": "scalar"
+        },
+        {
+            "id": "e-subqueries-column",
+            "source": "subqueries",
+            "target": "column"
+        },
+        {
+            "id": "e-subqueries-row",
+            "source": "subqueries",
+            "target": "row"
+        },
+        {
+            "id": "e-subqueries-table",
+            "source": "subqueries",
+            "target": "table"
+        },
+        {
+            "id": "e-subqueries-string-functions",
+            "source": "subqueries",
+            "target": "string-functions"
+        },
+        {
+            "id": "e-string-functions-concat",
+            "source": "string-functions",
+            "target": "concat"
+        },
+        {
+            "id": "e-string-functions-length",
+            "source": "string-functions",
+            "target": "length"
+        },
+        {
+            "id": "e-string-functions-substring",
+            "source": "string-functions",
+            "target": "substring"
+        },
+        {
+            "id": "e-string-functions-replace",
+            "source": "string-functions",
+            "target": "replace"
+        },
+        {
+            "id": "e-string-functions-upper",
+            "source": "string-functions",
+            "target": "upper"
+        },
+        {
+            "id": "e-string-functions-lower",
+            "source": "string-functions",
+            "target": "lower"
+        },
+        {
+            "id": "e-string-functions-numeric-functions",
+            "source": "string-functions",
+            "target": "numeric-functions"
+        },
+        {
+            "id": "e-numeric-functions-abs",
+            "source": "numeric-functions",
+            "target": "abs"
+        },
+        {
+            "id": "e-numeric-functions-round",
+            "source": "numeric-functions",
+            "target": "round"
+        },
+        {
+            "id": "e-numeric-functions-ceiling",
+            "source": "numeric-functions",
+            "target": "ceiling"
+        },
+        {
+            "id": "e-numeric-functions-floor",
+            "source": "numeric-functions",
+            "target": "floor"
+        },
+        {
+            "id": "e-numeric-functions-mod",
+            "source": "numeric-functions",
+            "target": "mod"
+        },
+        {
+            "id": "e-numeric-functions-date-and-time",
+            "source": "numeric-functions",
+            "target": "date-and-time"
+        },
+        {
+            "id": "e-date-and-time-date",
+            "source": "date-and-time",
+            "target": "date"
+        },
+        {
+            "id": "e-date-and-time-time",
+            "source": "date-and-time",
+            "target": "time"
+        },
+        {
+            "id": "e-date-and-time-timestamp",
+            "source": "date-and-time",
+            "target": "timestamp"
+        },
+        {
+            "id": "e-date-and-time-datepart",
+            "source": "date-and-time",
+            "target": "datepart"
+        },
+        {
+            "id": "e-date-and-time-dateadd",
+            "source": "date-and-time",
+            "target": "dateadd"
+        },
+        {
+            "id": "e-date-and-time-conditional",
+            "source": "date-and-time",
+            "target": "conditional"
+        },
+        {
+            "id": "e-conditional-case",
+            "source": "conditional",
+            "target": "case"
+        },
+        {
+            "id": "e-conditional-nullif",
+            "source": "conditional",
+            "target": "nullif"
+        },
+        {
+            "id": "e-conditional-coalesce",
+            "source": "conditional",
+            "target": "coalesce"
+        },
+        {
+            "id": "e-conditional-advanced-functions",
+            "source": "conditional",
+            "target": "advanced-functions"
+        },
+        {
+            "id": "e-advanced-functions-window-functions",
+            "source": "advanced-functions",
+            "target": "window-functions"
+        },
+        {
+            "id": "e-advanced-functions-rank",
+            "source": "advanced-functions",
+            "target": "rank"
+        },
+        {
+            "id": "e-advanced-functions-dense-rank",
+            "source": "advanced-functions",
+            "target": "dense-rank"
+        },
+        {
+            "id": "e-advanced-functions-lead",
+            "source": "advanced-functions",
+            "target": "lead"
+        },
+        {
+            "id": "e-advanced-functions-lag",
+            "source": "advanced-functions",
+            "target": "lag"
+        },
+        {
+            "id": "e-advanced-functions-row-number",
+            "source": "advanced-functions",
+            "target": "row-number"
+        },
+        {
+            "id": "e-advanced-functions-views",
+            "source": "advanced-functions",
+            "target": "views"
+        },
+        {
+            "id": "e-views-creating-views",
+            "source": "views",
+            "target": "creating-views"
+        },
+        {
+            "id": "e-views-modifying-views",
+            "source": "views",
+            "target": "modifying-views"
+        },
+        {
+            "id": "e-views-dropping-views",
+            "source": "views",
+            "target": "dropping-views"
+        },
+        {
+            "id": "e-views-indexes",
+            "source": "views",
+            "target": "indexes"
+        },
+        {
+            "id": "e-indexes-managing-indexes",
+            "source": "indexes",
+            "target": "managing-indexes"
+        },
+        {
+            "id": "e-indexes-query-optimization",
+            "source": "indexes",
+            "target": "query-optimization"
+        },
+        {
+            "id": "e-indexes-stored-procedures-functions",
+            "source": "indexes",
+            "target": "stored-procedures-functions"
+        },
+        {
+            "id": "e-stored-procedures-functions-creating-procedures",
+            "source": "stored-procedures-functions",
+            "target": "creating-procedures"
+        },
+        {
+            "id": "e-stored-procedures-functions-parameters",
+            "source": "stored-procedures-functions",
+            "target": "parameters"
+        },
+        {
+            "id": "e-stored-procedures-functions-transactions",
+            "source": "stored-procedures-functions",
+            "target": "transactions"
+        },
+        {
+            "id": "e-transactions-begin",
+            "source": "transactions",
+            "target": "begin"
+        },
+        {
+            "id": "e-transactions-commit",
+            "source": "transactions",
+            "target": "commit"
+        },
+        {
+            "id": "e-transactions-rollback",
+            "source": "transactions",
+            "target": "rollback"
+        },
+        {
+            "id": "e-transactions-savepoint",
+            "source": "transactions",
+            "target": "savepoint"
+        },
+        {
+            "id": "e-transactions-acid",
+            "source": "transactions",
+            "target": "acid"
+        },
+        {
+            "id": "e-transactions-transaction-isolation-levels",
+            "source": "transactions",
+            "target": "transaction-isolation-levels"
+        },
+        {
+            "id": "e-transactions-data-integrity-security",
+            "source": "transactions",
+            "target": "data-integrity-security"
+        },
+        {
+            "id": "e-data-integrity-security-data-integrity-constraints",
+            "source": "data-integrity-security",
+            "target": "data-integrity-constraints"
+        },
+        {
+            "id": "e-data-integrity-security-grant-and-revoke",
+            "source": "data-integrity-security",
+            "target": "grant-and-revoke"
+        },
+        {
+            "id": "e-data-integrity-security-db-security-best-practices",
+            "source": "data-integrity-security",
+            "target": "db-security-best-practices"
+        },
+        {
+            "id": "e-data-integrity-security-performance-optimization",
+            "source": "data-integrity-security",
+            "target": "performance-optimization"
+        },
+        {
+            "id": "e-performance-optimization-query-analysis-techniques",
+            "source": "performance-optimization",
+            "target": "query-analysis-techniques"
+        },
+        {
+            "id": "e-performance-optimization-using-indexes",
+            "source": "performance-optimization",
+            "target": "using-indexes"
+        },
+        {
+            "id": "e-performance-optimization-optimizing-joins",
+            "source": "performance-optimization",
+            "target": "optimizing-joins"
+        },
+        {
+            "id": "e-performance-optimization-reducing-subqueries",
+            "source": "performance-optimization",
+            "target": "reducing-subqueries"
+        },
+        {
+            "id": "e-performance-optimization-selective-projection",
+            "source": "performance-optimization",
+            "target": "selective-projection"
+        },
+        {
+            "id": "e-performance-optimization-query-optimization-techniques",
+            "source": "performance-optimization",
+            "target": "query-optimization-techniques"
+        },
+        {
+            "id": "e-performance-optimization-advanced-sql",
+            "source": "performance-optimization",
+            "target": "advanced-sql"
+        },
+        {
+            "id": "e-advanced-sql-recursive-queries",
+            "source": "advanced-sql",
+            "target": "recursive-queries"
+        },
+        {
+            "id": "e-advanced-sql-pivot-unpivot-operations",
+            "source": "advanced-sql",
+            "target": "pivot-unpivot-operations"
+        },
+        {
+            "id": "e-advanced-sql-common-table-expressions",
+            "source": "advanced-sql",
+            "target": "common-table-expressions"
+        },
+        {
+            "id": "e-advanced-sql-dynamic-sql",
+            "source": "advanced-sql",
+            "target": "dynamic-sql"
+        }
+    ]
+}
