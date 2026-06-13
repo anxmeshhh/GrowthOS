@@ -93,14 +93,14 @@ function LoginPage() {
             e.preventDefault(); 
             const formData = new FormData(e.currentTarget);
             const email = formData.get('email') as string;
+            const password = formData.get('password') as string;
             // The default Django User auth checks username and password, but SimpleJWT by default expects username.
             // Since we use email as the primary login in the UI, we'll pass email as username.
-            // In a real app we might configure Django to use email, but let's pass it as username for now.
             try {
               const res = await fetch("http://127.0.0.1:8000/api/auth/login/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: email.split('@')[0], password: "password" }) // Mocking password since we only have email input in UI
+                body: JSON.stringify({ username: email, password })
               });
               if (res.ok) {
                 const data = await res.json();
@@ -108,7 +108,7 @@ function LoginPage() {
                 localStorage.setItem("refresh_token", data.refresh);
                 window.location.href = '/dashboard';
               } else {
-                alert("Login failed. Make sure you registered.");
+                alert("Login failed. Check your email and password.");
               }
             } catch (err) {
               console.error(err);
@@ -117,7 +117,7 @@ function LoginPage() {
           }}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[#ccc]">
-                Email address (used as username prefix)
+                Email address
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,6 +131,23 @@ function LoginPage() {
                   required
                   className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
                   placeholder="you@example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-[#ccc]">
+                Password
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none block w-full px-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  placeholder="••••••••"
                 />
               </div>
             </div>

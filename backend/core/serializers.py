@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument
+from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -94,3 +94,12 @@ class NoteDocumentSerializer(serializers.ModelSerializer):
         if request and obj.file:
             return request.build_absolute_uri(obj.file.url)
         return None
+
+class VerifiedProjectSerializer(serializers.ModelSerializer):
+    topic_title = serializers.CharField(source='topic.title', read_only=True)
+    topic_slug = serializers.CharField(source='topic.slug', read_only=True)
+
+    class Meta:
+        model = VerifiedProject
+        fields = ['id', 'topic', 'topic_title', 'topic_slug', 'repo_url', 'repo_name', 'ai_evaluation', 'verified_at']
+        read_only_fields = ['user', 'verified_at']

@@ -68,19 +68,20 @@ function SignupPage() {
             const formData = new FormData(e.currentTarget);
             const name = formData.get('name') as string;
             const email = formData.get('email') as string;
+            const password = formData.get('password') as string;
             try {
               const res = await fetch("http://127.0.0.1:8000/api/auth/register/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                // We use the email prefix as a unique username and a dummy password since we only collect name/email in this mock UI
-                body: JSON.stringify({ username: email.split('@')[0], email, password: "password" })
+                // We use the full email as a unique username
+                body: JSON.stringify({ username: email, email, password })
               });
               if (res.ok || res.status === 201) {
                 // Auto-login after register
                 const loginRes = await fetch("http://127.0.0.1:8000/api/auth/login/", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ username: email.split('@')[0], password: "password" })
+                  body: JSON.stringify({ username: email, password })
                 });
                 if (loginRes.ok) {
                   const data = await loginRes.json();
@@ -131,6 +132,23 @@ function SignupPage() {
                   required
                   className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
                   placeholder="you@example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-[#ccc]">
+                Password
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="appearance-none block w-full px-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  placeholder="••••••••"
                 />
               </div>
             </div>

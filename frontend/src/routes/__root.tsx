@@ -123,23 +123,52 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+import { ToastProvider, useToast } from "../components/toast-context";
+import { apiFetch } from "../lib/api-client";
+import { FloatingChat } from "../components/floating-chat";
+
+function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
+  const { showToast } = useToast();
   const router = useRouter();
   const path = router.state.location.pathname;
   const isAuthRoute = path === "/login" || path === "/signup" || path === "/";
 
+  useEffect(() => {
+    if (!isAuthRoute) {
+      apiFetch("/auth/daily-login/", { method: "POST" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status === "awarded") {
+            showToast(data.message, "xp");
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAuthRoute, showToast]);
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row">
+      {!isAuthRoute && <Sidebar />}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {!isAuthRoute && <MobileTopBar />}
+        {children}
+      </div>
+      {!isAuthRoute && <FloatingChat />}
+    </div>
+  );
+}
+
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+
   return (
     <QueryClientProvider client={queryClient}>
       <GrowthProvider>
-        <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row">
-          {!isAuthRoute && <Sidebar />}
-          <div className="flex-1 min-w-0 flex flex-col">
-            {!isAuthRoute && <MobileTopBar />}
-            {/* Required: nested routes render here. */}
+        <ToastProvider>
+          <GlobalGamificationWrapper>
             <Outlet />
-          </div>
-        </div>
+          </GlobalGamificationWrapper>
+        </ToastProvider>
       </GrowthProvider>
     </QueryClientProvider>
   );

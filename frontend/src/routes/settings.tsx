@@ -1,46 +1,128 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { PageShell, PageHeader, Card, Btn } from "@/components/growth-ui";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch, clearAuthTokens } from "@/lib/api-client";
+import { Github, LogOut, AlertTriangle, Save, Loader2, User, Clock } from "lucide-react";
 import { useGrowth } from "@/lib/growth-store";
-import { PATHS } from "@/lib/growth-data";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — GrowthOS" }, { name: "description", content: "Configure your learning path, schedule and profile." }] }),
+  head: () => ({ meta: [{ title: "Settings — GrowthOS" }, { name: "description", content: "Configure your account and integrations." }] }),
   component: SettingsPage,
 });
 
 function SettingsPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { state, update, reset } = useGrowth();
   const [confirm, setConfirm] = useState(false);
+  const [githubInput, setGithubInput] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['user_profile'],
+    queryFn: async () => {
+      const res = await apiFetch("/profile/");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (profile?.github_username) {
+      setGithubInput(profile.github_username);
+    }
+  }, [profile]);
+
+  const saveGithub = useMutation({
+    mutationFn: async (username: string) => {
+      const res = await apiFetch("/profile/", {
+        method: "PATCH",
+        body: JSON.stringify({ github_username: username }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['github_repos'] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
+  });
+
+  const handleLogout = () => {
+    clearAuthTokens();
+    navigate({ to: "/login" });
+  };
+
+  if (isLoading) {
+    return <PageShell><div className="flex items-center justify-center p-12 text-[#666]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading settings...</div></PageShell>;
+  }
 
   return (
     <PageShell>
-      <PageHeader kicker="Settings" title="Workspace" subtitle="Configure your path, schedule and profile." />
+      <PageHeader kicker="Settings" title="Configuration" subtitle="Your account, integrations, and preferences." />
 
+      {/* Account */}
       <Card className="p-5 mb-4">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-3">Learning Path</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {PATHS.map((p) => {
-            const active = state.settings.pathId === p.id;
-            return (
-              <button
-                key={p.id}
-                onClick={() => update((s) => ({ ...s, settings: { ...s.settings, pathId: p.id, enabledPaths: s.settings.enabledPaths.includes(p.id) ? s.settings.enabledPaths : [...s.settings.enabledPaths, p.id] } }))}
-                className={"flex items-start gap-3 p-3 rounded border text-left transition-colors " + (active ? "border-[#22c55e]/40 bg-[#0d1a0d]" : "border-[#222] hover:bg-[#161616]")}
-              >
-                <div className={"mt-0.5 h-4 w-4 rounded-full border-2 " + (active ? "border-[#22c55e] bg-[#22c55e]" : "border-[#444]")} />
-                <div>
-                  <div className="text-sm font-medium">{p.name}</div>
-                  <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mt-0.5">{p.tagline}</div>
-                </div>
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-3 mb-4">
+          <User size={16} className="text-[#22c55e]" />
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Account</div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-mono uppercase tracking-wider text-[#666]">Username</label>
+            <div className="mt-1 w-full bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm text-[#999]">
+              {profile?.username || "—"}
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-mono uppercase tracking-wider text-[#666]">Member Since</label>
+            <div className="mt-1 w-full bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm text-[#999]">
+              {profile?.date_joined ? new Date(profile.date_joined).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "—"}
+            </div>
+          </div>
         </div>
       </Card>
 
+      {/* GitHub Integration */}
       <Card className="p-5 mb-4">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-2">Daily Time Budget</div>
+        <div className="flex items-center gap-3 mb-4">
+          <Github size={16} className="text-[#f0f0f0]" />
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">GitHub Integration</div>
+        </div>
+        <p className="text-xs text-[#888] mb-3">
+          Connect your GitHub username to import your repositories for AI project assessments.
+        </p>
+        <div className="flex items-center gap-3">
+          <input
+            value={githubInput}
+            onChange={(e) => setGithubInput(e.target.value)}
+            placeholder="e.g. anxmeshhh"
+            className="flex-1 bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm outline-none focus:border-[#22c55e]/50 text-[#f0f0f0] placeholder:text-[#555]"
+          />
+          <Btn
+            size="sm"
+            onClick={() => saveGithub.mutate(githubInput)}
+            disabled={saveGithub.isPending || githubInput === profile?.github_username}
+          >
+            {saveGithub.isPending ? <Loader2 size={14} className="animate-spin" /> : saved ? "Saved ✓" : <><Save size={14} /> Save</>}
+          </Btn>
+        </div>
+        {profile?.github_username && (
+          <div className="mt-2 text-xs text-[#22c55e]">
+            ✓ Connected as <span className="font-mono">{profile.github_username}</span>
+          </div>
+        )}
+      </Card>
+
+      {/* Daily Time Budget */}
+      <Card className="p-5 mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Clock size={16} className="text-[#f59e0b]" />
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Daily Time Budget</div>
+        </div>
         <div className="flex items-center gap-3">
           <input
             type="range"
@@ -53,73 +135,34 @@ function SettingsPage() {
         </div>
       </Card>
 
+      {/* Sign Out */}
       <Card className="p-5 mb-4">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-3">Profile</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-[#666]">Display name</label>
-            <input
-              value={state.settings.displayName}
-              onChange={(e) => update((s) => ({ ...s, settings: { ...s.settings, displayName: e.target.value } }))}
-              className="mt-1 w-full bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm outline-none focus:border-[#22c55e]/50"
-            />
+            <div className="text-sm font-medium text-[#f0f0f0]">Sign Out</div>
+            <div className="text-xs text-[#888]">Log out of your GrowthOS account on this device.</div>
           </div>
-          <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-[#666]">Timezone</label>
-            <select
-              value={state.settings.timezone}
-              onChange={(e) => update((s) => ({ ...s, settings: { ...s.settings, timezone: e.target.value } }))}
-              className="mt-1 w-full bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm outline-none focus:border-[#22c55e]/50"
-            >
-              {["Asia/Kolkata", "America/New_York", "America/Los_Angeles", "Europe/London", "Europe/Berlin", "Asia/Singapore", "UTC"].map((tz) => (
-                <option key={tz}>{tz}</option>
-              ))}
-            </select>
-          </div>
+          <Btn variant="outline" size="sm" onClick={handleLogout}>
+            <LogOut size={14} /> Sign Out
+          </Btn>
         </div>
       </Card>
 
-      <Card className="p-5 mb-4">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-3">Paths in Workspace</div>
-        <ul className="space-y-2">
-          {PATHS.map((p) => {
-            const on = state.settings.enabledPaths.includes(p.id);
-            return (
-              <li key={p.id} className="flex items-center justify-between border border-[#222] rounded px-3 py-2.5">
-                <div>
-                  <div className="text-sm">{p.name}</div>
-                  <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">{p.tagline}</div>
-                </div>
-                <button
-                  onClick={() => update((s) => ({ ...s, settings: { ...s.settings, enabledPaths: on ? s.settings.enabledPaths.filter((x) => x !== p.id) : [...s.settings.enabledPaths, p.id] } }))}
-                  className={"relative inline-flex h-5 w-9 rounded-full transition-colors " + (on ? "bg-[#22c55e]" : "bg-[#222]")}
-                  aria-label="toggle"
-                >
-                  <span className={"inline-block h-4 w-4 rounded-full bg-white transition-transform translate-y-0.5 " + (on ? "translate-x-4" : "translate-x-0.5")} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
-
-      <Card className="p-5">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-3">Data</div>
+      {/* Danger Zone */}
+      <Card className="p-5 border-red-500/20">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle size={16} className="text-[#ef4444]" />
+          <div className="text-[10px] uppercase font-mono tracking-wider text-[#ef4444]">Danger Zone</div>
+        </div>
+        <p className="text-xs text-[#888] mb-3">Reset all local progress data. This cannot be undone. Server data (notes, contributions) is not affected.</p>
         <div className="flex flex-wrap gap-2">
-          <Btn variant="outline" size="sm" onClick={() => {
-            const blob = new Blob([JSON.stringify(state.notes, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = "growthos-notes.json"; a.click();
-            URL.revokeObjectURL(url);
-          }}>Export Notes</Btn>
           {confirm ? (
             <>
-              <Btn tone="red" size="sm" onClick={() => { reset(); setConfirm(false); }}>Confirm reset</Btn>
+              <Btn tone="red" size="sm" onClick={() => { reset(); setConfirm(false); }}>Confirm Reset</Btn>
               <Btn variant="ghost" size="sm" onClick={() => setConfirm(false)}>Cancel</Btn>
             </>
           ) : (
-            <Btn tone="red" variant="outline" size="sm" onClick={() => setConfirm(true)}>Reset Progress</Btn>
+            <Btn tone="red" variant="outline" size="sm" onClick={() => setConfirm(true)}>Reset Local Progress</Btn>
           )}
         </div>
       </Card>

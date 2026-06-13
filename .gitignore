@@ -52,6 +52,7 @@ env/
 psycopg2/
 db.sqlite3
 .env
+media/
 
 # Editor / System
 .vscode/

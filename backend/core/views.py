@@ -3,23 +3,30 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
     TopicMaterialSerializer, TopicProgressSerializer, TopicNoteSerializer,
-    NoteDocumentSerializer
+    NoteDocumentSerializer, VerifiedProjectSerializer
 )
 
 class RegisterView(generics.CreateAPIView):
     queryset = UserSerializer.Meta.model.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        from django.contrib.auth.models import User
+        user = User.objects.get(username=request.data.get('username'))
+        Contribution.objects.create(user=user, action_type='signup_bonus', points=50)
+        return response
 
 class LearningPathViewSet(viewsets.ModelViewSet):
     serializer_class = LearningPathSerializer
@@ -39,6 +46,7 @@ class LearningPathViewSet(viewsets.ModelViewSet):
         if not created:
             bookmark.delete()
             return Response({'status': 'unbookmarked'})
+        Contribution.objects.create(user=request.user, action_type='path_bookmarked', points=3)
         return Response({'status': 'bookmarked'})
 
 class BookmarkViewSet(viewsets.ReadOnlyModelViewSet):
@@ -103,7 +111,11 @@ def _resolve_topic(pk):
     try:
         return Topic.objects.get(pk=int(pk))
     except (ValueError, Topic.DoesNotExist):
-        return get_object_or_404(Topic, slug=pk)
+        topic = Topic.objects.filter(slug=pk).first()
+        if topic is None:
+            from django.http import Http404
+            raise Http404(f"No topic found with slug '{pk}'")
+        return topic
 
 class TopicProgressUpdateView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -205,9 +217,157 @@ class HeatmapView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        contributions = Contribution.objects.filter(user=request.user).values('date').annotate(total_points=Sum('points'))
+        from django.db.models.functions import TruncDate
+        contributions = Contribution.objects.filter(user=request.user) \
+            .annotate(date=TruncDate('created_at')) \
+            .values('date') \
+            .annotate(total_points=Sum('points'))
         data = [{"date": str(c['date']), "count": c['total_points']} for c in contributions]
         return Response(data)
+
+class RecentActivityView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        acts = Contribution.objects.filter(user=request.user).order_by('-created_at')[:10]
+        data = []
+        label_map = {
+            'topic_verified': 'Verified proof of work',
+            'notes_uploaded': 'Updated study notes',
+            'signup_bonus': 'Welcome to GrowthOS!',
+            'daily_login': 'Daily streak bonus',
+            'quiz_passed': 'Quiz mastered',
+            'flashcards_reviewed': 'Reviewed flashcards',
+            'path_bookmarked': 'Bookmarked a learning path',
+            'streak_milestone': 'Streak milestone reached',
+        }
+        for a in acts:
+            label = label_map.get(a.action_type, a.action_type.replace('_', ' ').title())
+            label = f"{label} (+{a.points} XP)"
+            data.append({
+                "id": a.id,
+                "label": label,
+                "action_type": a.action_type,
+                "points": a.points,
+                "date": a.created_at.isoformat()
+            })
+        return Response(data)
+
+class DailyLoginView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        today = timezone.now().date()
+        has_logged_in = Contribution.objects.filter(
+            user=request.user, 
+            action_type='daily_login',
+            created_at__date=today
+        ).exists()
+
+        bonus_messages = []
+        if not has_logged_in:
+            Contribution.objects.create(user=request.user, action_type='daily_login', points=5)
+            bonus_messages.append({"type": "daily_login", "points": 5, "message": "Daily login bonus awarded!"})
+            
+            # Calculate current streak for milestone check
+            streak = 0
+            check = today
+            while True:
+                if Contribution.objects.filter(user=request.user, action_type='daily_login', created_at__date=check).exists():
+                    streak += 1
+                    check -= timezone.timedelta(days=1)
+                else:
+                    break
+            
+            # Award streak milestones (7, 14, 30 days)
+            for milestone in [7, 14, 30]:
+                if streak == milestone:
+                    already = Contribution.objects.filter(
+                        user=request.user, action_type='streak_milestone', points=milestone
+                    ).exists()
+                    if not already:
+                        Contribution.objects.create(user=request.user, action_type='streak_milestone', points=10)
+                        bonus_messages.append({"type": "streak_milestone", "points": 10, "message": f"🔥 {milestone}-day streak milestone!"})
+            
+            return Response({"status": "awarded", "bonuses": bonus_messages})
+        
+        return Response({"status": "already_awarded", "message": "Already claimed today."})
+
+class ChatAssistantView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        messages = ChatMessage.objects.filter(user=request.user).order_by('-created_at')[:50]
+        messages = reversed(messages) # Oldest first for chat UI
+        data = [{"id": str(m.id), "role": m.role, "content": m.content} for m in messages]
+        return Response(data)
+
+    def delete(self, request):
+        ChatMessage.objects.filter(user=request.user).delete()
+        return Response({"status": "cleared"})
+
+    def post(self, request):
+        user = request.user
+        user_message = request.data.get('message', '')
+        if not user_message:
+            return Response({'error': 'Message is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Context gathering
+        total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+        level = 1
+        if total_xp >= 500: level = 6
+        elif total_xp >= 250: level = 5
+        elif total_xp >= 100: level = 4
+        elif total_xp >= 50: level = 3
+        elif total_xp >= 20: level = 2
+
+        active_path = "None"
+        bookmark = Bookmark.objects.filter(user=user).select_related('path').first()
+        if bookmark:
+            active_path = bookmark.path.title
+
+        recent_acts = Contribution.objects.filter(user=user).order_by('-created_at')[:3]
+        recent_activity_str = ", ".join([f"{a.action_type}" for a in recent_acts]) or "None"
+
+        system_prompt = f"""You are GrowthOS, an elite AI mentor for '{user.username}'.
+User Context:
+- Level: {level}
+- Total XP: {total_xp}
+- Active Path: {active_path}
+- Recent Activity: {recent_activity_str}
+
+Your goal is to aggressively motivate them, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally.
+"""
+        try:
+            from groq import Groq
+            import os
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            
+            # Save user message
+            ChatMessage.objects.create(user=user, role='user', content=user_message)
+
+            # Build message history for Groq
+            history = ChatMessage.objects.filter(user=user).order_by('-created_at')[:10]
+            history = reversed(history)
+            
+            groq_messages = [{"role": "system", "content": system_prompt}]
+            for h in history:
+                groq_messages.append({"role": "assistant" if h.role == "ai" else "user", "content": h.content})
+
+            chat_completion = client.chat.completions.create(
+                messages=groq_messages,
+                model="llama-3.1-8b-instant",
+                temperature=0.7,
+                max_tokens=250,
+            )
+            reply = chat_completion.choices[0].message.content.strip()
+            
+            # Save AI response
+            ChatMessage.objects.create(user=user, role='ai', content=reply)
+
+            return Response({"reply": reply})
+        except Exception as e:
+            return Response({'error': f"AI Chat failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TopicNoteView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -220,9 +380,14 @@ class TopicNoteView(views.APIView):
 
     def post(self, request, topic_id):
         topic = _resolve_topic(topic_id)
-        note, _ = TopicNote.objects.get_or_create(user=request.user, topic=topic)
+        note, created = TopicNote.objects.get_or_create(user=request.user, topic=topic)
         note.content = request.data.get('content', '')
         note.save()
+        
+        # Award 1 point for saving notes, max once per topic/day roughly, but for now just create it
+        # To avoid spamming, we can just award it always or check if it's substantial
+        Contribution.objects.create(user=request.user, action_type='notes_uploaded', points=1)
+        
         serializer = TopicNoteSerializer(note)
         return Response(serializer.data)
 
@@ -233,6 +398,10 @@ class TopicQuizView(views.APIView):
         topic = _resolve_topic(topic_id)
         difficulty = request.query_params.get('difficulty', 'medium')
         count = int(request.query_params.get('count', '5'))
+        quiz = TopicQuiz.objects.filter(user=request.user, topic=topic, difficulty=difficulty).first()
+        if quiz and len(quiz.questions) >= count:
+            return Response({'questions': quiz.questions[:count]})
+            
         try:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             prompt = f"Generate exactly {count} multiple choice quiz questions about: '{topic.title}'. Summary: {topic.summary}. Difficulty level: {difficulty}. For easy: basic recall. For medium: application/understanding. For hard: analysis/edge cases. Return ONLY a JSON array where each object has: 'question' (string), 'options' (array of 4 strings), 'answer' (exact string matching one option)."
@@ -242,14 +411,18 @@ class TopicQuizView(views.APIView):
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            if response_content.startswith("```json"):
-                response_content = response_content[7:-3]
-            elif response_content.startswith("```"):
-                response_content = response_content[3:-3]
-                
-            import json
-            questions = json.loads(response_content)
-            return Response({'questions': questions})
+            import json, re
+            match = re.search(r'\[.*\]', response_content, re.DOTALL)
+            if match:
+                questions = json.loads(match.group(0))
+            else:
+                questions = json.loads(response_content)
+            
+            TopicQuiz.objects.update_or_create(
+                user=request.user, topic=topic, difficulty=difficulty,
+                defaults={'questions': questions}
+            )
+            return Response({'questions': questions[:count]})
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
@@ -258,6 +431,10 @@ class TopicFlashcardView(views.APIView):
 
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id)
+        flashcard = TopicFlashcard.objects.filter(user=request.user, topic=topic).first()
+        if flashcard and len(flashcard.cards) >= 5:
+            return Response({'flashcards': flashcard.cards[:5]})
+            
         try:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             prompt = f"Generate exactly 5 flashcards for the topic: '{topic.title}'. Summary: {topic.summary}. Return ONLY a JSON array where each object has: 'front' (the term or concept), 'back' (the definition or explanation)."
@@ -267,14 +444,18 @@ class TopicFlashcardView(views.APIView):
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            if response_content.startswith("```json"):
-                response_content = response_content[7:-3]
-            elif response_content.startswith("```"):
-                response_content = response_content[3:-3]
-                
-            import json
-            flashcards = json.loads(response_content)
-            return Response({'flashcards': flashcards})
+            import json, re
+            match = re.search(r'\[.*\]', response_content, re.DOTALL)
+            if match:
+                flashcards = json.loads(match.group(0))
+            else:
+                flashcards = json.loads(response_content)
+            
+            TopicFlashcard.objects.update_or_create(
+                user=request.user, topic=topic,
+                defaults={'cards': flashcards}
+            )
+            return Response({'flashcards': flashcards[:5]})
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
@@ -308,7 +489,7 @@ class ScanRepoView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, topic_id):
-        topic = get_object_or_404(Topic, id=topic_id)
+        topic = _resolve_topic(topic_id)
         repo_url = request.data.get('repo_url', '')
         if not repo_url:
             return Response({'error': 'No repo_url provided'}, status=400)
@@ -373,6 +554,16 @@ Reply with EXACTLY this JSON format:
 
             # Mark topic complete if passed
             if result.get('passed'):
+                VerifiedProject.objects.update_or_create(
+                    user=request.user,
+                    topic=topic,
+                    defaults={
+                        'repo_url': repo_url,
+                        'repo_name': repo,
+                        'ai_evaluation': result.get('feedback', '')
+                    }
+                )
+                
                 progress, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
                 if progress.status != 'completed':
                     progress.status = 'completed'
@@ -423,3 +614,147 @@ class AllNoteDocumentsView(views.APIView):
         docs = NoteDocument.objects.filter(user=request.user).select_related('topic')
         serializer = NoteDocumentSerializer(docs, many=True, context={'request': request})
         return Response(serializer.data)
+
+class SubmitQuizView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, topic_id):
+        score = request.data.get('score', 0)
+        total = request.data.get('total', 1)
+        percentage = score / total if total > 0 else 0
+
+        if percentage >= 0.8:
+            Contribution.objects.create(user=request.user, action_type='quiz_passed', points=5)
+            return Response({"status": "passed", "xp_earned": 5})
+        
+        return Response({"status": "failed", "xp_earned": 0})
+
+class UserProfileView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+        
+        level = 1
+        if total_xp >= 500: level = 6
+        elif total_xp >= 250: level = 5
+        elif total_xp >= 100: level = 4
+        elif total_xp >= 50: level = 3
+        elif total_xp >= 20: level = 2
+
+        # Stats
+        topics_completed = TopicProgress.objects.filter(user=user, status='completed').count()
+        notes_written = TopicNote.objects.filter(user=user).exclude(content='').count()
+        quizzes_passed = Contribution.objects.filter(user=user, action_type='quiz_passed').count()
+        
+        # Streak calculation
+        today = timezone.now().date()
+        streak = 0
+        check = today
+        while True:
+            if Contribution.objects.filter(user=user, action_type='daily_login', created_at__date=check).exists():
+                streak += 1
+                check -= timezone.timedelta(days=1)
+            else:
+                break
+
+        # XP breakdown by action type
+        xp_breakdown = list(
+            Contribution.objects.filter(user=user)
+            .values('action_type')
+            .annotate(total=Sum('points'), count=Count('id'))
+            .order_by('-total')
+        )
+
+        # Completed paths
+        completed_topics_qs = TopicProgress.objects.filter(user=user, status='completed').select_related('topic__path')
+        paths = set(tp.topic.path for tp in completed_topics_qs if tp.topic.path)
+        path_list = [{"id": p.id, "title": p.title, "slug": p.slug} for p in paths]
+
+        # Achievement badges (computed on-the-fly)
+        badges = []
+        if Contribution.objects.filter(user=user, action_type='signup_bonus').exists():
+            badges.append({"id": "first_login", "title": "Newcomer", "icon": "🌟", "desc": "Signed up for GrowthOS"})
+        if streak >= 7:
+            badges.append({"id": "streak_7", "title": "Consistent", "icon": "🔥", "desc": "7-day login streak"})
+        if streak >= 30:
+            badges.append({"id": "streak_30", "title": "Unstoppable", "icon": "💎", "desc": "30-day login streak"})
+        if quizzes_passed >= 1:
+            badges.append({"id": "quiz_first", "title": "Quiz Taker", "icon": "✅", "desc": "Passed your first quiz"})
+        if quizzes_passed >= 10:
+            badges.append({"id": "quiz_master", "title": "Quiz Master", "icon": "🏆", "desc": "Passed 10 quizzes"})
+        if topics_completed >= 5:
+            badges.append({"id": "5_topics", "title": "Scholar", "icon": "📚", "desc": "Verified 5 topics"})
+        if notes_written >= 10:
+            badges.append({"id": "note_hoarder", "title": "Note Hoarder", "icon": "📝", "desc": "Written 10+ study notes"})
+        if level >= 4:
+            badges.append({"id": "adept", "title": "Adept", "icon": "⚡", "desc": "Reached Level 4"})
+
+        return Response({
+            "username": user.username,
+            "date_joined": user.date_joined,
+            "total_xp": total_xp,
+            "level": level,
+            "streak": streak,
+            "topics_completed": topics_completed,
+            "notes_written": notes_written,
+            "quizzes_passed": quizzes_passed,
+            "xp_breakdown": xp_breakdown,
+            "completed_paths": path_list,
+            "badges": badges,
+            "github_username": profile.github_username,
+        })
+
+    def patch(self, request):
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        github_username = request.data.get('github_username')
+        if github_username is not None:
+            profile.github_username = github_username
+            profile.save()
+        return Response({"status": "updated", "github_username": profile.github_username})
+
+class GitHubReposView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        username = profile.github_username
+        if not username:
+            return Response({"repos": [], "message": "No GitHub username set. Go to Settings to connect."})
+        
+        import requests as http_requests
+        try:
+            resp = http_requests.get(
+                f"https://api.github.com/users/{username}/repos",
+                params={"sort": "updated", "per_page": 30},
+                headers={"Accept": "application/vnd.github.v3+json"},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                return Response({"repos": [], "message": f"GitHub API error: {resp.status_code}"})
+            repos = resp.json()
+            data = [{
+                "id": r["id"],
+                "name": r["name"],
+                "full_name": r["full_name"],
+                "description": r.get("description", ""),
+                "html_url": r["html_url"],
+                "language": r.get("language", ""),
+                "stargazers_count": r.get("stargazers_count", 0),
+                "updated_at": r.get("updated_at", ""),
+            } for r in repos]
+            return Response({"repos": data})
+        except Exception as e:
+            return Response({"repos": [], "message": f"Failed to fetch: {str(e)}"})
+
+class PortfolioView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        projects = VerifiedProject.objects.filter(user=request.user).select_related('topic')
+        serializer = VerifiedProjectSerializer(projects, many=True)
+        return Response(serializer.data)
+

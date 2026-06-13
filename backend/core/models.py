@@ -6,6 +6,7 @@ class UserProfile(models.Model):
     selected_path = models.ForeignKey('LearningPath', on_delete=models.SET_NULL, null=True, blank=True)
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
+    github_username = models.CharField(max_length=100, blank=True, default='')
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
@@ -81,15 +82,27 @@ class TopicProgress(models.Model):
 
 class Contribution(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contributions')
-    date = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     action_type = models.CharField(max_length=50) # e.g., 'topic_cleared', 'notes_uploaded'
     points = models.IntegerField(default=1)
 
     class Meta:
-        ordering = ['-date']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.date} - {self.action_type}"
+        return f"{self.user.username} - {self.created_at} - {self.action_type}"
+
+class ChatMessage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_messages')
+    role = models.CharField(max_length=10) # 'user' or 'ai'
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.username} ({self.role}) - {self.created_at}"
 
 class TopicNote(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notes')
@@ -115,3 +128,43 @@ class NoteDocument(models.Model):
 
     def __str__(self):
         return f"{self.filename} by {self.user.username}"
+
+class TopicQuiz(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quizzes')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='quizzes')
+    difficulty = models.CharField(max_length=20, default='medium')
+    questions = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'topic', 'difficulty')
+
+    def __str__(self):
+        return f"Quiz for {self.topic.title} ({self.difficulty}) by {self.user.username}"
+
+class TopicFlashcard(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='flashcards')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='flashcards')
+    cards = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'topic')
+
+    def __str__(self):
+        return f"Flashcards for {self.topic.title} by {self.user.username}"
+
+class VerifiedProject(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verified_projects')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='verified_projects')
+    repo_url = models.URLField()
+    repo_name = models.CharField(max_length=200, blank=True)
+    ai_evaluation = models.TextField(blank=True)
+    verified_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'topic')
+        ordering = ['-verified_at']
+
+    def __str__(self):
+        return f"Project by {self.user.username} for {self.topic.title}"

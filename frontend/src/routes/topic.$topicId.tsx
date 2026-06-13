@@ -4,6 +4,7 @@ import { ArrowLeft, Pause, Play, ExternalLink, Video, FileText, ChevronLeft, Che
 import { PageShell, Card, Btn, Badge, StepDot } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
+import { useToast } from "@/components/toast-context";
 
 export const Route = createFileRoute("/topic/$topicId")({
   head: () => ({ meta: [{ title: `Workspace — GrowthOS` }] }),
@@ -326,9 +327,12 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
 }
 
 function QuizTab({ topicId }: { topicId: number }) {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['quiz', topicId, difficulty],
@@ -356,6 +360,33 @@ function QuizTab({ topicId }: { topicId: number }) {
       if (answers[i] === q.answer) score++;
     });
   }
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    let currentScore = 0;
+    questions.forEach((q: any, i: number) => {
+      if (answers[i] === q.answer) currentScore++;
+    });
+    
+    try {
+      const res = await apiFetch(`/topics/${topicId}/submit-quiz/`, {
+        method: "POST",
+        body: JSON.stringify({ score: currentScore, total: questions.length })
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.status === "passed") {
+          showToast(`✨ +${result.xp_earned} XP - Quiz Mastered!`, "xp");
+          queryClient.invalidateQueries({ queryKey: ['heatmap'] });
+          queryClient.invalidateQueries({ queryKey: ['recent_activity'] });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setSubmitted(true);
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -422,7 +453,9 @@ function QuizTab({ topicId }: { topicId: number }) {
       ))}
 
       {!submitted && questions.length > 0 && (
-        <Btn onClick={() => setSubmitted(true)} className="w-full">Submit Quiz</Btn>
+        <Btn onClick={handleSubmit} disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "Submitting..." : "Submit Quiz"}
+        </Btn>
       )}
     </div>
   );
@@ -481,6 +514,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
 
 function BuildTab({ topic, materials, progress }: { topic: any, materials: any[], progress: any }) {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [buildMode, setBuildMode] = useState<"choose" | "ai" | "own">("choose");
   const [repoUrl, setRepoUrl] = useState("");
@@ -523,9 +557,11 @@ function BuildTab({ topic, materials, progress }: { topic: any, materials: any[]
       return res.json();
     },
     onSuccess: () => {
+      showToast("✨ +5 XP - Topic Verified!", "xp");
       queryClient.invalidateQueries({ queryKey: ['topic', String(topic.id)] });
       queryClient.invalidateQueries({ queryKey: ['heatmap'] });
       queryClient.invalidateQueries({ queryKey: ['paths'] });
+      queryClient.invalidateQueries({ queryKey: ['recent_activity'] });
     }
   });
 
@@ -541,8 +577,11 @@ function BuildTab({ topic, materials, progress }: { topic: any, materials: any[]
     onSuccess: (data) => {
       setScanResult(data);
       if (data.passed) {
+        showToast("✨ +5 XP - Topic Verified!", "xp");
         queryClient.invalidateQueries({ queryKey: ['topic', String(topic.id)] });
         queryClient.invalidateQueries({ queryKey: ['paths'] });
+        queryClient.invalidateQueries({ queryKey: ['heatmap'] });
+        queryClient.invalidateQueries({ queryKey: ['recent_activity'] });
       }
     }
   });

@@ -14,6 +14,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DiscoverRouteImport } from './routes/discover'
@@ -46,6 +47,11 @@ const ProjectsRoute = ProjectsRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotesRoute = NotesRouteImport.update({
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
   '/roadmap': typeof RoadmapRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
   '/roadmap': typeof RoadmapRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
   '/roadmap': typeof RoadmapRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/login'
     | '/notes'
+    | '/profile'
     | '/progress'
     | '/projects'
     | '/roadmap'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/login'
     | '/notes'
+    | '/profile'
     | '/progress'
     | '/projects'
     | '/roadmap'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/login'
     | '/notes'
+    | '/profile'
     | '/progress'
     | '/projects'
     | '/roadmap'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
+  ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   ProjectsRoute: typeof ProjectsRoute
   RoadmapRoute: typeof RoadmapRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notes': {
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
+  ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   ProjectsRoute: ProjectsRoute,
   RoadmapRoute: RoadmapRoute,
