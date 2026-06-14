@@ -56,10 +56,12 @@ function DiscoverPage() {
             className="w-full bg-[#111] border border-[#222] rounded-lg py-2.5 pl-9 pr-4 text-sm text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:border-[#444] transition-colors"
           />
         </div>
-        <Btn variant="outline" className="gap-2">
-          <Plus size={16} />
-          Create Custom Path
-        </Btn>
+        <Link to="/paths/create">
+          <Btn variant="outline" className="gap-2">
+            <Plus size={16} />
+            Create Custom Path
+          </Btn>
+        </Link>
       </div>
 
       {isLoading ? (

@@ -133,13 +133,32 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
       rawNodes = topics.map((t) => ({
         id: String(t.id),
         label: t.title,
-        bgColor: '#ffee55',
+        bgColor: t.bgColor,
       }));
-      rawEdges = topics.slice(1).map((t, i) => ({
-        id: `e${topics[i].id}-${t.id}`,
-        source: String(topics[i].id),
-        target: String(t.id),
-      }));
+      
+      rawEdges = [];
+      let hasDependencies = false;
+      
+      topics.forEach((t) => {
+        if (t.dependencies && t.dependencies.length > 0) {
+          hasDependencies = true;
+          t.dependencies.forEach((depId: any) => {
+            rawEdges.push({
+              id: `e${depId}-${t.id}`,
+              source: String(depId),
+              target: String(t.id),
+            });
+          });
+        }
+      });
+
+      if (!hasDependencies && topics.length > 1) {
+        rawEdges = topics.slice(1).map((t, i) => ({
+          id: `e${topics[i].id}-${t.id}`,
+          source: String(topics[i].id),
+          target: String(t.id),
+        }));
+      }
     } else {
       rawNodes = graphData.nodes;
       rawEdges = graphData.edges;

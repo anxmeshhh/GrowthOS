@@ -73,10 +73,12 @@ class CustomPathView(views.APIView):
         created_topics = {}
         for idx, topic_data in enumerate(topics_data):
             t_title = topic_data.get('title') if isinstance(topic_data, dict) else str(topic_data)
+            t_summary = topic_data.get('summary', '') if isinstance(topic_data, dict) else ''
             t = Topic.objects.create(
                 path=path,
                 title=t_title,
                 slug=t_title.lower().replace(" ", "-"),
+                summary=t_summary,
                 order=idx,
                 created_by=request.user
             )
@@ -151,6 +153,54 @@ class TopicMaterialUploadView(views.APIView):
 import os
 import PyPDF2
 from groq import Groq
+import json
+import re
+
+class GeneratePathView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        prompt = request.data.get('prompt', '')
+        if not prompt:
+            return Response({'error': 'Prompt is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            ai_prompt = f"""Generate a sequential learning roadmap based on this request: "{prompt}".
+Return EXACTLY a JSON object with this schema:
+{{
+  "title": "A short, catchy title for the roadmap",
+  "topics": [
+    {{
+      "title": "Topic 1 Name",
+      "subtopics": ["Subtopic A", "Subtopic B"]
+    }},
+    {{
+      "title": "Topic 2 Name",
+      "subtopics": ["Subtopic C", "Subtopic D"]
+    }}
+  ]
+}}
+Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
+
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": ai_prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.7,
+            )
+            response_content = chat_completion.choices[0].message.content.strip()
+            
+            # Extract JSON if markdown wrapped
+            match = re.search(r'\{.*\}', response_content, re.DOTALL)
+            if match:
+                data = json.loads(match.group(0))
+            else:
+                data = json.loads(response_content)
+                
+            return Response(data)
+        except Exception as e:
+            return Response({'error': f"AI generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class VerifyMaterialView(views.APIView):
     permission_classes = [IsAuthenticated]

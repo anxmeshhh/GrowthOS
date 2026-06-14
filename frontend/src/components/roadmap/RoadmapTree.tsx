@@ -256,22 +256,50 @@ function LegendItem({ kind, label }: { kind: NodeKind; label: string }) {
 
 export function RoadmapTree({ topics = [], graphData }: RoadmapTreeProps) {
     const forest = useMemo(() => {
-        if (!graphData) {
-            return topics.map(t => ({
+        let activeGraphData = graphData;
+
+        if (!activeGraphData) {
+            const nodes = topics.map((t, idx) => ({
                 id: String(t.id),
-                kind: 'topic' as NodeKind,
-                originalY: 0,
-                data: {
-                    label: t.title,
-                    topicId: String(t.id),
-                    status: (t.user_progress === 'completed' ? 'completed' : 'available') as RoadmapNodeData['status'],
-                    bgColor: '#ffee55',
-                },
-                children: [],
+                label: t.title,
+                x: 0,
+                y: idx * 100, // Ensure predictable sorting
+                bgColor: '#ffee55',
+                textColor: '#000000',
             }));
+
+            const edges: any[] = [];
+            let hasDependencies = false;
+            
+            topics.forEach((t) => {
+                if (t.dependencies && t.dependencies.length > 0) {
+                    hasDependencies = true;
+                    t.dependencies.forEach((depId: any) => {
+                        edges.push({
+                            id: `e${depId}-${t.id}`,
+                            source: String(depId),
+                            target: String(t.id),
+                        });
+                    });
+                }
+            });
+
+            // Fallback for purely sequential topics if no dependencies at all
+            if (!hasDependencies && topics.length > 1) {
+                for (let i = 0; i < topics.length - 1; i++) {
+                    edges.push({
+                        id: `e${topics[i].id}-${topics[i+1].id}`,
+                        source: String(topics[i].id),
+                        target: String(topics[i+1].id),
+                    });
+                }
+            }
+
+            activeGraphData = { nodes, edges };
         }
+
         const progressMap = buildProgressMap(topics);
-        return buildForest(graphData.nodes, graphData.edges, progressMap, topics);
+        return buildForest(activeGraphData.nodes, activeGraphData.edges, progressMap, topics);
     }, [topics, graphData]);
 
     return (
