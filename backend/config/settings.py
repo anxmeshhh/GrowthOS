@@ -14,7 +14,7 @@ SECRET_KEY = "django-insecure-f*b9r^dw-1j4%mniwl&jka*^bfrx^t(cglx=43e2c!v*l4ph6(
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -89,7 +89,40 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",      # Vite dev server (default)
+    "http://localhost:3000",      # Alternative frontend port
+    "http://localhost:8080",      # Another common port
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8080",
+]
+
+CORS_ALLOW_ALL_ORIGINS = False  # Explicitly use whitelist
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

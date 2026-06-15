@@ -8,10 +8,12 @@ from .views import (
     ProjectIdeasView, ScanRepoView, NoteDocumentView,
     AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView
 )
+from .custom_path_views import CustomPathViewSet, PathProgressView
 
 router = DefaultRouter()
 router.register(r'paths', LearningPathViewSet, basename='path')
 router.register(r'bookmarks', BookmarkViewSet, basename='bookmark')
+router.register(r'custom-paths', CustomPathViewSet, basename='custom-path')
 
 urlpatterns = [
     # Auth Endpoints
@@ -47,6 +49,9 @@ urlpatterns = [
     # Library Endpoints
     path('all-notes/', AllNotesView.as_view(), name='all_notes'),
     path('all-note-documents/', AllNoteDocumentsView.as_view(), name='all_note_documents'),
+    
+    # Custom Path Endpoints
+    path('custom-paths/<str:path_slug>/progress/', PathProgressView.as_view(), name='path_progress'),
     
     # User Profile & GitHub
     path('profile/', UserProfileView.as_view(), name='user_profile'),

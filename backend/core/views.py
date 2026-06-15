@@ -8,12 +8,12 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
     TopicMaterialSerializer, TopicProgressSerializer, TopicNoteSerializer,
-    NoteDocumentSerializer, VerifiedProjectSerializer
+    NoteDocumentSerializer, VerifiedProjectSerializer, PathSharingSerializer, CustomPathCreateSerializer, PathCloneSerializer
 )
 
 class RegisterView(generics.CreateAPIView):

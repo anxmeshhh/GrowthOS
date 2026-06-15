@@ -9,6 +9,7 @@ const NAV = [
   { to: "/profile", label: "Profile", icon: User },
   { to: "/discover", label: "Discover", icon: Compass },
   { to: "/roadmap", label: "Roadmap", icon: Map },
+  { to: "/custom-paths", label: "My Paths", icon: BookOpen },
   { to: "/notes", label: "Notes", icon: BookOpen },
   { to: "/assessments", label: "Assessments", icon: ClipboardCheck },
   { to: "/projects", label: "Projects", icon: Github },

@@ -37,8 +37,9 @@ const GRAPH_MAP: Record<string, { nodes: any[]; edges: any[] }> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/roadmap")({
-  validateSearch: (search: Record<string, unknown>): { pathId?: number } => ({
+  validateSearch: (search: Record<string, unknown>): { pathId?: number; pathSlug?: string } => ({
     pathId: typeof search.pathId === 'number' ? search.pathId : undefined,
+    pathSlug: typeof search.pathSlug === 'string' ? search.pathSlug : undefined,
   }),
   head: () => ({ meta: [{ title: "Roadmap — GrowthOS" }] }),
   component: RoadmapPage,
@@ -46,9 +47,10 @@ export const Route = createFileRoute("/roadmap")({
 
 function RoadmapPage() {
   const queryClient = useQueryClient();
-  const { pathId: searchPathId } = Route.useSearch();
+  const { pathId: searchPathId, pathSlug: searchPathSlug } = Route.useSearch();
   const [selectedPathId, setSelectedPathId] = useState<number | null>(searchPathId ?? null);
 
+  // Fetch predefined paths
   const { data: paths = [], isLoading: pathsLoading } = useQuery({
     queryKey: ["paths"],
     queryFn: async () => {
@@ -56,6 +58,18 @@ function RoadmapPage() {
       if (!res.ok) return [];
       return res.json();
     },
+  });
+
+  // Fetch custom path if pathSlug provided
+  const { data: customPath, isLoading: customPathLoading } = useQuery({
+    queryKey: ["custom-path", searchPathSlug],
+    queryFn: async () => {
+      if (!searchPathSlug) return null;
+      const res = await apiFetch(`/custom-paths/${searchPathSlug}/`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!searchPathSlug,
   });
 
   const bookmarkMutation = useMutation({
@@ -68,7 +82,7 @@ function RoadmapPage() {
   });
 
   // ── Loading ───────────────────────────────────────────────────────────────
-  if (pathsLoading) {
+  if (pathsLoading || customPathLoading) {
     return (
       <PageShell>
         <div className="flex justify-center p-12 text-[#666]">
@@ -79,9 +93,12 @@ function RoadmapPage() {
   }
 
   // ── Active path ───────────────────────────────────────────────────────────
-  const activePath = selectedPathId
-    ? paths.find((p: any) => p.id === selectedPathId)
-    : paths.find((p: any) => p.is_bookmarked) || paths[0] || null;
+  // If custom path is loaded, use that; otherwise use predefined path
+  const activePath = customPath
+    ? customPath
+    : (selectedPathId
+        ? paths.find((p: any) => p.id === selectedPathId)
+        : paths.find((p: any) => p.is_bookmarked) || paths[0] || null);
 
   if (!activePath) {
     return (
@@ -104,8 +121,44 @@ function RoadmapPage() {
   const completionPct = topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0;
   const nextTopic = topics.find((t: any) => t.user_progress !== "completed") || topics[0];
 
+  // Helper function to generate graph data from custom path topics
+  const generateGraphDataFromTopics = (topicsArray: any[]) => {
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4"];
+
+    let y = 0;
+    topicsArray.forEach((topic, idx) => {
+      const color = colors[idx % colors.length];
+      nodes.push({
+        id: String(topic.id),
+        label: topic.title,
+        x: 0,
+        y: y,
+        bgColor: color,
+        textColor: "#fff",
+      });
+      y += 100;
+
+      // Add edges for dependencies if they exist
+      if (topic.dependencies && Array.isArray(topic.dependencies)) {
+        topic.dependencies.forEach((depId: number) => {
+          edges.push({
+            id: `${depId}-${topic.id}`,
+            source: String(depId),
+            target: String(topic.id),
+          });
+        });
+      }
+    });
+
+    return { nodes, edges };
+  };
+
   // ── Graph data ────────────────────────────────────────────────────────────
-  const graphData = GRAPH_MAP[activePath.slug] ?? null;
+  const graphData = customPath
+    ? generateGraphDataFromTopics(topics)
+    : (GRAPH_MAP[activePath.slug] ?? null);
 
   return (
     <PageShell>

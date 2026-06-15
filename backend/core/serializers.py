@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject
+from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject, PathSharing
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -42,15 +42,27 @@ class TopicSerializer(serializers.ModelSerializer):
 class LearningPathSerializer(serializers.ModelSerializer):
     topics = TopicSerializer(many=True, read_only=True)
     is_bookmarked = serializers.SerializerMethodField()
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    can_edit = serializers.SerializerMethodField()
 
     class Meta:
         model = LearningPath
-        fields = ['id', 'title', 'slug', 'description', 'is_active', 'is_custom', 'created_by', 'topics', 'is_bookmarked']
+        fields = ['id', 'title', 'slug', 'description', 'is_active', 'is_custom', 'created_by', 'created_by_username', 'topics', 'is_bookmarked', 'visibility', 'estimated_weeks', 'created_at', 'updated_at', 'can_edit', 'original_path']
 
     def get_is_bookmarked(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Bookmark.objects.filter(user=request.user, path=obj).exists()
+        return False
+    
+    def get_can_edit(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            if obj.created_by == request.user:
+                return True
+            # Check if user has edit permission
+            sharing = PathSharing.objects.filter(path=obj, shared_to=request.user, permission__in=['edit', 'admin']).exists()
+            return sharing
         return False
 
 class BookmarkSerializer(serializers.ModelSerializer):
@@ -103,3 +115,48 @@ class VerifiedProjectSerializer(serializers.ModelSerializer):
         model = VerifiedProject
         fields = ['id', 'topic', 'topic_title', 'topic_slug', 'repo_url', 'repo_name', 'ai_evaluation', 'verified_at']
         read_only_fields = ['user', 'verified_at']
+
+class PathSharingSerializer(serializers.ModelSerializer):
+    shared_to_username = serializers.CharField(source='shared_to.username', read_only=True)
+    shared_by_username = serializers.CharField(source='shared_by.username', read_only=True)
+    path_title = serializers.CharField(source='path.title', read_only=True)
+
+    class Meta:
+        model = PathSharing
+        fields = ['id', 'path', 'path_title', 'shared_by', 'shared_by_username', 'shared_to', 'shared_to_username', 'permission', 'created_at']
+        read_only_fields = ['shared_by', 'created_at']
+
+class CustomPathCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LearningPath
+        fields = ['title', 'slug', 'description', 'estimated_weeks']
+    
+    def validate_slug(self, value):
+        """Ensure slug is unique"""
+        if LearningPath.objects.filter(slug=value).exists():
+            raise serializers.ValidationError(
+                "A path with this slug already exists. Please use a different slug."
+            )
+        return value
+    
+    def create(self, validated_data):
+        """Create custom path with unique slug"""
+        validated_data['is_custom'] = True
+        validated_data['created_by'] = self.context['request'].user
+        
+        # Ensure slug is unique by appending counter if needed
+        slug = validated_data.get('slug')
+        base_slug = slug
+        counter = 1
+        
+        while LearningPath.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        
+        validated_data['slug'] = slug
+        return super().create(validated_data)
+
+class PathCloneSerializer(serializers.Serializer):
+    new_title = serializers.CharField(max_length=200)
+    new_slug = serializers.SlugField()
+    description = serializers.CharField(required=False, allow_blank=True)

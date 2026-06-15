@@ -19,6 +19,7 @@ import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CustomPathsRouteImport } from './routes/custom-paths'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
@@ -74,6 +75,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomPathsRoute = CustomPathsRouteImport.update({
+  id: '/custom-paths',
+  path: '/custom-paths',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssessmentsRoute = AssessmentsRouteImport.update({
   id: '/assessments',
   path: '/assessments',
@@ -98,6 +104,7 @@ const PathsCreateRoute = PathsCreateRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
+  '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
+  '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/assessments': typeof AssessmentsRoute
+  '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/assessments'
+    | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/login'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/assessments'
+    | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/login'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/assessments'
+    | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/login'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssessmentsRoute: typeof AssessmentsRoute
+  CustomPathsRoute: typeof CustomPathsRoute
   DashboardRoute: typeof DashboardRoute
   DiscoverRoute: typeof DiscoverRoute
   LoginRoute: typeof LoginRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/custom-paths': {
+      id: '/custom-paths'
+      path: '/custom-paths'
+      fullPath: '/custom-paths'
+      preLoaderRoute: typeof CustomPathsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assessments': {
       id: '/assessments'
       path: '/assessments'
@@ -318,6 +338,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssessmentsRoute: AssessmentsRoute,
+  CustomPathsRoute: CustomPathsRoute,
   DashboardRoute: DashboardRoute,
   DiscoverRoute: DiscoverRoute,
   LoginRoute: LoginRoute,
