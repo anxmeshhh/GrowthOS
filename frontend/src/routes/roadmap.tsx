@@ -54,10 +54,12 @@ function useGraphData(slug: string | undefined, isCustomPath: boolean) {
   useEffect(() => {
     if (!slug || isCustomPath) {
       setGraphData(null);
+      lastSlugRef.current = null;
       return;
     }
     if (!(slug in GRAPH_LOADERS)) {
       setGraphData(null);
+      lastSlugRef.current = null;
       return;
     }
     if (lastSlugRef.current === slug) return; // already loaded this slug
