@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject, PathSharing
+from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject, PathSharing, TopicScreenshot
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -105,6 +105,20 @@ class NoteDocumentSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and obj.file:
             return request.build_absolute_uri(obj.file.url)
+        return None
+
+class TopicScreenshotSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TopicScreenshot
+        fields = ['id', 'topic', 'image', 'caption', 'uploaded_at', 'image_url']
+        read_only_fields = ['user', 'uploaded_at']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if request and obj.image:
+            return request.build_absolute_uri(obj.image.url)
         return None
 
 class VerifiedProjectSerializer(serializers.ModelSerializer):

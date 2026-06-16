@@ -5,7 +5,7 @@ from .views import (
     RegisterView, LearningPathViewSet, BookmarkViewSet, CustomPathView, GeneratePathView,
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
-    ProjectIdeasView, ScanRepoView, NoteDocumentView,
+    ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
     AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
@@ -42,6 +42,7 @@ urlpatterns = [
     path('topics/<str:topic_id>/project-ideas/', ProjectIdeasView.as_view(), name='topic_project_ideas'),
     path('topics/<str:topic_id>/scan-repo/', ScanRepoView.as_view(), name='topic_scan_repo'),
     path('topics/<str:topic_id>/note-documents/', NoteDocumentView.as_view(), name='topic_note_documents'),
+    path('topics/<str:topic_id>/screenshots/', TopicScreenshotView.as_view(), name='topic_screenshots'),
     
     # Verification Endpoints
     path('materials/<int:pk>/verify/', VerifyMaterialView.as_view(), name='verify_material'),

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Pause, Play, ExternalLink, Video, FileText, ChevronLeft, ChevronRight, UploadCloud, Loader2, Plus } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { ArrowLeft, Pause, Play, ExternalLink, FileText, ChevronLeft, ChevronRight, UploadCloud, Loader2, Plus, Image as ImageIcon, Clipboard, X, Trash2, Maximize2 } from "lucide-react";
 import { PageShell, Card, Btn, Badge, StepDot } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -49,8 +49,69 @@ function TopicWorkspace() {
   const [tab, setTab] = useState<Tab>("notes");
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(true);
-  const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [videoRefs, setVideoRefs] = useState<string[]>([]);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const pasteZoneRef = useRef<HTMLDivElement>(null);
+
+  // Screenshots query
+  const { data: screenshots = [], refetch: refetchScreenshots } = useQuery({
+    queryKey: ['screenshots', topicId],
+    queryFn: async () => {
+      const res = await apiFetch(`/topics/${topicId}/screenshots/`);
+      if (!res.ok) return [];
+      return res.json();
+    }
+  });
+
+  const uploadScreenshotMutation = useMutation({
+    mutationFn: async ({ file, caption }: { file: File; caption?: string }) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      if (caption) formData.append('caption', caption);
+      const res = await apiFetch(`/topics/${topicId}/screenshots/`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchScreenshots();
+    }
+  });
+
+  const deleteScreenshotMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiFetch(`/topics/${topicId}/screenshots/?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Delete failed');
+    },
+    onSuccess: () => {
+      refetchScreenshots();
+    }
+  });
+
+  // Handle clipboard paste
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          uploadScreenshotMutation.mutate({ file, caption: '' });
+        }
+        break;
+      }
+    }
+  }, [topicId]);
+
+  useEffect(() => {
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [handlePaste]);
 
   useEffect(() => {
     if (!running) return;
@@ -63,28 +124,16 @@ function TopicWorkspace() {
 
   const { topic, progress, materials } = data;
 
-  // YouTube embed URL logic
-  function toEmbedUrl(url: string): string | null {
-    try {
-      const u = new URL(url);
-      let vid = "";
-      if (u.hostname.includes("youtu.be")) vid = u.pathname.slice(1);
-      else if (u.hostname.includes("youtube.com")) vid = u.searchParams.get("v") || "";
-      return vid ? `https://www.youtube.com/embed/${vid}` : null;
-    } catch { return null; }
-  }
-  const customEmbed = youtubeUrl ? toEmbedUrl(youtubeUrl) : null;
-  const videoQuery = encodeURIComponent(topic.title + " programming tutorial");
-  const embedSrc = customEmbed || `https://www.youtube.com/embed?listType=search&list=${videoQuery}`;
-
-  const addVideoRef = () => {
-    if (youtubeUrl && !videoRefs.includes(youtubeUrl)) {
-      setVideoRefs((prev) => [...prev, youtubeUrl]);
+  const handleScreenshotFiles = (files: FileList | File[]) => {
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        uploadScreenshotMutation.mutate({ file, caption: '' });
+      }
     }
   };
 
   return (
-    <main className="flex-1 min-w-0 flex flex-col h-full">
+    <main className="flex-1 min-w-0 flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden">
       {/* Top bar */}
       <div className="shrink-0 bg-[#0a0a0a] border-b border-[#222] px-4 sm:px-6 py-2.5 flex items-center gap-3 z-20">
         <Link to="/roadmap" className="text-[#666] hover:text-[#f0f0f0] p-1"><ArrowLeft size={16} /></Link>
@@ -103,49 +152,139 @@ function TopicWorkspace() {
 
       {/* Split-screen body */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-        {/* LEFT PANE — Video + saved videos */}
+        {/* LEFT PANE — Screenshots */}
         <div className="lg:w-1/2 flex flex-col border-r border-[#1a1a1a] bg-[#070707] min-h-0">
-          {/* Video embed */}
-          <div className="w-full bg-black" style={{ aspectRatio: '16/9' }}>
-            <iframe src={embedSrc} title={topic.title} className="w-full h-full" allowFullScreen />
-          </div>
-          {/* URL input */}
-          <div className="px-4 py-3 border-b border-[#1a1a1a] shrink-0">
-            <div className="flex gap-2">
+          {/* Paste / Upload zone */}
+          <div
+            ref={pasteZoneRef}
+            className={`shrink-0 border-b border-[#1a1a1a] px-4 py-5 transition-colors ${
+              isDragging ? 'bg-[#22c55e]/10 border-[#22c55e]/40' : ''
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files?.length) handleScreenshotFiles(e.dataTransfer.files);
+            }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-[#22c55e]/15 flex items-center justify-center">
+                <ImageIcon size={14} className="text-[#22c55e]" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-[#f0f0f0]">Screenshots</div>
+                <div className="text-[10px] text-[#666] font-mono">Paste • Drop • Upload</div>
+              </div>
+              {uploadScreenshotMutation.isPending && (
+                <div className="ml-auto flex items-center gap-1.5 text-[10px] text-[#22c55e] font-mono">
+                  <Loader2 size={12} className="animate-spin" /> Uploading...
+                </div>
+              )}
+            </div>
+            <div
+              className="border-2 border-dashed border-[#2a2a2a] rounded-xl p-5 text-center hover:bg-[#0f0f0f] hover:border-[#333] transition-all cursor-pointer group"
+              onClick={() => document.getElementById('screenshotUpload')?.click()}
+            >
               <input
-                type="text" value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="Paste YouTube URL here..."
-                className="flex-1 bg-[#111] border border-[#222] rounded px-3 py-1.5 text-xs text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#444]"
+                type="file"
+                id="screenshotUpload"
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={(e) => { if (e.target.files?.length) handleScreenshotFiles(e.target.files); e.target.value = ''; }}
               />
-              <Btn size="sm" variant="outline" onClick={addVideoRef}><Plus size={12} /> Save</Btn>
+              <div className="flex items-center justify-center gap-3 text-[#666] group-hover:text-[#999] transition-colors">
+                <Clipboard size={16} />
+                <span className="text-xs">Press <kbd className="px-1.5 py-0.5 bg-[#222] rounded text-[10px] font-mono text-[#999] border border-[#333]">Ctrl+V</kbd> to paste screenshot, or click to browse</span>
+              </div>
             </div>
           </div>
-          {/* Saved videos + summary */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {videoRefs.length > 0 && (
-              <div>
-                <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-2">
-                  <Video size={12} className="inline mr-1" /> Saved Videos ({videoRefs.length})
+
+          {/* Screenshot Gallery */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {screenshots.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <div className="w-16 h-16 rounded-2xl bg-[#111] border border-[#222] flex items-center justify-center mb-4">
+                  <ImageIcon size={24} className="text-[#333]" />
                 </div>
-                <ul className="space-y-1.5">
-                  {videoRefs.map((url, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-[#999]">
-                      <ExternalLink size={10} className="shrink-0 text-[#22c55e]" />
-                      <a href={url} target="_blank" rel="noreferrer" className="truncate hover:text-[#f0f0f0] transition-colors">{url}</a>
-                    </li>
-                  ))}
-                </ul>
+                <div className="text-sm text-[#555] mb-1">No screenshots yet</div>
+                <div className="text-xs text-[#444] max-w-[240px]">Take a screenshot and paste it here with <span className="font-mono text-[#666]">Ctrl+V</span></div>
               </div>
+            ) : (
+              <>
+                <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-3">
+                  <ImageIcon size={12} className="inline mr-1" /> Gallery ({screenshots.length})
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {screenshots.map((ss: any) => (
+                    <div
+                      key={ss.id}
+                      className="group relative rounded-lg overflow-hidden border border-[#222] bg-[#111] hover:border-[#333] transition-all cursor-pointer"
+                      onClick={() => setLightboxImg(ss.image_url || ss.image)}
+                    >
+                      <img
+                        src={ss.image_url || ss.image}
+                        alt={ss.caption || 'Screenshot'}
+                        className="w-full aspect-video object-cover"
+                        loading="lazy"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <Maximize2 size={18} className="text-white/80" />
+                      </div>
+                      {/* Delete button */}
+                      <button
+                        className="absolute top-1.5 right-1.5 p-1 rounded-md bg-black/60 text-[#999] hover:text-[#ef4444] hover:bg-black/80 opacity-0 group-hover:opacity-100 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteScreenshotMutation.mutate(ss.id);
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                      {/* Timestamp */}
+                      <div className="absolute bottom-0 inset-x-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="text-[9px] font-mono text-[#888]">
+                          {new Date(ss.uploaded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
+
+            {/* Topic Summary - kept below gallery */}
             {topic.summary && (
-              <div className="border border-[#1a1a1a] rounded-lg p-3">
+              <div className="border border-[#1a1a1a] rounded-lg p-3 mt-4">
                 <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-1">Topic Summary</div>
                 <div className="text-sm text-[#999] leading-relaxed">{topic.summary}</div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Lightbox */}
+        {lightboxImg && (
+          <div
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-8"
+            onClick={() => setLightboxImg(null)}
+          >
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              onClick={() => setLightboxImg(null)}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={lightboxImg}
+              alt="Screenshot preview"
+              className="max-w-full max-h-full rounded-xl shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
 
         {/* RIGHT PANE — Tabs: Notes / Flashcards / Quiz / Build */}
         <div className="lg:w-1/2 flex flex-col min-h-0 bg-[#0a0a0a]">

@@ -8,12 +8,13 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
     TopicMaterialSerializer, TopicProgressSerializer, TopicNoteSerializer,
-    NoteDocumentSerializer, VerifiedProjectSerializer, PathSharingSerializer, CustomPathCreateSerializer, PathCloneSerializer
+    NoteDocumentSerializer, VerifiedProjectSerializer, PathSharingSerializer, CustomPathCreateSerializer, PathCloneSerializer,
+    TopicScreenshotSerializer
 )
 
 class RegisterView(generics.CreateAPIView):
@@ -46,7 +47,13 @@ class LearningPathViewSet(viewsets.ModelViewSet):
         if not created:
             bookmark.delete()
             return Response({'status': 'unbookmarked'})
-        Contribution.objects.create(user=request.user, action_type='path_bookmarked', points=3)
+        # Award only if user has never bookmarked this path before (first-time only)
+        already_awarded = Contribution.objects.filter(
+            user=request.user,
+            action_type='path_bookmarked',
+        ).count()
+        if already_awarded < Bookmark.objects.filter(user=request.user).count():
+            Contribution.objects.create(user=request.user, action_type='path_bookmarked', points=3)
         return Response({'status': 'bookmarked'})
 
 class BookmarkViewSet(viewsets.ReadOnlyModelViewSet):
@@ -434,9 +441,15 @@ class TopicNoteView(views.APIView):
         note.content = request.data.get('content', '')
         note.save()
         
-        # Award 1 point for saving notes, max once per topic/day roughly, but for now just create it
-        # To avoid spamming, we can just award it always or check if it's substantial
-        Contribution.objects.create(user=request.user, action_type='notes_uploaded', points=1)
+        # Award 1 point for saving notes, max once per topic per day
+        today = timezone.now().date()
+        already_awarded = Contribution.objects.filter(
+            user=request.user,
+            action_type='notes_uploaded',
+            created_at__date=today
+        ).exists()
+        if not already_awarded:
+            Contribution.objects.create(user=request.user, action_type='notes_uploaded', points=1)
         
         serializer = TopicNoteSerializer(note)
         return Response(serializer.data)
@@ -649,6 +662,39 @@ class NoteDocumentView(views.APIView):
         serializer = NoteDocumentSerializer(doc, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class TopicScreenshotView(views.APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
+        screenshots = TopicScreenshot.objects.filter(user=request.user, topic=topic)
+        serializer = TopicScreenshotSerializer(screenshots, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
+        image = request.data.get('image')
+        if not image:
+            return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+        caption = request.data.get('caption', '')
+        screenshot = TopicScreenshot.objects.create(
+            user=request.user,
+            topic=topic,
+            image=image,
+            caption=caption
+        )
+        serializer = TopicScreenshotSerializer(screenshot, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, topic_id):
+        screenshot_id = request.query_params.get('id')
+        if not screenshot_id:
+            return Response({'error': 'No screenshot ID provided'}, status=status.HTTP_400_BAD_REQUEST)
+        screenshot = get_object_or_404(TopicScreenshot, id=screenshot_id, user=request.user)
+        screenshot.delete()
+        return Response({'status': 'deleted'})
+
 class AllNotesView(views.APIView):
     permission_classes = [IsAuthenticated]
 
@@ -669,13 +715,23 @@ class SubmitQuizView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
         score = request.data.get('score', 0)
         total = request.data.get('total', 1)
         percentage = score / total if total > 0 else 0
 
         if percentage >= 0.8:
-            Contribution.objects.create(user=request.user, action_type='quiz_passed', points=5)
-            return Response({"status": "passed", "xp_earned": 5})
+            # Award max once per topic per day
+            today = timezone.now().date()
+            already_awarded = Contribution.objects.filter(
+                user=request.user,
+                action_type='quiz_passed',
+                created_at__date=today
+            ).exists()
+            xp = 5 if not already_awarded else 0
+            if not already_awarded:
+                Contribution.objects.create(user=request.user, action_type='quiz_passed', points=5)
+            return Response({"status": "passed", "xp_earned": xp})
         
         return Response({"status": "failed", "xp_earned": 0})
 

@@ -163,6 +163,19 @@ class NoteDocument(models.Model):
     def __str__(self):
         return f"{self.filename} by {self.user.username}"
 
+class TopicScreenshot(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='screenshots')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='screenshots')
+    image = models.ImageField(upload_to='screenshots/')
+    caption = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"Screenshot by {self.user.username} on {self.topic.title}"
+
 class TopicQuiz(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quizzes')
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='quizzes')
