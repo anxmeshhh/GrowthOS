@@ -10,79 +10,42 @@ export const Route = createFileRoute("/assessments")({
   component: AssessmentsPage,
 });
 
-// Load the graph JSONs for section grouping
-const GRAPH_MAP: Record<string, () => Promise<any>> = {
-  'backend': () => import('@/assets/roadmaps/backend.json').then(m => m.default),
-  'frontend': () => import('@/assets/roadmaps/frontend.json').then(m => m.default),
-  'ai-engineer': () => import('@/assets/roadmaps/ai-engineer.json').then(m => m.default),
-  'api-design': () => import('@/assets/roadmaps/api-design.json').then(m => m.default),
-  'datastructures-and-algorithms': () => import('@/assets/roadmaps/datastructures-and-algorithms.json').then(m => m.default),
-  'django': () => import('@/assets/roadmaps/django.json').then(m => m.default),
-  'sql': () => import('@/assets/roadmaps/sql.json').then(m => m.default),
-  'system-design': () => import('@/assets/roadmaps/system-design.json').then(m => m.default),
-};
-
 type Section = {
   id: string;
   label: string;
   children: { id: string; label: string; slug: string; status: string; topicId: string }[];
 };
 
-function buildSections(graph: any, topics: any[]): Section[] {
-  if (!graph) return [];
-  const node_map = new Map<string, any>(graph.nodes.map((n: any): [string, any] => [n.id, n]));
-  const children_of: Record<string, string[]> = {};
-  const child_ids = new Set<string>();
-  for (const e of graph.edges) {
-    children_of[e.source] = children_of[e.source] || [];
-    children_of[e.source].push(e.target);
-    child_ids.add(e.target);
-  }
-  // Root nodes = milestones with bgColor #ffee55
-  const roots = graph.nodes
-    .filter((n: any) => !child_ids.has(n.id) || n.bgColor === '#ffee55')
-    .filter((n: any) => n.bgColor === '#ffee55');
-
-  const topicMap = new Map<string, any>(topics.map((t: any): [string, any] => [t.slug, t]));
-
+function buildSections(topics: any[]): Section[] {
   const sections: Section[] = [];
-  const visited = new Set<string>();
-
-  for (const root of roots) {
-    if (visited.has(root.id)) continue;
-    visited.add(root.id);
-    const childIds = children_of[root.id] || [];
-    const childNodes: Section['children'] = [];
-    for (const cid of childIds) {
-      if (visited.has(cid)) continue;
-      visited.add(cid);
-      const cnode: any = node_map.get(cid);
-      if (!cnode) continue;
-      // If this child is also a milestone, recurse
-      if (cnode.bgColor === '#ffee55') {
-        const subChildren = children_of[cid] || [];
-        for (const scid of subChildren) {
-          if (visited.has(scid)) continue;
-          visited.add(scid);
-          const scnode: any = node_map.get(scid);
-          if (!scnode) continue;
-          const t = topicMap.get(scid);
-          childNodes.push({
-            id: scid, label: scnode.label, slug: scid,
-            status: t?.user_progress || 'available',
-            topicId: t ? String(t.id) : scid,
-          });
-        }
-        continue;
+  let currentSection: Section | null = null;
+  
+  const sorted = [...topics].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  
+  for (const t of sorted) {
+    if (t.node_kind === 'milestone') {
+      currentSection = {
+        id: String(t.id),
+        label: t.title,
+        children: [],
+      };
+      sections.push(currentSection);
+    } else {
+      if (!currentSection) {
+        currentSection = { id: 'root', label: 'General', children: [] };
+        sections.push(currentSection);
       }
-      const t = topicMap.get(cid);
-      childNodes.push({
-        id: cid, label: cnode.label, slug: cid,
-        status: t?.user_progress || 'available',
-        topicId: t ? String(t.id) : cid,
+      // Skip callouts/notes from assessments
+      if (t.node_kind === 'note' || t.node_kind === 'callout') continue;
+      
+      currentSection.children.push({
+        id: String(t.id),
+        label: t.title,
+        slug: t.slug ?? String(t.id),
+        status: t.user_progress || 'available',
+        topicId: String(t.id),
       });
     }
-    sections.push({ id: root.id, label: root.label, children: childNodes });
   }
   return sections;
 }
@@ -98,19 +61,6 @@ function AssessmentsPage() {
       if (!res.ok) return [];
       return res.json();
     },
-  });
-
-  // Load all graph JSONs
-  const { data: graphs = {} } = useQuery({
-    queryKey: ["all-graphs"],
-    queryFn: async () => {
-      const result: Record<string, any> = {};
-      for (const [slug, loader] of Object.entries(GRAPH_MAP)) {
-        try { result[slug] = await loader(); } catch { /* skip */ }
-      }
-      return result;
-    },
-    staleTime: Infinity,
   });
 
   const allTopics = paths.flatMap((p: any) => p.topics || []);
@@ -163,8 +113,7 @@ function AssessmentsPage() {
           const done = topics.filter((t: any) => t.user_progress === "completed").length;
           const pct = topics.length > 0 ? Math.round((done / topics.length) * 100) : 0;
           const isExpanded = expandedPaths.has(path.slug);
-          const graph = graphs[path.slug];
-          const sections = useMemo(() => buildSections(graph, topics), [graph, topics]);
+          const sections = useMemo(() => buildSections(topics), [topics]);
 
           return (
             <Card key={path.slug} className="p-0 overflow-hidden">

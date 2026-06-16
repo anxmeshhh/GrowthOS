@@ -9,144 +9,10 @@ import {
   StatCard,
   Badge,
 } from "@/components/growth-ui";
-import { RoadmapTree, type GraphData } from "@/components/roadmap/RoadmapTree";
+import { RoadmapTree } from "@/components/roadmap/RoadmapTree";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import { useState, useMemo, useEffect, useRef } from "react";
-
-// ─── Lazy graph loader ────────────────────────────────────────────────────────
-// FIX #2: Removed 8 eager JSON imports. Each JSON is loaded on-demand only when
-// that specific roadmap slug becomes the active path, not on page mount.
-// This cuts initial parse cost by ~8× for pages where the user only views 1 path.
-
-const GRAPH_SLUGS = [
-  "backend",
-  "frontend",
-  "ai-engineer",
-  "datastructures-and-algorithms",
-  "django",
-  "sql",
-  "system-design",
-  "api-design",
-] as const;
-
-type GraphSlug = typeof GRAPH_SLUGS[number];
-
-const GRAPH_LOADERS: Record<GraphSlug, () => Promise<GraphData>> = {
-  "backend":                        () => import("@/assets/roadmaps/backend.json").then(m => m.default as unknown as GraphData),
-  "frontend":                       () => import("@/assets/roadmaps/frontend.json").then(m => m.default as unknown as GraphData),
-  "ai-engineer":                    () => import("@/assets/roadmaps/ai-engineer.json").then(m => m.default as unknown as GraphData),
-  "datastructures-and-algorithms":  () => import("@/assets/roadmaps/datastructures-and-algorithms.json").then(m => m.default as unknown as GraphData),
-  "django":                         () => import("@/assets/roadmaps/django.json").then(m => m.default as unknown as GraphData),
-  "sql":                            () => import("@/assets/roadmaps/sql.json").then(m => m.default as unknown as GraphData),
-  "system-design":                  () => import("@/assets/roadmaps/system-design.json").then(m => m.default as unknown as GraphData),
-  "api-design":                     () => import("@/assets/roadmaps/api-design.json").then(m => m.default as unknown as GraphData),
-};
-
-// Cache so we don't re-fetch the same JSON after the first load
-const graphCache = new Map<string, GraphData>();
-
-function useGraphData(slug: string | undefined, isCustomPath: boolean) {
-  const [graphData, setGraphData] = useState<GraphData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const lastSlugRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!slug || isCustomPath) {
-      setGraphData(null);
-      lastSlugRef.current = null;
-      return;
-    }
-    if (!(slug in GRAPH_LOADERS)) {
-      setGraphData(null);
-      lastSlugRef.current = null;
-      return;
-    }
-    if (lastSlugRef.current === slug) return; // already loaded this slug
-    lastSlugRef.current = slug;
-
-    if (graphCache.has(slug)) {
-      setGraphData(graphCache.get(slug)!);
-      return;
-    }
-
-    setLoading(true);
-    const loader = GRAPH_LOADERS[slug as GraphSlug];
-    loader().then(data => {
-      graphCache.set(slug, data);
-      setGraphData(data);
-      setLoading(false);
-    }).catch(() => {
-      setGraphData(null);
-      setLoading(false);
-    });
-  }, [slug, isCustomPath]);
-
-  return { graphData, graphLoading: loading };
-}
-
-// ─── node_kind → bgColor ──────────────────────────────────────────────────────
-// These exact hex values are what getKind() in RoadmapNode.tsx keys on:
-//   milestone → '#ffee55' → blue section header
-//   topic     → '#ffdfb3' → green recommended node
-//   optional  → '#e0e0e0' → cyan dashed optional node
-const KIND_BGCOLOR: Record<string, string> = {
-  milestone: '#ffee55',
-  topic:     '#ffdfb3',
-  optional:  '#e0e0e0',
-};
-
-// ─── FIX #1 (page-level): generateGraphDataFromTopics moved outside component
-// and memoized at call site. Now reads node_kind from the API response so
-// custom paths render identically to JSON roadmaps (same getKind() mapping).
-function generateGraphDataFromTopics(topicsArray: any[]): GraphData {
-  const nodes: GraphData['nodes'] = [];
-  const edges: GraphData['edges'] = [];
-
-  const sorted = [...topicsArray].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-  let currentMilestoneId: string | null = null;
-
-  sorted.forEach((topic, idx) => {
-    const kind: string = topic.node_kind ?? 'topic';
-    const bgColor = KIND_BGCOLOR[kind] ?? KIND_BGCOLOR.topic;
-
-    nodes.push({
-      id: String(topic.id),
-      label: topic.title,
-      x: 0,
-      y: idx * 60,
-      bgColor,
-      textColor: '#000000',
-    });
-
-    if (kind === 'milestone') {
-      // Milestones are root nodes (no incoming edges from other milestones)
-      currentMilestoneId = String(topic.id);
-    } else {
-      // Topic or Optional: Connect to the current active milestone
-      if (currentMilestoneId) {
-        // Prevent duplicate edges if the data happens to have them
-        const edgeId = `dep-${currentMilestoneId}-${topic.id}`;
-        if (!edges.find(e => e.id === edgeId)) {
-          edges.push({
-            id: edgeId,
-            source: currentMilestoneId,
-            target: String(topic.id),
-          });
-        }
-      }
-    }
-    
-    // We intentionally ignore topic.dependencies here because the old path builder
-    // created massive dependency DAGs (e.g. 1 node depending on 5 previous nodes),
-    // which causes an exponential rendering explosion (millions of components) 
-    // when RoadmapTree recursively traverses the children. The JSON roadmaps 
-    // are strict trees, so we enforce a strict tree here too!
-  });
-
-  return { nodes, edges };
-}
+import { useState } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -247,45 +113,24 @@ function RoadmapPage() {
 
   return <RoadmapPageInner
     activePath={activePath}
-    isCustomPath={activePath.is_custom}
     paths={paths}
     selectedPathId={selectedPathId}
     onSelectPath={setSelectedPathId}
   />;
 }
 
-// ─── Split into inner component so hooks run after activePath is confirmed ───
-// This also means the lazy graph loader and memos below don't run during the
-// loading/empty state branches above.
-
 function RoadmapPageInner({
   activePath,
-  isCustomPath,
   paths,
   selectedPathId,
   onSelectPath,
 }: {
   activePath: any;
-  isCustomPath: boolean;
   paths: any[];
   selectedPathId: number | null;
   onSelectPath: (id: number) => void;
 }) {
   const topics: any[] = activePath.topics || [];
-
-  // FIX #1: memoized — won't re-run unless topics array identity changes
-  const customGraphData = useMemo(
-    () => isCustomPath ? generateGraphDataFromTopics(topics) : null,
-    [topics, isCustomPath]
-  );
-
-  // FIX #2: lazy-load the correct JSON only when slug changes
-  const { graphData: lazyGraphData, graphLoading } = useGraphData(
-    isCustomPath ? undefined : activePath.slug,
-    isCustomPath
-  );
-
-  const graphData = isCustomPath ? customGraphData : lazyGraphData;
 
   // ── Computed stats ──────────────────────────────────────────────────────
   const completedCount = topics.filter((t: any) => t.user_progress === "completed").length;
@@ -412,18 +257,15 @@ function RoadmapPageInner({
       <div className="mb-2 flex items-center gap-2">
         <MapIcon size={13} className="text-[#444]" />
         <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#444]">
-          {graphData ? `${activePath.title} — full roadmap` : "Learning path"}
+          {activePath.title} — full roadmap
         </span>
-        {graphLoading && (
-          <Loader2 size={11} className="animate-spin text-[#333] ml-1" />
-        )}
       </div>
 
       <div
         className="w-full mb-12 rounded-xl overflow-hidden border border-[#1a1a1a]"
         style={{ height: "820px" }}
       >
-        <RoadmapTree topics={topics} graphData={graphData} />
+        <RoadmapTree topics={topics} />
       </div>
     </PageShell>
   );

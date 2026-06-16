@@ -1,129 +1,22 @@
 import { useMemo, useState, useCallback, memo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { RoadmapNode, RoadmapNodeData, getKind, NodeKind } from './RoadmapNode';
+import { RoadmapNode, NodeKind } from './RoadmapNode';
 import { CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type GraphData = {
-  nodes: {
-    id: string;
-    label: string;
-    x: number;
-    y: number;
-    width?: number;
-    height?: number;
-    bgColor?: string;
-    textColor?: string;
-  }[];
-  edges: {
-    id: string;
-    source: string;
-    target: string;
-    type?: string;
-  }[];
-};
 
 type RoadmapTreeProps = {
   topics: any[];
-  graphData?: GraphData | null;
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function buildProgressMap(topics: any[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  topics.forEach(t => {
-    const key = t.graph_node_id ?? t.slug ?? String(t.id);
-    map[key] = t.user_progress ?? 'available';
-  });
-  return map;
-}
-
-function resolveTopicId(graphNodeId: string, topics: any[]): string {
-  const match = topics.find(
-    t => (t.graph_node_id ?? t.slug ?? String(t.id)) === graphNodeId
-  );
-  return match ? String(match.id) : graphNodeId;
-}
-
-function buildScoreMap(topics: any[]): Record<string, number | undefined> {
-  const map: Record<string, number | undefined> = {};
-  topics.forEach(t => {
-    const key = t.graph_node_id ?? t.slug ?? String(t.id);
-    map[key] = t.verified_project?.ai_score;
-  });
-  return map;
-}
 
 type TreeNode = {
   id: string;
-  data: RoadmapNodeData;
   kind: NodeKind;
-  children: TreeNode[];
   originalY: number;
+  data: any;
+  children: TreeNode[];
 };
-
-function buildForest(
-  graphNodes: GraphData['nodes'],
-  edges: GraphData['edges'],
-  progressMap: Record<string, string>,
-  scoreMap: Record<string, number | undefined>,
-  topics: any[]
-): TreeNode[] {
-  const nodeMap = new Map<string, TreeNode>();
-
-  graphNodes.forEach(n => {
-    const progress = progressMap[n.id] ?? 'available';
-    const score = scoreMap[n.id];
-    const kind = getKind(n.bgColor);
-    nodeMap.set(n.id, {
-      id: n.id,
-      kind,
-      originalY: n.y,
-      data: {
-        label: n.label,
-        topicId: resolveTopicId(n.id, topics),
-        status: progress === 'completed' ? 'completed' : 'available',
-        bgColor: n.bgColor,
-        textColor: n.textColor,
-        width: n.width,
-        height: n.height,
-        aiScore: score,
-      },
-      children: [],
-    });
-  });
-
-  const childIds = new Set<string>();
-  edges.forEach(e => {
-    const parent = nodeMap.get(e.source);
-    const child = nodeMap.get(e.target);
-    if (parent && child) {
-      if (parent.kind === 'milestone' && child.kind === 'milestone') return;
-      parent.children.push(child);
-      childIds.add(e.target);
-    }
-  });
-
-  nodeMap.forEach(node => {
-    node.children.sort((a, b) => a.originalY - b.originalY);
-  });
-
-  return graphNodes
-    .filter(n => {
-      const node = nodeMap.get(n.id)!;
-      if (node.kind === 'milestone') return true;
-      return !childIds.has(n.id);
-    })
-    .sort((a, b) => a.y - b.y)
-    .map(n => nodeMap.get(n.id)!)
-    .filter(Boolean);
-}
 
 // ─── Section header ───────────────────────────────────────────────────────────
 
-// FIX #4: memo so parent re-renders don't cascade into headers that haven't changed
 const SectionHeader = memo(function SectionHeader({
   node,
   isOpen,
@@ -159,20 +52,16 @@ const SectionHeader = memo(function SectionHeader({
 
 // ─── Tree branch ──────────────────────────────────────────────────────────────
 
-// FIX #4: memo so siblings don't re-render when one branch's open state toggles
 const TreeBranch = memo(function TreeBranch({
   node,
   depth,
-  topics,
 }: {
   node: TreeNode;
   depth: number;
-  topics: any[];
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
 
-  // FIX #4: stable toggle callback — won't cause children to re-render
   const handleToggle = useCallback(() => setOpen(v => !v), []);
 
   if (node.kind === 'note' || node.kind === 'callout') return null;
@@ -180,7 +69,7 @@ const TreeBranch = memo(function TreeBranch({
   const indent = depth * 20;
   const connectorColor = '#1e3a1e';
 
-  // ── Top-level milestone: section group ──────────────────────────────────
+  // Top-level milestone
   if (node.kind === 'milestone' && depth === 0) {
     return (
       <div className="mb-6">
@@ -199,7 +88,7 @@ const TreeBranch = memo(function TreeBranch({
         {hasChildren && (
           <div className="space-y-1 pl-2">
             {node.children.map(child => (
-              <TreeBranch key={child.id} node={child} depth={1} topics={topics} />
+              <TreeBranch key={child.id} node={child} depth={1} />
             ))}
           </div>
         )}
@@ -207,7 +96,7 @@ const TreeBranch = memo(function TreeBranch({
     );
   }
 
-  // ── All other nodes ───────────────────────────────────────────────────────
+  // All other nodes
   return (
     <div className="relative">
       {depth > 0 && (
@@ -238,15 +127,13 @@ const TreeBranch = memo(function TreeBranch({
       {hasChildren && open && (
         <div className="mt-1 space-y-1">
           {node.children.map(child => (
-            <TreeBranch key={child.id} node={child} depth={depth + 1} topics={topics} />
+            <TreeBranch key={child.id} node={child} depth={depth + 1} />
           ))}
         </div>
       )}
     </div>
   );
 });
-
-// ─── Legend helpers ───────────────────────────────────────────────────────────
 
 function LegendItem({ kind, label }: { kind: NodeKind; label: string }) {
   const colors: Record<string, { border: string; bg: string; borderStyle: string }> = {
@@ -266,62 +153,52 @@ function LegendItem({ kind, label }: { kind: NodeKind; label: string }) {
   );
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
-
-export function RoadmapTree({ topics = [], graphData }: RoadmapTreeProps) {
-  // FIX #1: derive a stable graphData reference so buildForest doesn't rerun needlessly.
-  // If graphData is null (custom path), we build it here inside useMemo — only once per
-  // topics array identity change, not on every render.
+export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
   const forest = useMemo(() => {
-    let activeGraphData = graphData;
-
-    if (!activeGraphData) {
-      // Build a minimal graph from topics list (no inline function call on every render)
-      const nodes = topics.map((t, idx) => ({
+    const sorted = [...topics].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    
+    const roots: TreeNode[] = [];
+    let currentMilestone: TreeNode | null = null;
+    
+    sorted.forEach(t => {
+      const kind = t.node_kind || 'topic';
+      const bgColor = kind === 'milestone' ? '#ffee55' : (kind === 'optional' ? '#e0e0e0' : '#ffdfb3');
+      
+      const node: TreeNode = {
         id: String(t.id),
-        label: t.title,
-        x: 0,
-        y: idx * 100,
-        bgColor: '#ffee55',
-        textColor: '#000000',
-      }));
-
-      const edges: GraphData['edges'] = [];
-      let hasDependencies = false;
-
-      topics.forEach(t => {
-        if (t.dependencies && t.dependencies.length > 0) {
-          hasDependencies = true;
-          t.dependencies.forEach((depId: any) => {
-            edges.push({ id: `e${depId}-${t.id}`, source: String(depId), target: String(t.id) });
-          });
-        }
-      });
-
-      if (!hasDependencies && topics.length > 1) {
-        for (let i = 0; i < topics.length - 1; i++) {
-          edges.push({
-            id: `e${topics[i].id}-${topics[i + 1].id}`,
-            source: String(topics[i].id),
-            target: String(topics[i + 1].id),
-          });
+        kind,
+        originalY: t.order ?? 0,
+        data: {
+          label: t.title,
+          topicId: String(t.id),
+          status: t.user_progress === 'completed' ? 'completed' : 'available',
+          bgColor,
+          textColor: '#000000',
+          aiScore: t.verified_project?.ai_score,
+        },
+        children: [],
+      };
+      
+      if (kind === 'milestone') {
+        currentMilestone = node;
+        roots.push(node);
+      } else {
+        if (currentMilestone) {
+          currentMilestone.children.push(node);
+        } else {
+          roots.push(node);
         }
       }
-
-      activeGraphData = { nodes, edges };
-    }
-
-    const progressMap = buildProgressMap(topics);
-    const scoreMap = buildScoreMap(topics);
-    return buildForest(activeGraphData.nodes, activeGraphData.edges, progressMap, scoreMap, topics);
-  }, [topics, graphData]);
+    });
+    
+    return roots;
+  }, [topics]);
 
   return (
     <div
       className="w-full h-full overflow-y-auto overflow-x-hidden"
       style={{ background: '#080c08', scrollbarWidth: 'thin', scrollbarColor: '#1e3a1e #080c08' }}
     >
-      {/* Legend */}
       <div
         className="sticky top-0 z-10 flex flex-wrap items-center gap-x-5 gap-y-1.5 px-4 py-2.5 border-b"
         style={{ background: 'rgba(8,12,8,0.96)', backdropFilter: 'blur(8px)', borderColor: '#111a11' }}
@@ -335,10 +212,9 @@ export function RoadmapTree({ topics = [], graphData }: RoadmapTreeProps) {
         </div>
       </div>
 
-      {/* Tree */}
       <div className="p-4 pb-16 space-y-1">
         {forest.map(root => (
-          <TreeBranch key={root.id} node={root} depth={0} topics={topics} />
+          <TreeBranch key={root.id} node={root} depth={0} />
         ))}
       </div>
     </div>
