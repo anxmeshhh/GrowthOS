@@ -15,6 +15,7 @@ export type RoadmapNodeData = {
   isExpanded?: boolean;
   onToggleExpand?: (nodeId: string) => void;
   isTreeMode?: boolean;
+  aiScore?: number;
 };
 
 export type NodeKind = 'topic' | 'milestone' | 'optional' | 'note' | 'callout';
@@ -131,6 +132,11 @@ export function RoadmapNode({
         >
           {data.label}
         </span>
+        {isCompleted && data.aiScore !== undefined && (
+          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm bg-[#162a16] border border-[#22c55e]/30 text-[#4ade80] ml-2 shrink-0 flex items-center shadow-sm">
+            ★ {data.aiScore}
+          </span>
+        )}
       </button>
 
       {/* Expand/Collapse Toggle Button */}

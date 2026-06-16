@@ -26,10 +26,11 @@ class TopicSerializer(serializers.ModelSerializer):
     user_progress = serializers.SerializerMethodField()
 
     dependencies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    verified_project = serializers.SerializerMethodField()
 
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'slug', 'summary', 'order', 'created_by', 'user_progress', 'dependencies']
+        fields = ['id', 'title', 'slug', 'summary', 'order', 'created_by', 'user_progress', 'dependencies', 'verified_project']
 
     def get_user_progress(self, obj):
         request = self.context.get('request')
@@ -38,6 +39,15 @@ class TopicSerializer(serializers.ModelSerializer):
             if progress:
                 return progress.status
         return 'available'
+
+    def get_verified_project(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            from .models import VerifiedProject
+            project = VerifiedProject.objects.filter(user=request.user, topic=obj).first()
+            if project:
+                return VerifiedProjectSerializer(project).data
+        return None
 
 class LearningPathSerializer(serializers.ModelSerializer):
     topics = TopicSerializer(many=True, read_only=True)
@@ -74,8 +84,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
 class TopicMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = TopicMaterial
-        fields = ['id', 'topic', 'file', 'uploaded_at', 'ai_status', 'ai_feedback']
-        read_only_fields = ['user', 'ai_status', 'ai_feedback']
+        fields = ['id', 'topic', 'file', 'uploaded_at', 'ai_status', 'ai_feedback', 'ai_score']
+        read_only_fields = ['user', 'ai_status', 'ai_feedback', 'ai_score']
 
 class TopicProgressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -127,7 +137,7 @@ class VerifiedProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = VerifiedProject
-        fields = ['id', 'topic', 'topic_title', 'topic_slug', 'repo_url', 'repo_name', 'ai_evaluation', 'verified_at']
+        fields = ['id', 'topic', 'topic_title', 'topic_slug', 'repo_url', 'repo_name', 'ai_evaluation', 'ai_score', 'verified_at']
         read_only_fields = ['user', 'verified_at']
 
 class PathSharingSerializer(serializers.ModelSerializer):

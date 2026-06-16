@@ -234,7 +234,7 @@ class VerifyMaterialView(views.APIView):
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an AI teaching assistant. Determine if the following uploaded proof of work adequately covers the topic. Reply exactly with 'VERIFIED' or 'REJECTED' on the first line, followed by a short encouraging feedback message on the next lines."
+                        "content": "You are an AI teaching assistant. Determine if the following uploaded proof of work adequately covers the topic. Reply exactly with this JSON format: {\"score\": integer_0_to_100, \"feedback\": \"your encouraging feedback\"}"
                     },
                     {
                         "role": "user",
@@ -245,22 +245,43 @@ class VerifyMaterialView(views.APIView):
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            first_line = response_content.split('\n')[0].strip().upper()
+            if response_content.startswith("```json"):
+                response_content = response_content[7:-3]
+            elif response_content.startswith("```"):
+                response_content = response_content[3:-3]
+            import json
+            result = json.loads(response_content)
             
-            if 'VERIFIED' in first_line:
-                material.ai_status = 'verified'
-            else:
-                material.ai_status = 'rejected'
-                
-            material.ai_feedback = response_content
+            score = result.get('score', 0)
+            feedback = result.get('feedback', '')
+            passed = score >= 65
+            
+            material.ai_status = 'verified' if passed else 'rejected'
+            material.ai_feedback = feedback
+            material.ai_score = score
             material.save()
             
             progress, _ = TopicProgress.objects.get_or_create(user=request.user, topic=material.topic)
-            if material.ai_status == 'verified' and progress.status != 'completed':
-                progress.status = 'completed'
-                progress.completed_at = timezone.now()
-                progress.save()
-                Contribution.objects.create(user=request.user, action_type='topic_verified', points=5)
+            if passed:
+                from .models import VerifiedProject
+                repo_url = request.build_absolute_uri(material.file.url) if material.file else ""
+                repo_name = material.file.name.split('/')[-1] if material.file else "Document Submission"
+                VerifiedProject.objects.update_or_create(
+                    user=request.user,
+                    topic=material.topic,
+                    defaults={
+                        'repo_url': repo_url,
+                        'repo_name': repo_name,
+                        'ai_evaluation': feedback,
+                        'ai_score': score
+                    }
+                )
+                
+                if progress.status != 'completed':
+                    progress.status = 'completed'
+                    progress.completed_at = timezone.now()
+                    progress.save()
+                    Contribution.objects.create(user=request.user, action_type='topic_verified', points=5)
                 
         except Exception as e:
             return Response({'error': f"AI Verification failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -601,7 +622,7 @@ README:
 
 Does this project adequately demonstrate understanding of '{topic.title}'?
 Reply with EXACTLY this JSON format:
-{{"passed": true/false, "feedback": "your detailed feedback"}}"""
+{{"passed": true/false, "score": integer_0_to_100, "feedback": "your detailed feedback"}}"""
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model="llama-3.1-8b-instant",
@@ -615,18 +636,22 @@ Reply with EXACTLY this JSON format:
             import json
             result = json.loads(response_content)
 
-            # Mark topic complete if passed
-            if result.get('passed'):
-                VerifiedProject.objects.update_or_create(
+            score = result.get('score', 0)
+            passed = score >= 65 and result.get('passed', False)
+
+            if passed:
+                project, _ = VerifiedProject.objects.update_or_create(
                     user=request.user,
                     topic=topic,
                     defaults={
                         'repo_url': repo_url,
                         'repo_name': repo,
-                        'ai_evaluation': result.get('feedback', '')
+                        'ai_evaluation': result.get('feedback', ''),
+                        'ai_score': score
                     }
                 )
-                
+            # Only mark progress as completed if passed (score >= 65)
+            if passed:
                 progress, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
                 if progress.status != 'completed':
                     progress.status = 'completed'
@@ -634,6 +659,7 @@ Reply with EXACTLY this JSON format:
                     progress.save()
                     Contribution.objects.create(user=request.user, action_type='topic_verified', points=5)
 
+            result['passed'] = passed # override the AI's "passed" with our 65 rule
             return Response(result)
         except Exception as e:
             return Response({'error': str(e)}, status=500)

@@ -74,7 +74,10 @@ function ProjectsPage() {
                     <ShieldCheck size={16} className="text-[#22c55e] shrink-0" />
                     <h3 className="font-semibold tracking-tight text-[#4ade80] truncate">{proj.repo_name}</h3>
                   </div>
-                  <Badge tone="green">Verified for: {proj.topic_title}</Badge>
+                  <div className="flex gap-2 shrink-0">
+                    {proj.ai_score !== undefined && <Badge tone="amber">Score: {proj.ai_score}/100</Badge>}
+                    <Badge tone="green">Verified for: {proj.topic_title}</Badge>
+                  </div>
                 </div>
                 <p className="text-sm text-[#a8c078] mb-4 line-clamp-2 italic">"{proj.ai_evaluation}"</p>
                 <div className="flex items-center justify-between">

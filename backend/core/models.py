@@ -94,6 +94,7 @@ class TopicMaterial(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     ai_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     ai_feedback = models.TextField(blank=True, null=True)
+    ai_score = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.user.username} - {self.topic.title} ({self.ai_status})"
@@ -207,6 +208,7 @@ class VerifiedProject(models.Model):
     repo_url = models.URLField()
     repo_name = models.CharField(max_length=200, blank=True)
     ai_evaluation = models.TextField(blank=True)
+    ai_score = models.IntegerField(default=0)
     verified_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

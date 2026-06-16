@@ -47,6 +47,15 @@ function resolveTopicId(graphNodeId: string, topics: any[]): string {
     return match ? String(match.id) : graphNodeId;
 }
 
+function buildScoreMap(topics: any[]): Record<string, number | undefined> {
+    const map: Record<string, number | undefined> = {};
+    topics.forEach(t => {
+        const key = t.graph_node_id ?? t.slug ?? String(t.id);
+        map[key] = t.verified_project?.ai_score;
+    });
+    return map;
+}
+
 type TreeNode = {
     id: string;
     data: RoadmapNodeData;
@@ -59,12 +68,14 @@ function buildForest(
     graphNodes: GraphData['nodes'],
     edges: GraphData['edges'],
     progressMap: Record<string, string>,
+    scoreMap: Record<string, number | undefined>,
     topics: any[]
 ): TreeNode[] {
     const nodeMap = new Map<string, TreeNode>();
 
     graphNodes.forEach(n => {
         const progress = progressMap[n.id] ?? 'available';
+        const score = scoreMap[n.id];
         const kind = getKind(n.bgColor);
         nodeMap.set(n.id, {
             id: n.id,
@@ -78,6 +89,7 @@ function buildForest(
                 textColor: n.textColor,
                 width: n.width,
                 height: n.height,
+                aiScore: score,
             },
             children: [],
         });
@@ -299,7 +311,8 @@ export function RoadmapTree({ topics = [], graphData }: RoadmapTreeProps) {
         }
 
         const progressMap = buildProgressMap(topics);
-        return buildForest(activeGraphData.nodes, activeGraphData.edges, progressMap, topics);
+        const scoreMap = buildScoreMap(topics);
+        return buildForest(activeGraphData.nodes, activeGraphData.edges, progressMap, scoreMap, topics);
     }, [topics, graphData]);
 
     return (
