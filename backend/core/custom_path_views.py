@@ -46,7 +46,39 @@ class CustomPathViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         path = serializer.save(created_by=request.user, is_custom=True)
-        
+
+        # Process nested topics
+        topics_data = request.data.get('topics', [])
+        for idx, topic_data in enumerate(topics_data):
+            if isinstance(topic_data, dict):
+                t_title = topic_data.get('title', f'Topic {idx + 1}').strip()
+                t_summary = topic_data.get('summary', '')
+                t_kind = topic_data.get('node_kind', 'topic')
+                if t_kind not in ('milestone', 'topic', 'optional'):
+                    t_kind = 'topic'
+                t_order = topic_data.get('order', idx)
+            else:
+                t_title = str(topic_data)
+                t_summary = ''
+                t_kind = 'topic'
+                t_order = idx
+
+            if not t_title:
+                continue
+
+            from django.utils.text import slugify as _slugify
+            t_slug = _slugify(t_title)
+
+            Topic.objects.create(
+                path=path,
+                title=t_title,
+                slug=t_slug or f'topic-{idx}',
+                summary=t_summary,
+                node_kind=t_kind,
+                order=t_order,
+                created_by=request.user
+            )
+
         # Award points for creating a custom path
         Contribution.objects.create(
             user=request.user,

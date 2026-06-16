@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    RegisterView, LearningPathViewSet, BookmarkViewSet, CustomPathView, GeneratePathView,
+    RegisterView, LearningPathViewSet, BookmarkViewSet, GeneratePathView,
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
@@ -23,7 +23,6 @@ urlpatterns = [
     path('auth/daily-login/', DailyLoginView.as_view(), name='daily_login'),
     
     # Path Endpoints
-    path('paths/custom/', CustomPathView.as_view(), name='custom_path'),
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),
     
     # Dashboard Endpoints

@@ -354,7 +354,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
 
       setTopics(newTopics);
     } catch (e: any) {
-      setError(e?.response?.data?.error || 'AI generation failed');
+      setError(e.message || 'AI generation failed');
     } finally {
       setAiLoading(false);
     }
@@ -391,7 +391,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
         onCreated?.();
       }, 1200);
     } catch (e: any) {
-      setError(e?.response?.data?.detail || e?.response?.data?.error || 'Failed to create path');
+      setError(e.message || 'Failed to create path');
     } finally {
       setSubmitting(false);
     }
