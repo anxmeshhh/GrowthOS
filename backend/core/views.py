@@ -70,9 +70,14 @@ class CustomPathView(views.APIView):
         title = request.data.get('title')
         topics_data = request.data.get('topics', [])
         
+        import uuid
+        from django.utils.text import slugify
+        base_slug = slugify(title)
+        unique_slug = f"{base_slug}-{request.user.id}-{uuid.uuid4().hex[:8]}"
+        
         path = LearningPath.objects.create(
             title=title, 
-            slug=title.lower().replace(" ", "-") + f"-{request.user.id}", 
+            slug=unique_slug, 
             is_custom=True, 
             created_by=request.user
         )
