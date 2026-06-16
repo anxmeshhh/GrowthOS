@@ -103,6 +103,8 @@ function generateGraphDataFromTopics(topicsArray: any[]): GraphData {
 
   const sorted = [...topicsArray].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+  let currentMilestoneId: string | null = null;
+
   sorted.forEach((topic, idx) => {
     const kind: string = topic.node_kind ?? 'topic';
     const bgColor = KIND_BGCOLOR[kind] ?? KIND_BGCOLOR.topic;
@@ -116,6 +118,21 @@ function generateGraphDataFromTopics(topicsArray: any[]): GraphData {
       textColor: '#000000',
     });
 
+    if (kind === 'milestone') {
+      // Milestones are root nodes (no incoming edges from other milestones)
+      currentMilestoneId = String(topic.id);
+    } else {
+      // Topic or Optional: Connect to the current active milestone
+      if (currentMilestoneId) {
+        edges.push({
+          id: `dep-${currentMilestoneId}-${topic.id}`,
+          source: currentMilestoneId,
+          target: String(topic.id),
+        });
+      }
+    }
+
+    // Also include any explicit dependencies if defined
     if (topic.dependencies && Array.isArray(topic.dependencies)) {
       topic.dependencies.forEach((depId: number) => {
         edges.push({
