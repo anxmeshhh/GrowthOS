@@ -421,15 +421,17 @@ function CustomPathBuilder() {
         </div>
 
         {/* Right: Live Preview */}
-        <div className="h-full bg-[#111] border border-[#333] rounded-xl overflow-hidden relative">
+        <div className="flex flex-col h-full bg-[#111] border border-[#333] rounded-xl overflow-hidden relative">
           <div className="absolute top-4 left-4 z-10 bg-[#000]/80 backdrop-blur border border-[#333] px-3 py-1.5 rounded-full text-xs font-mono text-[#f0f0f0] flex items-center gap-2 shadow-lg">
             <span className="w-2 h-2 rounded-full bg-[#3b82f6] inline-block animate-pulse"></span>
             Live Auto-Layout Preview
           </div>
           {flattenedTopics.length > 0 ? (
-            <InteractiveRoadmap topics={previewTopics} />
+            <div className="flex-1 min-h-0 w-full h-full">
+              <InteractiveRoadmap topics={previewTopics} />
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-[#666] font-mono text-sm">Add topics to see preview</div>
+            <div className="flex items-center justify-center flex-1 text-[#666] font-mono text-sm">Add topics to see preview</div>
           )}
         </div>
       </div>
