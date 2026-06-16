@@ -321,7 +321,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
     setAiLoading(true);
     setError('');
     try {
-      const res = await apiClient.post('/api/generate-path/', { prompt: aiPrompt });
+      const res = await apiClient.post('/api/paths/generate/', { prompt: aiPrompt });
       const data = res.data;
 
       if (data.title && !title) setTitle(data.title);
@@ -361,7 +361,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
   };
 
   // ── Submit ───────────────────────────────────────────────────────────────────
-  // Sends to CustomPathView (/api/custom-path/) which accepts:
+  // Sends to CustomPathView (/api/paths/custom/) which accepts:
   //   { title, topics: [{title, summary, node_kind, order, dependencies:[]}] }
 
   const handleSubmit = async () => {
@@ -372,7 +372,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
     setSubmitting(true);
     setError('');
     try {
-      await apiClient.post('/api/custom-path/', {
+      await apiClient.post('/api/paths/custom/', {
         title: title.trim(),
         description,
         estimated_weeks: weeks,
