@@ -246,7 +246,7 @@ function RoadmapPage() {
 
   return <RoadmapPageInner
     activePath={activePath}
-    isCustomPath={!!customPath}
+    isCustomPath={activePath.is_custom}
     paths={paths}
     selectedPathId={selectedPathId}
     onSelectPath={setSelectedPathId}
