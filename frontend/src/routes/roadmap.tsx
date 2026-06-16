@@ -83,28 +83,46 @@ function useGraphData(slug: string | undefined, isCustomPath: boolean) {
   return { graphData, graphLoading: loading };
 }
 
+// ─── node_kind → bgColor ──────────────────────────────────────────────────────
+// These exact hex values are what getKind() in RoadmapNode.tsx keys on:
+//   milestone → '#ffee55' → blue section header
+//   topic     → '#ffdfb3' → green recommended node
+//   optional  → '#e0e0e0' → cyan dashed optional node
+const KIND_BGCOLOR: Record<string, string> = {
+  milestone: '#ffee55',
+  topic:     '#ffdfb3',
+  optional:  '#e0e0e0',
+};
+
 // ─── FIX #1 (page-level): generateGraphDataFromTopics moved outside component
-// and memoized at call site, so it doesn't re-run or get re-created each render.
+// and memoized at call site. Now reads node_kind from the API response so
+// custom paths render identically to JSON roadmaps (same getKind() mapping).
 function generateGraphDataFromTopics(topicsArray: any[]): GraphData {
-  const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4"];
   const nodes: GraphData['nodes'] = [];
   const edges: GraphData['edges'] = [];
 
-  let y = 0;
-  topicsArray.forEach((topic, idx) => {
+  const sorted = [...topicsArray].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  sorted.forEach((topic, idx) => {
+    const kind: string = topic.node_kind ?? 'topic';
+    const bgColor = KIND_BGCOLOR[kind] ?? KIND_BGCOLOR.topic;
+
     nodes.push({
       id: String(topic.id),
       label: topic.title,
       x: 0,
-      y,
-      bgColor: colors[idx % colors.length],
-      textColor: "#fff",
+      y: idx * 60,
+      bgColor,
+      textColor: '#000000',
     });
-    y += 100;
 
     if (topic.dependencies && Array.isArray(topic.dependencies)) {
       topic.dependencies.forEach((depId: number) => {
-        edges.push({ id: `${depId}-${topic.id}`, source: String(depId), target: String(topic.id) });
+        edges.push({
+          id: `dep-${depId}-${topic.id}`,
+          source: String(depId),
+          target: String(topic.id),
+        });
       });
     }
   });

@@ -69,11 +69,21 @@ class PathSharing(models.Model):
         return f"{self.path.title} shared with {self.shared_to.username}"
 
 class Topic(models.Model):
+    NODE_KIND_CHOICES = [
+        ('milestone', 'Milestone'),
+        ('topic', 'Topic'),
+        ('optional', 'Optional'),
+    ]
     path = models.ForeignKey(LearningPath, on_delete=models.CASCADE, related_name='topics')
     title = models.CharField(max_length=200)
     slug = models.SlugField()
     summary = models.TextField(blank=True)
     order = models.IntegerField(default=0)
+    node_kind = models.CharField(
+        max_length=20,
+        choices=NODE_KIND_CHOICES,
+        default='topic'
+    )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_topics', null=True, blank=True)
     dependencies = models.ManyToManyField('self', symmetrical=False, related_name='dependents', blank=True)
     

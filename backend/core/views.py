@@ -67,43 +67,72 @@ class CustomPathView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        title = request.data.get('title')
+        title = request.data.get('title', '').strip()
+        description = request.data.get('description', '')
+        estimated_weeks = request.data.get('estimated_weeks', 12)
         topics_data = request.data.get('topics', [])
-        
+
+        if not title:
+            return Response({'error': 'Title is required'}, status=400)
+
         import uuid
         from django.utils.text import slugify
         base_slug = slugify(title)
         unique_slug = f"{base_slug}-{request.user.id}-{uuid.uuid4().hex[:8]}"
-        
+
         path = LearningPath.objects.create(
-            title=title, 
-            slug=unique_slug, 
-            is_custom=True, 
+            title=title,
+            slug=unique_slug,
+            description=description,
+            estimated_weeks=estimated_weeks,
+            is_custom=True,
             created_by=request.user
         )
-        
+
         created_topics = {}
         for idx, topic_data in enumerate(topics_data):
-            t_title = topic_data.get('title') if isinstance(topic_data, dict) else str(topic_data)
-            t_summary = topic_data.get('summary', '') if isinstance(topic_data, dict) else ''
+            if isinstance(topic_data, dict):
+                t_title = topic_data.get('title', f'Topic {idx + 1}').strip()
+                t_summary = topic_data.get('summary', '')
+                t_kind = topic_data.get('node_kind', 'topic')
+                if t_kind not in ('milestone', 'topic', 'optional'):
+                    t_kind = 'topic'
+                t_order = topic_data.get('order', idx)
+            else:
+                t_title = str(topic_data)
+                t_summary = ''
+                t_kind = 'topic'
+                t_order = idx
+
+            if not t_title:
+                continue
+
+            from django.utils.text import slugify as _slugify
+            t_slug = _slugify(t_title)
+
             t = Topic.objects.create(
                 path=path,
                 title=t_title,
-                slug=t_title.lower().replace(" ", "-"),
+                slug=t_slug or f'topic-{idx}',
                 summary=t_summary,
-                order=idx,
+                node_kind=t_kind,           # ← persists node_kind
+                order=t_order,
                 created_by=request.user
             )
             created_topics[idx] = t
-            
+
+        # Wire up dependencies (index-based, matching frontend order array)
         for idx, topic_data in enumerate(topics_data):
             if isinstance(topic_data, dict):
                 deps = topic_data.get('dependencies', [])
                 for dep_idx in deps:
-                    if dep_idx in created_topics:
+                    if dep_idx in created_topics and idx in created_topics:
                         created_topics[idx].dependencies.add(created_topics[dep_idx])
-                        
-        return Response(LearningPathSerializer(path, context={'request': request}).data)
+
+        return Response(
+            LearningPathSerializer(path, context={'request': request}).data,
+            status=201
+        )
 
 class TopicDetailView(views.APIView):
     permission_classes = [IsAuthenticated]

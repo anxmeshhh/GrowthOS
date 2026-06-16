@@ -30,7 +30,7 @@ class TopicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'slug', 'summary', 'order', 'created_by', 'user_progress', 'dependencies', 'verified_project']
+        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project']
 
     def get_user_progress(self, obj):
         request = self.context.get('request')
