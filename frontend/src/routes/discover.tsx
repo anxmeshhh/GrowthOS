@@ -29,10 +29,24 @@ function DiscoverPage() {
       if (!res.ok) throw new Error("Failed to bookmark");
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['paths'] });
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
-    }
+    onMutate: async (slug: string) => {
+      await queryClient.cancelQueries({ queryKey: ["paths"] });
+      const previousPaths = queryClient.getQueryData(["paths"]);
+      queryClient.setQueryData(["paths"], (old: any) => {
+        if (!old) return old;
+        return old.map((p: any) => p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p);
+      });
+      return { previousPaths };
+    },
+    onError: (err, slug, context: any) => {
+      if (context?.previousPaths) {
+        queryClient.setQueryData(["paths"], context.previousPaths);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["paths"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+    },
   });
 
   const filteredPaths = paths.filter((p: any) => p.title.toLowerCase().includes(search.toLowerCase()) || p.description?.toLowerCase().includes(search.toLowerCase()));

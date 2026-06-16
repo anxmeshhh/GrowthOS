@@ -4,7 +4,7 @@ import {
   Github, Zap, Award, TrendingUp, CheckCircle2, Circle,
   Activity, BarChart3, ChevronRight, Layers, Loader2
 } from "lucide-react";
-import { PageShell, Progress, Btn, showToast } from "@/components/growth-ui";
+import { PageShell, Progress, Btn } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -180,12 +180,12 @@ function DashboardPage() {
       return res.json();
     },
     onSuccess: () => {
-      showToast("🔥 Streak Revived! (-10 XP)", "xp");
+      alert("🔥 Streak Revived! (-10 XP)");
       queryClient.invalidateQueries({ queryKey: ['user_profile'] });
       queryClient.invalidateQueries({ queryKey: ['heatmap'] });
     },
     onError: (err: Error) => {
-      showToast(err.message, "error");
+      alert(err.message);
     }
   });
 
