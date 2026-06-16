@@ -126,24 +126,23 @@ function generateGraphDataFromTopics(topicsArray: any[]): GraphData {
     } else {
       // Topic or Optional: Connect to the current active milestone
       if (currentMilestoneId) {
-        edges.push({
-          id: `dep-${currentMilestoneId}-${topic.id}`,
-          source: currentMilestoneId,
-          target: String(topic.id),
-        });
+        // Prevent duplicate edges if the data happens to have them
+        const edgeId = `dep-${currentMilestoneId}-${topic.id}`;
+        if (!edges.find(e => e.id === edgeId)) {
+          edges.push({
+            id: edgeId,
+            source: currentMilestoneId,
+            target: String(topic.id),
+          });
+        }
       }
     }
-
-    // Also include any explicit dependencies if defined
-    if (topic.dependencies && Array.isArray(topic.dependencies)) {
-      topic.dependencies.forEach((depId: number) => {
-        edges.push({
-          id: `dep-${depId}-${topic.id}`,
-          source: String(depId),
-          target: String(topic.id),
-        });
-      });
-    }
+    
+    // We intentionally ignore topic.dependencies here because the old path builder
+    // created massive dependency DAGs (e.g. 1 node depending on 5 previous nodes),
+    // which causes an exponential rendering explosion (millions of components) 
+    // when RoadmapTree recursively traverses the children. The JSON roadmaps 
+    // are strict trees, so we enforce a strict tree here too!
   });
 
   return { nodes, edges };
