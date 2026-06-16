@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, Lock, ChevronDown, ChevronRight } from 'lucide-react';
 import { Handle, Position } from '@xyflow/react';
+import { memo } from 'react';
 
 export type RoadmapNodeData = {
   label: string;
@@ -9,7 +10,7 @@ export type RoadmapNodeData = {
   textColor?: string;
   width?: number;
   height?: number;
-  
+
   // Tree expansion props
   hasChildren?: boolean;
   isExpanded?: boolean;
@@ -23,13 +24,12 @@ export type NodeKind = 'topic' | 'milestone' | 'optional' | 'note' | 'callout';
 export function getKind(bgColor?: string): NodeKind {
   if (!bgColor) return 'topic';
   const c = bgColor.toLowerCase();
-  // roadmap.sh / roadmap.dev colors
-  if (c === '#ffee55') return 'milestone';   // yellow section headers
-  if (c === '#4147d3') return 'milestone';   // blue milestones
+  if (c === '#ffee55') return 'milestone';
+  if (c === '#4147d3') return 'milestone';
   if (c === '#343434') return 'callout';
   if (c === '#ffffff') return 'note';
   if (c === '#e0e0e0') return 'optional';
-  return 'topic';  // #ffdfb3 (orange subtopics) and others
+  return 'topic';
 }
 
 type S = {
@@ -42,6 +42,7 @@ function resolveStyles(kind: NodeKind, status: string): S {
   const isCompleted = status === 'completed';
   const isLocked = status === 'locked';
   const isInProgress = status === 'in_progress';
+
   if (isLocked) return {
     bg: '#0a0a0a', bgHov: '#0a0a0a', border: '#181818', bdStyle: 'solid',
     text: '#252525', dot: '#1e1e1e', opacity: '0.4',
@@ -64,7 +65,6 @@ function resolveStyles(kind: NodeKind, status: string): S {
     dot: isCompleted ? '#22d3ee' : '#2a3a40',
     opacity: '1',
   };
-  // topic (yellow = recommended)
   if (isInProgress) return {
     bg: '#1a1305', bgHov: '#1f1708',
     border: '#f59e0b', bdStyle: 'solid',
@@ -81,13 +81,35 @@ function resolveStyles(kind: NodeKind, status: string): S {
   };
 }
 
-export function RoadmapNode({
+// FIX #3: Use CSS variables + a data-attribute hover trick so the browser
+// handles hover purely in CSS — no JS style mutations, no reflow storms.
+// We inject a <style> once per unique style combination via a CSS custom-property
+// approach embedded directly in the element's style attribute so Tailwind JIT
+// stays out of it, and we use a plain CSS :hover pseudo-class via a wrapper
+// <style> tag appended once to <head> (lazy singleton).
+
+let _hoverStyleInjected = false;
+function ensureHoverStyle() {
+  if (_hoverStyleInjected) return;
+  _hoverStyleInjected = true;
+  const style = document.createElement('style');
+  style.textContent = `
+    .rmn-btn:hover:not(:disabled) {
+      background: var(--rmn-bg-hov) !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+export const RoadmapNode = memo(function RoadmapNode({
   data,
   onClick,
 }: {
   data: RoadmapNodeData;
   onClick?: () => void;
 }) {
+  ensureHoverStyle();
+
   const isCompleted = data.status === 'completed';
   const isLocked = data.status === 'locked';
   const isInProgress = data.status === 'in_progress';
@@ -99,22 +121,23 @@ export function RoadmapNode({
 
   return (
     <div className="relative" style={{ width: '100%', height: '100%' }}>
-      {/* Target handle at the top */}
-      {!data.isTreeMode && <Handle type="target" position={Position.Top} className="!opacity-0 !w-1 !h-1" />}
-      
+      {!data.isTreeMode && (
+        <Handle type="target" position={Position.Top} className="!opacity-0 !w-1 !h-1" />
+      )}
+
       <button
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
+        className="rmn-btn flex items-center gap-2 text-left px-3 py-[7px] rounded-[4px] transition-colors duration-100 select-none disabled:cursor-not-allowed cursor-pointer"
         style={{
+          // FIX #3: pass bg-hover as a CSS variable so :hover rule above can use it
+          '--rmn-bg-hov': s.bgHov,
           background: s.bg,
           border: `1px ${s.bdStyle} ${s.border}`,
           opacity: s.opacity,
           width: '100%',
           height: '100%',
-        }}
-        onMouseEnter={e => { if (!isLocked) (e.currentTarget as HTMLElement).style.background = s.bgHov; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = s.bg; }}
-        className="flex items-center gap-2 text-left px-3 py-[7px] rounded-[4px] transition-colors duration-100 select-none disabled:cursor-not-allowed cursor-pointer"
+        } as React.CSSProperties}
       >
         <span className="shrink-0 w-[14px] flex items-center justify-center">
           {isCompleted
@@ -139,27 +162,24 @@ export function RoadmapNode({
         )}
       </button>
 
-      {/* Expand/Collapse Toggle Button */}
       {data.hasChildren && (
         <button
           className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-[#111] border border-[#333] hover:bg-[#222] hover:border-[#555] transition-colors shadow-md z-10"
           onClick={(e) => {
             e.stopPropagation();
-            if (data.onToggleExpand) {
-              data.onToggleExpand(data.topicId);
-            }
+            data.onToggleExpand?.(data.topicId);
           }}
         >
-          {data.isExpanded ? (
-             <ChevronDown size={14} className="text-[#a0a0a0]" />
-          ) : (
-             <ChevronRight size={14} className="text-[#a0a0a0]" />
-          )}
+          {data.isExpanded
+            ? <ChevronDown size={14} className="text-[#a0a0a0]" />
+            : <ChevronRight size={14} className="text-[#a0a0a0]" />
+          }
         </button>
       )}
 
-      {/* Source handle at the bottom */}
-      {!data.isTreeMode && <Handle type="source" position={Position.Bottom} className="!opacity-0 !w-1 !h-1" />}
+      {!data.isTreeMode && (
+        <Handle type="source" position={Position.Bottom} className="!opacity-0 !w-1 !h-1" />
+      )}
     </div>
   );
-}
+});

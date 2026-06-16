@@ -6,7 +6,7 @@ from .views import (
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView
+    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
 
@@ -29,6 +29,7 @@ urlpatterns = [
     # Dashboard Endpoints
     path('heatmap/', HeatmapView.as_view(), name='heatmap'),
     path('activity/', RecentActivityView.as_view(), name='recent_activity'),
+    path('activity/revive-streak/', ReviveStreakView.as_view(), name='revive_streak'),
     path('chat/', ChatAssistantView.as_view(), name='chat_assistant'),
     
     # Topic Endpoints (supports both numeric ID and slug)

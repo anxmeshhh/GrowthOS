@@ -2,11 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight, Flame, Target, BookOpen, ClipboardCheck,
   Github, Zap, Award, TrendingUp, CheckCircle2, Circle,
-  Activity, BarChart3, ChevronRight, Layers
+  Activity, BarChart3, ChevronRight, Layers, Loader2
 } from "lucide-react";
-import { PageShell, Progress } from "@/components/growth-ui";
+import { PageShell, Progress, Btn, showToast } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { ActivityCalendar } from "react-activity-calendar";
 
@@ -124,6 +124,7 @@ function Stat({
 // ── Main page ─────────────────────────────────────────────────────────────────
 function DashboardPage() {
   const { state } = useGrowth();
+  const queryClient = useQueryClient();
 
   const { data: paths = [], isLoading: pathsLoading } = useQuery({
     queryKey: ["paths"],
@@ -160,9 +161,38 @@ function DashboardPage() {
     },
   });
 
-  const totalXP = heatmapData.reduce((s: number, d: any) => s + d.count, 0);
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['user_profile'],
+    queryFn: async () => {
+      const res = await apiFetch("/profile/");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    }
+  });
+
+  const reviveStreakMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/activity/revive-streak/", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to revive streak");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      showToast("🔥 Streak Revived! (-10 XP)", "xp");
+      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
+      queryClient.invalidateQueries({ queryKey: ['heatmap'] });
+    },
+    onError: (err: Error) => {
+      showToast(err.message, "error");
+    }
+  });
+
+  const totalXP = profile ? profile.total_xp : heatmapData.reduce((s: number, d: any) => s + d.count, 0);
   const { level, title: lvlTitle, next } = getLevelInfo(totalXP);
   const xpPct = Math.min(100, Math.round((totalXP / next) * 100));
+
 
   const activePath = paths.find((p: any) => p.is_bookmarked) || paths[0] || null;
   const topics = activePath?.topics || [];
@@ -173,7 +203,7 @@ function DashboardPage() {
     total: topics.length,
     pct: topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0,
   };
-  const streak = computeStreak(state.activeDays);
+  const streak = profile ? profile.streak : computeStreak(state.activeDays);
 
   const isStarted = nextTopic?.user_progress === "in_progress";
   const steps = [
@@ -222,7 +252,21 @@ function DashboardPage() {
               <span className="text-sm font-normal text-[#555]">days</span>
             </span>
           }
-          sub={streak > 0 ? "Keep going" : "Start today"}
+          sub={
+            profile?.can_revive_streak ? (
+              <div className="mt-1">
+                <Btn 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => reviveStreakMutation.mutate()}
+                  disabled={reviveStreakMutation.isPending}
+                  className="h-6 text-[10px] px-2 text-[#f59e0b] border-[#f59e0b]/30 hover:bg-[#f59e0b]/10"
+                >
+                  {reviveStreakMutation.isPending ? "Reviving..." : "Revive Streak (-10 XP)"}
+                </Btn>
+              </div>
+            ) : streak > 0 ? "Keep going" : "Start today"
+          }
         />
         <Stat
           label="Topics done"

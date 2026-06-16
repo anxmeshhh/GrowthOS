@@ -7,6 +7,7 @@ class UserProfile(models.Model):
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     github_username = models.CharField(max_length=100, blank=True, default='')
+    streak_revive_used_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"

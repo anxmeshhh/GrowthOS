@@ -277,11 +277,8 @@ class VerifyMaterialView(views.APIView):
                     }
                 )
                 
-                if progress.status != 'completed':
-                    progress.status = 'completed'
-                    progress.completed_at = timezone.now()
-                    progress.save()
-                    Contribution.objects.create(user=request.user, action_type='topic_verified', points=5)
+                from .helpers import award_topic_completion_xp
+                award_topic_completion_xp(request.user, material.topic, progress, score)
                 
         except Exception as e:
             return Response({'error': f"AI Verification failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -653,11 +650,8 @@ Reply with EXACTLY this JSON format:
             # Only mark progress as completed if passed (score >= 65)
             if passed:
                 progress, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
-                if progress.status != 'completed':
-                    progress.status = 'completed'
-                    progress.completed_at = timezone.now()
-                    progress.save()
-                    Contribution.objects.create(user=request.user, action_type='topic_verified', points=5)
+                from .helpers import award_topic_completion_xp
+                award_topic_completion_xp(request.user, topic, progress, score)
 
             result['passed'] = passed # override the AI's "passed" with our 65 rule
             return Response(result)
@@ -747,16 +741,37 @@ class SubmitQuizView(views.APIView):
         percentage = score / total if total > 0 else 0
 
         if percentage >= 0.8:
-            # Award max once per topic per day
             today = timezone.now().date()
-            already_awarded = Contribution.objects.filter(
+            # To enforce once per topic per day without a topic field, we could use a specific action_type
+            # But the requirement implies we award 'quiz_passed'. We will let it award for now or assume they aren't spamming.
+            # Let's just award it if it's not the same topic. Actually we'll just award it.
+            # Let's count how many quiz_passed today
+            today_quizzes = Contribution.objects.filter(
                 user=request.user,
                 action_type='quiz_passed',
                 created_at__date=today
+            ).count()
+            
+            # For simplicity, we just award it, ignoring the "once per topic" comment if it conflicts.
+            # Or we can just award it once per topic by changing action_type to 'quiz_passed_{topic.id}' and checking that,
+            # but then we also need to log a 'quiz_passed' for the stats. We can log both!
+            topic_awarded = Contribution.objects.filter(
+                user=request.user,
+                action_type=f'quiz_passed_{topic.id}',
+                created_at__date=today
             ).exists()
-            xp = 5 if not already_awarded else 0
-            if not already_awarded:
+            
+            xp = 0
+            if not topic_awarded:
+                Contribution.objects.create(user=request.user, action_type=f'quiz_passed_{topic.id}', points=0)
                 Contribution.objects.create(user=request.user, action_type='quiz_passed', points=5)
+                xp = 5
+                today_quizzes += 1
+                
+                if today_quizzes == 3:
+                    Contribution.objects.create(user=request.user, action_type='quiz_chain', points=10)
+                    xp += 10
+
             return Response({"status": "passed", "xp_earned": xp})
         
         return Response({"status": "failed", "xp_earned": 0})
@@ -809,20 +824,64 @@ class UserProfileView(views.APIView):
         badges = []
         if Contribution.objects.filter(user=user, action_type='signup_bonus').exists():
             badges.append({"id": "first_login", "title": "Newcomer", "icon": "🌟", "desc": "Signed up for GrowthOS"})
-        if streak >= 7:
-            badges.append({"id": "streak_7", "title": "Consistent", "icon": "🔥", "desc": "7-day login streak"})
-        if streak >= 30:
-            badges.append({"id": "streak_30", "title": "Unstoppable", "icon": "💎", "desc": "30-day login streak"})
-        if quizzes_passed >= 1:
-            badges.append({"id": "quiz_first", "title": "Quiz Taker", "icon": "✅", "desc": "Passed your first quiz"})
-        if quizzes_passed >= 10:
-            badges.append({"id": "quiz_master", "title": "Quiz Master", "icon": "🏆", "desc": "Passed 10 quizzes"})
-        if topics_completed >= 5:
-            badges.append({"id": "5_topics", "title": "Scholar", "icon": "📚", "desc": "Verified 5 topics"})
-        if notes_written >= 10:
-            badges.append({"id": "note_hoarder", "title": "Note Hoarder", "icon": "📝", "desc": "Written 10+ study notes"})
-        if level >= 4:
-            badges.append({"id": "adept", "title": "Adept", "icon": "⚡", "desc": "Reached Level 4"})
+            
+        perfect_scores = Contribution.objects.filter(user=user, action_type__startswith='perfect_score').count()
+        speed_bonuses = Contribution.objects.filter(user=user, action_type__startswith='speed_bonus').count()
+        paths_completed = Contribution.objects.filter(user=user, action_type__startswith='path_completed').count()
+        has_streak_revived = Contribution.objects.filter(user=user, action_type='streak_revived').exists()
+
+        if streak >= 3: badges.append({"id": "ignition", "title": "Ignition", "icon": "🚀", "desc": "3-day login streak"})
+        if streak >= 7: badges.append({"id": "streak_7", "title": "On Fire", "icon": "🔥", "desc": "7-day login streak"})
+        if streak >= 30: badges.append({"id": "streak_30", "title": "Unstoppable", "icon": "💎", "desc": "30-day login streak"})
+        if has_streak_revived: badges.append({"id": "comeback_kid", "title": "Comeback Kid", "icon": "🧟", "desc": "Revived a lost streak"})
+        
+        if perfect_scores >= 1: badges.append({"id": "sharpshooter", "title": "Sharpshooter", "icon": "🎯", "desc": "Scored >= 90 on a topic"})
+        if perfect_scores >= 3: badges.append({"id": "perfectionist", "title": "Perfectionist", "icon": "✨", "desc": "Scored >= 90 on 3 topics"})
+        if perfect_scores >= 5: badges.append({"id": "diamond_coder", "title": "Diamond Coder", "icon": "💎", "desc": "Scored >= 90 on 5 topics"})
+        if speed_bonuses >= 1: badges.append({"id": "speed_runner", "title": "Speed Runner", "icon": "⚡", "desc": "Completed a topic within 48 hours"})
+        
+        if paths_completed >= 1: badges.append({"id": "pathfinder", "title": "Pathfinder", "icon": "🗺️", "desc": "Completed a learning path"})
+        if paths_completed >= 3: badges.append({"id": "explorer", "title": "Explorer", "icon": "🧭", "desc": "Completed 3 learning paths"})
+        if LearningPath.objects.filter(created_by=user, is_custom=True).exists():
+            badges.append({"id": "cartographer", "title": "Cartographer", "icon": "📜", "desc": "Created a custom learning path"})
+            
+        if notes_written >= 10: badges.append({"id": "chronicler", "title": "Chronicler", "icon": "📝", "desc": "Written 10+ study notes"})
+        
+        if quizzes_passed >= 20: badges.append({"id": "quiz_veteran", "title": "Quiz Veteran", "icon": "🏆", "desc": "Passed 20 quizzes"})
+        
+        is_specialist = False
+        for p in paths:
+            path_topics = Topic.objects.filter(path=p)
+            all_high = True
+            for pt in path_topics:
+                vp = VerifiedProject.objects.filter(user=user, topic=pt).order_by('-ai_score').first()
+                tm = TopicMaterial.objects.filter(user=user, topic=pt).order_by('-ai_score').first()
+                max_score = 0
+                if vp and vp.ai_score > max_score: max_score = vp.ai_score
+                if tm and tm.ai_score > max_score: max_score = tm.ai_score
+                
+                if max_score < 80:
+                    all_high = False
+                    break
+            if all_high and path_topics.count() > 0:
+                is_specialist = True
+                break
+        if is_specialist:
+            badges.append({"id": "specialist", "title": "Specialist", "icon": "🧠", "desc": "Completed a path with all scores >= 80"})
+            
+        if PathSharing.objects.filter(path__created_by=user).exists() or PathSharing.objects.filter(path__original_path__created_by=user).exists():
+            badges.append({"id": "architect", "title": "Architect", "icon": "🏗️", "desc": "Shared a path you created"})
+        if LearningPath.objects.filter(created_by=user, visibility='public').exists():
+            badges.append({"id": "broadcaster", "title": "Broadcaster", "icon": "📡", "desc": "Published a public learning path"})
+
+        can_revive_streak = False
+        import datetime
+        if streak == 0 and total_xp >= 10:
+            two_days_ago = today - datetime.timedelta(days=2)
+            has_activity_two_days_ago = Contribution.objects.filter(user=user, created_at__date=two_days_ago).exists()
+            if has_activity_two_days_ago:
+                if not profile.streak_revive_used_at or timezone.now() - profile.streak_revive_used_at > datetime.timedelta(days=7):
+                    can_revive_streak = True
 
         return Response({
             "username": user.username,
@@ -837,6 +896,7 @@ class UserProfileView(views.APIView):
             "completed_paths": path_list,
             "badges": badges,
             "github_username": profile.github_username,
+            "can_revive_streak": can_revive_streak,
         })
 
     def patch(self, request):
@@ -890,3 +950,35 @@ class PortfolioView(views.APIView):
         serializer = VerifiedProjectSerializer(projects, many=True)
         return Response(serializer.data)
 
+class ReviveStreakView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+        if total_xp < 10:
+            return Response({'error': 'Not enough XP to revive streak (need 10 XP)'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        
+        # Check if used recently
+        if profile.streak_revive_used_at:
+            from django.utils import timezone
+            import datetime
+            if timezone.now() - profile.streak_revive_used_at < datetime.timedelta(days=7):
+                return Response({'error': 'Can only revive streak once every 7 days'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Deduct 10 XP
+        import datetime
+        from django.utils import timezone
+        
+        c = Contribution(user=user, action_type='streak_revived', points=-10)
+        c.save()
+        # Override created_at to yesterday
+        c.created_at = timezone.now() - datetime.timedelta(days=1)
+        c.save()
+        
+        profile.streak_revive_used_at = timezone.now()
+        profile.save()
+        
+        return Response({'status': 'Streak revived successfully!', 'xp_deducted': 10})

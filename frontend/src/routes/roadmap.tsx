@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookmarkCheck, Loader2, ArrowRight, Map } from "lucide-react";
+import { BookmarkCheck, Loader2, ArrowRight, Map as MapIcon } from "lucide-react";
 import {
   PageShell,
   PageHeader,
@@ -9,31 +9,109 @@ import {
   StatCard,
   Badge,
 } from "@/components/growth-ui";
-import { RoadmapTree } from "@/components/roadmap/RoadmapTree";
+import { RoadmapTree, type GraphData } from "@/components/roadmap/RoadmapTree";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import { useState } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 
-// ─── Roadmap JSON imports ─────────────────────────────────────────────────────
-import backendGraph from "@/assets/roadmaps/backend.json";
-import frontendGraph from "@/assets/roadmaps/frontend.json";
-import aiGraph from "@/assets/roadmaps/ai-engineer.json";
-import dsaGraph from "@/assets/roadmaps/datastructures-and-algorithms.json";
-import djangoGraph from "@/assets/roadmaps/django.json";
-import sqlGraph from "@/assets/roadmaps/sql.json";
-import systemGraph from "@/assets/roadmaps/system-design.json";
-import apiGraph from "@/assets/roadmaps/api-design.json";
+// ─── Lazy graph loader ────────────────────────────────────────────────────────
+// FIX #2: Removed 8 eager JSON imports. Each JSON is loaded on-demand only when
+// that specific roadmap slug becomes the active path, not on page mount.
+// This cuts initial parse cost by ~8× for pages where the user only views 1 path.
 
-const GRAPH_MAP: Record<string, { nodes: any[]; edges: any[] }> = {
-  backend: backendGraph,
-  frontend: frontendGraph,
-  "ai-engineer": aiGraph,
-  "datastructures-and-algorithms": dsaGraph,
-  django: djangoGraph,
-  sql: sqlGraph,
-  "system-design": systemGraph,
-  "api-design": apiGraph,
+const GRAPH_SLUGS = [
+  "backend",
+  "frontend",
+  "ai-engineer",
+  "datastructures-and-algorithms",
+  "django",
+  "sql",
+  "system-design",
+  "api-design",
+] as const;
+
+type GraphSlug = typeof GRAPH_SLUGS[number];
+
+const GRAPH_LOADERS: Record<GraphSlug, () => Promise<GraphData>> = {
+  "backend":                        () => import("@/assets/roadmaps/backend.json").then(m => m.default as unknown as GraphData),
+  "frontend":                       () => import("@/assets/roadmaps/frontend.json").then(m => m.default as unknown as GraphData),
+  "ai-engineer":                    () => import("@/assets/roadmaps/ai-engineer.json").then(m => m.default as unknown as GraphData),
+  "datastructures-and-algorithms":  () => import("@/assets/roadmaps/datastructures-and-algorithms.json").then(m => m.default as unknown as GraphData),
+  "django":                         () => import("@/assets/roadmaps/django.json").then(m => m.default as unknown as GraphData),
+  "sql":                            () => import("@/assets/roadmaps/sql.json").then(m => m.default as unknown as GraphData),
+  "system-design":                  () => import("@/assets/roadmaps/system-design.json").then(m => m.default as unknown as GraphData),
+  "api-design":                     () => import("@/assets/roadmaps/api-design.json").then(m => m.default as unknown as GraphData),
 };
+
+// Cache so we don't re-fetch the same JSON after the first load
+const graphCache = new Map<string, GraphData>();
+
+function useGraphData(slug: string | undefined, isCustomPath: boolean) {
+  const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const lastSlugRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!slug || isCustomPath) {
+      setGraphData(null);
+      return;
+    }
+    if (!(slug in GRAPH_LOADERS)) {
+      setGraphData(null);
+      return;
+    }
+    if (lastSlugRef.current === slug) return; // already loaded this slug
+    lastSlugRef.current = slug;
+
+    if (graphCache.has(slug)) {
+      setGraphData(graphCache.get(slug)!);
+      return;
+    }
+
+    setLoading(true);
+    const loader = GRAPH_LOADERS[slug as GraphSlug];
+    loader().then(data => {
+      graphCache.set(slug, data);
+      setGraphData(data);
+      setLoading(false);
+    }).catch(() => {
+      setGraphData(null);
+      setLoading(false);
+    });
+  }, [slug, isCustomPath]);
+
+  return { graphData, graphLoading: loading };
+}
+
+// ─── FIX #1 (page-level): generateGraphDataFromTopics moved outside component
+// and memoized at call site, so it doesn't re-run or get re-created each render.
+function generateGraphDataFromTopics(topicsArray: any[]): GraphData {
+  const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4"];
+  const nodes: GraphData['nodes'] = [];
+  const edges: GraphData['edges'] = [];
+
+  let y = 0;
+  topicsArray.forEach((topic, idx) => {
+    nodes.push({
+      id: String(topic.id),
+      label: topic.title,
+      x: 0,
+      y,
+      bgColor: colors[idx % colors.length],
+      textColor: "#fff",
+    });
+    y += 100;
+
+    if (topic.dependencies && Array.isArray(topic.dependencies)) {
+      topic.dependencies.forEach((depId: number) => {
+        edges.push({ id: `${depId}-${topic.id}`, source: String(depId), target: String(topic.id) });
+      });
+    }
+  });
+
+  return { nodes, edges };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/roadmap")({
@@ -93,7 +171,6 @@ function RoadmapPage() {
   }
 
   // ── Active path ───────────────────────────────────────────────────────────
-  // If custom path is loaded, use that; otherwise use predefined path
   const activePath = customPath
     ? customPath
     : (selectedPathId
@@ -115,50 +192,52 @@ function RoadmapPage() {
     );
   }
 
-  // ── Computed stats ────────────────────────────────────────────────────────
-  const topics = activePath.topics || [];
+  return <RoadmapPageInner
+    activePath={activePath}
+    isCustomPath={!!customPath}
+    paths={paths}
+    selectedPathId={selectedPathId}
+    onSelectPath={setSelectedPathId}
+  />;
+}
+
+// ─── Split into inner component so hooks run after activePath is confirmed ───
+// This also means the lazy graph loader and memos below don't run during the
+// loading/empty state branches above.
+
+function RoadmapPageInner({
+  activePath,
+  isCustomPath,
+  paths,
+  selectedPathId,
+  onSelectPath,
+}: {
+  activePath: any;
+  isCustomPath: boolean;
+  paths: any[];
+  selectedPathId: number | null;
+  onSelectPath: (id: number) => void;
+}) {
+  const topics: any[] = activePath.topics || [];
+
+  // FIX #1: memoized — won't re-run unless topics array identity changes
+  const customGraphData = useMemo(
+    () => isCustomPath ? generateGraphDataFromTopics(topics) : null,
+    [topics, isCustomPath]
+  );
+
+  // FIX #2: lazy-load the correct JSON only when slug changes
+  const { graphData: lazyGraphData, graphLoading } = useGraphData(
+    isCustomPath ? undefined : activePath.slug,
+    isCustomPath
+  );
+
+  const graphData = isCustomPath ? customGraphData : lazyGraphData;
+
+  // ── Computed stats ──────────────────────────────────────────────────────
   const completedCount = topics.filter((t: any) => t.user_progress === "completed").length;
   const completionPct = topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0;
   const nextTopic = topics.find((t: any) => t.user_progress !== "completed") || topics[0];
-
-  // Helper function to generate graph data from custom path topics
-  const generateGraphDataFromTopics = (topicsArray: any[]) => {
-    const nodes: any[] = [];
-    const edges: any[] = [];
-    const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4"];
-
-    let y = 0;
-    topicsArray.forEach((topic, idx) => {
-      const color = colors[idx % colors.length];
-      nodes.push({
-        id: String(topic.id),
-        label: topic.title,
-        x: 0,
-        y: y,
-        bgColor: color,
-        textColor: "#fff",
-      });
-      y += 100;
-
-      // Add edges for dependencies if they exist
-      if (topic.dependencies && Array.isArray(topic.dependencies)) {
-        topic.dependencies.forEach((depId: number) => {
-          edges.push({
-            id: `${depId}-${topic.id}`,
-            source: String(depId),
-            target: String(topic.id),
-          });
-        });
-      }
-    });
-
-    return { nodes, edges };
-  };
-
-  // ── Graph data ────────────────────────────────────────────────────────────
-  const graphData = customPath
-    ? generateGraphDataFromTopics(topics)
-    : (GRAPH_MAP[activePath.slug] ?? null);
 
   return (
     <PageShell>
@@ -168,7 +247,7 @@ function RoadmapPage() {
         subtitle={`${completedCount} of ${topics.length} topics completed`}
       />
 
-      {/* ── Bookmarks switcher ────────────────────────────────────────────── */}
+      {/* ── Bookmarks switcher ──────────────────────────────────────────── */}
       <Card className="p-5 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <BookmarkCheck size={13} className="text-[#22c55e]" />
@@ -188,7 +267,7 @@ function RoadmapPage() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => setSelectedPathId(p.id)}
+                  onClick={() => onSelectPath(p.id)}
                   className={`
                     flex flex-col gap-2 px-4 py-3 rounded-md border text-left
                     transition-all duration-150
@@ -220,7 +299,7 @@ function RoadmapPage() {
         </div>
       </Card>
 
-      {/* ── Stats row ─────────────────────────────────────────────────────── */}
+      {/* ── Stats row ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <StatCard
           label="Topics Cleared"
@@ -255,7 +334,7 @@ function RoadmapPage() {
         />
       </div>
 
-      {/* ── Next topic CTA ────────────────────────────────────────────────── */}
+      {/* ── Next topic CTA ──────────────────────────────────────────────── */}
       {nextTopic && (
         <Card className="p-4 mb-6 border-[#22c55e]/20 bg-[#071a0f]">
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -276,18 +355,17 @@ function RoadmapPage() {
         </Card>
       )}
 
-      {/* ── Roadmap tree ──────────────────────────────────────────────────── */}
+      {/* ── Roadmap tree ─────────────────────────────────────────────────── */}
       <div className="mb-2 flex items-center gap-2">
-        <Map size={13} className="text-[#444]" />
+        <MapIcon size={13} className="text-[#444]" />
         <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#444]">
           {graphData ? `${activePath.title} — full roadmap` : "Learning path"}
         </span>
+        {graphLoading && (
+          <Loader2 size={11} className="animate-spin text-[#333] ml-1" />
+        )}
       </div>
 
-      {/*
-        Height cap so it's tall enough to be useful but doesn't push
-        the rest of the page off screen. overflow-y-auto is inside RoadmapTree.
-      */}
       <div
         className="w-full mb-12 rounded-xl overflow-hidden border border-[#1a1a1a]"
         style={{ height: "820px" }}
