@@ -79,6 +79,8 @@ function DashboardPage() {
   useEffect(() => {
     if (selectedPathId) {
       localStorage.setItem("dashboard_selected_path", selectedPathId);
+    } else {
+      localStorage.removeItem("dashboard_selected_path");
     }
   }, [selectedPathId]);
 
@@ -167,17 +169,25 @@ function DashboardPage() {
             <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Dashboard</h1>
           </div>
           {ap && (
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#22c55e]/30 to-[#16a34a]/30 rounded blur-sm opacity-60 group-hover:opacity-100 animate-pulse transition duration-500 pointer-events-none"></div>
-              <select
-                value={ap.uniqueId}
-                onChange={(e) => setSelectedPathId(e.target.value)}
-                className="relative bg-[#0a1a12] border border-[#22c55e]/40 text-[#22c55e] text-[10px] font-mono uppercase tracking-wider rounded px-2.5 py-1.5 outline-none hover:border-[#22c55e]/80 hover:bg-[#0a2015] transition-all cursor-pointer shadow-[0_0_10px_rgba(34,197,94,0.1)]"
-              >
-                {allPaths.map((p: any) => (
-                  <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#888] font-sans normal-case">{p.title}</option>
-                ))}
-              </select>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#22c55e] hidden sm:block animate-pulse">
+                Live Status
+              </span>
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#22c55e]/30 to-[#16a34a]/30 rounded blur-sm opacity-60 group-hover:opacity-100 animate-pulse transition duration-500 pointer-events-none"></div>
+                <select
+                  value={selectedPathId || "auto"}
+                  onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
+                  className="relative bg-[#0a1a12] border border-[#22c55e]/40 text-[#22c55e] text-[10px] font-mono uppercase tracking-wider rounded px-2.5 py-1.5 outline-none hover:border-[#22c55e]/80 hover:bg-[#0a2015] transition-all cursor-pointer shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+                >
+                  <option value="auto" className="bg-[#0a0a0a] text-[#22c55e] font-sans font-medium">✨ Auto-Track Active</option>
+                  <optgroup label="Available Paths" className="bg-[#0a0a0a] text-[#555] font-sans uppercase tracking-wider text-[10px]">
+                    {allPaths.map((p: any) => (
+                      <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#888] font-sans normal-case text-xs">{p.title}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
             </div>
           )}
         </div>
