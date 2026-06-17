@@ -41,9 +41,9 @@ class LearningPathViewSet(viewsets.ModelViewSet):
             user = self.request.user
             base_qs = base_qs.prefetch_related(
                 'topics',
-                Prefetch('topics__topicprogress_set', queryset=TopicProgress.objects.filter(user=user), to_attr='user_progress_cache'),
-                Prefetch('topics__verifiedproject_set', queryset=VerifiedProject.objects.filter(user=user), to_attr='verified_project_cache'),
-                Prefetch('topics__topicmaterial_set', queryset=TopicMaterial.objects.filter(user=user), to_attr='materials_cache'),
+                Prefetch('topics__progress', queryset=TopicProgress.objects.filter(user=user), to_attr='user_progress_cache'),
+                Prefetch('topics__verified_projects', queryset=VerifiedProject.objects.filter(user=user), to_attr='verified_project_cache'),
+                Prefetch('topics__materials', queryset=TopicMaterial.objects.filter(user=user), to_attr='materials_cache'),
             ).filter(
                 Q(is_active=True, is_custom=False) | Q(created_by=user)
             )
