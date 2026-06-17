@@ -16,11 +16,16 @@ function NotesPage() {
 
   const [q, setQ] = useState("");
   const [filterPath, setFilterPath] = useState<string>(() => {
-    return localStorage.getItem("notes_filter_path") || "all";
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("notes_filter_path") || "all";
+    }
+    return "all";
   });
 
   useEffect(() => {
-    localStorage.setItem("notes_filter_path", filterPath);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("notes_filter_path", filterPath);
+    }
   }, [filterPath]);
   
   // Inline edit state mapping note id to its draft content

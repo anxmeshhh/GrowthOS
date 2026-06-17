@@ -30,12 +30,15 @@ function RoadmapPage() {
   const { pathId: searchPathId, pathSlug: searchPathSlug } = Route.useSearch();
   const [selectedPathId, setSelectedPathId] = useState<number | null>(() => {
     if (searchPathId) return searchPathId;
-    const cached = localStorage.getItem("roadmap_selected_path");
-    return cached ? Number(cached) : null;
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("roadmap_selected_path");
+      return cached ? Number(cached) : null;
+    }
+    return null;
   });
 
   useEffect(() => {
-    if (selectedPathId) {
+    if (selectedPathId && typeof window !== "undefined") {
       localStorage.setItem("roadmap_selected_path", selectedPathId.toString());
     }
   }, [selectedPathId]);
@@ -88,6 +91,21 @@ function RoadmapPage() {
     },
   });
 
+  // ── Active path ───────────────────────────────────────────────────────────
+  const activePath = customPath
+    ? customPath
+    : (selectedPathId
+        ? paths.find((p: any) => p.id === selectedPathId)
+        : paths.find((p: any) => p.is_bookmarked) || paths[0] || null);
+
+  // Auto-sync viewed path in roadmap to dashboard
+  useEffect(() => {
+    if (activePath && typeof window !== "undefined") {
+      const uid = customPath ? `cust-${activePath.id}` : `std-${activePath.id}`;
+      localStorage.setItem("dashboard_selected_path", uid);
+    }
+  }, [activePath, customPath]);
+
   // ── Loading ───────────────────────────────────────────────────────────────
   if (pathsLoading || customPathLoading) {
     return (
@@ -98,21 +116,6 @@ function RoadmapPage() {
       </PageShell>
     );
   }
-
-  // ── Active path ───────────────────────────────────────────────────────────
-  const activePath = customPath
-    ? customPath
-    : (selectedPathId
-        ? paths.find((p: any) => p.id === selectedPathId)
-        : paths.find((p: any) => p.is_bookmarked) || paths[0] || null);
-
-  // Auto-sync viewed path in roadmap to dashboard
-  useEffect(() => {
-    if (activePath) {
-      const uid = customPath ? `cust-${activePath.id}` : `std-${activePath.id}`;
-      localStorage.setItem("dashboard_selected_path", uid);
-    }
-  }, [activePath, customPath]);
 
   if (!activePath) {
     return (

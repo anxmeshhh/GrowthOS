@@ -72,15 +72,20 @@ function DashboardPage() {
   ];
 
   const [selectedPathId, setSelectedPathId] = useState<string | null>(() => {
-    return localStorage.getItem("dashboard_selected_path");
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("dashboard_selected_path");
+    }
+    return null;
   });
 
   // Sync to localStorage
   useEffect(() => {
-    if (selectedPathId) {
-      localStorage.setItem("dashboard_selected_path", selectedPathId);
-    } else {
-      localStorage.removeItem("dashboard_selected_path");
+    if (typeof window !== "undefined") {
+      if (selectedPathId) {
+        localStorage.setItem("dashboard_selected_path", selectedPathId);
+      } else {
+        localStorage.removeItem("dashboard_selected_path");
+      }
     }
   }, [selectedPathId]);
 
