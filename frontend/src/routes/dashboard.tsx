@@ -124,10 +124,12 @@ function DashboardPage() {
 
   let ap = selectedPathId ? allPaths.find((p: any) => p.uniqueId === selectedPathId) : null;
   if (!ap) {
-    ap = allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
-         allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
-         allPaths.find((p: any) => p.is_bookmarked) ||
-         allPaths[0] || null;
+    // Prioritize custom paths over standard paths in Auto mode
+    const fallbackPaths = [...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })), ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` }))];
+    ap = fallbackPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
+         fallbackPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
+         fallbackPaths.find((p: any) => p.is_bookmarked) ||
+         fallbackPaths[0] || null;
   }
 
   const topics: any[] = ap?.topics || [];

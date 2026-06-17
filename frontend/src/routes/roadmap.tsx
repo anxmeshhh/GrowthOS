@@ -106,6 +106,14 @@ function RoadmapPage() {
         ? paths.find((p: any) => p.id === selectedPathId)
         : paths.find((p: any) => p.is_bookmarked) || paths[0] || null);
 
+  // Auto-sync viewed path in roadmap to dashboard
+  useEffect(() => {
+    if (activePath) {
+      const uid = customPath ? `cust-${activePath.id}` : `std-${activePath.id}`;
+      localStorage.setItem("dashboard_selected_path", uid);
+    }
+  }, [activePath, customPath]);
+
   if (!activePath) {
     return (
       <PageShell>
