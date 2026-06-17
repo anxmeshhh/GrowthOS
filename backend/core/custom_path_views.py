@@ -83,7 +83,7 @@ class CustomPathViewSet(viewsets.ModelViewSet):
         Contribution.objects.create(
             user=request.user,
             action_type='custom_path_created',
-            points=10
+            points=1
         )
         
         output_serializer = LearningPathSerializer(path, context={'request': request})
@@ -175,7 +175,7 @@ class CustomPathViewSet(viewsets.ModelViewSet):
             Contribution.objects.create(
                 user=request.user,
                 action_type='path_cloned',
-                points=5
+                points=1
             )
             
             output_serializer = LearningPathSerializer(new_path, context={'request': request})

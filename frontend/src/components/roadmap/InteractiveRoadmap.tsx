@@ -211,7 +211,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
           data: {
             label: n.label,
             topicId: resolveTopicId(n.id, topics),
-            status: progress === 'completed' ? 'completed' : 'available',
+            status: progress || 'available',
             bgColor: n.bgColor,
             textColor: n.textColor,
             hasChildren,

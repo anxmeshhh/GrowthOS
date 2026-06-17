@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '../ui/dialog';
 import { apiClient } from '../../lib/api-client';
 
@@ -361,7 +362,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
   };
 
   // ── Submit ───────────────────────────────────────────────────────────────────
-  // Sends to CustomPathView (/api/paths/custom/) which accepts:
+  // Sends to CustomPathView (/api/custom-paths/) which accepts:
   //   { title, topics: [{title, summary, node_kind, order, dependencies:[]}] }
 
   const handleSubmit = async () => {
@@ -372,8 +373,9 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
     setSubmitting(true);
     setError('');
     try {
-      await apiClient.post('/api/paths/custom/', {
+      await apiClient.post('/api/custom-paths/', {
         title: title.trim(),
+        slug: generateSlug(title.trim()),
         description,
         estimated_weeks: weeks,
         topics: validTopics.map((t, i) => ({
@@ -424,9 +426,9 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           <DialogTitle className="font-mono text-sm" style={{ color: '#d4d4d4' }}>
             Build a learning path
           </DialogTitle>
-          <p className="text-[11px] mt-0.5" style={{ color: '#3a5a3a' }}>
+          <DialogDescription className="text-[11px] mt-0.5" style={{ color: '#3a5a3a' }}>
             Structure it like a real roadmap — milestones group topics into sections.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {/* ── Scrollable body ── */}

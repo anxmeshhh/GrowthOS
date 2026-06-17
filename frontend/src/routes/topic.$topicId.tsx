@@ -641,62 +641,162 @@ function QuizTab({ topicId }: { topicId: number }) {
 }
 
 function FlashcardsTab({ topicId }: { topicId: number }) {
+  const queryClient = useQueryClient();
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftCards, setDraftCards] = useState<{front: string, back: string}[]>([]);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['flashcards', topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/flashcards/`);
-      if (!res.ok) throw new Error("Failed to generate flashcards");
+      if (!res.ok) throw new Error("Failed to load flashcards");
       return res.json();
     },
     refetchOnWindowFocus: false,
   });
 
+  const saveMutation = useMutation({
+    mutationFn: async (cards: {front: string, back: string}[]) => {
+      const res = await apiFetch(`/topics/${topicId}/flashcards/`, {
+        method: 'POST',
+        body: JSON.stringify({ cards }),
+      });
+      if (!res.ok) throw new Error("Failed to save flashcards");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flashcards', topicId] });
+      setIsEditing(false);
+      setFlipped({});
+    }
+  });
+
+  const handleEditClick = () => {
+    setDraftCards(data?.flashcards || []);
+    setIsEditing(true);
+  };
+
   if (isLoading) return (
     <div className="text-center py-12">
       <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#666] mb-4" />
-      <div className="text-sm text-[#666] font-mono">Writing flashcards…</div>
+      <div className="text-sm text-[#666] font-mono">Loading flashcards…</div>
     </div>
   );
+  
   if (isError) return (
     <div className="text-center py-8 text-red-500 text-sm">
-      Failed to generate flashcards.
+      Failed to load flashcards.
       <Btn onClick={() => refetch()} size="sm" className="mt-4 block mx-auto">Retry</Btn>
     </div>
   );
 
   const flashcards = data?.flashcards || [];
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {flashcards.map((f: any, i: number) => {
-        const isFlipped = flipped[i];
-        return (
-          <div
-            key={i}
-            className="perspective-1000 h-48 cursor-pointer"
-            onClick={() => setFlipped({ ...flipped, [i]: !isFlipped })}
-          >
-            <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-              {/* Front */}
-              <Card className="absolute inset-0 w-full h-full backface-hidden flex items-center justify-center p-6 border-[#333] hover:border-[#444] bg-[#0f0f0f]">
-                <div className="text-center">
-                  <div className="text-[10px] uppercase font-mono tracking-widest text-[#666] mb-2">Term</div>
-                  <div className="text-lg font-semibold text-[#f0f0f0]">{f.front}</div>
-                </div>
-              </Card>
-              {/* Back */}
-              <Card className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex items-center justify-center p-6 border-[#22c55e]/30 bg-[#0d1a0d]">
-                <div className="text-center">
-                  <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e] mb-2">Definition</div>
-                  <div className="text-sm text-[#f0f0f0] leading-relaxed">{f.back}</div>
-                </div>
-              </Card>
-            </div>
+  if (isEditing) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-sm font-semibold text-[#f0f0f0]">Edit Flashcards</div>
+          <div className="flex gap-2">
+            <Btn variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Btn>
+            <Btn size="sm" onClick={() => saveMutation.mutate(draftCards)} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? "Saving..." : "Save Cards"}
+            </Btn>
           </div>
-        );
-      })}
+        </div>
+        
+        {draftCards.map((c, i) => (
+          <Card key={i} className="p-4 border-[#222] bg-[#0a0a0a]">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Card {i + 1}</div>
+              <button 
+                className="text-[#666] hover:text-[#ef4444] transition-colors"
+                onClick={() => setDraftCards(draftCards.filter((_, idx) => idx !== i))}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-[#555] block mb-1">Term (Front)</label>
+                <input 
+                  type="text" 
+                  value={c.front}
+                  onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, front: e.target.value } : card))}
+                  className="w-full bg-[#111] border border-[#222] rounded p-2 text-sm text-[#f0f0f0] outline-none focus:border-[#4ade80]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-[#555] block mb-1">Definition (Back)</label>
+                <textarea 
+                  value={c.back}
+                  onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, back: e.target.value } : card))}
+                  className="w-full bg-[#111] border border-[#222] rounded p-2 text-sm text-[#f0f0f0] outline-none focus:border-[#4ade80] resize-y min-h-[60px]"
+                />
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        <Btn 
+          variant="outline" 
+          className="w-full py-4 border-dashed border-[#333] text-[#888] hover:bg-[#111] hover:text-[#ccc]"
+          onClick={() => setDraftCards([...draftCards, { front: "", back: "" }])}
+        >
+          + Add Flashcard
+        </Btn>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">
+          {flashcards.length} Cards
+        </div>
+        <Btn variant="outline" size="sm" onClick={handleEditClick}>
+          Edit Cards
+        </Btn>
+      </div>
+      
+      {flashcards.length === 0 ? (
+        <div className="text-center py-12 border border-dashed border-[#222] rounded-xl bg-[#0a0a0a]">
+          <div className="text-[#666] mb-4">No flashcards written yet.</div>
+          <Btn onClick={handleEditClick}>Create Flashcards</Btn>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {flashcards.map((f: any, i: number) => {
+            const isFlipped = flipped[i];
+            return (
+              <div
+                key={i}
+                className="perspective-1000 h-48 cursor-pointer"
+                onClick={() => setFlipped({ ...flipped, [i]: !isFlipped })}
+              >
+                <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                  {/* Front */}
+                  <Card className="absolute inset-0 w-full h-full backface-hidden flex items-center justify-center p-6 border-[#333] hover:border-[#444] bg-[#0f0f0f]">
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase font-mono tracking-widest text-[#666] mb-2">Term</div>
+                      <div className="text-lg font-semibold text-[#f0f0f0]">{f.front}</div>
+                    </div>
+                  </Card>
+                  {/* Back */}
+                  <Card className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex items-center justify-center p-6 border-[#22c55e]/30 bg-[#0d1a0d]">
+                    <div className="text-center">
+                      <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e] mb-2">Definition</div>
+                      <div className="text-sm text-[#f0f0f0] leading-relaxed">{f.back}</div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

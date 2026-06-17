@@ -171,7 +171,7 @@ export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
         data: {
           label: t.title,
           topicId: String(t.id),
-          status: t.user_progress === 'completed' ? 'completed' : 'available',
+          status: t.user_progress || 'available',
           bgColor,
           textColor: '#000000',
           aiScore: t.verified_project?.ai_score,

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Github, Mail, ArrowRight, User } from "lucide-react";
 import { Btn, Card } from "@/components/growth-ui";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Sign Up — GrowthOS" }] }),
@@ -11,8 +12,8 @@ function SignupPage() {
   return (
     <div className="min-h-screen bg-[#000] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="w-12 h-12 bg-[#111] border border-[#222] rounded-xl flex items-center justify-center mx-auto mb-6">
-          <div className="w-6 h-6 bg-[#22c55e] rounded-md shadow-[0_0_15px_rgba(34,197,94,0.4)]" />
+        <div className="w-14 h-14 bg-[#111] border border-[#222] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+          <Logo size={28} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Create your account</h2>
         <p className="mt-2 text-sm text-[#999]">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Github, Mail, ArrowRight } from "lucide-react";
 import { Btn, Card } from "@/components/growth-ui";
+import { Logo } from "@/components/logo";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/login")({
@@ -26,7 +27,7 @@ function LoginPage() {
         <div className="text-center">
           <div className="text-xs uppercase tracking-[0.3em] font-mono text-[#666] mb-4">We Present</div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[#f0f0f0] flex items-center justify-center gap-4">
-            <div className="w-8 h-8 bg-[#22c55e] rounded-lg shadow-[0_0_20px_rgba(34,197,94,0.5)]" />
+            <Logo size={36} className="shadow-[0_0_20px_rgba(34,197,94,0.5)] rounded-lg" />
             GrowthOS
           </h1>
         </div>
@@ -37,8 +38,8 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#000] flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-in fade-in duration-1000">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="w-12 h-12 bg-[#111] border border-[#222] rounded-xl flex items-center justify-center mx-auto mb-6">
-          <div className="w-6 h-6 bg-[#22c55e] rounded-md shadow-[0_0_15px_rgba(34,197,94,0.4)]" />
+        <div className="w-14 h-14 bg-[#111] border border-[#222] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+          <Logo size={28} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Welcome back</h2>
         <p className="mt-2 text-sm text-[#999]">

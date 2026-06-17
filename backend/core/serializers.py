@@ -27,10 +27,11 @@ class TopicSerializer(serializers.ModelSerializer):
 
     dependencies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     verified_project = serializers.SerializerMethodField()
+    has_submitted_work = serializers.SerializerMethodField()
 
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project']
+        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project', 'has_submitted_work']
 
     def get_user_progress(self, obj):
         request = self.context.get('request')
@@ -49,6 +50,13 @@ class TopicSerializer(serializers.ModelSerializer):
                 return VerifiedProjectSerializer(project).data
         return None
 
+    def get_has_submitted_work(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            from .models import TopicMaterial
+            return TopicMaterial.objects.filter(user=request.user, topic=obj).exists()
+        return False
+        
 class LearningPathSerializer(serializers.ModelSerializer):
     topics = TopicSerializer(many=True, read_only=True)
     is_bookmarked = serializers.SerializerMethodField()

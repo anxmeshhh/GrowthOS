@@ -162,36 +162,44 @@ function NotesPage() {
         filteredFlat.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="space-y-2 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
             {filteredFlat.map(item => (
-              <div key={item.id} className="flex items-start gap-4 px-4 py-3 bg-[#111] border border-[#1a1a1a] rounded-lg hover:border-[#252525] transition-colors group">
-                {/* Icon */}
-                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${item.type === "note" ? "bg-[#0d1a0d] text-[#22c55e]" : "bg-[#0d1317] text-[#3b82f6]"}`}>
-                  {item.type === "note" ? <BookOpen size={14} /> : <FileText size={14} />}
-                </div>
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-[#ccc]">{item.topicTitle}</span>
-                    <span className="text-[10px] text-[#444]">·</span>
-                    <span className="text-[10px] text-[#555]">{item.pathTitle}</span>
+              <div key={item.id} className="flex flex-col bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl overflow-hidden hover:border-[#333] transition-colors group h-64 relative">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a] bg-[#111]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {item.type === "note" ? <BookOpen size={14} className="text-[#22c55e] shrink-0" /> : <FileText size={14} className="text-[#3b82f6] shrink-0" />}
+                    <div className="text-[11px] font-medium text-[#ccc] truncate">{item.topicTitle}</div>
                   </div>
+                  <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} className="text-[#555] hover:text-[#e0e0e0] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ExternalLink size={14} />
+                  </Link>
+                </div>
+                
+                <div className="flex-1 p-4 overflow-hidden relative">
                   {item.type === "note" ? (
-                    <p className="text-[13px] text-[#888] leading-relaxed line-clamp-2">{item.content}</p>
+                    <p className="text-[13px] text-[#999] leading-relaxed whitespace-pre-wrap line-clamp-[7]">
+                      {item.content}
+                    </p>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] text-[#888]">{item.filename}</span>
-                      <a href={item.fileUrl} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:text-[#60a5fa] opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ExternalLink size={12} />
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                      <div className="w-12 h-12 rounded-full bg-[#111] flex items-center justify-center mb-3">
+                        <FileText size={20} className="text-[#3b82f6]" />
+                      </div>
+                      <span className="text-[13px] text-[#ccc] font-medium px-2 line-clamp-2">{item.filename}</span>
+                      <a href={item.fileUrl} target="_blank" rel="noreferrer" className="mt-3 text-[11px] text-[#3b82f6] hover:text-[#60a5fa] px-3 py-1.5 rounded-full bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-colors">
+                        Download / View
                       </a>
                     </div>
                   )}
-                  {item.date && <div className="text-[10px] text-[#444] mt-1">{new Date(item.date).toLocaleDateString()}</div>}
+                  {item.type === "note" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#0d0d0d] to-transparent pointer-events-none" />
+                  )}
                 </div>
-                {/* Open workspace link */}
-                <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Btn variant="ghost" size="sm">Open</Btn>
-                </Link>
+                
+                <div className="px-4 py-3 bg-[#0a0a0a] border-t border-[#1a1a1a] flex items-center justify-between mt-auto">
+                  <div className="text-[10px] text-[#555] truncate max-w-[60%]">{item.pathTitle}</div>
+                  {item.date && <div className="text-[10px] text-[#444]">{new Date(item.date).toLocaleDateString()}</div>}
+                </div>
               </div>
             ))}
           </div>
@@ -203,67 +211,98 @@ function NotesPage() {
         filteredTopics.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="space-y-2 mt-2">
+          <div className="space-y-3 mt-4">
             {filteredTopics.map(item => {
               const isOpen = expanded.has(item.topicId);
               const noteCount = item.notes.filter(n => n.content).length;
               const docCount = item.docs.length;
               return (
-                <div key={item.topicId} className="bg-[#111] border border-[#1a1a1a] rounded-lg overflow-hidden">
-                  <div className="flex items-center gap-3 px-4 py-3 hover:bg-[#141414] transition-colors">
-                    <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => toggleExpand(item.topicId)}>
-                      {isOpen ? <ChevronDown size={14} className="text-[#22c55e] shrink-0" /> : <ChevronRight size={14} className="text-[#444] shrink-0" />}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-[#e0e0e0] truncate">{item.topicTitle}</div>
-                        <div className="text-[10px] text-[#555] mt-0.5">{item.pathTitle}</div>
+                <div key={item.topicId} className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden hover:border-[#2a2a2a] transition-all">
+                  <div 
+                    className="flex items-center gap-4 px-5 py-4 cursor-pointer group bg-[#111]"
+                    onClick={() => toggleExpand(item.topicId)}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${isOpen ? "bg-[#22c55e]/10 text-[#22c55e]" : "bg-[#1a1a1a] text-[#555] group-hover:text-[#ccc]"}`}>
+                      {isOpen ? <FolderOpen size={16} /> : <FolderOpen size={16} />}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[15px] font-medium text-[#e0e0e0] truncate group-hover:text-white transition-colors">{item.topicTitle}</div>
+                      <div className="text-[11px] text-[#666] mt-1">{item.pathTitle}</div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="hidden sm:flex items-center gap-4 mr-4">
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                          <BookOpen size={12} className={noteCount > 0 ? "text-[#22c55e]/70" : ""} />
+                          <span className={noteCount > 0 ? "text-[#ccc]" : ""}>{noteCount} Notes</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                          <FileText size={12} className={docCount > 0 ? "text-[#3b82f6]/70" : ""} />
+                          <span className={docCount > 0 ? "text-[#ccc]" : ""}>{docCount} Docs</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        {noteCount > 0 && <span className="text-[10px] text-[#555]">{noteCount} note{noteCount !== 1 ? "s" : ""}</span>}
-                        {docCount > 0 && <span className="text-[10px] text-[#555]">{docCount} doc{docCount !== 1 ? "s" : ""}</span>}
+                      <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} onClick={(e) => e.stopPropagation()}>
+                        <Btn variant="outline" size="sm" className="h-8 bg-[#1a1a1a] hover:bg-[#222] border-transparent">View Topic</Btn>
+                      </Link>
+                      <div className="w-8 flex items-center justify-center text-[#444] group-hover:text-[#ccc] transition-colors">
+                        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                       </div>
                     </div>
-                    <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }}>
-                      <Btn variant="ghost" size="sm">Open</Btn>
-                    </Link>
                   </div>
 
                   {isOpen && (
-                    <div className="px-4 pb-4 pt-1 border-t border-[#1a1a1a] space-y-3">
-                      {item.notes.map(note => (
-                        note.content && (
-                          <div key={note.id}>
-                            <div className="text-[10px] text-[#555] mb-1.5 flex items-center gap-1.5">
-                              <BookOpen size={10} /> Written notes
-                            </div>
-                            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-3 text-[13px] text-[#999] leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">
-                              {note.content}
-                            </div>
-                            <div className="text-[10px] text-[#444] mt-1">
-                              {new Date(note.updated_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        )
-                      ))}
-                      {item.docs.length > 0 && (
-                        <div>
-                          <div className="text-[10px] text-[#555] mb-1.5 flex items-center gap-1.5">
-                            <FileText size={10} /> Documents ({item.docs.length})
-                          </div>
-                          <div className="space-y-1">
-                            {item.docs.map((doc: any) => (
-                              <div key={doc.id} className="flex items-center justify-between p-2.5 rounded-lg border border-[#1a1a1a] bg-[#0a0a0a]">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <FileText size={13} className="shrink-0 text-[#3b82f6]" />
-                                  <span className="text-[13px] text-[#999] truncate">{doc.filename}</span>
+                    <div className="p-5 border-t border-[#1a1a1a] bg-[#0d0d0d] grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Notes Column */}
+                      <div className="space-y-4">
+                        <h4 className="text-[12px] font-semibold text-[#888] uppercase tracking-wider flex items-center gap-2">
+                          <BookOpen size={14} className="text-[#22c55e]" /> Written Notes
+                        </h4>
+                        {item.notes.length === 0 || !item.notes.some(n => n.content) ? (
+                          <div className="text-[12px] text-[#444] italic">No written notes.</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {item.notes.filter(n => n.content).map(note => (
+                              <div key={note.id} className="bg-[#111] border border-[#1a1a1a] rounded-xl p-4 relative group">
+                                <div className="text-[13px] text-[#ccc] leading-relaxed whitespace-pre-wrap">
+                                  {note.content}
                                 </div>
-                                <a href={doc.file_url || doc.file} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:text-[#60a5fa] ml-2 shrink-0">
-                                  <ExternalLink size={13} />
-                                </a>
+                                <div className="text-[10px] text-[#555] mt-3">
+                                  Last updated: {new Date(note.updated_at).toLocaleString()}
+                                </div>
                               </div>
                             ))}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
+
+                      {/* Docs Column */}
+                      <div className="space-y-4">
+                        <h4 className="text-[12px] font-semibold text-[#888] uppercase tracking-wider flex items-center gap-2">
+                          <FileText size={14} className="text-[#3b82f6]" /> Documents
+                        </h4>
+                        {item.docs.length === 0 ? (
+                          <div className="text-[12px] text-[#444] italic">No documents uploaded.</div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {item.docs.map((doc: any) => (
+                              <a 
+                                key={doc.id} 
+                                href={doc.file_url || doc.file} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="flex flex-col items-center justify-center p-4 bg-[#111] border border-[#1a1a1a] rounded-xl hover:bg-[#161616] hover:border-[#222] transition-colors text-center group"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-[#3b82f6]/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                  <FileText size={18} className="text-[#3b82f6]" />
+                                </div>
+                                <span className="text-[12px] font-medium text-[#ccc] line-clamp-2 px-2">{doc.filename}</span>
+                                <span className="text-[10px] mt-1 text-[#3b82f6] opacity-0 group-hover:opacity-100 transition-opacity">Click to open</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

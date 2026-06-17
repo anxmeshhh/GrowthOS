@@ -26,7 +26,7 @@ class RegisterView(generics.CreateAPIView):
         response = super().create(request, *args, **kwargs)
         from django.contrib.auth.models import User
         user = User.objects.get(username=request.data.get('username'))
-        Contribution.objects.create(user=user, action_type='signup_bonus', points=50)
+        Contribution.objects.create(user=user, action_type='signup_bonus', points=1)
         return response
 
 class LearningPathViewSet(viewsets.ModelViewSet):
@@ -53,7 +53,7 @@ class LearningPathViewSet(viewsets.ModelViewSet):
             action_type='path_bookmarked',
         ).count()
         if already_awarded < Bookmark.objects.filter(user=request.user).count():
-            Contribution.objects.create(user=request.user, action_type='path_bookmarked', points=3)
+            Contribution.objects.create(user=request.user, action_type='path_bookmarked', points=1)
         return Response({'status': 'bookmarked'})
 
 class BookmarkViewSet(viewsets.ReadOnlyModelViewSet):
@@ -71,7 +71,13 @@ class TopicDetailView(views.APIView):
     def get(self, request, pk):
         topic = _resolve_topic(pk)
         
-        progress, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
+        progress, created = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
+        if progress.status in ['locked', 'available']:
+            progress.status = 'in_progress'
+            from django.utils import timezone
+            if not progress.started_at:
+                progress.started_at = timezone.now()
+            progress.save()
         materials = TopicMaterial.objects.filter(user=request.user, topic=topic)
         
         return Response({
@@ -306,8 +312,8 @@ class DailyLoginView(views.APIView):
 
         bonus_messages = []
         if not has_logged_in:
-            Contribution.objects.create(user=request.user, action_type='daily_login', points=5)
-            bonus_messages.append({"type": "daily_login", "points": 5, "message": "Daily login bonus awarded!"})
+            Contribution.objects.create(user=request.user, action_type='daily_login', points=1)
+            bonus_messages.append({"type": "daily_login", "points": 1, "message": "Daily login bonus awarded!"})
             
             # Calculate current streak for milestone check
             streak = 0
@@ -326,8 +332,8 @@ class DailyLoginView(views.APIView):
                         user=request.user, action_type='streak_milestone', points=milestone
                     ).exists()
                     if not already:
-                        Contribution.objects.create(user=request.user, action_type='streak_milestone', points=10)
-                        bonus_messages.append({"type": "streak_milestone", "points": 10, "message": f"🔥 {milestone}-day streak milestone!"})
+                        Contribution.objects.create(user=request.user, action_type='streak_milestone', points=1)
+                        bonus_messages.append({"type": "streak_milestone", "points": 1, "message": f"🔥 {milestone}-day streak milestone!"})
             
             return Response({"status": "awarded", "bonuses": bonus_messages})
         
@@ -355,11 +361,11 @@ class ChatAssistantView(views.APIView):
         # Context gathering
         total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
         level = 1
-        if total_xp >= 500: level = 6
-        elif total_xp >= 250: level = 5
-        elif total_xp >= 100: level = 4
-        elif total_xp >= 50: level = 3
-        elif total_xp >= 20: level = 2
+        if total_xp >= 100: level = 6
+        elif total_xp >= 50: level = 5
+        elif total_xp >= 25: level = 4
+        elif total_xp >= 10: level = 3
+        elif total_xp >= 5: level = 2
 
         active_path = "None"
         bookmark = Bookmark.objects.filter(user=user).select_related('path').first()
@@ -478,32 +484,25 @@ class TopicFlashcardView(views.APIView):
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id)
         flashcard = TopicFlashcard.objects.filter(user=request.user, topic=topic).first()
-        if flashcard and len(flashcard.cards) >= 5:
-            return Response({'flashcards': flashcard.cards[:5]})
-            
-        try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
-            prompt = f"Generate exactly 5 flashcards for the topic: '{topic.title}'. Summary: {topic.summary}. Return ONLY a JSON array where each object has: 'front' (the term or concept), 'back' (the definition or explanation)."
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
-                temperature=0.3,
-            )
-            response_content = chat_completion.choices[0].message.content.strip()
-            import json, re
-            match = re.search(r'\[.*\]', response_content, re.DOTALL)
-            if match:
-                flashcards = json.loads(match.group(0))
-            else:
-                flashcards = json.loads(response_content)
-            
-            TopicFlashcard.objects.update_or_create(
-                user=request.user, topic=topic,
-                defaults={'cards': flashcards}
-            )
-            return Response({'flashcards': flashcards[:5]})
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
+        if flashcard:
+            return Response({'flashcards': flashcard.cards})
+        return Response({'flashcards': []})
+
+    def post(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
+        cards = request.data.get('cards', [])
+        
+        # Simple validation
+        valid_cards = []
+        for c in cards:
+            if isinstance(c, dict) and 'front' in c and 'back' in c:
+                valid_cards.append({'front': c['front'], 'back': c['back']})
+                
+        flashcard, created = TopicFlashcard.objects.update_or_create(
+            user=request.user, topic=topic,
+            defaults={'cards': valid_cards}
+        )
+        return Response({'flashcards': flashcard.cards})
 
 class ProjectIdeasView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -729,13 +728,13 @@ class SubmitQuizView(views.APIView):
             xp = 0
             if not topic_awarded:
                 Contribution.objects.create(user=request.user, action_type=f'quiz_passed_{topic.id}', points=0)
-                Contribution.objects.create(user=request.user, action_type='quiz_passed', points=5)
-                xp = 5
+                Contribution.objects.create(user=request.user, action_type='quiz_passed', points=1)
+                xp = 1
                 today_quizzes += 1
                 
                 if today_quizzes == 3:
-                    Contribution.objects.create(user=request.user, action_type='quiz_chain', points=10)
-                    xp += 10
+                    Contribution.objects.create(user=request.user, action_type='quiz_chain', points=1)
+                    xp += 1
 
             return Response({"status": "passed", "xp_earned": xp})
         
@@ -750,11 +749,11 @@ class UserProfileView(views.APIView):
         total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
         
         level = 1
-        if total_xp >= 500: level = 6
-        elif total_xp >= 250: level = 5
-        elif total_xp >= 100: level = 4
-        elif total_xp >= 50: level = 3
-        elif total_xp >= 20: level = 2
+        if total_xp >= 100: level = 6
+        elif total_xp >= 50: level = 5
+        elif total_xp >= 25: level = 4
+        elif total_xp >= 10: level = 3
+        elif total_xp >= 5: level = 2
 
         # Stats
         topics_completed = TopicProgress.objects.filter(user=user, status='completed').count()
@@ -790,14 +789,26 @@ class UserProfileView(views.APIView):
         if Contribution.objects.filter(user=user, action_type='signup_bonus').exists():
             badges.append({"id": "first_login", "title": "Newcomer", "icon": "🌟", "desc": "Signed up for GrowthOS"})
             
+        if Contribution.objects.filter(user=user, action_type='notes_uploaded').exists():
+            badges.append({"id": "first_note", "title": "Scholar", "icon": "📝", "desc": "Wrote your first study note"})
+            
         perfect_scores = Contribution.objects.filter(user=user, action_type__startswith='perfect_score').count()
         speed_bonuses = Contribution.objects.filter(user=user, action_type__startswith='speed_bonus').count()
         paths_completed = Contribution.objects.filter(user=user, action_type__startswith='path_completed').count()
         has_streak_revived = Contribution.objects.filter(user=user, action_type='streak_revived').exists()
 
+        if topics_completed > 0:
+            badges.append({"id": "first_topic", "title": "First Steps", "icon": "🌱", "desc": "Verified your first topic"})
+            
+        if quizzes_passed >= 5:
+            badges.append({"id": "quiz_master", "title": "Quiz Master", "icon": "🎓", "desc": "Passed 5 quizzes"})
+            
         if streak >= 3: badges.append({"id": "ignition", "title": "Ignition", "icon": "🚀", "desc": "3-day login streak"})
         if streak >= 7: badges.append({"id": "streak_7", "title": "On Fire", "icon": "🔥", "desc": "7-day login streak"})
         if streak >= 30: badges.append({"id": "streak_30", "title": "Unstoppable", "icon": "💎", "desc": "30-day login streak"})
+        
+        if len(path_list) > 0:
+            badges.append({"id": "path_completed", "title": "Pathfinder", "icon": "🗺️", "desc": "Completed a full learning path"})
         if has_streak_revived: badges.append({"id": "comeback_kid", "title": "Comeback Kid", "icon": "🧟", "desc": "Revived a lost streak"})
         
         if perfect_scores >= 1: badges.append({"id": "sharpshooter", "title": "Sharpshooter", "icon": "🎯", "desc": "Scored >= 90 on a topic"})
@@ -947,3 +958,27 @@ class ReviveStreakView(views.APIView):
         profile.save()
         
         return Response({'status': 'Streak revived successfully!', 'xp_deducted': 10})
+
+class ResetProgressView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        TopicProgress.objects.filter(user=user).delete()
+        Contribution.objects.filter(user=user).delete()
+        TopicNote.objects.filter(user=user).delete()
+        NoteDocument.objects.filter(user=user).delete()
+        TopicQuiz.objects.filter(user=user).delete()
+        TopicFlashcard.objects.filter(user=user).delete()
+        VerifiedProject.objects.filter(user=user).delete()
+        TopicScreenshot.objects.filter(user=user).delete()
+        TopicMaterial.objects.filter(user=user).delete()
+        
+        # Reset profile streak
+        profile = getattr(user, 'profile', None)
+        if profile:
+            profile.current_streak = 0
+            profile.longest_streak = 0
+            profile.save()
+            
+        return Response({"status": "reset"})

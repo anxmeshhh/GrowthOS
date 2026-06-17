@@ -6,7 +6,7 @@ from .views import (
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView
+    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
 
@@ -58,6 +58,7 @@ urlpatterns = [
     path('profile/', UserProfileView.as_view(), name='user_profile'),
     path('github/repos/', GitHubReposView.as_view(), name='github_repos'),
     path('portfolio/', PortfolioView.as_view(), name='portfolio'),
+    path('profile/reset/', ResetProgressView.as_view(), name='profile_reset'),
     
     # Router covers /paths/ and /bookmarks/
     path('', include(router.urls)),

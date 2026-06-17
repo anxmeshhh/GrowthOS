@@ -154,15 +154,20 @@ function SettingsPage() {
           <AlertTriangle size={16} className="text-[#ef4444]" />
           <div className="text-[10px] uppercase font-mono tracking-wider text-[#ef4444]">Danger Zone</div>
         </div>
-        <p className="text-xs text-[#888] mb-3">Reset all local progress data. This cannot be undone. Server data (notes, contributions) is not affected.</p>
+        <p className="text-xs text-[#888] mb-3">Reset all progress data including topics, XP, and flashcards. This cannot be undone.</p>
         <div className="flex flex-wrap gap-2">
           {confirm ? (
             <>
-              <Btn tone="red" size="sm" onClick={() => { reset(); setConfirm(false); }}>Confirm Reset</Btn>
+              <Btn tone="red" size="sm" onClick={async () => {
+                await apiFetch("/profile/reset/", { method: "POST" });
+                reset();
+                setConfirm(false);
+                window.location.reload();
+              }}>Confirm Reset</Btn>
               <Btn variant="ghost" size="sm" onClick={() => setConfirm(false)}>Cancel</Btn>
             </>
           ) : (
-            <Btn tone="red" variant="outline" size="sm" onClick={() => setConfirm(true)}>Reset Local Progress</Btn>
+            <Btn tone="red" variant="outline" size="sm" onClick={() => setConfirm(true)}>Reset All Progress</Btn>
           )}
         </div>
       </Card>

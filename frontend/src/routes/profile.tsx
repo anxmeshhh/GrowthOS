@@ -90,7 +90,7 @@ function ProfilePage() {
               <div className="max-w-xs mx-auto md:mx-0">
                 <div className="flex justify-between items-end mb-1">
                   <span className="text-xs font-mono text-[#60a5fa]">{title}</span>
-                  <span className="text-[10px] font-mono text-[#60a5fa]">{profile.total_xp} / {next} XP</span>
+                  <span className="text-[10px] font-mono text-[#60a5fa]">{profile.total_xp} / {next} Points</span>
                 </div>
                 <Progress value={xpPct} />
               </div>
@@ -101,7 +101,7 @@ function ProfilePage() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatMini icon={<Flame size={18} className="text-[#f59e0b]" />} label="Streak" value={`${profile.streak}d`} />
-          <StatMini icon={<Trophy size={18} className="text-[#22c55e]" />} label="Total XP" value={String(profile.total_xp)} />
+          <StatMini icon={<Trophy size={18} className="text-[#22c55e]" />} label="Contributions" value={String(profile.total_xp)} />
           <StatMini icon={<BookOpen size={18} className="text-[#60a5fa]" />} label="Notes" value={String(profile.notes_written)} />
           <StatMini icon={<ClipboardCheck size={18} className="text-[#a78bfa]" />} label="Quizzes" value={String(profile.quizzes_passed)} />
         </div>
@@ -186,7 +186,7 @@ function ProfilePage() {
           </Card>
           
           <Card className="p-5">
-            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">XP Breakdown</h3>
+            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">Contribution Breakdown</h3>
             {profile.xp_breakdown && profile.xp_breakdown.length > 0 ? (
               <div className="space-y-3">
                 {profile.xp_breakdown.map((item: any) => {
@@ -197,7 +197,7 @@ function ProfilePage() {
                     <div key={item.action_type}>
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-[#ccc]">{label}</span>
-                        <span className="font-mono text-[#666]">{item.total} XP ({item.count}×)</span>
+                        <span className="font-mono text-[#666]">{item.total} pts ({item.count}×)</span>
                       </div>
                       <div className="h-1.5 bg-[#222] rounded-full">
                         <div className="h-1.5 rounded-full bg-[#22c55e] transition-all" style={{ width: `${pct}%` }} />
@@ -207,7 +207,7 @@ function ProfilePage() {
                 })}
               </div>
             ) : (
-              <div className="text-sm text-[#888] text-center py-6">No XP earned yet.</div>
+              <div className="text-sm text-[#888] text-center py-6">No contributions yet.</div>
             )}
           </Card>
         </div>

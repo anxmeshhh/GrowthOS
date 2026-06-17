@@ -3,6 +3,7 @@ import { LayoutDashboard, Compass, Map, BookOpen, ClipboardCheck, Github, Trendi
 import { useState, type ReactNode } from "react";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
 import { PATHS } from "@/lib/growth-data";
+import { Logo } from "@/components/logo";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -76,9 +77,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
     <div className="h-full flex flex-col">
       <div className="px-5 pt-5 pb-5">
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg bg-[#22c55e]/10 flex items-center justify-center">
-            <div className="h-2 w-2 rounded-full bg-[#22c55e]" />
-          </div>
+          <Logo size={24} />
           <div className="text-[14px] font-semibold tracking-tight text-[#e0e0e0]">GrowthOS</div>
         </div>
       </div>
