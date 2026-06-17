@@ -126,9 +126,8 @@ export const RoadmapNode = memo(function RoadmapNode({
       )}
 
       <button
-        onClick={isLocked ? undefined : onClick}
-        disabled={isLocked}
-        className="rmn-btn flex items-center gap-2 text-left px-3 py-[7px] rounded-[4px] transition-colors duration-100 select-none disabled:cursor-not-allowed cursor-pointer"
+        onClick={onClick}
+        className="rmn-btn flex items-center gap-2 text-left px-3 py-[7px] rounded-[4px] transition-colors duration-100 select-none cursor-pointer"
         style={{
           // FIX #3: pass bg-hover as a CSS variable so :hover rule above can use it
           '--rmn-bg-hov': s.bgHov,
