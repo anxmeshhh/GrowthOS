@@ -29,6 +29,14 @@ export const Route = createFileRoute("/dashboard")({
    mono        ui-monospace — used for all numerals, labels, timestamps
 ──────────────────────────────────────────────────────────────────────── */
 
+const TONE = {
+  violet: { fg: "#a855f7", rail: "from-[#a855f7]/60 via-[#a855f7]/10 to-transparent", soft: "bg-[#a855f7]/10", ring: "ring-[#a855f7]/30" },
+  amber: { fg: "#f59e0b", rail: "from-[#f59e0b]/60 via-[#f59e0b]/10 to-transparent", soft: "bg-[#f59e0b]/10", ring: "ring-[#f59e0b]/30" },
+  emerald: { fg: "#22c55e", rail: "from-[#22c55e]/60 via-[#22c55e]/10 to-transparent", soft: "bg-[#22c55e]/10", ring: "ring-[#22c55e]/30" },
+  neutral: { fg: "#8a8a8a", rail: "from-white/15 via-white/5 to-transparent", soft: "bg-white/5", ring: "ring-white/10" },
+} as const;
+type Tone = keyof typeof TONE;
+
 function getLevelInfo(xp: number) {
   const tiers = [
     { level: 1, title: "Novice", next: 20 },
@@ -50,40 +58,77 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+function todayLabel() {
+  return new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+}
+
 /* ── shared primitives ───────────────────────────────────────────────── */
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: Tone }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.22em] font-mono text-[#5a5a5a] flex items-center gap-1.5">
+    <p
+      className="text-[10px] uppercase tracking-[0.24em] font-mono flex items-center gap-1.5"
+      style={{ color: TONE[tone].fg, opacity: tone === "neutral" ? 0.55 : 0.9 }}
+    >
       {children}
     </p>
   );
 }
 
-function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Panel({
+  children,
+  className = "",
+  tone = "neutral",
+  padded = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  tone?: Tone;
+  padded?: boolean;
+}) {
   return (
-    <div className={`bg-[#0a0a0a] border border-white/[0.06] rounded-2xl overflow-hidden transition-colors duration-300 hover:border-white/[0.09] ${className}`}>
-      {children}
-    </div>
+    <section
+      className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_0_rgba(0,0,0,0.6)] ${className}`}
+    >
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute inset-y-0 left-0 w-px bg-gradient-to-b ${TONE[tone].rail}`}
+      />
+      <div className={padded ? "px-5 py-4" : ""}>{children}</div>
+    </section>
   );
 }
 
 function PanelHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
-      <div>{left}</div>
-      {right && <div>{right}</div>}
-    </div>
+    <header className="flex items-center justify-between gap-3 mb-4">
+      <div className="min-w-0">{left}</div>
+      {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
+    </header>
   );
 }
 
 function EmptyState({ icon: Icon, title, sub }: { icon: any; title: string; sub: string }) {
   return (
-    <div className="py-14 flex flex-col items-center justify-center text-center">
-      <Icon size={22} className="text-[#333] mb-3" />
-      <p className="text-[13px] font-medium text-[#999]">{title}</p>
-      <p className="text-[11px] text-[#454545] mt-1 font-mono">{sub}</p>
+    <div className="flex flex-col items-center text-center py-10 px-4">
+      <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center mb-3">
+        <Icon className="w-4 h-4 text-[#5a5a5a]" />
+      </div>
+      <p className="text-[13px] text-[#cfcfcf]">{title}</p>
+      <p className="text-[11px] text-[#5a5a5a] mt-1 font-mono">{sub}</p>
     </div>
+  );
+}
+
+function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: Tone }) {
+  const t = TONE[tone];
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[10px] font-mono tracking-wider uppercase px-2 py-1 rounded-full ${t.soft} ring-1 ${t.ring}`}
+      style={{ color: t.fg }}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -202,272 +247,297 @@ function DashboardPage() {
 
   return (
     <PageShell>
+      {/* ── Toast ─────────────────────────────────────────────────────── */}
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl border border-[#1a3d28] bg-[#0a1a12]/95 backdrop-blur text-[#4ade80] text-xs font-mono shadow-2xl shadow-black/50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-          <CheckCircle2 size={13} /> {toast}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0a0a0a] border border-[#22c55e]/30 shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
+            <span className="text-[11px] font-mono tracking-wide text-[#cfcfcf]">{toast}</span>
+          </div>
         </div>
       )}
 
-      <div className="p-5 lg:p-8 space-y-5 max-w-screen-xl mx-auto">
+      <div className="space-y-6">
 
-        {/* ── Header ── */}
-        <div className="flex items-end justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="relative w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-[#a855f7]/15 to-[#a855f7]/[0.02] border border-[#a855f7]/25 flex items-center justify-center">
-              <span className="text-[15px] font-mono font-semibold text-[#c084fc]">{level}</span>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center">
-                <Star size={8} className="text-[#a855f7]" fill="currentColor" />
-              </div>
-            </div>
-            <div>
-              <p className="text-[9px] uppercase tracking-[0.28em] font-mono text-[#454545]">GrowthOS</p>
-              <h1 className="text-[22px] font-semibold tracking-tight text-[#f2f2f2] leading-none mt-1">Dashboard</h1>
-            </div>
-          </div>
-
-          {ap && (
-            <div className="flex items-center gap-3">
-              {streak > 0 && (
-                <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[#22c55e]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" /> Live
-                </span>
-              )}
-              <div className="relative">
-                <select
-                  value={selectedPathId || "auto"}
-                  onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
-                  className="appearance-none bg-[#0c0c0c] border border-white/10 text-[#cfcfcf] text-[11px] font-mono tracking-wide rounded-xl pl-3.5 pr-8 py-2 outline-none hover:border-white/20 focus-visible:ring-2 focus-visible:ring-[#22c55e]/40 transition-all cursor-pointer"
-                >
-                  <option value="auto" className="bg-[#0a0a0a]">✨ Auto-track</option>
-                  <optgroup label="Available paths" className="bg-[#0a0a0a] text-[#666]">
-                    {allPaths.map((p: any) => (
-                      <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#999]">
-                        {p.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] pointer-events-none" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Stats rail ── */}
-        <div className="relative rounded-2xl border border-white/[0.06] bg-[#070707] overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7]/[0.05] via-transparent to-[#22c55e]/[0.05] pointer-events-none" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] relative">
-
-            {/* XP */}
-            <div className="p-6">
-              <Eyebrow><Zap size={11} className="text-[#a855f7]" /> Level &amp; XP</Eyebrow>
-              <div className="mt-3.5 flex items-baseline gap-2">
-                <span className="text-[34px] font-semibold tracking-tight text-[#c084fc] leading-none">{level}</span>
-                <span className="text-[13px] text-[#5a5a5a] font-mono">{lvl}</span>
-              </div>
-              <div className="text-[11px] font-mono text-[#5a5a5a] mt-1">{xp} XP total</div>
-              <div className="mt-4 space-y-1.5">
-                <div className="flex justify-between text-[10px] font-mono text-[#5a5a5a]">
-                  <span>{xpPct}% to Lv{level + 1}</span>
-                  <span className="text-[#a855f7]">{next - xp} XP left</span>
+        {/* ── HERO BAND ─────────────────────────────────────────────── */}
+        <Panel tone="violet" padded={false}>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-32 -right-24 w-[420px] h-[420px] rounded-full blur-3xl"
+            style={{ background: "radial-gradient(closest-side, rgba(168,85,247,0.18), transparent 70%)" }}
+          />
+          <div className="relative px-6 py-7">
+            <div className="flex items-start gap-6">
+              {/* Level badge */}
+              <div className="shrink-0">
+                <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-[#a855f7]/20 to-[#a855f7]/5 border border-[#a855f7]/30 flex flex-col items-center justify-center">
+                  <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#a855f7]/70">Lv</span>
+                  <span className="text-2xl font-mono font-semibold text-[#f2f2f2] leading-none">{level}</span>
                 </div>
-                <div className="h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#a855f7]/70 to-[#a855f7] rounded-full transition-all duration-700" style={{ width: `${xpPct}%` }} />
-                </div>
+                <p className="mt-2 text-center text-[10px] font-mono uppercase tracking-[0.22em] text-[#8a8a8a]">{lvl}</p>
               </div>
-            </div>
 
-            {/* Streak */}
-            <div className="p-6 flex flex-col">
-              <Eyebrow><Flame size={11} className="text-[#f59e0b]" /> Day streak</Eyebrow>
-              <div className="flex-1 flex items-center gap-4 mt-2">
-                <span className={`text-[34px] font-mono font-semibold leading-none ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
-                  {streak}
-                </span>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-mono text-[#5a5a5a] uppercase tracking-wide">
-                    {streak > 0 ? "Keep it alive" : "Start today"}
-                  </span>
-                  {profile?.can_revive_streak && (
-                    <button
-                      onClick={() => revive.mutate()}
-                      disabled={revive.isPending}
-                      className="flex items-center gap-1 text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/25 rounded-lg px-2 py-1 hover:bg-[#f59e0b]/10 transition-colors w-fit disabled:opacity-50"
-                    >
-                      <RotateCcw size={9} /> Revive
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Path progress */}
-            <div className="p-6">
-              <Eyebrow><Target size={11} className="text-[#22c55e]" /> Path progress</Eyebrow>
-              <div className="mt-3.5 flex items-baseline gap-1">
-                <span className="text-[34px] font-semibold tracking-tight text-[#f2f2f2] leading-none">{cpct}</span>
-                <span className="text-[15px] text-[#5a5a5a]">%</span>
-              </div>
-              <div className="text-[11px] font-mono text-[#22c55e] mt-1">{done} / {total} topics done</div>
-              <div className="mt-4 h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#22c55e]/70 to-[#22c55e] rounded-full transition-all duration-700" style={{ width: `${cpct}%` }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Mission + Topics ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-          <Panel>
-            <PanelHeader
-              left={<Eyebrow><Zap size={11} className="text-[#22c55e]" /> Today's mission</Eyebrow>}
-              right={cur && (
-                <span className="flex items-center gap-1.5 text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" /> Active
-                </span>
-              )}
-            />
-            <div className="p-6">
-              {cur ? (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[9px] font-mono text-[#454545] uppercase tracking-wider mb-1.5">{ap?.title}</p>
-                    <h2 className="text-[16px] font-semibold text-[#f2f2f2] leading-snug">{cur.title}</h2>
-                    <p className="text-[12.5px] text-[#666] leading-relaxed mt-2 line-clamp-2">
-                      {cur.summary || "Complete the session and submit proof of work."}
+              {/* Greeting + selector */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="min-w-0">
+                    <Eyebrow tone="violet"><Zap className="w-3 h-3" /> GrowthOS · Dashboard</Eyebrow>
+                    <h1 className="mt-2 text-[26px] leading-tight font-semibold text-[#f2f2f2] tracking-tight">
+                      {todayLabel()}
+                    </h1>
+                    <p className="mt-1 text-[13px] text-[#8a8a8a]">
+                      {cur ? <>Pick up where you left off — <span className="text-[#cfcfcf]">{cur.title}</span></> : "Choose a path to start your day."}
                     </p>
                   </div>
 
-                  <div className="relative space-y-2.5">
-                    {steps.map((s, i) => (
-                      <div key={i} className="relative flex items-center gap-3.5">
-                        {i < steps.length - 1 && (
-                          <div className={`absolute left-[15px] top-[28px] w-px h-[18px] ${s.d ? "bg-[#22c55e]/30" : "bg-white/[0.06]"}`} />
-                        )}
-                        <div className={`relative z-10 w-[30px] h-[30px] rounded-full flex items-center justify-center shrink-0 border transition-colors ${s.d ? "bg-[#0d2015] border-[#22c55e]/30" : "bg-[#0d0d0d] border-white/[0.08]"}`}>
-                          {s.d ? <CheckCircle2 size={13} className="text-[#22c55e]" /> : <Circle size={11} className="text-[#3a3a3a]" />}
-                        </div>
-                        <span className={`flex-1 text-[12.5px] ${s.d ? "text-[#999]" : "text-[#555]"}`}>{s.l}</span>
-                        <s.I size={12} className={s.d ? "text-[#22c55e]" : "text-[#333]"} />
+                  {ap && (
+                    <div className="flex items-center gap-2">
+                      {streak > 0 && <Pill tone="amber"><Flame className="w-3 h-3" /> {streak}d live</Pill>}
+                      <div className="relative">
+                        <select
+                          value={selectedPathId || "auto"}
+                          onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
+                          className="appearance-none bg-[#0c0c0c] border border-white/10 text-[#cfcfcf] text-[11px] font-mono tracking-wide rounded-xl pl-3.5 pr-9 py-2 outline-none hover:border-white/20 focus-visible:ring-2 focus-visible:ring-[#a855f7]/40 transition-all cursor-pointer"
+                        >
+                          <option value="auto">✨ Auto-track</option>
+                          {allPaths.map((p: any) => (
+                            <option key={p.uniqueId} value={p.uniqueId}>{p.title}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-3.5 h-3.5 text-[#8a8a8a] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
-                    ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* XP bar */}
+                <div className="mt-5">
+                  <div className="flex items-end justify-between mb-1.5">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#5a5a5a]">XP</span>
+                      <span className="text-[15px] font-mono text-[#f2f2f2]">{xp}</span>
+                      <span className="text-[11px] font-mono text-[#5a5a5a]">/ {next}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] font-mono text-[#8a8a8a]">
+                      <span>{xpPct}% to Lv{level + 1}</span>
+                      <span className="text-[#454545]">·</span>
+                      <span>{Math.max(0, next - xp)} left</span>
+                    </div>
                   </div>
+                  <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#a855f7] to-[#7c3aed] transition-[width] duration-700"
+                      style={{ width: `${xpPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        {/* ── MISSION + STREAK ─────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Panel tone="emerald" className="lg:col-span-2">
+            <PanelHeader
+              left={<Eyebrow tone="emerald"><Target className="w-3 h-3" /> Today's mission</Eyebrow>}
+              right={cur && <Pill tone="emerald"><span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" /> Active</Pill>}
+            />
+            {cur ? (
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-stretch">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#5a5a5a]">{ap?.title}</p>
+                  <h2 className="mt-2 text-[20px] leading-snug text-[#f2f2f2] font-semibold tracking-tight">{cur.title}</h2>
+                  <p className="mt-2 text-[13px] text-[#8a8a8a] leading-relaxed max-w-prose">
+                    {cur.summary || "Complete the session and submit proof of work."}
+                  </p>
 
                   <Link
-                    to="/topic/$topicId"
-                    params={{ topicId: String(cur.slug || cur.id) }}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#22c55e] text-[#031007] text-[13px] font-semibold hover:bg-[#16a34a] active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-[#22c55e]/50"
+                    to={"/path/$pathId" as any}
+                    params={{ pathId: ap?.id } as any}
+                    className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#22c55e] text-[#052e16] text-[12px] font-mono font-semibold tracking-wide hover:bg-[#16a34a] transition-colors"
                   >
-                    Continue <ArrowRight size={13} />
+                    Continue <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-              ) : (
-                <EmptyState icon={Award} title="Path complete" sub="ALL TOPICS MASTERED" />
+
+                {/* Vertical step rail */}
+                <ol className="md:w-56 flex flex-col gap-2.5 md:border-l md:border-white/[0.06] md:pl-5">
+                  {steps.map((s, i) => {
+                    const Icon = s.I;
+                    return (
+                      <li key={i} className="flex items-center gap-3">
+                        <span
+                          className={`flex items-center justify-center w-7 h-7 rounded-lg border text-[10px] font-mono ${s.d
+                              ? "bg-[#22c55e]/15 border-[#22c55e]/40 text-[#22c55e]"
+                              : "bg-white/[0.02] border-white/10 text-[#5a5a5a]"
+                            }`}
+                        >
+                          {s.d ? <CheckCircle2 className="w-3.5 h-3.5" /> : i + 1}
+                        </span>
+                        <p className={`flex-1 text-[12px] ${s.d ? "text-[#cfcfcf]" : "text-[#8a8a8a]"}`}>{s.l}</p>
+                        <Icon className={`w-3.5 h-3.5 ${s.d ? "text-[#22c55e]" : "text-[#3a3a3a]"}`} />
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ) : (
+              <EmptyState icon={BookOpen} title="No active path" sub="Pick or create a path to begin." />
+            )}
+          </Panel>
+
+          {/* Streak card */}
+          <Panel tone="amber">
+            <PanelHeader left={<Eyebrow tone="amber"><Flame className="w-3 h-3" /> Day streak</Eyebrow>} />
+            <div className="flex flex-col items-center text-center py-2">
+              <div className="relative">
+                <div
+                  className={`text-[64px] leading-none font-mono font-semibold ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}
+                  style={streak > 0 ? { textShadow: "0 0 40px rgba(245,158,11,0.35)" } : undefined}
+                >
+                  {streak}
+                </div>
+                <Flame className={`absolute -right-6 top-1 w-5 h-5 ${streak > 0 ? "text-[#f59e0b]" : "text-[#2a2a2a]"}`} />
+              </div>
+              <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.22em] text-[#8a8a8a]">
+                {streak > 0 ? "Keep it alive" : "Start today"}
+              </p>
+
+              {profile?.can_revive_streak && (
+                <button
+                  onClick={() => revive.mutate()}
+                  disabled={revive.isPending}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-mono text-[#f59e0b] border border-[#f59e0b]/30 bg-[#f59e0b]/5 rounded-lg px-3 py-1.5 hover:bg-[#f59e0b]/10 transition-colors disabled:opacity-50"
+                >
+                  <RotateCcw className="w-3 h-3" /> Revive streak
+                </button>
               )}
             </div>
           </Panel>
+        </div>
 
-          <Panel>
+        {/* ── PATH PROGRESS STRIP ──────────────────────────────────── */}
+        {total > 0 && (
+          <Panel tone="emerald">
+            <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <Eyebrow tone="emerald"><Award className="w-3 h-3" /> Path progress</Eyebrow>
+                <span className="text-[11px] font-mono text-[#8a8a8a]">{ap?.title}</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-[20px] font-mono text-[#f2f2f2]">{cpct}<span className="text-[#5a5a5a]">%</span></span>
+                <span className="text-[11px] font-mono text-[#8a8a8a]">{done}/{total} topics</span>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {topics.map((t: any, i: number) => {
+                const d = t.user_progress === "completed";
+                const a = t.id === cur?.id;
+                return (
+                  <div
+                    key={t.id ?? i}
+                    title={t.title}
+                    className={`flex-1 h-2 rounded-sm transition-colors ${d ? "bg-[#22c55e]" : a ? "bg-[#22c55e]/40" : "bg-white/[0.06]"
+                      }`}
+                  />
+                );
+              })}
+            </div>
+          </Panel>
+        )}
+
+        {/* ── TOPICS + ACTIVITY ────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Panel tone="neutral">
             <PanelHeader
-              left={<Eyebrow>Path topics</Eyebrow>}
-              right={<span className="text-[10px] font-mono text-[#454545]">{done}/{total}</span>}
+              left={<Eyebrow><BookOpen className="w-3 h-3" /> Path topics</Eyebrow>}
+              right={<span className="text-[11px] font-mono text-[#8a8a8a]">{done}/{total}</span>}
             />
-            <div className="overflow-y-auto max-h-[336px]">
-              {topics.length === 0 ? (
-                <EmptyState icon={BookOpen} title="No topics yet" sub="SELECT A PATH TO BEGIN" />
-              ) : (
-                topics.map((t: any) => {
+            {topics.length === 0 ? (
+              <EmptyState icon={Circle} title="No topics yet" sub="Topics will appear here once a path is selected." />
+            ) : (
+              <ul className="space-y-1 max-h-[320px] overflow-y-auto pr-1">
+                {topics.map((t: any) => {
                   const d = t.user_progress === "completed";
                   const a = t.id === cur?.id;
                   return (
-                    <Link
+                    <li
                       key={t.id}
-                      to="/topic/$topicId"
-                      params={{ topicId: String(t.slug || t.id) }}
-                      className={`flex items-center gap-3 px-6 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${a ? "bg-[#22c55e]/[0.04]" : ""}`}
+                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors ${a
+                          ? "border-[#22c55e]/30 bg-[#22c55e]/5"
+                          : "border-transparent hover:border-white/[0.06] hover:bg-white/[0.02]"
+                        }`}
                     >
-                      <div className={`w-[18px] h-[18px] rounded-md flex items-center justify-center shrink-0 border ${d ? "bg-[#0d2015] border-[#22c55e]/25" : a ? "bg-[#0a1a12] border-[#22c55e]/50" : "bg-[#0d0d0d] border-white/[0.08]"}`}>
-                        {d && <CheckCircle2 size={10} className="text-[#22c55e]" />}
-                        {!d && a && <div className="w-[6px] h-[6px] rounded-full bg-[#22c55e]" />}
-                      </div>
-                      <span className={`text-[12.5px] flex-1 truncate ${d ? "text-[#3a3a3a] line-through" : a ? "text-[#e0e0e0] font-medium" : "text-[#777]"}`}>
+                      <span className="shrink-0">
+                        {d ? (
+                          <CheckCircle2 className="w-4 h-4 text-[#22c55e]" />
+                        ) : a ? (
+                          <span className="block w-3.5 h-3.5 rounded-full border-2 border-[#22c55e]" />
+                        ) : (
+                          <Circle className="w-4 h-4 text-[#3a3a3a]" />
+                        )}
+                      </span>
+                      <span className={`flex-1 truncate text-[13px] ${d ? "text-[#5a5a5a] line-through" : a ? "text-[#f2f2f2]" : "text-[#cfcfcf]"}`}>
                         {t.title}
                       </span>
-                      {a && <ChevronRight size={12} className="text-[#22c55e] shrink-0" />}
-                    </Link>
+                      {a && <ChevronRight className="w-3.5 h-3.5 text-[#22c55e]" />}
+                    </li>
                   );
-                })
-              )}
-            </div>
-            {total > 0 && (
-              <div className="px-6 py-3.5 border-t border-white/[0.05]">
-                <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${cpct}%` }} />
-                </div>
-              </div>
+                })}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel tone="neutral">
+            <PanelHeader
+              left={<Eyebrow><Activity className="w-3 h-3" /> Recent activity</Eyebrow>}
+              right={activity.length > 0 && <span className="text-[11px] font-mono text-[#8a8a8a]">{activity.length}</span>}
+            />
+            {activity.length > 0 ? (
+              <ol className="relative pl-4 space-y-3">
+                <span aria-hidden className="absolute left-1.5 top-1 bottom-1 w-px bg-white/[0.06]" />
+                {activity.slice(0, 8).map((a: any, i: number) => (
+                  <li key={i} className="relative">
+                    <span className="absolute -left-[14px] top-1.5 w-2 h-2 rounded-full bg-[#a855f7] ring-4 ring-[#0a0a0a]" />
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[13px] text-[#cfcfcf] truncate">{a.label}</p>
+                      <p className="text-[10px] font-mono text-[#5a5a5a] shrink-0">{timeAgo(a.date)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <EmptyState icon={Activity} title="No recent activity" sub="Complete a topic to start your log." />
             )}
           </Panel>
         </div>
 
-        {/* ── Activity + Heatmap ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          <Panel>
-            <PanelHeader
-              left={<Eyebrow><Activity size={11} /> Recent activity</Eyebrow>}
-              right={activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />}
-            />
-            <div className="overflow-y-auto max-h-[280px] px-6 py-2">
-              {activity.length > 0 ? (
-                <ul>
-                  {activity.map((a: any, i: number) => (
-                    <li key={a.id} className="flex items-start gap-3 py-3 border-b border-white/[0.04] last:border-0">
-                      <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#2a2a2a]"}`} />
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-[12.5px] leading-snug truncate ${i === 0 ? "text-[#c4c4c4]" : "text-[#555]"}`}>{a.label}</p>
-                        <p className="text-[10px] font-mono text-[#3a3a3a] mt-0.5">{timeAgo(a.date)}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <EmptyState icon={Activity} title="No activity yet" sub="YOUR MOVES SHOW UP HERE" />
-              )}
-            </div>
-          </Panel>
-
-          <Panel className="lg:col-span-2">
-            <PanelHeader
-              left={<Eyebrow><Github size={11} /> Contributions</Eyebrow>}
-              right={<span className="text-[10px] font-mono text-[#454545] uppercase tracking-wider">Last 12 months</span>}
-            />
-            <div className="p-6 overflow-x-auto">
-              <div className="min-w-[480px]">
-                {hl ? (
-                  <div className="h-24 rounded-xl bg-white/[0.02] animate-pulse" />
-                ) : (
-                  <ActivityCalendar
-                    data={hd}
-                    theme={{
-                      light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                      dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                    }}
-                    colorScheme="dark"
-                    blockSize={11}
-                    blockMargin={4}
-                    fontSize={10}
-                    labels={{ totalCount: "{{count}} contributions in the last year" }}
-                    style={{
-                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                      color: "#5a5a5a",
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </Panel>
-        </div>
+        {/* ── CONTRIBUTIONS ────────────────────────────────────────── */}
+        <Panel tone="violet">
+          <PanelHeader
+            left={<Eyebrow tone="violet"><Github className="w-3 h-3" /> Contributions</Eyebrow>}
+            right={<span className="text-[11px] font-mono text-[#8a8a8a]">Last 12 months</span>}
+          />
+          <div className="overflow-x-auto -mx-1 px-1">
+            {hl ? (
+              <div className="h-[120px] w-full rounded-lg bg-white/[0.02] animate-pulse" />
+            ) : (
+              <ActivityCalendar
+                data={hd}
+                blockSize={11}
+                blockMargin={3}
+                fontSize={10}
+                theme={{
+                  light: ["#111", "#2a1245", "#5b21b6", "#7c3aed", "#a855f7"],
+                  dark: ["#111", "#2a1245", "#5b21b6", "#7c3aed", "#a855f7"],
+                }}
+                colorScheme="dark"
+                labels={{ totalCount: "{{count}} contributions in the last year" }}
+              />
+            )}
+          </div>
+        </Panel>
       </div>
     </PageShell>
   );
