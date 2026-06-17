@@ -34,11 +34,22 @@ class LearningPathViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
+        from django.db.models import Prefetch
+        base_qs = LearningPath.objects.all()
+        
         if self.request.user.is_authenticated:
-            return LearningPath.objects.filter(
-                Q(is_active=True, is_custom=False) | Q(created_by=self.request.user)
+            user = self.request.user
+            base_qs = base_qs.prefetch_related(
+                'topics',
+                Prefetch('topics__topicprogress_set', queryset=TopicProgress.objects.filter(user=user), to_attr='user_progress_cache'),
+                Prefetch('topics__verifiedproject_set', queryset=VerifiedProject.objects.filter(user=user), to_attr='verified_project_cache'),
+                Prefetch('topics__topicmaterial_set', queryset=TopicMaterial.objects.filter(user=user), to_attr='materials_cache'),
+            ).filter(
+                Q(is_active=True, is_custom=False) | Q(created_by=user)
             )
-        return LearningPath.objects.filter(is_active=True, is_custom=False)
+            return base_qs.distinct()
+            
+        return base_qs.prefetch_related('topics').filter(is_active=True, is_custom=False).distinct()
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def bookmark(self, request, slug=None):
@@ -835,22 +846,40 @@ class UserProfileView(views.APIView):
         if quizzes_passed >= 20: badges.append({"id": "quiz_veteran", "title": "Quiz Veteran", "icon": "🏆", "desc": "Passed 20 quizzes"})
         
         is_specialist = False
-        for p in paths:
-            path_topics = Topic.objects.filter(path=p)
-            all_high = True
+        if paths:
+            user_vps = VerifiedProject.objects.filter(user=user)
+            user_tms = TopicMaterial.objects.filter(user=user)
+            
+            vp_scores = {}
+            for vp in user_vps:
+                if vp.ai_score > vp_scores.get(vp.topic_id, 0):
+                    vp_scores[vp.topic_id] = vp.ai_score
+                    
+            tm_scores = {}
+            for tm in user_tms:
+                if tm.ai_score > tm_scores.get(tm.topic_id, 0):
+                    tm_scores[tm.topic_id] = tm.ai_score
+                    
+            path_topics = list(Topic.objects.filter(path__in=paths))
+            topics_by_path = {}
             for pt in path_topics:
-                vp = VerifiedProject.objects.filter(user=user, topic=pt).order_by('-ai_score').first()
-                tm = TopicMaterial.objects.filter(user=user, topic=pt).order_by('-ai_score').first()
-                max_score = 0
-                if vp and vp.ai_score > max_score: max_score = vp.ai_score
-                if tm and tm.ai_score > max_score: max_score = tm.ai_score
+                topics_by_path.setdefault(pt.path_id, []).append(pt.id)
                 
-                if max_score < 80:
-                    all_high = False
+            for p in paths:
+                t_ids = topics_by_path.get(p.id, [])
+                if not t_ids:
+                    continue
+                
+                all_high = True
+                for t_id in t_ids:
+                    max_score = max(vp_scores.get(t_id, 0), tm_scores.get(t_id, 0))
+                    if max_score < 80:
+                        all_high = False
+                        break
+                
+                if all_high:
+                    is_specialist = True
                     break
-            if all_high and path_topics.count() > 0:
-                is_specialist = True
-                break
         if is_specialist:
             badges.append({"id": "specialist", "title": "Specialist", "icon": "🧠", "desc": "Completed a path with all scores >= 80"})
             

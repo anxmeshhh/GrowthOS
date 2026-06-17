@@ -1,6 +1,11 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud, Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud,
+  Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2,
+  CheckCircle2, ChevronRight, RefreshCw, Github, Zap, BookOpen,
+  Layers, Hammer, Plus, RotateCcw
+} from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -13,27 +18,39 @@ export const Route = createFileRoute("/topic/$topicId")({
 
 type Tab = "notes" | "flash" | "quiz" | "build";
 
+/* ─────────────────────────────────────────────
+   Utility
+───────────────────────────────────────────── */
+function formatTime(s: number) {
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+}
+
+/* ─────────────────────────────────────────────
+   Main Workspace
+───────────────────────────────────────────── */
 function TopicWorkspace() {
   const { topicId } = useParams({ from: "/topic/$topicId" });
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['topic', topicId],
+    queryKey: ["topic", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/`);
       if (!res.ok) {
         const titleFromSlug = topicId
-          .replace(/-/g, ' ')
+          .replace(/-/g, " ")
           .replace(/\b\w/g, (c: string) => c.toUpperCase());
         return {
-          topic: { id: topicId, title: titleFromSlug, slug: topicId, summary: '' },
-          progress: { status: 'available' },
+          topic: { id: topicId, title: titleFromSlug, slug: topicId, summary: "" },
+          progress: { status: "available" },
           materials: [],
           _stub: true,
         };
       }
       return res.json();
-    }
+    },
   });
 
   const [tab, setTab] = useState<Tab>("notes");
@@ -44,68 +61,73 @@ function TopicWorkspace() {
   const pasteZoneRef = useRef<HTMLDivElement>(null);
 
   const { data: screenshots = [], refetch: refetchScreenshots } = useQuery({
-    queryKey: ['screenshots', topicId],
+    queryKey: ["screenshots", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/screenshots/`);
       if (!res.ok) return [];
       return res.json();
-    }
+    },
   });
 
   const uploadScreenshotMutation = useMutation({
     mutationFn: async ({ file, caption }: { file: File; caption?: string }) => {
       const formData = new FormData();
-      formData.append('image', file);
-      if (caption) formData.append('caption', caption);
+      formData.append("image", file);
+      if (caption) formData.append("caption", caption);
       const res = await apiFetch(`/topics/${topicId}/screenshots/`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) throw new Error("Upload failed");
       return res.json();
     },
-    onSuccess: () => refetchScreenshots()
+    onSuccess: () => refetchScreenshots(),
   });
 
   const deleteScreenshotMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiFetch(`/topics/${topicId}/screenshots/?id=${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
+      const res = await apiFetch(`/topics/${topicId}/screenshots/?id=${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Delete failed");
     },
-    onSuccess: () => refetchScreenshots()
+    onSuccess: () => refetchScreenshots(),
   });
 
   const markDoneMutation = useMutation({
     mutationFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/progress/`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'completed' })
+        method: "PATCH",
+        body: JSON.stringify({ status: "completed" }),
       });
-      if (!res.ok) throw new Error('Failed to mark as done');
+      if (!res.ok) throw new Error("Failed to mark as done");
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['topic', topicId] });
-      queryClient.invalidateQueries({ queryKey: ['paths'] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["topic", topicId] });
+      queryClient.invalidateQueries({ queryKey: ["paths"] });
+    },
   });
 
-  const handlePaste = useCallback((e: ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (file) uploadScreenshotMutation.mutate({ file, caption: '' });
-        break;
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) uploadScreenshotMutation.mutate({ file, caption: "" });
+          break;
+        }
       }
-    }
-  }, [topicId]);
+    },
+    [topicId]
+  );
 
   useEffect(() => {
-    document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
   useEffect(() => {
@@ -114,71 +136,97 @@ function TopicWorkspace() {
     return () => clearInterval(t);
   }, [running]);
 
-  if (isLoading) return <PageShell><div className="p-8 text-[#999]">Loading workspace...</div></PageShell>;
-  if (!data) return <PageShell><div className="p-8 text-[#ef4444]">Error loading topic.</div></PageShell>;
+  if (isLoading)
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={24} className="animate-spin text-[#22c55e]" />
+            <span className="text-xs font-mono text-[#555] tracking-widest uppercase">Loading workspace</span>
+          </div>
+        </div>
+      </PageShell>
+    );
+
+  if (!data)
+    return (
+      <PageShell>
+        <div className="p-8 text-[#ef4444] text-sm">Error loading topic.</div>
+      </PageShell>
+    );
 
   const { topic, progress, materials } = data;
+  const isCompleted = progress?.status === "completed";
 
   const handleScreenshotFiles = (files: FileList | File[]) => {
     for (const file of files) {
-      if (file.type.startsWith('image/')) {
-        uploadScreenshotMutation.mutate({ file, caption: '' });
+      if (file.type.startsWith("image/")) {
+        uploadScreenshotMutation.mutate({ file, caption: "" });
       }
     }
   };
 
-  return (
-    // Root: full viewport height, no overflow at the page level
-    <main className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden">
+  const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "notes", label: "Notes", icon: <BookOpen size={13} /> },
+    { id: "flash", label: "Flashcards", icon: <Layers size={13} /> },
+    { id: "quiz", label: "Quiz", icon: <Zap size={13} /> },
+    { id: "build", label: "Build", icon: <Hammer size={13} /> },
+  ];
 
-      {/* ── Top bar ── fixed height, never shrinks */}
-      <header className="shrink-0 bg-[#0a0a0a] border-b border-[#222] px-4 sm:px-6 py-2.5 flex items-center gap-3 z-20">
-        <Link to="/roadmap" className="text-[#666] hover:text-[#f0f0f0] p-1">
-          <ArrowLeft size={16} />
+  return (
+    <main className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden bg-[#060606]">
+
+      {/* ── Top bar ── */}
+      <header className="shrink-0 border-b border-[#181818] px-4 sm:px-6 py-0 flex items-center gap-4 z-20 h-14" style={{ background: "linear-gradient(180deg,#0d0d0d 0%,#080808 100%)" }}>
+        <Link to="/roadmap" className="group flex items-center gap-1.5 text-[#444] hover:text-[#888] transition-colors">
+          <ArrowLeft size={14} />
+          <span className="text-[10px] font-mono tracking-widest uppercase hidden sm:block">Back</span>
         </Link>
+
+        <div className="w-px h-5 bg-[#1e1e1e]" />
+
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#555]">Topic Workspace</div>
-          <div className="text-sm font-semibold tracking-tight truncate text-[#f0f0f0]">{topic.title}</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#3a3a3a] mb-0.5">Workspace</div>
+          <div className="text-sm font-semibold tracking-[-0.01em] truncate text-[#e8e8e8]">{topic.title}</div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="font-mono text-sm text-[#22c55e] tabular-nums">{formatTime(seconds)}</div>
-          <Btn variant="outline" size="sm" onClick={() => setRunning((r) => !r)}>
-            {running ? <Pause size={14} /> : <Play size={14} />}
-            {running ? "Pause" : "Focus"}
-          </Btn>
-          <Btn 
-            variant={progress.status === 'completed' ? 'solid' : 'outline'} 
-            tone={progress.status === 'completed' ? 'green' : 'neutral'}
-            size="sm" 
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Timer */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0f0f0f] border border-[#1e1e1e]">
+            <div className={`w-1.5 h-1.5 rounded-full ${running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#333]"}`} />
+            <span className="font-mono text-xs text-[#e8e8e8] tabular-nums">{formatTime(seconds)}</span>
+            <button
+              onClick={() => setRunning((r) => !r)}
+              className="text-[#444] hover:text-[#999] transition-colors ml-0.5"
+            >
+              {running ? <Pause size={12} /> : <Play size={12} />}
+            </button>
+          </div>
+
+          {/* Mark done */}
+          <button
             onClick={() => markDoneMutation.mutate()}
-            disabled={progress.status === 'completed' || markDoneMutation.isPending}
+            disabled={isCompleted || markDoneMutation.isPending}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${isCompleted
+              ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
+              : "border-[#2a2a2a] bg-[#111] text-[#666] hover:border-[#22c55e]/40 hover:text-[#22c55e] hover:bg-[#22c55e]/5"
+              }`}
           >
-            <CheckCircle2 size={14} />
-            {progress.status === 'completed' ? 'Completed' : 'Mark Done'}
-          </Btn>
+            <CheckCircle2 size={12} />
+            <span className="hidden sm:inline">{isCompleted ? "Completed" : "Mark Done"}</span>
+          </button>
         </div>
       </header>
 
-      {/*
-        ── Body: fills remaining height, split left/right on lg ──
-        On mobile: stacked vertically, each pane gets 50% of the remaining space.
-        On lg+: side-by-side, each pane fills the full remaining height.
-      */}
+      {/* ── Body ── */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
 
-        {/* ════════════════════════════════════════
-            LEFT PANE — Screenshots
-            On mobile: takes up roughly half the remaining space (flex-1 in the column)
-            On lg+: exactly half the width, full height
-        ════════════════════════════════════════ */}
+        {/* ════ LEFT: Screenshots ════ */}
         <section
-          className="flex flex-col lg:w-1/2 border-b lg:border-b-0 lg:border-r border-[#1a1a1a] bg-[#070707]
-                     /* Mobile: limit to ~40vh so both panes are visible without scrolling the page */
-                     max-h-[40vh] lg:max-h-none
-                     /* lg: fill the full body height */
-                     lg:h-full
-                     overflow-hidden"
           ref={pasteZoneRef}
+          className={`flex flex-col lg:w-[42%] xl:w-[38%] border-b lg:border-b-0 lg:border-r border-[#131313] bg-[#060606]
+                      max-h-[38vh] lg:max-h-none lg:h-full overflow-hidden transition-colors
+                      ${isDragging ? "border-[#22c55e]/30 bg-[#22c55e]/[0.03]" : ""}`}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(e) => {
@@ -187,26 +235,32 @@ function TopicWorkspace() {
             if (e.dataTransfer.files?.length) handleScreenshotFiles(e.dataTransfer.files);
           }}
         >
-          {/* Upload zone — shrinks to content, never scrolls */}
-          <div className={`shrink-0 border-b border-[#1a1a1a] px-4 py-4 transition-colors ${isDragging ? 'bg-[#22c55e]/10 border-[#22c55e]/40' : ''}`}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-[#22c55e]/15 flex items-center justify-center">
-                <ImageIcon size={14} className="text-[#22c55e]" />
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-[#f0f0f0]">Screenshots</div>
-                <div className="text-[10px] text-[#666] font-mono">Paste • Drop • Upload</div>
+          {/* Section header */}
+          <div className="shrink-0 px-5 pt-4 pb-3 border-b border-[#131313]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#22c55e]/10 flex items-center justify-center">
+                  <ImageIcon size={12} className="text-[#22c55e]" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-[#d0d0d0] leading-none">Screenshots</div>
+                  <div className="text-[10px] text-[#3a3a3a] font-mono mt-0.5">{screenshots.length} saved</div>
+                </div>
               </div>
               {uploadScreenshotMutation.isPending && (
-                <div className="ml-auto flex items-center gap-1.5 text-[10px] text-[#22c55e] font-mono">
-                  <Loader2 size={12} className="animate-spin" /> Uploading...
+                <div className="flex items-center gap-1.5 text-[10px] text-[#22c55e] font-mono">
+                  <Loader2 size={10} className="animate-spin" />
+                  Uploading
                 </div>
               )}
             </div>
 
+            {/* Drop zone */}
             <div
-              className="border-2 border-dashed border-[#2a2a2a] rounded-xl p-3 text-center hover:bg-[#0f0f0f] hover:border-[#333] transition-all cursor-pointer group"
-              onClick={() => document.getElementById('screenshotUpload')?.click()}
+              className={`mt-3 border border-dashed rounded-lg py-2.5 px-3 flex items-center gap-2.5 cursor-pointer
+                          transition-all hover:border-[#2a2a2a] hover:bg-[#0d0d0d]
+                          ${isDragging ? "border-[#22c55e]/40 bg-[#22c55e]/5" : "border-[#1e1e1e]"}`}
+              onClick={() => document.getElementById("screenshotUpload")?.click()}
             >
               <input
                 type="file"
@@ -216,79 +270,69 @@ function TopicWorkspace() {
                 multiple
                 onChange={(e) => {
                   if (e.target.files?.length) handleScreenshotFiles(e.target.files);
-                  e.target.value = '';
+                  e.target.value = "";
                 }}
               />
-              <div className="flex items-center justify-center gap-2 text-[#666] group-hover:text-[#999] transition-colors">
-                <Clipboard size={14} />
-                <span className="text-xs">
-                  <kbd className="px-1.5 py-0.5 bg-[#222] rounded text-[10px] font-mono text-[#999] border border-[#333]">Ctrl+V</kbd>
-                  {" "}to paste, or click to browse
-                </span>
-              </div>
+              <Clipboard size={13} className="text-[#333] shrink-0" />
+              <span className="text-[11px] text-[#444]">
+                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-[10px] font-mono text-[#555] border border-[#222]">Ctrl+V</kbd>
+                <span className="mx-1.5 text-[#2a2a2a]">·</span>
+                drag or click to upload
+              </span>
             </div>
           </div>
 
-          {/* Screenshot gallery — scrollable, fills remaining left-pane height */}
-          <div className="flex-1 overflow-y-auto p-4 min-h-0">
+          {/* Gallery */}
+          <div className="flex-1 overflow-y-auto p-4 min-h-0 scrollbar-thin">
             {screenshots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                <div className="w-14 h-14 rounded-2xl bg-[#111] border border-[#222] flex items-center justify-center mb-3">
-                  <ImageIcon size={22} className="text-[#333]" />
+              <div className="flex flex-col items-center justify-center h-full text-center py-10 px-6">
+                <div className="w-12 h-12 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a] flex items-center justify-center mb-3">
+                  <ImageIcon size={18} className="text-[#222]" />
                 </div>
-                <div className="text-sm text-[#555] mb-1">No screenshots yet</div>
-                <div className="text-xs text-[#444] max-w-[220px]">
-                  Paste with <span className="font-mono text-[#666]">Ctrl+V</span> or drag an image above
-                </div>
+                <div className="text-xs text-[#3a3a3a] font-mono">No screenshots yet</div>
+                <div className="text-[10px] text-[#2a2a2a] mt-1">Paste or drag an image above</div>
               </div>
             ) : (
-              <>
-                <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-3">
-                  <ImageIcon size={12} className="inline mr-1" />
-                  Gallery ({screenshots.length})
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {screenshots.map((ss: any) => (
-                    <div
-                      key={ss.id}
-                      className="group relative rounded-lg overflow-hidden border border-[#222] bg-[#111] hover:border-[#333] transition-all cursor-pointer"
-                      onClick={() => setLightboxImg(ss.image_url || ss.image)}
-                    >
-                      <img
-                        src={ss.image_url || ss.image}
-                        alt={ss.caption || 'Screenshot'}
-                        className="w-full aspect-video object-cover"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Maximize2 size={18} className="text-white/80" />
-                      </div>
-                      <button
-                        className="absolute top-1.5 right-1.5 p-1 rounded-md bg-black/60 text-[#999] hover:text-[#ef4444] hover:bg-black/80 opacity-0 group-hover:opacity-100 transition-all"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteScreenshotMutation.mutate(ss.id);
-                        }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                      <div className="absolute bottom-0 inset-x-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent">
-                        <div className="text-[9px] font-mono text-[#888]">
-                          {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
-                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {screenshots.map((ss: any) => (
+                  <div
+                    key={ss.id}
+                    className="group relative rounded-lg overflow-hidden border border-[#1a1a1a] bg-[#0d0d0d] hover:border-[#2a2a2a] transition-all cursor-pointer"
+                    onClick={() => setLightboxImg(ss.image_url || ss.image)}
+                  >
+                    <img
+                      src={ss.image_url || ss.image}
+                      alt={ss.caption || "Screenshot"}
+                      className="w-full aspect-video object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                        <Maximize2 size={13} className="text-white/80" />
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
+                    <button
+                      className="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/70 text-[#666] hover:text-[#ef4444] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                      onClick={(e) => { e.stopPropagation(); deleteScreenshotMutation.mutate(ss.id); }}
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                    <div className="absolute bottom-0 inset-x-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="text-[9px] font-mono text-[#666]">
+                        {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
+                          month: "short", day: "numeric",
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {topic.summary && (
-              <div className="border border-[#1a1a1a] rounded-lg p-3 mt-4">
-                <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mb-1">Topic Summary</div>
-                <div className="text-sm text-[#999] leading-relaxed">{topic.summary}</div>
+              <div className="border border-[#141414] rounded-lg p-3 mt-4 bg-[#090909]">
+                <div className="text-[9px] uppercase font-mono tracking-widest text-[#333] mb-1.5">Summary</div>
+                <div className="text-xs text-[#666] leading-relaxed">{topic.summary}</div>
               </div>
             )}
           </div>
@@ -297,14 +341,14 @@ function TopicWorkspace() {
         {/* Lightbox */}
         {lightboxImg && (
           <div
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-8"
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-8"
             onClick={() => setLightboxImg(null)}
           >
             <button
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center justify-center"
               onClick={() => setLightboxImg(null)}
             >
-              <X size={20} />
+              <X size={16} />
             </button>
             <img
               src={lightboxImg}
@@ -315,41 +359,34 @@ function TopicWorkspace() {
           </div>
         )}
 
-        {/* ════════════════════════════════════════
-            RIGHT PANE — Tabs
-            On mobile: fills remaining space below the left pane
-            On lg+: exactly half the width, full height
-        ════════════════════════════════════════ */}
-        <section className="flex-1 flex flex-col lg:w-1/2 bg-[#0a0a0a] min-h-0 overflow-hidden">
+        {/* ════ RIGHT: Tabs ════ */}
+        <section className="flex-1 flex flex-col bg-[#080808] min-h-0 overflow-hidden">
 
-          {/* Tab bar — fixed height, no shrink */}
-          <div className="shrink-0 flex border-b border-[#222] overflow-x-auto">
-            {([
-              { id: "notes", label: "📝 Notes" },
-              { id: "flash", label: "🃏 Flashcards" },
-              { id: "quiz",  label: "✅ Quiz" },
-              { id: "build", label: "🔨 Build" },
-            ] as { id: Tab; label: string }[]).map((t) => (
+          {/* Tab bar */}
+          <div className="shrink-0 flex border-b border-[#131313] px-2 pt-1">
+            {TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={
-                  "px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors font-medium " +
-                  (tab === t.id
-                    ? "border-[#22c55e] text-[#f0f0f0] bg-[#111]"
-                    : "border-transparent text-[#666] hover:text-[#f0f0f0] hover:bg-[#0d0d0d]")
-                }
+                className={`relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-all whitespace-nowrap ${tab === t.id
+                  ? "text-[#e8e8e8]"
+                  : "text-[#444] hover:text-[#888]"
+                  }`}
               >
+                {t.icon}
                 {t.label}
+                {tab === t.id && (
+                  <span className="absolute bottom-0 left-2 right-2 h-px bg-[#22c55e] rounded-full" />
+                )}
               </button>
             ))}
           </div>
 
-          {/* Tab content — scrollable, fills remaining right-pane height */}
-          <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5">
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto min-h-0 p-5 scrollbar-thin">
             {tab === "notes" && <StudyNotesTab topicId={topic.id} />}
             {tab === "flash" && <FlashcardsTab topicId={topic.id} />}
-            {tab === "quiz"  && <QuizTab topicId={topic.id} />}
+            {tab === "quiz" && <QuizTab topicId={topic.id} />}
             {tab === "build" && <BuildTab topic={topic} materials={materials} progress={progress} />}
           </div>
         </section>
@@ -358,45 +395,38 @@ function TopicWorkspace() {
   );
 }
 
-function formatTime(s: number) {
-  const m = Math.floor(s / 60);
-  const ss = s % 60;
-  return `${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-}
-
-// ─────────────────────────────────────────────
-// Tab Components
-// ─────────────────────────────────────────────
-
+/* ─────────────────────────────────────────────
+   Notes Tab
+───────────────────────────────────────────── */
 function StudyNotesTab({ topicId }: { topicId: number | string }) {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [noteFile, setNoteFile] = useState<File | null>(null);
 
   const { isLoading } = useQuery({
-    queryKey: ['notes', topicId],
+    queryKey: ["notes", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/notes/`);
-      if (!res.ok) return { content: '', documents: [] };
+      if (!res.ok) return { content: "", documents: [] };
       const json = await res.json();
-      setContent(json.content || '');
+      setContent(json.content || "");
       return json;
-    }
+    },
   });
 
   const { data: noteDocuments = [], refetch: refetchDocs } = useQuery({
-    queryKey: ['note-documents', topicId],
+    queryKey: ["note-documents", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/note-documents/`);
       if (!res.ok) return [];
       return res.json();
-    }
+    },
   });
 
   const saveNote = async (val: string) => {
     setSaving(true);
     await apiFetch(`/topics/${topicId}/notes/`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ content: val }),
     });
     setSaving(false);
@@ -405,41 +435,38 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
   const uploadDocMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
       const res = await apiFetch(`/topics/${topicId}/note-documents/`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
       if (!res.ok) throw new Error("Upload failed");
       return res.json();
     },
-    onSuccess: () => {
-      setNoteFile(null);
-      refetchDocs();
-    }
+    onSuccess: () => { setNoteFile(null); refetchDocs(); },
   });
 
-  if (isLoading) return <div className="text-[#666] text-sm text-center py-8">Loading notes...</div>;
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={20} className="animate-spin text-[#333]" />
+      </div>
+    );
 
   return (
-    /*
-      Important: this container must NOT be `h-full` or use flex-1 with flex-col here,
-      because the parent scroll container handles height. Just let content flow naturally.
-    */
-    <div className="flex flex-col gap-4">
-
-      {/* Notes textarea — fixed visible height, scrolls internally */}
-      <div className="flex flex-col">
+    <div className="flex flex-col gap-5">
+      {/* Text area */}
+      <div>
         <div className="flex justify-between items-center mb-2">
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Markdown Supported</div>
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#22c55e]/70">
-            {saving ? 'Saving…' : 'Saved'}
-          </div>
+          <label className="text-[9px] uppercase tracking-widest font-mono text-[#333]">Markdown</label>
+          <span className={`text-[9px] uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}>
+            {saving ? "Saving…" : "Saved"}
+          </span>
         </div>
         <textarea
-          className="w-full h-64 bg-transparent border border-[#222] rounded-lg p-3 text-sm text-[#f0f0f0]
-                     focus:outline-none focus:border-[#444] resize-y placeholder-[#444]"
-          placeholder="Type your study notes here…"
+          className="w-full h-60 bg-[#060606] border border-[#181818] rounded-lg p-3.5 text-sm text-[#d0d0d0] leading-relaxed
+                     focus:outline-none focus:border-[#2a2a2a] resize-y placeholder-[#2a2a2a] font-mono transition-colors"
+          placeholder="Start typing your notes…"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onBlur={() => saveNote(content)}
@@ -447,13 +474,15 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       </div>
 
       {/* Document upload */}
-      <div className="border-t border-[#222] pt-4">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-2">
-          <FileText size={12} className="inline mr-1" /> Upload Documents
+      <div>
+        <div className="text-[9px] uppercase tracking-widest font-mono text-[#333] mb-2 flex items-center gap-1.5">
+          <FileText size={10} />
+          Documents
         </div>
         <div
-          className="border-2 border-dashed border-[#333] rounded-lg p-4 text-center hover:bg-[#161616] transition-colors cursor-pointer"
-          onClick={() => document.getElementById('noteFileUpload')?.click()}
+          className="border border-dashed border-[#1a1a1a] rounded-lg p-4 flex items-center gap-3 cursor-pointer
+                     hover:border-[#252525] hover:bg-[#0a0a0a] transition-all"
+          onClick={() => document.getElementById("noteFileUpload")?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
@@ -467,46 +496,43 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg"
             onChange={(e) => { if (e.target.files?.length) setNoteFile(e.target.files[0]); }}
           />
-          <UploadCloud className="w-5 h-5 text-[#666] mx-auto mb-1" />
-          <div className="text-xs text-[#999]">{noteFile ? noteFile.name : 'Click or drag files (PDF, DOCX, images)'}</div>
-        </div>
-        {noteFile && (
-          <div className="flex justify-end mt-2">
-            <Btn
-              size="sm"
-              onClick={() => uploadDocMutation.mutate(noteFile)}
+          <div className="w-8 h-8 rounded-lg bg-[#0f0f0f] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+            <UploadCloud size={14} className="text-[#333]" />
+          </div>
+          <div>
+            <div className="text-xs text-[#555]">{noteFile ? noteFile.name : "Drop a file or click to browse"}</div>
+            <div className="text-[10px] text-[#333] mt-0.5">PDF, DOCX, TXT, images</div>
+          </div>
+          {noteFile && (
+            <button
+              className="ml-auto px-3 py-1.5 rounded-md bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-xs font-medium hover:bg-[#22c55e]/15 transition-colors"
+              onClick={(e) => { e.stopPropagation(); uploadDocMutation.mutate(noteFile); }}
               disabled={uploadDocMutation.isPending}
             >
-              {uploadDocMutation.isPending
-                ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Uploading…</>
-                : "Upload Document"}
-            </Btn>
-          </div>
-        )}
+              {uploadDocMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : "Upload"}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Saved documents */}
+      {/* Saved docs */}
       {noteDocuments.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-2">
-            Saved Documents ({noteDocuments.length})
+          <div className="text-[9px] uppercase tracking-widest font-mono text-[#333] mb-2">
+            Saved ({noteDocuments.length})
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {noteDocuments.map((doc: any) => (
-              <li key={doc.id} className="flex items-center justify-between p-3 rounded-lg border border-[#222] bg-[#111]">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText size={14} className="shrink-0 text-[#22c55e]" />
-                  <span className="text-sm text-[#ccc] truncate">
-                    {doc.filename || doc.file?.split('/').pop() || `Document #${doc.id}`}
+              <li key={doc.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#141414] bg-[#0a0a0a] hover:border-[#1e1e1e] transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileText size={13} className="shrink-0 text-[#22c55e]/60" />
+                  <span className="text-xs text-[#888] truncate">
+                    {doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}
                   </span>
                 </div>
-                <a
-                  href={doc.file_url || doc.file}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-[#22c55e] hover:text-[#4ade80] ml-2 shrink-0"
-                >
-                  <ExternalLink size={14} />
+                <a href={doc.file_url || doc.file} target="_blank" rel="noreferrer"
+                  className="text-[#333] hover:text-[#666] ml-2 shrink-0 transition-colors">
+                  <ExternalLink size={13} />
                 </a>
               </li>
             ))}
@@ -517,6 +543,9 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
   );
 }
 
+/* ─────────────────────────────────────────────
+   Quiz Tab
+───────────────────────────────────────────── */
 function QuizTab({ topicId }: { topicId: number }) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -526,7 +555,7 @@ function QuizTab({ topicId }: { topicId: number }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['quiz', topicId, difficulty],
+    queryKey: ["quiz", topicId, difficulty],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/quiz/?difficulty=${difficulty}&count=5`);
       if (!res.ok) throw new Error("Failed to generate quiz");
@@ -541,44 +570,28 @@ function QuizTab({ topicId }: { topicId: number }) {
     setSubmitted(false);
   };
 
-  if (isLoading) return (
-    <div className="text-center py-12">
-      <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#666] mb-4" />
-      <div className="text-sm text-[#666] font-mono">Generating {difficulty} questions…</div>
-    </div>
-  );
-  if (isError) return (
-    <div className="text-center py-8 text-red-500 text-sm">
-      Failed to generate quiz.
-      <Btn onClick={() => refetch()} size="sm" className="mt-4 block mx-auto">Retry</Btn>
-    </div>
-  );
-
   const questions = data?.questions || [];
+
   let score = 0;
   if (submitted) {
-    questions.forEach((q: any, i: number) => {
-      if (answers[i] === q.answer) score++;
-    });
+    questions.forEach((q: any, i: number) => { if (answers[i] === q.answer) score++; });
   }
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     let currentScore = 0;
-    questions.forEach((q: any, i: number) => {
-      if (answers[i] === q.answer) currentScore++;
-    });
+    questions.forEach((q: any, i: number) => { if (answers[i] === q.answer) currentScore++; });
     try {
       const res = await apiFetch(`/topics/${topicId}/submit-quiz/`, {
         method: "POST",
-        body: JSON.stringify({ score: currentScore, total: questions.length })
+        body: JSON.stringify({ score: currentScore, total: questions.length }),
       });
       if (res.ok) {
         const result = await res.json();
         if (result.status === "passed") {
-          showToast(`✨ +${result.xp_earned} XP - Quiz Mastered!`, "xp");
-          queryClient.invalidateQueries({ queryKey: ['heatmap'] });
-          queryClient.invalidateQueries({ queryKey: ['recent_activity'] });
+          showToast(`✨ +${result.xp_earned} XP — Quiz Mastered!`, "xp");
+          queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+          queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
         }
       }
     } catch (e) { console.error(e); }
@@ -586,93 +599,134 @@ function QuizTab({ topicId }: { topicId: number }) {
     setIsSubmitting(false);
   };
 
+  const DIFF_STYLES = {
+    easy: { active: "border-[#22c55e]/40 bg-[#22c55e]/8 text-[#22c55e]", dot: "bg-[#22c55e]" },
+    medium: { active: "border-[#f59e0b]/40 bg-[#f59e0b]/8 text-[#f59e0b]", dot: "bg-[#f59e0b]" },
+    hard: { active: "border-[#ef4444]/40 bg-[#ef4444]/8 text-[#ef4444]", dot: "bg-[#ef4444]" },
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <Loader2 size={20} className="animate-spin text-[#333]" />
+        <span className="text-[10px] font-mono tracking-widest text-[#333] uppercase">Generating {difficulty} questions</span>
+      </div>
+    );
+
+  if (isError)
+    return (
+      <div className="text-center py-12">
+        <div className="text-xs text-[#ef4444] mb-4">Failed to generate quiz</div>
+        <button onClick={() => refetch()} className="flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-md border border-[#222] text-xs text-[#666] hover:text-[#f0f0f0] transition-colors">
+          <RefreshCw size={12} /> Retry
+        </button>
+      </div>
+    );
+
   return (
-    <div className="space-y-6">
-      {/* Difficulty selector */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] uppercase font-mono tracking-wider text-[#666] mr-1">Difficulty</span>
-        {(["easy", "medium", "hard"] as const).map((d) => (
-          <button
-            key={d}
-            onClick={() => handleDifficultyChange(d)}
-            className={`px-3 py-1.5 rounded text-xs font-mono uppercase tracking-wider border transition-colors ${
-              difficulty === d
-                ? d === "easy"   ? "border-[#22c55e]/50 bg-[#0d1a0d] text-[#22c55e]"
-                : d === "medium" ? "border-[#f59e0b]/50 bg-[#1a1305] text-[#f59e0b]"
-                                 : "border-[#ef4444]/50 bg-[#1a0d0d] text-[#ef4444]"
-                : "border-[#222] text-[#666] hover:text-[#f0f0f0] hover:bg-[#161616]"
-            }`}
-          >
-            {d}
-          </button>
-        ))}
+    <div className="space-y-5">
+      {/* Difficulty */}
+      <div className="flex items-center gap-2">
+        <span className="text-[9px] uppercase tracking-widest font-mono text-[#333]">Level</span>
+        <div className="flex gap-1.5 ml-1">
+          {(["easy", "medium", "hard"] as const).map((d) => {
+            const s = DIFF_STYLES[d];
+            const active = difficulty === d;
+            return (
+              <button
+                key={d}
+                onClick={() => handleDifficultyChange(d)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider border transition-all ${active ? s.active : "border-[#181818] text-[#444] hover:border-[#2a2a2a] hover:text-[#666]"
+                  }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : "bg-[#333]"}`} />
+                {d}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* Score card */}
       {submitted && (
-        <div className={`p-4 rounded-lg border text-center ${score === questions.length ? 'border-[#22c55e]/30 bg-[#0d1a0d]' : 'border-[#f59e0b]/30 bg-[#1a1305]'}`}>
-          <div className="text-lg font-semibold text-[#f0f0f0] mb-1">
-            {score} / {questions.length}
+        <div className={`rounded-xl border p-4 flex items-center justify-between ${score === questions.length
+          ? "border-[#22c55e]/20 bg-[#22c55e]/5"
+          : "border-[#f59e0b]/20 bg-[#f59e0b]/5"
+          }`}>
+          <div>
+            <div className="text-2xl font-bold text-[#e8e8e8] tabular-nums">{score}<span className="text-base text-[#444] font-normal">/{questions.length}</span></div>
+            <div className={`text-xs mt-0.5 ${score === questions.length ? "text-[#22c55e]" : "text-[#f59e0b]"}`}>
+              {score === questions.length ? "Perfect score!" : "Review your notes and try again"}
+            </div>
           </div>
-          {score === questions.length
-            ? <div className="text-sm text-[#22c55e]">Perfect! You're ready to build.</div>
-            : <div className="text-sm text-[#f59e0b]">Review your notes and try again.</div>
-          }
-          <Btn
+          <button
             onClick={() => { setSubmitted(false); setAnswers({}); }}
-            size="sm"
-            className="mt-3"
-            variant="outline"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#222] text-xs text-[#666] hover:text-[#f0f0f0] hover:border-[#333] transition-colors"
           >
-            Retake Quiz
-          </Btn>
+            <RotateCcw size={11} /> Retake
+          </button>
         </div>
       )}
 
-      {questions.map((q: any, i: number) => (
-        <Card key={i} className="p-4 border-[#222]">
-          <div className="text-sm font-medium text-[#f0f0f0] mb-3">{i + 1}. {q.question}</div>
-          <div className="space-y-2">
-            {q.options.map((opt: string, j: number) => {
-              const isSelected = answers[i] === opt;
-              const isCorrect = submitted && opt === q.answer;
-              const isWrong = submitted && isSelected && !isCorrect;
-              let cls = "w-full text-left p-3 rounded border text-sm transition-colors ";
-              if (isCorrect)       cls += "border-[#22c55e] bg-[#0d1a0d] text-[#22c55e]";
-              else if (isWrong)    cls += "border-red-500 bg-red-500/10 text-red-500";
-              else if (isSelected) cls += "border-[#666] bg-[#222] text-[#f0f0f0]";
-              else                 cls += "border-[#222] hover:bg-[#161616] text-[#999]";
-              return (
-                <button
-                  key={j}
-                  className={cls}
-                  onClick={() => !submitted && setAnswers({ ...answers, [i]: opt })}
-                  disabled={submitted}
-                >
-                  {opt}
-                </button>
-              );
-            })}
+      {/* Questions */}
+      <div className="space-y-4">
+        {questions.map((q: any, i: number) => (
+          <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#141414] flex items-start gap-3">
+              <span className="text-[10px] font-mono text-[#333] mt-0.5 shrink-0">Q{i + 1}</span>
+              <span className="text-sm text-[#d0d0d0] leading-snug">{q.question}</span>
+            </div>
+            <div className="p-3 grid grid-cols-1 gap-1.5">
+              {q.options.map((opt: string, j: number) => {
+                const isSelected = answers[i] === opt;
+                const isCorrect = submitted && opt === q.answer;
+                const isWrong = submitted && isSelected && !isCorrect;
+                return (
+                  <button
+                    key={j}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-all border ${isCorrect ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]" :
+                      isWrong ? "border-[#ef4444]/40 bg-[#ef4444]/10 text-[#ef4444]" :
+                        isSelected ? "border-[#333] bg-[#141414] text-[#e8e8e8]" :
+                          "border-[#141414] hover:border-[#222] hover:bg-[#0f0f0f] text-[#666] hover:text-[#aaa]"
+                      }`}
+                    onClick={() => !submitted && setAnswers({ ...answers, [i]: opt })}
+                    disabled={submitted}
+                  >
+                    <span className="font-mono text-[9px] mr-2 opacity-50">{String.fromCharCode(65 + j)}.</span>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </Card>
-      ))}
+        ))}
+      </div>
 
       {!submitted && questions.length > 0 && (
-        <Btn onClick={handleSubmit} disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting…" : "Submit Quiz"}
-        </Btn>
+        <button
+          onClick={handleSubmit}
+          disabled={isSubmitting || Object.keys(answers).length < questions.length}
+          className="w-full py-2.5 rounded-xl bg-[#22c55e] text-[#030f05] text-sm font-semibold
+                     hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          {isSubmitting ? "Submitting…" : `Submit — ${Object.keys(answers).length}/${questions.length} answered`}
+        </button>
       )}
     </div>
   );
 }
 
+/* ─────────────────────────────────────────────
+   Flashcards Tab
+───────────────────────────────────────────── */
 function FlashcardsTab({ topicId }: { topicId: number }) {
   const queryClient = useQueryClient();
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [draftCards, setDraftCards] = useState<{front: string, back: string}[]>([]);
+  const [draftCards, setDraftCards] = useState<{ front: string; back: string }[]>([]);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['flashcards', topicId],
+    queryKey: ["flashcards", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/flashcards/`);
       if (!res.ok) throw new Error("Failed to load flashcards");
@@ -682,140 +736,155 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (cards: {front: string, back: string}[]) => {
+    mutationFn: async (cards: { front: string; back: string }[]) => {
       const res = await apiFetch(`/topics/${topicId}/flashcards/`, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify({ cards }),
       });
       if (!res.ok) throw new Error("Failed to save flashcards");
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['flashcards', topicId] });
+      queryClient.invalidateQueries({ queryKey: ["flashcards", topicId] });
       setIsEditing(false);
       setFlipped({});
-    }
+    },
   });
 
-  const handleEditClick = () => {
-    setDraftCards(data?.flashcards || []);
-    setIsEditing(true);
-  };
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={20} className="animate-spin text-[#333]" />
+      </div>
+    );
 
-  if (isLoading) return (
-    <div className="text-center py-12">
-      <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#666] mb-4" />
-      <div className="text-sm text-[#666] font-mono">Loading flashcards…</div>
-    </div>
-  );
-  
-  if (isError) return (
-    <div className="text-center py-8 text-red-500 text-sm">
-      Failed to load flashcards.
-      <Btn onClick={() => refetch()} size="sm" className="mt-4 block mx-auto">Retry</Btn>
-    </div>
-  );
+  if (isError)
+    return (
+      <div className="text-center py-12">
+        <div className="text-xs text-[#ef4444] mb-4">Failed to load flashcards</div>
+        <button onClick={() => refetch()} className="flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-md border border-[#222] text-xs text-[#666] hover:text-[#f0f0f0] transition-colors">
+          <RefreshCw size={12} /> Retry
+        </button>
+      </div>
+    );
 
   const flashcards = data?.flashcards || [];
 
+  /* Edit mode */
   if (isEditing) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm font-semibold text-[#f0f0f0]">Edit Flashcards</div>
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold text-[#d0d0d0]">Edit Flashcards</div>
           <div className="flex gap-2">
-            <Btn variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Btn>
-            <Btn size="sm" onClick={() => saveMutation.mutate(draftCards)} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Saving..." : "Save Cards"}
-            </Btn>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-3 py-1.5 text-xs text-[#555] hover:text-[#999] transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => saveMutation.mutate(draftCards)}
+              disabled={saveMutation.isPending}
+              className="px-3 py-1.5 rounded-md bg-[#22c55e] text-[#030f05] text-xs font-semibold hover:bg-[#16a34a] disabled:opacity-40 transition-all"
+            >
+              {saveMutation.isPending ? "Saving…" : "Save"}
+            </button>
           </div>
         </div>
-        
+
         {draftCards.map((c, i) => (
-          <Card key={i} className="p-4 border-[#222] bg-[#0a0a0a]">
-            <div className="flex justify-between items-center mb-3">
-              <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Card {i + 1}</div>
-              <button 
-                className="text-[#666] hover:text-[#ef4444] transition-colors"
+          <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#141414]">
+              <span className="text-[9px] font-mono text-[#333] uppercase tracking-widest">Card {i + 1}</span>
+              <button
+                className="text-[#333] hover:text-[#ef4444] transition-colors"
                 onClick={() => setDraftCards(draftCards.filter((_, idx) => idx !== i))}
               >
-                <Trash2 size={14} />
+                <Trash2 size={12} />
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="p-4 space-y-3">
               <div>
-                <label className="text-[10px] text-[#555] block mb-1">Term (Front)</label>
-                <input 
-                  type="text" 
+                <label className="text-[9px] text-[#333] block mb-1 font-mono uppercase tracking-widest">Front</label>
+                <input
+                  type="text"
                   value={c.front}
                   onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, front: e.target.value } : card))}
-                  className="w-full bg-[#111] border border-[#222] rounded p-2 text-sm text-[#f0f0f0] outline-none focus:border-[#4ade80]"
+                  className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-sm text-[#d0d0d0] outline-none focus:border-[#2a2a2a] transition-colors"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-[#555] block mb-1">Definition (Back)</label>
-                <textarea 
+                <label className="text-[9px] text-[#333] block mb-1 font-mono uppercase tracking-widest">Back</label>
+                <textarea
                   value={c.back}
                   onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, back: e.target.value } : card))}
-                  className="w-full bg-[#111] border border-[#222] rounded p-2 text-sm text-[#f0f0f0] outline-none focus:border-[#4ade80] resize-y min-h-[60px]"
+                  className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-sm text-[#d0d0d0] outline-none focus:border-[#2a2a2a] resize-y min-h-[56px] transition-colors"
                 />
               </div>
             </div>
-          </Card>
+          </div>
         ))}
 
-        <Btn 
-          variant="outline" 
-          className="w-full py-4 border-dashed border-[#333] text-[#888] hover:bg-[#111] hover:text-[#ccc]"
+        <button
+          className="w-full py-3 rounded-xl border border-dashed border-[#1e1e1e] text-xs text-[#444] hover:border-[#2a2a2a] hover:text-[#777] transition-all flex items-center justify-center gap-2"
           onClick={() => setDraftCards([...draftCards, { front: "", back: "" }])}
         >
-          + Add Flashcard
-        </Btn>
+          <Plus size={13} /> Add card
+        </button>
       </div>
     );
   }
 
+  /* View mode */
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">
-          {flashcards.length} Cards
+      <div className="flex justify-between items-center mb-5">
+        <div className="text-[9px] uppercase tracking-widest font-mono text-[#333]">
+          {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
         </div>
-        <Btn variant="outline" size="sm" onClick={handleEditClick}>
-          Edit Cards
-        </Btn>
+        <button
+          onClick={() => { setDraftCards(data?.flashcards || []); setIsEditing(true); }}
+          className="px-3 py-1.5 rounded-md border border-[#1e1e1e] text-xs text-[#555] hover:border-[#2a2a2a] hover:text-[#999] transition-all"
+        >
+          Edit
+        </button>
       </div>
-      
+
       {flashcards.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-[#222] rounded-xl bg-[#0a0a0a]">
-          <div className="text-[#666] mb-4">No flashcards written yet.</div>
-          <Btn onClick={handleEditClick}>Create Flashcards</Btn>
+        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-[#141414] rounded-xl">
+          <div className="text-xs text-[#3a3a3a] mb-4">No flashcards yet</div>
+          <button
+            onClick={() => { setDraftCards([]); setIsEditing(true); }}
+            className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-xs font-medium hover:bg-[#22c55e]/15 transition-colors"
+          >
+            Create flashcards
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {flashcards.map((f: any, i: number) => {
             const isFlipped = flipped[i];
             return (
               <div
                 key={i}
-                className="perspective-1000 h-48 cursor-pointer"
+                className="perspective-1000 h-44 cursor-pointer"
                 onClick={() => setFlipped({ ...flipped, [i]: !isFlipped })}
               >
-                <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}>
                   {/* Front */}
-                  <Card className="absolute inset-0 w-full h-full backface-hidden flex items-center justify-center p-6 border-[#333] hover:border-[#444] bg-[#0f0f0f]">
-                    <div className="text-center">
-                      <div className="text-[10px] uppercase font-mono tracking-widest text-[#666] mb-2">Term</div>
-                      <div className="text-lg font-semibold text-[#f0f0f0]">{f.front}</div>
+                  <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
+                    <div className="text-[9px] uppercase font-mono tracking-widest text-[#2a2a2a] mb-3">Term</div>
+                    <div className="text-sm font-semibold text-[#e8e8e8] text-center leading-snug">{f.front}</div>
+                    <div className="absolute bottom-3 right-3">
+                      <RotateCcw size={11} className="text-[#222]" />
                     </div>
-                  </Card>
+                  </div>
                   {/* Back */}
-                  <Card className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex items-center justify-center p-6 border-[#22c55e]/30 bg-[#0d1a0d]">
-                    <div className="text-center">
-                      <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e] mb-2">Definition</div>
-                      <div className="text-sm text-[#f0f0f0] leading-relaxed">{f.back}</div>
-                    </div>
-                  </Card>
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border border-[#22c55e]/15 bg-[#0a0f0a] flex flex-col items-center justify-center p-5">
+                    <div className="text-[9px] uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">Definition</div>
+                    <div className="text-xs text-[#aaa] text-center leading-relaxed">{f.back}</div>
+                  </div>
                 </div>
               </div>
             );
@@ -826,16 +895,18 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   );
 }
 
+/* ─────────────────────────────────────────────
+   Build Tab
+───────────────────────────────────────────── */
 function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]; progress: any }) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  const [file, setFile] = useState<File | null>(null);
   const [buildMode, setBuildMode] = useState<"choose" | "ai" | "own">("choose");
   const [repoUrl, setRepoUrl] = useState("");
   const [scanResult, setScanResult] = useState<any>(null);
 
   const { data: projectIdeas, isLoading: ideasLoading, refetch: refetchIdeas } = useQuery({
-    queryKey: ['project-ideas', topic.id],
+    queryKey: ["project-ideas", topic.id],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topic.id}/project-ideas/`);
       if (!res.ok) throw new Error("Failed to generate ideas");
@@ -843,37 +914,6 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
     },
     enabled: buildMode === "ai",
     refetchOnWindowFocus: false,
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: async (uploadFile: File) => {
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      const res = await apiFetch(`/topics/${topic.id}/materials/`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      return res.json();
-    },
-    onSuccess: (data) => verifyMutation.mutate(data.id)
-  });
-
-  const verifyMutation = useMutation({
-    mutationFn: async (materialId: number) => {
-      const res = await apiFetch(`/materials/${materialId}/verify/`, { method: "POST" });
-      if (!res.ok) throw new Error("Verification failed");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data.material?.ai_status === 'verified') {
-        showToast("✨ +5 XP - Topic Verified!", "xp");
-      }
-      queryClient.invalidateQueries({ queryKey: ['topic', String(topic.id)] });
-      queryClient.invalidateQueries({ queryKey: ['heatmap'] });
-      queryClient.invalidateQueries({ queryKey: ['paths'] });
-      queryClient.invalidateQueries({ queryKey: ['recent_activity'] });
-    }
   });
 
   const scanRepoMutation = useMutation({
@@ -888,74 +928,97 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
     onSuccess: (data) => {
       setScanResult(data);
       if (data.passed) {
-        showToast("✨ +5 XP - Topic Verified!", "xp");
-        queryClient.invalidateQueries({ queryKey: ['topic', String(topic.id)] });
-        queryClient.invalidateQueries({ queryKey: ['paths'] });
-        queryClient.invalidateQueries({ queryKey: ['heatmap'] });
-        queryClient.invalidateQueries({ queryKey: ['recent_activity'] });
+        showToast("✨ +5 XP — Project Verified!", "xp");
+        queryClient.invalidateQueries({ queryKey: ["topic", String(topic.id)] });
+        queryClient.invalidateQueries({ queryKey: ["paths"] });
+        queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+        queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
       }
-    }
+    },
   });
 
-  if (progress?.status === 'completed') {
-    const vp = topic?.verified_project;
+  /* Completed state */
+  if (progress?.status === "completed") {
     return (
-      <div className="border border-[#22c55e]/30 bg-[#0d1a0d] rounded-lg p-6 text-center">
-        <div className="w-12 h-12 bg-[#22c55e]/20 text-[#22c55e] rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
-          ✓
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-14 h-14 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center mb-4">
+          <CheckCircle2 size={22} className="text-[#22c55e]" />
         </div>
-        <h3 className="text-lg font-semibold text-[#f0f0f0]">Topic Verified</h3>
-        <p className="text-sm text-[#22c55e] mt-1">Your proof of work has been accepted by the AI.</p>
+        <div className="text-sm font-semibold text-[#e8e8e8]">Topic Verified</div>
+        <div className="text-xs text-[#22c55e]/70 mt-1">Your proof of work was accepted</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+
       {/* Mode chooser */}
       {buildMode === "choose" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button
-            onClick={() => setBuildMode("ai")}
-            className="p-6 rounded-xl border border-[#222] bg-[#0f0f0f] hover:border-[#22c55e]/40 hover:bg-[#0d1a0d] transition-colors text-left"
-          >
-            <div className="text-[10px] uppercase font-mono tracking-wider text-[#22c55e] mb-2">Option 1</div>
-            <div className="text-base font-semibold text-[#f0f0f0] mb-1">AI-Generated Projects</div>
-            <div className="text-xs text-[#666]">Get project ideas tailored to this topic. Pick one and build it.</div>
-          </button>
-          <button
-            onClick={() => setBuildMode("own")}
-            className="p-6 rounded-xl border border-[#222] bg-[#0f0f0f] hover:border-[#f59e0b]/40 hover:bg-[#1a1305] transition-colors text-left"
-          >
-            <div className="text-[10px] uppercase font-mono tracking-wider text-[#f59e0b] mb-2">Option 2</div>
-            <div className="text-base font-semibold text-[#f0f0f0] mb-1">Your Own Project</div>
-            <div className="text-xs text-[#666]">Paste your GitHub repo link. AI will scan and evaluate it.</div>
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            {
+              mode: "ai" as const,
+              accent: "#22c55e",
+              label: "AI Project Ideas",
+              desc: "Get tailored project suggestions. Pick one and build it.",
+              tag: "Guided",
+            },
+            {
+              mode: "own" as const,
+              accent: "#f59e0b",
+              label: "Your Own Project",
+              desc: "Submit a GitHub repo. AI will evaluate your work.",
+              tag: "Freestyle",
+            },
+          ].map(({ mode, accent, label, desc, tag }) => (
+            <button
+              key={mode}
+              onClick={() => setBuildMode(mode)}
+              className="group text-left p-5 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#222] transition-all"
+            >
+              <div className="text-[9px] font-mono uppercase tracking-widest mb-3" style={{ color: accent }}>{tag}</div>
+              <div className="text-sm font-semibold text-[#d0d0d0] mb-1.5 group-hover:text-[#e8e8e8] transition-colors">{label}</div>
+              <div className="text-[11px] text-[#3a3a3a] leading-relaxed">{desc}</div>
+              <div className="mt-4 flex items-center gap-1" style={{ color: accent + "80" }}>
+                <span className="text-[10px] font-mono">Select</span>
+                <ChevronRight size={11} />
+              </div>
+            </button>
+          ))}
         </div>
       )}
 
-      {/* AI ideas */}
+      {/* AI Ideas */}
       {buildMode === "ai" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <button onClick={() => setBuildMode("choose")} className="text-xs text-[#666] hover:text-[#f0f0f0]">← Back</button>
-            <div className="text-[10px] uppercase font-mono tracking-wider text-[#22c55e]">AI Project Ideas</div>
+            <button onClick={() => setBuildMode("choose")} className="text-[10px] font-mono text-[#444] hover:text-[#888] transition-colors flex items-center gap-1">
+              <ArrowLeft size={11} /> Back
+            </button>
+            <button onClick={() => refetchIdeas()} className="text-[10px] font-mono text-[#444] hover:text-[#888] transition-colors flex items-center gap-1">
+              <RefreshCw size={11} /> Regenerate
+            </button>
           </div>
 
           {ideasLoading ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#666] mb-2" />
-              <div className="text-xs text-[#666] font-mono">Generating ideas…</div>
+            <div className="flex flex-col items-center py-12 gap-3">
+              <Loader2 size={18} className="animate-spin text-[#333]" />
+              <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">Generating ideas</span>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {(projectIdeas?.ideas || []).map((idea: any, i: number) => (
-                <Card key={i} className="p-4 border-[#222] hover:border-[#333] transition-colors">
-                  <div className="text-sm font-semibold text-[#f0f0f0] mb-1">{idea.title || `Project ${i + 1}`}</div>
-                  <div className="text-xs text-[#999] leading-relaxed">{idea.description || idea}</div>
-                </Card>
+                <div key={i} className="p-4 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#1e1e1e] transition-colors">
+                  <div className="flex items-start gap-3">
+                    <span className="text-[9px] font-mono text-[#22c55e]/40 mt-0.5 shrink-0 tabular-nums">0{i + 1}</span>
+                    <div>
+                      <div className="text-sm font-semibold text-[#d0d0d0] mb-1">{idea.title || `Project ${i + 1}`}</div>
+                      <div className="text-xs text-[#555] leading-relaxed">{idea.description || idea}</div>
+                    </div>
+                  </div>
+                </div>
               ))}
-              <Btn variant="outline" size="sm" onClick={() => refetchIdeas()}>Regenerate Ideas</Btn>
             </div>
           )}
         </div>
@@ -963,80 +1026,91 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
 
       {/* Own project */}
       {buildMode === "own" && (
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <button onClick={() => setBuildMode("choose")} className="text-xs text-[#666] hover:text-[#f0f0f0]">← Back</button>
-            <div className="text-[10px] uppercase font-mono tracking-wider text-[#f59e0b]">Your Project</div>
+            <button onClick={() => setBuildMode("choose")} className="text-[10px] font-mono text-[#444] hover:text-[#888] transition-colors flex items-center gap-1">
+              <ArrowLeft size={11} /> Back
+            </button>
           </div>
-          <div className="text-sm text-[#aaa]">
-            Build any project that demonstrates your understanding of this topic and submit the GitHub repository below.
+          <div className="text-xs text-[#555] leading-relaxed pb-1">
+            Build any project that demonstrates your understanding, then submit the GitHub link below for AI evaluation.
           </div>
         </div>
       )}
 
-      {/* Shared GitHub Repo Submission */}
+      {/* Repo submission */}
       {buildMode !== "choose" && (
-        <div className="border-t border-[#222] pt-4 mt-6 space-y-4">
-          <Card className="p-4 bg-[#0f0f0f] border-[#222]">
-            <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-2">Submit GitHub Repository</div>
+        <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#141414] flex items-center gap-2">
+            <Github size={13} className="text-[#333]" />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[#333]">Submit Repository</span>
+          </div>
+          <div className="p-4 space-y-3">
             <div className="flex gap-2">
               <input
                 type="text"
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
                 placeholder="https://github.com/username/repo"
-                className="flex-1 bg-[#111] border border-[#222] rounded px-3 py-2 text-sm text-[#f0f0f0]
-                           placeholder-[#555] focus:outline-none focus:border-[#444]"
+                className="flex-1 bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-xs text-[#d0d0d0]
+                           placeholder-[#2a2a2a] focus:outline-none focus:border-[#2a2a2a] font-mono transition-colors"
               />
-              <Btn
+              <button
                 onClick={() => scanRepoMutation.mutate(repoUrl)}
                 disabled={!repoUrl || scanRepoMutation.isPending}
+                className="px-4 py-2 rounded-lg bg-[#22c55e] text-[#030f05] text-xs font-semibold
+                           hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
-                {scanRepoMutation.isPending
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Scanning…</>
-                  : "Scan Repo"}
-              </Btn>
+                {scanRepoMutation.isPending ? (
+                  <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Scanning</span>
+                ) : "Scan Repo"}
+              </button>
             </div>
-          </Card>
 
-          {scanResult && (
-            <Card className={`p-4 border ${scanResult.passed ? 'border-[#22c55e]/30 bg-[#0d1a0d]' : 'border-[#ef4444]/30 bg-[#1a0d0d]'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-semibold text-[#f0f0f0]">
-                  {scanResult.passed ? '✓ Project Approved' : '✗ Needs Improvement'}
+            {scanResult && (
+              <div className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#22c55e]/20 bg-[#22c55e]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs font-semibold ${scanResult.passed ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
+                    {scanResult.passed ? "✓ Approved" : "✗ Needs work"}
+                  </span>
+                  {scanResult.score !== undefined && (
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}>
+                      {scanResult.score}/100
+                    </span>
+                  )}
                 </div>
-                {scanResult.score !== undefined && (
-                  <Badge tone={scanResult.passed ? 'green' : 'red'}>Score: {scanResult.score}/100</Badge>
-                )}
+                <div className="text-[11px] text-[#666] leading-relaxed whitespace-pre-wrap">{scanResult.feedback}</div>
               </div>
-              <div className="text-xs text-[#999] whitespace-pre-wrap">{scanResult.feedback}</div>
-            </Card>
-          )}
+            )}
+          </div>
         </div>
       )}
 
       {/* Previous submissions */}
       {materials?.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666] mb-3">
-            Previous Submissions
-          </div>
-          <ul className="space-y-3">
+          <div className="text-[9px] uppercase tracking-widest font-mono text-[#2a2a2a] mb-3">Previous Submissions</div>
+          <ul className="space-y-2">
             {materials.slice().reverse().map((m: any) => (
-              <li key={m.id} className="border border-[#222] rounded-lg p-4 bg-[#111]">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm text-[#ccc] font-mono truncate mr-4">Submission #{m.id}</span>
-                  <div className="flex gap-2 shrink-0">
-                    {m.ai_score !== undefined && m.ai_score > 0 && <Badge tone={m.ai_status === 'verified' ? 'green' : 'red'}>Score: {m.ai_score}/100</Badge>}
-                    <Badge tone={m.ai_status === 'verified' ? 'green' : m.ai_status === 'rejected' ? 'red' : 'amber'}>
+              <li key={m.id} className="border border-[#141414] rounded-xl bg-[#090909] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#101010]">
+                  <span className="text-[10px] font-mono text-[#444]">Submission #{m.id}</span>
+                  <div className="flex items-center gap-2">
+                    {m.ai_score > 0 && (
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}>
+                        {m.ai_score}/100
+                      </span>
+                    )}
+                    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded capitalize ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" :
+                      m.ai_status === "rejected" ? "text-[#ef4444] bg-[#ef4444]/10" :
+                        "text-[#f59e0b] bg-[#f59e0b]/10"
+                      }`}>
                       {m.ai_status}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
                 {m.ai_feedback && (
-                  <div className="text-sm text-[#999] bg-[#0a0a0a] p-3 rounded border border-[#222] whitespace-pre-wrap">
-                    {m.ai_feedback}
-                  </div>
+                  <div className="px-4 py-3 text-[11px] text-[#555] leading-relaxed whitespace-pre-wrap">{m.ai_feedback}</div>
                 )}
               </li>
             ))}

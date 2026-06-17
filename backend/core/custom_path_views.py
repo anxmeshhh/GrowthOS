@@ -27,8 +27,16 @@ class CustomPathViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return custom paths created by user or shared with user"""
+        from django.db.models import Prefetch
         user = self.request.user
-        return LearningPath.objects.filter(
+        from .models import TopicProgress, VerifiedProject, TopicMaterial
+        
+        return LearningPath.objects.prefetch_related(
+            'topics',
+            Prefetch('topics__topicprogress_set', queryset=TopicProgress.objects.filter(user=user), to_attr='user_progress_cache'),
+            Prefetch('topics__verifiedproject_set', queryset=VerifiedProject.objects.filter(user=user), to_attr='verified_project_cache'),
+            Prefetch('topics__topicmaterial_set', queryset=TopicMaterial.objects.filter(user=user), to_attr='materials_cache'),
+        ).filter(
             Q(created_by=user, is_custom=True) |
             Q(shared_with_users__shared_to=user)
         ).distinct()

@@ -3,7 +3,7 @@ import {
   ArrowRight, Target, BookOpen, ClipboardCheck,
   Zap, Award, CheckCircle2, Circle,
   Activity, ChevronRight, Github,
-  RotateCcw, Flame, Trophy, Star,
+  RotateCcw, Flame, Star, ChevronDown,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
@@ -22,7 +22,12 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
-/* ── helpers ─────────────────────────────────────────────────────────────── */
+/* ── design tokens ───────────────────────────────────────────────────────
+   bg          #050505 / surface #0a0a0a / border rgba(255,255,255,.06)
+   text        primary #f2f2f2, secondary #8a8a8a, muted #454545
+   accents     violet #a855f7 (XP), amber #f59e0b (streak), emerald #22c55e (progress/success)
+   mono        ui-monospace — used for all numerals, labels, timestamps
+──────────────────────────────────────────────────────────────────────── */
 
 function getLevelInfo(xp: number) {
   const tiers = [
@@ -45,34 +50,44 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-/* ── sub-components (matching Progress page) ─────────────────────────────── */
+/* ── shared primitives ───────────────────────────────────────────────── */
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#555] flex items-center gap-1.5">
+    <p className="text-[10px] uppercase tracking-[0.22em] font-mono text-[#5a5a5a] flex items-center gap-1.5">
       {children}
     </p>
   );
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Panel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden ${className}`}>
+    <div className={`bg-[#0a0a0a] border border-white/[0.06] rounded-2xl overflow-hidden transition-colors duration-300 hover:border-white/[0.09] ${className}`}>
       {children}
     </div>
   );
 }
 
-function CardHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
+function PanelHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#131313]">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
       <div>{left}</div>
       {right && <div>{right}</div>}
     </div>
   );
 }
 
-/* ── main ────────────────────────────────────────────────────────────────── */
+function EmptyState({ icon: Icon, title, sub }: { icon: any; title: string; sub: string }) {
+  return (
+    <div className="py-14 flex flex-col items-center justify-center text-center">
+      <Icon size={22} className="text-[#333] mb-3" />
+      <p className="text-[13px] font-medium text-[#999]">{title}</p>
+      <p className="text-[11px] text-[#454545] mt-1 font-mono">{sub}</p>
+    </div>
+  );
+}
+
+/* ── main ────────────────────────────────────────────────────────────── */
 
 function DashboardPage() {
   const { state } = useGrowth();
@@ -84,7 +99,6 @@ function DashboardPage() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  /* ── queries ── */
   const { data: paths = [] } = useQuery({
     queryKey: ["paths"],
     queryFn: async () => { const r = await apiFetch("/paths/"); return r.ok ? r.json() : []; },
@@ -141,14 +155,13 @@ function DashboardPage() {
       return r.json();
     },
     onSuccess: () => {
-      flash("🔥 Streak revived");
+      flash("Streak revived");
       qc.invalidateQueries({ queryKey: ["user_profile"] });
       qc.invalidateQueries({ queryKey: ["heatmap"] });
     },
     onError: (e: Error) => flash(e.message),
   });
 
-  /* ── derived ── */
   const xp = profile?.total_xp ?? 0;
   const { level, title: lvl, next } = getLevelInfo(xp);
   const xpPct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
@@ -187,133 +200,156 @@ function DashboardPage() {
   const today = new Date().toISOString().split("T")[0];
   const hd = heatmap.length > 0 ? heatmap : [{ date: today, count: 0, level: 0 }];
 
-  /* ── render ── */
   return (
     <PageShell>
-      {/* Toast */}
       {toast && (
-        <div className="fixed bottom-4 right-4 z-50 px-4 py-2.5 rounded-lg border border-[#1a3d28] bg-[#0a1a12] text-[#22c55e] text-xs font-mono shadow-xl flex items-center gap-2">
+        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl border border-[#1a3d28] bg-[#0a1a12]/95 backdrop-blur text-[#4ade80] text-xs font-mono shadow-2xl shadow-black/50 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 size={13} /> {toast}
         </div>
       )}
 
-      <div className="p-5 lg:p-6 space-y-4 max-w-screen-xl mx-auto">
+      <div className="p-5 lg:p-8 space-y-5 max-w-screen-xl mx-auto">
 
-        {/* ── Page Header ── */}
-        <div className="flex items-end justify-between mb-1">
-          <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1.5">GrowthOS</p>
-            <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Dashboard</h1>
+        {/* ── Header ── */}
+        <div className="flex items-end justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="relative w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-[#a855f7]/15 to-[#a855f7]/[0.02] border border-[#a855f7]/25 flex items-center justify-center">
+              <span className="text-[15px] font-mono font-semibold text-[#c084fc]">{level}</span>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center">
+                <Star size={8} className="text-[#a855f7]" fill="currentColor" />
+              </div>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.28em] font-mono text-[#454545]">GrowthOS</p>
+              <h1 className="text-[22px] font-semibold tracking-tight text-[#f2f2f2] leading-none mt-1">Dashboard</h1>
+            </div>
           </div>
+
           {ap && (
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#22c55e] hidden sm:block animate-pulse">
-                Live Status
-              </span>
-              <select
-                value={selectedPathId || "auto"}
-                onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
-                className="bg-[#0a1a12] border border-[#22c55e]/40 text-[#22c55e] text-[10px] font-mono uppercase tracking-wider rounded-lg px-3 py-1.5 outline-none hover:border-[#22c55e]/70 transition-all cursor-pointer"
-              >
-                <option value="auto" className="bg-[#0a0a0a] font-sans normal-case">✨ Auto-Track Active</option>
-                <optgroup label="Available Paths" className="bg-[#0a0a0a] text-[#555] font-sans">
-                  {allPaths.map((p: any) => (
-                    <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#888] font-sans normal-case text-xs">
-                      {p.title}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
+              {streak > 0 && (
+                <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-[#22c55e]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" /> Live
+                </span>
+              )}
+              <div className="relative">
+                <select
+                  value={selectedPathId || "auto"}
+                  onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
+                  className="appearance-none bg-[#0c0c0c] border border-white/10 text-[#cfcfcf] text-[11px] font-mono tracking-wide rounded-xl pl-3.5 pr-8 py-2 outline-none hover:border-white/20 focus-visible:ring-2 focus-visible:ring-[#22c55e]/40 transition-all cursor-pointer"
+                >
+                  <option value="auto" className="bg-[#0a0a0a]">✨ Auto-track</option>
+                  <optgroup label="Available paths" className="bg-[#0a0a0a] text-[#666]">
+                    {allPaths.map((p: any) => (
+                      <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#999]">
+                        {p.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] pointer-events-none" />
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── Stats Row (matching Progress top cards) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* ── Stats rail ── */}
+        <div className="relative rounded-2xl border border-white/[0.06] bg-[#070707] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#a855f7]/[0.05] via-transparent to-[#22c55e]/[0.05] pointer-events-none" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] relative">
 
-          {/* XP + Level — purple tint */}
-          <div className="bg-[#0d0914] border border-[#1f1938] rounded-xl p-5 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-[#a855f7] opacity-[0.06] rounded-full blur-3xl pointer-events-none" />
-            <SectionLabel><Zap size={11} className="text-[#a855f7]" /> Level & XP</SectionLabel>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-[#a855f7]">{level}</span>
-              <span className="text-sm text-[#555] font-mono">— {lvl}</span>
-            </div>
-            <div className="text-[11px] font-mono text-[#666] mt-0.5">{xp} XP total</div>
-            <div className="mt-4 space-y-1.5">
-              <div className="flex justify-between text-[10px] font-mono">
-                <span className="text-[#666]">{xpPct}% to Lv{level + 1}</span>
-                <span className="text-[#a855f7]">{next - xp} XP left</span>
+            {/* XP */}
+            <div className="p-6">
+              <Eyebrow><Zap size={11} className="text-[#a855f7]" /> Level &amp; XP</Eyebrow>
+              <div className="mt-3.5 flex items-baseline gap-2">
+                <span className="text-[34px] font-semibold tracking-tight text-[#c084fc] leading-none">{level}</span>
+                <span className="text-[13px] text-[#5a5a5a] font-mono">{lvl}</span>
               </div>
-              <div className="h-1 w-full bg-[#111] rounded-full overflow-hidden">
-                <div className="h-full bg-[#a855f7] rounded-full transition-all duration-700" style={{ width: `${xpPct}%` }} />
+              <div className="text-[11px] font-mono text-[#5a5a5a] mt-1">{xp} XP total</div>
+              <div className="mt-4 space-y-1.5">
+                <div className="flex justify-between text-[10px] font-mono text-[#5a5a5a]">
+                  <span>{xpPct}% to Lv{level + 1}</span>
+                  <span className="text-[#a855f7]">{next - xp} XP left</span>
+                </div>
+                <div className="h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#a855f7]/70 to-[#a855f7] rounded-full transition-all duration-700" style={{ width: `${xpPct}%` }} />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Streak — amber tint */}
-          <div className="bg-[#0d0b04] border border-[#221a05] rounded-xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-[#f59e0b] opacity-[0.07] rounded-full blur-2xl pointer-events-none" />
-            <SectionLabel><Flame size={11} className="text-[#f59e0b]" /> Day Streak</SectionLabel>
-            <div className={`text-4xl font-mono font-semibold mt-3 ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
-              {streak}
+            {/* Streak */}
+            <div className="p-6 flex flex-col">
+              <Eyebrow><Flame size={11} className="text-[#f59e0b]" /> Day streak</Eyebrow>
+              <div className="flex-1 flex items-center gap-4 mt-2">
+                <span className={`text-[34px] font-mono font-semibold leading-none ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
+                  {streak}
+                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-mono text-[#5a5a5a] uppercase tracking-wide">
+                    {streak > 0 ? "Keep it alive" : "Start today"}
+                  </span>
+                  {profile?.can_revive_streak && (
+                    <button
+                      onClick={() => revive.mutate()}
+                      disabled={revive.isPending}
+                      className="flex items-center gap-1 text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/25 rounded-lg px-2 py-1 hover:bg-[#f59e0b]/10 transition-colors w-fit disabled:opacity-50"
+                    >
+                      <RotateCcw size={9} /> Revive
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-1">
-              {streak > 0 ? "Keep it alive!" : "Start today"}
-            </div>
-            {profile?.can_revive_streak && (
-              <button
-                onClick={() => revive.mutate()}
-                disabled={revive.isPending}
-                className="mt-3 flex items-center gap-1 text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/25 rounded px-2 py-1 hover:bg-[#f59e0b]/10 transition-colors"
-              >
-                <RotateCcw size={9} /> Revive Streak
-              </button>
-            )}
-          </div>
 
-          {/* Path Progress — green tint */}
-          <div className="bg-[#040d07] border border-[#0d2214] rounded-xl p-5 flex flex-col justify-center relative overflow-hidden">
-            <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-[#22c55e] opacity-[0.06] rounded-full blur-2xl pointer-events-none" />
-            <SectionLabel><Star size={11} className="text-[#22c55e]" /> Path Progress</SectionLabel>
-            <div className="text-3xl font-semibold tracking-tight text-[#f0f0f0] mt-3">
-              {cpct}<span className="text-base text-[#555] ml-1">%</span>
-            </div>
-            <div className="text-[11px] font-mono text-[#22c55e] mt-0.5">{done} / {total} topics done</div>
-            <div className="mt-4 h-1 w-full bg-[#111] rounded-full overflow-hidden">
-              <div className="h-full bg-[#22c55e] rounded-full transition-all duration-700" style={{ width: `${cpct}%` }} />
+            {/* Path progress */}
+            <div className="p-6">
+              <Eyebrow><Target size={11} className="text-[#22c55e]" /> Path progress</Eyebrow>
+              <div className="mt-3.5 flex items-baseline gap-1">
+                <span className="text-[34px] font-semibold tracking-tight text-[#f2f2f2] leading-none">{cpct}</span>
+                <span className="text-[15px] text-[#5a5a5a]">%</span>
+              </div>
+              <div className="text-[11px] font-mono text-[#22c55e] mt-1">{done} / {total} topics done</div>
+              <div className="mt-4 h-1 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#22c55e]/70 to-[#22c55e] rounded-full transition-all duration-700" style={{ width: `${cpct}%` }} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ── Middle Row: Mission + Topics ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* ── Mission + Topics ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-          {/* Mission Card */}
-          <Card>
-            <CardHeader
-              left={<SectionLabel><Zap size={11} className="text-[#22c55e]" /> Today's Mission</SectionLabel>}
-              right={cur && <span className="text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">Active</span>}
+          <Panel>
+            <PanelHeader
+              left={<Eyebrow><Zap size={11} className="text-[#22c55e]" /> Today's mission</Eyebrow>}
+              right={cur && (
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" /> Active
+                </span>
+              )}
             />
-            <div className="p-5">
+            <div className="p-6">
               {cur ? (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-[9px] font-mono text-[#444] uppercase tracking-wider mb-1">{ap?.title}</p>
-                    <h2 className="text-[15px] font-semibold text-[#f0f0f0] leading-snug">{cur.title}</h2>
-                    <p className="text-[12px] text-[#555] leading-relaxed mt-1.5 line-clamp-2">
+                    <p className="text-[9px] font-mono text-[#454545] uppercase tracking-wider mb-1.5">{ap?.title}</p>
+                    <h2 className="text-[16px] font-semibold text-[#f2f2f2] leading-snug">{cur.title}</h2>
+                    <p className="text-[12.5px] text-[#666] leading-relaxed mt-2 line-clamp-2">
                       {cur.summary || "Complete the session and submit proof of work."}
                     </p>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="relative space-y-2.5">
                     {steps.map((s, i) => (
-                      <div key={i} className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg border text-[12px] transition-colors ${s.d ? "border-[#1a3028] bg-[#0a1a12] text-[#888]" : "border-[#151515] bg-[#0d0d0d] text-[#444]"}`}>
-                        {s.d
-                          ? <CheckCircle2 size={12} className="text-[#22c55e] shrink-0" />
-                          : <Circle size={12} className="text-[#2a2a2a] shrink-0" />}
-                        <span className="flex-1">{s.l}</span>
-                        <s.I size={11} className={s.d ? "text-[#22c55e]" : "text-[#252525]"} />
+                      <div key={i} className="relative flex items-center gap-3.5">
+                        {i < steps.length - 1 && (
+                          <div className={`absolute left-[15px] top-[28px] w-px h-[18px] ${s.d ? "bg-[#22c55e]/30" : "bg-white/[0.06]"}`} />
+                        )}
+                        <div className={`relative z-10 w-[30px] h-[30px] rounded-full flex items-center justify-center shrink-0 border transition-colors ${s.d ? "bg-[#0d2015] border-[#22c55e]/30" : "bg-[#0d0d0d] border-white/[0.08]"}`}>
+                          {s.d ? <CheckCircle2 size={13} className="text-[#22c55e]" /> : <Circle size={11} className="text-[#3a3a3a]" />}
+                        </div>
+                        <span className={`flex-1 text-[12.5px] ${s.d ? "text-[#999]" : "text-[#555]"}`}>{s.l}</span>
+                        <s.I size={12} className={s.d ? "text-[#22c55e]" : "text-[#333]"} />
                       </div>
                     ))}
                   </div>
@@ -321,30 +357,25 @@ function DashboardPage() {
                   <Link
                     to="/topic/$topicId"
                     params={{ topicId: String(cur.slug || cur.id) }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#22c55e] text-[#030f07] text-[13px] font-semibold hover:bg-[#16a34a] transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#22c55e] text-[#031007] text-[13px] font-semibold hover:bg-[#16a34a] active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-[#22c55e]/50"
                   >
                     Continue <ArrowRight size={13} />
                   </Link>
                 </div>
               ) : (
-                <div className="py-10 flex flex-col items-center justify-center text-center">
-                  <Award size={28} className="text-[#22c55e] mb-3 opacity-30" />
-                  <p className="text-[14px] font-semibold text-[#ddd]">Path complete</p>
-                  <p className="text-[12px] text-[#444] mt-1">All topics mastered.</p>
-                </div>
+                <EmptyState icon={Award} title="Path complete" sub="ALL TOPICS MASTERED" />
               )}
             </div>
-          </Card>
+          </Panel>
 
-          {/* Topic List */}
-          <Card>
-            <CardHeader
-              left={<SectionLabel>Path Topics</SectionLabel>}
-              right={<span className="text-[10px] font-mono text-[#333]">{done}/{total}</span>}
+          <Panel>
+            <PanelHeader
+              left={<Eyebrow>Path topics</Eyebrow>}
+              right={<span className="text-[10px] font-mono text-[#454545]">{done}/{total}</span>}
             />
-            <div className="overflow-y-auto max-h-[320px]">
+            <div className="overflow-y-auto max-h-[336px]">
               {topics.length === 0 ? (
-                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">No topics</div>
+                <EmptyState icon={BookOpen} title="No topics yet" sub="SELECT A PATH TO BEGIN" />
               ) : (
                 topics.map((t: any) => {
                   const d = t.user_progress === "completed";
@@ -354,69 +385,67 @@ function DashboardPage() {
                       key={t.id}
                       to="/topic/$topicId"
                       params={{ topicId: String(t.slug || t.id) }}
-                      className={`flex items-center gap-3 px-5 py-3 border-b border-[#0e0e0e] hover:bg-[#0d0d0d] transition-colors ${a ? "bg-[#0a1310]" : ""}`}
+                      className={`flex items-center gap-3 px-6 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${a ? "bg-[#22c55e]/[0.04]" : ""}`}
                     >
-                      <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${d ? "bg-[#0d2015] border-[#1a3028]" : a ? "bg-[#0a1a12] border-[#22c55e]/40" : "bg-[#0e0e0e] border-[#1a1a1a]"}`}>
-                        {d && <CheckCircle2 size={9} className="text-[#22c55e]" />}
-                        {!d && a && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
+                      <div className={`w-[18px] h-[18px] rounded-md flex items-center justify-center shrink-0 border ${d ? "bg-[#0d2015] border-[#22c55e]/25" : a ? "bg-[#0a1a12] border-[#22c55e]/50" : "bg-[#0d0d0d] border-white/[0.08]"}`}>
+                        {d && <CheckCircle2 size={10} className="text-[#22c55e]" />}
+                        {!d && a && <div className="w-[6px] h-[6px] rounded-full bg-[#22c55e]" />}
                       </div>
-                      <span className={`text-[12px] flex-1 truncate ${d ? "text-[#2e2e2e] line-through" : a ? "text-[#ddd]" : "text-[#666]"}`}>
+                      <span className={`text-[12.5px] flex-1 truncate ${d ? "text-[#3a3a3a] line-through" : a ? "text-[#e0e0e0] font-medium" : "text-[#777]"}`}>
                         {t.title}
                       </span>
-                      {a && <ChevronRight size={11} className="text-[#22c55e] shrink-0" />}
+                      {a && <ChevronRight size={12} className="text-[#22c55e] shrink-0" />}
                     </Link>
                   );
                 })
               )}
             </div>
             {total > 0 && (
-              <div className="px-5 py-3 border-t border-[#111]">
-                <div className="h-[2px] bg-[#111] rounded-full overflow-hidden">
+              <div className="px-6 py-3.5 border-t border-white/[0.05]">
+                <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
                   <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${cpct}%` }} />
                 </div>
               </div>
             )}
-          </Card>
+          </Panel>
         </div>
 
-        {/* ── Bottom Row: Activity Feed + Heatmap ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* ── Activity + Heatmap ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-          {/* Activity Feed */}
-          <Card>
-            <CardHeader
-              left={<SectionLabel><Activity size={11} /> Recent Activity</SectionLabel>}
-              right={activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
+          <Panel>
+            <PanelHeader
+              left={<Eyebrow><Activity size={11} /> Recent activity</Eyebrow>}
+              right={activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />}
             />
-            <div className="overflow-y-auto max-h-[260px] px-4 py-3">
+            <div className="overflow-y-auto max-h-[280px] px-6 py-2">
               {activity.length > 0 ? (
-                <ul className="space-y-px">
+                <ul>
                   {activity.map((a: any, i: number) => (
-                    <li key={a.id} className="flex items-start gap-3 py-2 border-b border-[#0d0d0d] last:border-0">
-                      <div className={`mt-1.5 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#222]"}`} />
+                    <li key={a.id} className="flex items-start gap-3 py-3 border-b border-white/[0.04] last:border-0">
+                      <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#2a2a2a]"}`} />
                       <div className="min-w-0 flex-1">
-                        <p className={`text-[12px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#444]"}`}>{a.label}</p>
-                        <p className="text-[10px] font-mono text-[#2a2a2a] mt-0.5">{timeAgo(a.date)}</p>
+                        <p className={`text-[12.5px] leading-snug truncate ${i === 0 ? "text-[#c4c4c4]" : "text-[#555]"}`}>{a.label}</p>
+                        <p className="text-[10px] font-mono text-[#3a3a3a] mt-0.5">{timeAgo(a.date)}</p>
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">No activity yet</div>
+                <EmptyState icon={Activity} title="No activity yet" sub="YOUR MOVES SHOW UP HERE" />
               )}
             </div>
-          </Card>
+          </Panel>
 
-          {/* Heatmap — spans 2 cols */}
-          <Card className="lg:col-span-2">
-            <CardHeader
-              left={<SectionLabel><Github size={11} /> Contributions</SectionLabel>}
-              right={<span className="text-[10px] font-mono text-[#444] uppercase tracking-wider">Last 12 months</span>}
+          <Panel className="lg:col-span-2">
+            <PanelHeader
+              left={<Eyebrow><Github size={11} /> Contributions</Eyebrow>}
+              right={<span className="text-[10px] font-mono text-[#454545] uppercase tracking-wider">Last 12 months</span>}
             />
-            <div className="p-5 overflow-x-auto">
+            <div className="p-6 overflow-x-auto">
               <div className="min-w-[480px]">
                 {hl ? (
-                  <div className="h-24 rounded bg-[#0c0c0c] animate-pulse" />
+                  <div className="h-24 rounded-xl bg-white/[0.02] animate-pulse" />
                 ) : (
                   <ActivityCalendar
                     data={hd}
@@ -431,13 +460,13 @@ function DashboardPage() {
                     labels={{ totalCount: "{{count}} contributions in the last year" }}
                     style={{
                       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                      color: "#555",
+                      color: "#5a5a5a",
                     }}
                   />
                 )}
               </div>
             </div>
-          </Card>
+          </Panel>
         </div>
       </div>
     </PageShell>

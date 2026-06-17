@@ -34,6 +34,12 @@ class TopicSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project', 'has_submitted_work']
 
     def get_user_progress(self, obj):
+        if hasattr(obj, 'user_progress_cache'):
+            if obj.user_progress_cache:
+                status = obj.user_progress_cache[0].status
+                return 'available' if status == 'locked' else status
+            return 'available'
+        
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             progress = TopicProgress.objects.filter(user=request.user, topic=obj).first()
@@ -43,6 +49,12 @@ class TopicSerializer(serializers.ModelSerializer):
         return 'available'
 
     def get_verified_project(self, obj):
+        if hasattr(obj, 'verified_project_cache'):
+            if obj.verified_project_cache:
+                from .serializers import VerifiedProjectSerializer
+                return VerifiedProjectSerializer(obj.verified_project_cache[0]).data
+            return None
+            
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             from .models import VerifiedProject
@@ -52,6 +64,9 @@ class TopicSerializer(serializers.ModelSerializer):
         return None
 
     def get_has_submitted_work(self, obj):
+        if hasattr(obj, 'materials_cache'):
+            return len(obj.materials_cache) > 0
+            
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             from .models import TopicMaterial
