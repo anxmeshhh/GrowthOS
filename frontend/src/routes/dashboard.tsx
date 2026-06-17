@@ -10,7 +10,7 @@ import { useGrowth, computeStreak } from "@/lib/growth-store";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { ActivityCalendar } from "react-activity-calendar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -95,10 +95,10 @@ function DashboardPage() {
     queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
   });
 
-  const allPaths = [
+  const allPaths = useMemo(() => [
     ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
     ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
-  ];
+  ], [paths, customPaths]);
 
   const [selectedPathId, setSelectedPathId] = useState<string | null>(() => {
     if (typeof window !== "undefined") return localStorage.getItem("dashboard_selected_path");

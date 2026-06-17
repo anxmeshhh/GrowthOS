@@ -137,13 +137,13 @@ function ProgressPage() {
   const isLoading = pl || cl || hl || prl;
 
   /* ── derived ── */
-  const allPaths = [
-    ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
-    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
-  ];
-
   const activePaths = useMemo(() => {
-    return allPaths
+    const all = [
+      ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+      ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
+    ];
+
+    return all
       .filter((p) =>
         p.topics?.some(
           (t: any) => t.user_progress === "in_progress" || t.user_progress === "completed"
@@ -156,7 +156,7 @@ function ProgressPage() {
         return { ...p, total, done, pct };
       })
       .sort((a, b) => b.pct - a.pct);
-  }, [allPaths]);
+  }, [paths, customPaths]);
 
   const xp = profile?.total_xp ?? 0;
   const { level, next } = getLevelInfo(xp);
