@@ -12,7 +12,7 @@ import {
 import { RoadmapTree } from "@/components/roadmap/RoadmapTree";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -28,7 +28,17 @@ export const Route = createFileRoute("/roadmap")({
 function RoadmapPage() {
   const queryClient = useQueryClient();
   const { pathId: searchPathId, pathSlug: searchPathSlug } = Route.useSearch();
-  const [selectedPathId, setSelectedPathId] = useState<number | null>(searchPathId ?? null);
+  const [selectedPathId, setSelectedPathId] = useState<number | null>(() => {
+    if (searchPathId) return searchPathId;
+    const cached = localStorage.getItem("roadmap_selected_path");
+    return cached ? Number(cached) : null;
+  });
+
+  useEffect(() => {
+    if (selectedPathId) {
+      localStorage.setItem("roadmap_selected_path", selectedPathId.toString());
+    }
+  }, [selectedPathId]);
 
   // Fetch predefined paths
   const { data: paths = [], isLoading: pathsLoading } = useQuery({

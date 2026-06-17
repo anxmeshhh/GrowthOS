@@ -10,7 +10,7 @@ import { useGrowth, computeStreak } from "@/lib/growth-store";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { ActivityCalendar } from "react-activity-calendar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -71,7 +71,16 @@ function DashboardPage() {
     ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` }))
   ];
 
-  const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
+  const [selectedPathId, setSelectedPathId] = useState<string | null>(() => {
+    return localStorage.getItem("dashboard_selected_path");
+  });
+
+  // Sync to localStorage
+  useEffect(() => {
+    if (selectedPathId) {
+      localStorage.setItem("dashboard_selected_path", selectedPathId);
+    }
+  }, [selectedPathId]);
 
   const { data: heatmap = [], isLoading: hl } = useQuery({
     queryKey: ["heatmap"],
@@ -111,12 +120,13 @@ function DashboardPage() {
   const { level, title: lvl, next } = getLevelInfo(xp);
   const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
 
-  const ap = selectedPathId 
-    ? allPaths.find((p: any) => p.uniqueId === selectedPathId)
-    : allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
-      allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
-      allPaths.find((p: any) => p.is_bookmarked) ||
-      allPaths[0] || null;
+  let ap = selectedPathId ? allPaths.find((p: any) => p.uniqueId === selectedPathId) : null;
+  if (!ap) {
+    ap = allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
+         allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
+         allPaths.find((p: any) => p.is_bookmarked) ||
+         allPaths[0] || null;
+  }
 
   const topics: any[] = ap?.topics || [];
   const cur = topics.find((t: any) => t.user_progress !== "completed") || topics[0] || null;

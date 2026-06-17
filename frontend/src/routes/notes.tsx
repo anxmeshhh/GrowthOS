@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, FileText, BookOpen, Loader2, ExternalLink, Plus, Trash2, Edit2, Save, X, Layers } from "lucide-react";
 import { PageShell, Card, Btn } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,13 @@ function NotesPage() {
   const navigate = useNavigate();
 
   const [q, setQ] = useState("");
-  const [filterPath, setFilterPath] = useState<string>("all");
+  const [filterPath, setFilterPath] = useState<string>(() => {
+    return localStorage.getItem("notes_filter_path") || "all";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("notes_filter_path", filterPath);
+  }, [filterPath]);
   
   // Inline edit state mapping note id to its draft content
   const [editDrafts, setEditDrafts] = useState<Record<string, string>>({});
