@@ -132,3 +132,36 @@ REST_FRAMEWORK = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+import logging
+
+class IgnoreBrokenPipeFilter(logging.Filter):
+    def filter(self, record):
+        if 'Broken pipe from' in str(record.msg):
+            return False
+        if record.exc_info and isinstance(record.exc_info[1], (BrokenPipeError, ConnectionAbortedError)):
+            return False
+        return True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'ignore_broken_pipe': {
+            '()': 'config.settings.IgnoreBrokenPipeFilter',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'filters': ['ignore_broken_pipe'],
+        },
+    },
+    'loggers': {
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
