@@ -66,7 +66,11 @@ function DashboardPage() {
     queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
   });
 
-  const allPaths = [...paths, ...customPaths];
+  // Deduplicate paths since /paths/ and /custom-paths/ might both return the user's custom paths
+  const allPathsMap = new Map();
+  paths.forEach((p: any) => allPathsMap.set(p.id, p));
+  customPaths.forEach((p: any) => allPathsMap.set(p.id, p));
+  const allPaths = Array.from(allPathsMap.values());
 
   const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
 
