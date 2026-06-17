@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud, Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2 } from "lucide-react";
+import { ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud, Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2, CheckCircle2 } from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -75,6 +75,21 @@ function TopicWorkspace() {
     onSuccess: () => refetchScreenshots()
   });
 
+  const markDoneMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch(`/topics/${topicId}/progress/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'completed' })
+      });
+      if (!res.ok) throw new Error('Failed to mark as done');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['topic', topicId] });
+      queryClient.invalidateQueries({ queryKey: ['paths'] });
+    }
+  });
+
   const handlePaste = useCallback((e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -130,6 +145,16 @@ function TopicWorkspace() {
           <Btn variant="outline" size="sm" onClick={() => setRunning((r) => !r)}>
             {running ? <Pause size={14} /> : <Play size={14} />}
             {running ? "Pause" : "Focus"}
+          </Btn>
+          <Btn 
+            variant={progress.status === 'completed' ? 'solid' : 'outline'} 
+            tone={progress.status === 'completed' ? 'green' : 'neutral'}
+            size="sm" 
+            onClick={() => markDoneMutation.mutate()}
+            disabled={progress.status === 'completed' || markDoneMutation.isPending}
+          >
+            <CheckCircle2 size={14} />
+            {progress.status === 'completed' ? 'Completed' : 'Mark Done'}
           </Btn>
         </div>
       </header>
