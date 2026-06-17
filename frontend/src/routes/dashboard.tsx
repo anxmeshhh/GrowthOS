@@ -61,6 +61,15 @@ function DashboardPage() {
     queryFn: async () => { const r = await apiFetch("/paths/"); return r.ok ? r.json() : []; },
   });
 
+  const { data: customPaths = [], isLoading: cl } = useQuery({
+    queryKey: ["custom-paths"],
+    queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
+  });
+
+  const allPaths = [...paths, ...customPaths];
+
+  const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
+
   const { data: heatmap = [], isLoading: hl } = useQuery({
     queryKey: ["heatmap"],
     queryFn: async () => {
@@ -99,11 +108,12 @@ function DashboardPage() {
   const { level, title: lvl, next } = getLevelInfo(xp);
   const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
 
-  const ap =
-    paths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
-    paths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
-    paths.find((p: any) => p.is_bookmarked) ||
-    paths[0] || null;
+  const ap = selectedPathId 
+    ? allPaths.find((p: any) => p.id === selectedPathId)
+    : allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
+      allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
+      allPaths.find((p: any) => p.is_bookmarked) ||
+      allPaths[0] || null;
 
   const topics: any[] = ap?.topics || [];
   const cur = topics.find((t: any) => t.user_progress !== "completed") || topics[0] || null;
@@ -143,7 +153,17 @@ function DashboardPage() {
             <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#333] mb-0.5">GrowthOS</p>
             <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Dashboard</h1>
           </div>
-          {ap && <span className="text-[10px] font-mono text-[#444] uppercase tracking-wider">{ap.title}</span>}
+          {ap && (
+            <select
+              value={ap.id}
+              onChange={(e) => setSelectedPathId(Number(e.target.value))}
+              className="bg-[#0a0a0a] border border-[#222] text-[#888] text-[10px] font-mono uppercase tracking-wider rounded px-2 py-1 outline-none hover:border-[#444] cursor-pointer"
+            >
+              {allPaths.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* ─── ROW 2 : stats strip ─────────────────────────────────────── */}
