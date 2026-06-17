@@ -278,7 +278,7 @@ function ProgressPage() {
               <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">{unlockedCount} / {TITLES.length} Acquired</span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
               {TITLES.map((t: TitleTag) => {
                 const isUnlocked = level >= t.levelReq;
                 const isEquipped = lvlTitle === t.id;
@@ -356,6 +356,10 @@ function ProgressPage() {
           0% { transform: translateX(-100%) skewX(-15deg); }
           50%, 100% { transform: translateX(200%) skewX(-15deg); }
         }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
       `}</style>
     </PageShell>
   );
