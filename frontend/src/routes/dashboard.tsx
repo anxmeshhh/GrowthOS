@@ -167,9 +167,10 @@ function DashboardPage() {
   const done = topics.filter((t: any) => t.user_progress === "completed").length;
   const total = topics.length;
   const cpct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const railPct = total > 1 ? Math.round((done / (total - 1)) * 100) : (done === 1 ? 100 : 0);
 
   const started = cur?.user_progress === "in_progress" || cur?.user_progress === "completed";
-  const proof = cur?.has_submitted_work === true;
+  const proof = cur?.has_submitted_work === true || cur?.user_progress === "completed";
   const verified = cur?.verified_project != null || cur?.user_progress === "completed";
 
   const steps = [
@@ -326,7 +327,7 @@ function DashboardPage() {
                 <div className="absolute left-8 right-8 h-0.5 bg-white/10 top-1/2 -translate-y-1/2" />
                 <div 
                   className="absolute left-8 h-0.5 bg-[#22c55e] top-1/2 -translate-y-1/2 transition-all duration-1000 shadow-[0_0_10px_#22c55e]" 
-                  style={{ width: `calc(${cpct}% - 3rem)` }} 
+                  style={{ width: `calc((100% - 4rem) * ${railPct / 100})` }} 
                 />
 
                 {/* Nodes */}
@@ -400,32 +401,36 @@ function DashboardPage() {
           </GlassPanel>
 
           {/* 5. GitHub Heatmap Span (12 cols) */}
-          <GlassPanel className="col-span-12 p-6 flex items-center justify-between flex-wrap gap-6">
-            <div>
-              <Label><Github size={12} /> Matrix</Label>
-              <p className="text-[11px] font-mono text-white/30 tracking-widest uppercase mt-2">Annual Trace</p>
+          <GlassPanel className="col-span-12 p-6 flex flex-col gap-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <Label><Github size={12} /> Matrix</Label>
+                <p className="text-[11px] font-mono text-white/30 tracking-widest uppercase mt-2">Annual Trace</p>
+              </div>
             </div>
-            <div className="overflow-x-auto min-w-[480px]">
-              {hl ? (
-                <div className="h-[90px] bg-white/[0.02] rounded-lg animate-pulse" />
-              ) : (
-                <ActivityCalendar
-                  data={hd}
-                  theme={{
-                    light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                    dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                  }}
-                  colorScheme="dark"
-                  blockSize={12}
-                  blockMargin={4}
-                  fontSize={10}
-                  labels={{ totalCount: "{{count}} interactions" }}
-                  style={{
-                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                    color: "rgba(255,255,255,0.3)",
-                  }}
-                />
-              )}
+            <div className="overflow-x-auto">
+              <div className="min-w-[680px]">
+                {hl ? (
+                  <div className="h-[90px] bg-white/[0.02] rounded-lg animate-pulse" />
+                ) : (
+                  <ActivityCalendar
+                    data={hd}
+                    theme={{
+                      light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                    }}
+                    colorScheme="dark"
+                    blockSize={11}
+                    blockMargin={4}
+                    fontSize={10}
+                    labels={{ totalCount: "{{count}} contributions in the last year" }}
+                    style={{
+                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                      color: "#555",
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </GlassPanel>
 
