@@ -202,7 +202,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
     const flowNodes: Node<RoadmapNodeData>[] = rawNodes
       .filter(n => visibleNodeIds.has(n.id))
       .map((n) => {
-        const progress = progressMap[n.id] ?? 'available';
+        const progress = (progressMap[n.id] ?? 'available') as 'available' | 'in_progress' | 'completed';
         const hasChildren = childrenMap[n.id].length > 0;
         return {
           id: n.id,
@@ -211,7 +211,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
           data: {
             label: n.label,
             topicId: resolveTopicId(n.id, topics),
-            status: progress || 'available',
+            status: progress,
             bgColor: n.bgColor,
             textColor: n.textColor,
             hasChildren,

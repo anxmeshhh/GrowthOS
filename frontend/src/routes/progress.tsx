@@ -36,9 +36,9 @@ function computeStreak(activeDays: string[]) {
   for (let i = 0; i < days.length; i++) {
     if (days[i] === currentDate) {
       currentStreak++;
-      const prevDate = new Date(new Date(currentDate).getTime() - 86400000).toISOString().split("T")[0];
+      const prevDate: string = new Date(new Date(currentDate!).getTime() - 86400000).toISOString().split("T")[0];
       currentDate = prevDate;
-    } else if (days[i] < currentDate) {
+    } else if (days[i] < currentDate!) {
       break;
     }
   }
@@ -183,7 +183,7 @@ function ProgressPage() {
               <span className="text-[#a855f7] font-semibold">{xpRemaining} XP to Level {level + 1}</span>
             </div>
             <div className="h-1.5 w-full bg-[#111] rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[#7e22ce] to-[#c084fc] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.5)]" style={{ width: \`\${xpPct}%\` }} />
+              <div className="h-full bg-gradient-to-r from-[#7e22ce] to-[#c084fc] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.5)]" style={{ width: `${xpPct}%` }} />
             </div>
           </div>
         </div>
@@ -191,8 +191,8 @@ function ProgressPage() {
         {/* ── [STREAK] ───────────────────────────────────────────────────── */}
         <div className="border border-[#2a1a08] bg-[#140c04] rounded-lg p-5 flex flex-col items-center justify-center text-center relative" style={{ gridArea: "streak" }}>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-[#f59e0b] opacity-10 rounded-full blur-2xl pointer-events-none" />
-          <Flame size={32} className={\`mb-2 \${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}\`} strokeWidth={2} />
-          <div className={\`text-3xl font-mono font-semibold tracking-tight \${streak > 0 ? "text-[#f59e0b]" : "text-[#444]"}\`}>
+          <Flame size={32} className={`mb-2 ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`} strokeWidth={2} />
+          <div className={`text-3xl font-mono font-semibold tracking-tight ${streak > 0 ? "text-[#f59e0b]" : "text-[#444]"}`}>
             {streak}
           </div>
           <div className="text-[9px] uppercase font-mono tracking-wider text-[#666] mt-1">Day Streak</div>
@@ -245,7 +245,7 @@ function ProgressPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-1.5 bg-[#151515] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#22c55e] transition-all duration-1000" style={{ width: \`\${p.pct}%\` }} />
+                      <div className="h-full bg-[#22c55e] transition-all duration-1000" style={{ width: `${p.pct}%` }} />
                     </div>
                     <div className="text-[10px] font-mono text-[#22c55e] tabular-nums w-8 text-right">{p.pct}%</div>
                   </div>
@@ -274,7 +274,7 @@ function ProgressPage() {
                       <span className="text-[11px] font-mono text-[#ccc] tabular-nums">{item.total}</span>
                     </div>
                     <div className="h-1 w-full bg-[#111] rounded-full overflow-hidden">
-                      <div className={\`h-full rounded-full transition-all \${i === 0 ? "bg-[#eab308]" : "bg-[#444]"}\`} style={{ width: \`\${pct}%\` }} />
+                      <div className={`h-full rounded-full transition-all ${i === 0 ? "bg-[#eab308]" : "bg-[#444]"}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
