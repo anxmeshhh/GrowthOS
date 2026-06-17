@@ -3,7 +3,7 @@ import {
   ArrowRight, Target, BookOpen, ClipboardCheck,
   Zap, Award, CheckCircle2, Circle,
   Activity, ChevronRight, Github,
-  RotateCcw, Sparkles, Flame,
+  RotateCcw, Flame, Trophy, Star,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
@@ -45,6 +45,33 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+/* ── sub-components (matching Progress page) ─────────────────────────────── */
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#555] flex items-center gap-1.5">
+      {children}
+    </p>
+  );
+}
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function CardHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#131313]">
+      <div>{left}</div>
+      {right && <div>{right}</div>}
+    </div>
+  );
+}
+
 /* ── main ────────────────────────────────────────────────────────────────── */
 
 function DashboardPage() {
@@ -52,40 +79,36 @@ function DashboardPage() {
   const qc = useQueryClient();
   const [toast, setToast] = useState<string | null>(null);
 
-  const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+  const flash = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
-  /* ── queries ─────────────────────────────────────────────────────────── */
-
-  const { data: paths = [], isLoading: pl } = useQuery({
+  /* ── queries ── */
+  const { data: paths = [] } = useQuery({
     queryKey: ["paths"],
     queryFn: async () => { const r = await apiFetch("/paths/"); return r.ok ? r.json() : []; },
   });
 
-  const { data: customPaths = [], isLoading: cl } = useQuery({
+  const { data: customPaths = [] } = useQuery({
     queryKey: ["custom-paths"],
     queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
   });
 
   const allPaths = [
     ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
-    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` }))
+    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
   ];
 
   const [selectedPathId, setSelectedPathId] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("dashboard_selected_path");
-    }
+    if (typeof window !== "undefined") return localStorage.getItem("dashboard_selected_path");
     return null;
   });
 
-  // Sync to localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (selectedPathId) {
-        localStorage.setItem("dashboard_selected_path", selectedPathId);
-      } else {
-        localStorage.removeItem("dashboard_selected_path");
-      }
+      if (selectedPathId) localStorage.setItem("dashboard_selected_path", selectedPathId);
+      else localStorage.removeItem("dashboard_selected_path");
     }
   }, [selectedPathId]);
 
@@ -101,7 +124,7 @@ function DashboardPage() {
     },
   });
 
-  const { data: activity = [], isLoading: al } = useQuery({
+  const { data: activity = [] } = useQuery({
     queryKey: ["recent_activity"],
     queryFn: async () => { const r = await apiFetch("/activity/"); return r.ok ? r.json() : []; },
   });
@@ -117,32 +140,39 @@ function DashboardPage() {
       if (!r.ok) { const d = await r.json(); throw new Error(d.error || "Failed"); }
       return r.json();
     },
-    onSuccess: () => { flash("🔥 Streak revived"); qc.invalidateQueries({ queryKey: ["user_profile"] }); qc.invalidateQueries({ queryKey: ["heatmap"] }); },
+    onSuccess: () => {
+      flash("🔥 Streak revived");
+      qc.invalidateQueries({ queryKey: ["user_profile"] });
+      qc.invalidateQueries({ queryKey: ["heatmap"] });
+    },
     onError: (e: Error) => flash(e.message),
   });
 
-  /* ── derived ─────────────────────────────────────────────────────────── */
-
+  /* ── derived ── */
   const xp = profile?.total_xp ?? 0;
   const { level, title: lvl, next } = getLevelInfo(xp);
-  const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
+  const xpPct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
+  const streak = profile?.streak ?? computeStreak(state.activeDays);
 
   let ap = selectedPathId ? allPaths.find((p: any) => p.uniqueId === selectedPathId) : null;
   if (!ap) {
-    // Prioritize custom paths over standard paths in Auto mode
-    const fallbackPaths = [...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })), ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` }))];
-    ap = fallbackPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
-         fallbackPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
-         fallbackPaths.find((p: any) => p.is_bookmarked) ||
-         fallbackPaths[0] || null;
+    const fallback = [
+      ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
+      ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+    ];
+    ap = fallback.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress"))
+      || fallback.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed"))
+      || fallback.find((p: any) => p.is_bookmarked)
+      || fallback[0] || null;
   }
 
   const topics: any[] = ap?.topics || [];
-  const cur = topics.find((t: any) => t.user_progress === "in_progress") || topics.find((t: any) => t.user_progress !== "completed") || topics[0] || null;
+  const cur = topics.find((t: any) => t.user_progress === "in_progress")
+    || topics.find((t: any) => t.user_progress !== "completed")
+    || topics[0] || null;
   const done = topics.filter((t: any) => t.user_progress === "completed").length;
   const total = topics.length;
   const cpct = total > 0 ? Math.round((done / total) * 100) : 0;
-  const streak = profile?.streak ?? computeStreak(state.activeDays);
 
   const started = cur?.user_progress === "in_progress" || cur?.user_progress === "completed";
   const proof = cur?.has_submitted_work === true;
@@ -157,22 +187,22 @@ function DashboardPage() {
   const today = new Date().toISOString().split("T")[0];
   const hd = heatmap.length > 0 ? heatmap : [{ date: today, count: 0, level: 0 }];
 
-  /* ── render ──────────────────────────────────────────────────────────── */
-
+  /* ── render ── */
   return (
     <PageShell>
+      {/* Toast */}
       {toast && (
         <div className="fixed bottom-4 right-4 z-50 px-4 py-2.5 rounded-lg border border-[#1a3d28] bg-[#0a1a12] text-[#22c55e] text-xs font-mono shadow-xl flex items-center gap-2">
           <CheckCircle2 size={13} /> {toast}
         </div>
       )}
 
-      <div className="dashboard-grid" style={{ height: "calc(100vh - 64px)", overflow: "hidden" }}>
+      <div className="p-5 lg:p-6 space-y-4 max-w-screen-xl mx-auto">
 
-        {/* ─── ROW 1 : header ──────────────────────────────────────────── */}
-        <div className="col-span-full flex items-end justify-between pb-1" style={{ gridArea: "hdr" }}>
+        {/* ── Page Header ── */}
+        <div className="flex items-end justify-between mb-1">
           <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#333] mb-0.5">GrowthOS</p>
+            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1.5">GrowthOS</p>
             <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Dashboard</h1>
           </div>
           {ap && (
@@ -180,243 +210,236 @@ function DashboardPage() {
               <span className="text-[10px] font-mono uppercase tracking-widest text-[#22c55e] hidden sm:block animate-pulse">
                 Live Status
               </span>
-              <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#22c55e]/30 to-[#16a34a]/30 rounded blur-sm opacity-60 group-hover:opacity-100 animate-pulse transition duration-500 pointer-events-none"></div>
-                <select
-                  value={selectedPathId || "auto"}
-                  onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
-                  className="relative bg-[#0a1a12] border border-[#22c55e]/40 text-[#22c55e] text-[10px] font-mono uppercase tracking-wider rounded px-2.5 py-1.5 outline-none hover:border-[#22c55e]/80 hover:bg-[#0a2015] transition-all cursor-pointer shadow-[0_0_10px_rgba(34,197,94,0.1)]"
-                >
-                  <option value="auto" className="bg-[#0a0a0a] text-[#22c55e] font-sans font-medium">✨ Auto-Track Active</option>
-                  <optgroup label="Available Paths" className="bg-[#0a0a0a] text-[#555] font-sans uppercase tracking-wider text-[10px]">
-                    {allPaths.map((p: any) => (
-                      <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#888] font-sans normal-case text-xs">{p.title}</option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
+              <select
+                value={selectedPathId || "auto"}
+                onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
+                className="bg-[#0a1a12] border border-[#22c55e]/40 text-[#22c55e] text-[10px] font-mono uppercase tracking-wider rounded-lg px-3 py-1.5 outline-none hover:border-[#22c55e]/70 transition-all cursor-pointer"
+              >
+                <option value="auto" className="bg-[#0a0a0a] font-sans normal-case">✨ Auto-Track Active</option>
+                <optgroup label="Available Paths" className="bg-[#0a0a0a] text-[#555] font-sans">
+                  {allPaths.map((p: any) => (
+                    <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#888] font-sans normal-case text-xs">
+                      {p.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
             </div>
           )}
         </div>
 
-        {/* ─── ROW 2 : stats strip ─────────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] grid grid-cols-5 divide-x divide-[#141414] overflow-hidden" style={{ gridArea: "stats" }}>
-          {/* XP */}
-          <div className="px-3 py-2.5 flex flex-col justify-center">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">XP</span>
-            <span className="text-lg font-semibold tabular-nums text-[#22c55e] leading-tight">{xp}</span>
-            <span className="text-[9px] font-mono text-[#2e2e2e]">Lv{level} {lvl}</span>
+        {/* ── Stats Row (matching Progress top cards) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+          {/* XP + Level — purple tint */}
+          <div className="bg-[#0d0914] border border-[#1f1938] rounded-xl p-5 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-[#a855f7] opacity-[0.06] rounded-full blur-3xl pointer-events-none" />
+            <SectionLabel><Zap size={11} className="text-[#a855f7]" /> Level & XP</SectionLabel>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tracking-tight text-[#a855f7]">{level}</span>
+              <span className="text-sm text-[#555] font-mono">— {lvl}</span>
+            </div>
+            <div className="text-[11px] font-mono text-[#666] mt-0.5">{xp} XP total</div>
+            <div className="mt-4 space-y-1.5">
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-[#666]">{xpPct}% to Lv{level + 1}</span>
+                <span className="text-[#a855f7]">{next - xp} XP left</span>
+              </div>
+              <div className="h-1 w-full bg-[#111] rounded-full overflow-hidden">
+                <div className="h-full bg-[#a855f7] rounded-full transition-all duration-700" style={{ width: `${xpPct}%` }} />
+              </div>
+            </div>
           </div>
-          {/* Streak */}
-          <div className="px-3 py-2.5 flex flex-col justify-center">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Streak</span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-semibold tabular-nums text-[#e8e8e8] leading-tight">{streak}</span>
-              <span className="text-[9px] font-mono text-[#2e2e2e]">days</span>
-              {profile?.can_revive_streak && (
-                <button onClick={() => revive.mutate()} disabled={revive.isPending}
-                  className="ml-auto text-[8px] font-mono text-[#f59e0b] border border-[#f59e0b]/25 rounded px-1 py-px hover:bg-[#f59e0b]/10 transition-colors">
-                  <RotateCcw size={7} className="inline mr-0.5" />revive
-                </button>
+
+          {/* Streak — amber tint */}
+          <div className="bg-[#0d0b04] border border-[#221a05] rounded-xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-[#f59e0b] opacity-[0.07] rounded-full blur-2xl pointer-events-none" />
+            <SectionLabel><Flame size={11} className="text-[#f59e0b]" /> Day Streak</SectionLabel>
+            <div className={`text-4xl font-mono font-semibold mt-3 ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
+              {streak}
+            </div>
+            <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-1">
+              {streak > 0 ? "Keep it alive!" : "Start today"}
+            </div>
+            {profile?.can_revive_streak && (
+              <button
+                onClick={() => revive.mutate()}
+                disabled={revive.isPending}
+                className="mt-3 flex items-center gap-1 text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/25 rounded px-2 py-1 hover:bg-[#f59e0b]/10 transition-colors"
+              >
+                <RotateCcw size={9} /> Revive Streak
+              </button>
+            )}
+          </div>
+
+          {/* Path Progress — green tint */}
+          <div className="bg-[#040d07] border border-[#0d2214] rounded-xl p-5 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-[#22c55e] opacity-[0.06] rounded-full blur-2xl pointer-events-none" />
+            <SectionLabel><Star size={11} className="text-[#22c55e]" /> Path Progress</SectionLabel>
+            <div className="text-3xl font-semibold tracking-tight text-[#f0f0f0] mt-3">
+              {cpct}<span className="text-base text-[#555] ml-1">%</span>
+            </div>
+            <div className="text-[11px] font-mono text-[#22c55e] mt-0.5">{done} / {total} topics done</div>
+            <div className="mt-4 h-1 w-full bg-[#111] rounded-full overflow-hidden">
+              <div className="h-full bg-[#22c55e] rounded-full transition-all duration-700" style={{ width: `${cpct}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Middle Row: Mission + Topics ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+          {/* Mission Card */}
+          <Card>
+            <CardHeader
+              left={<SectionLabel><Zap size={11} className="text-[#22c55e]" /> Today's Mission</SectionLabel>}
+              right={cur && <span className="text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">Active</span>}
+            />
+            <div className="p-5">
+              {cur ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[9px] font-mono text-[#444] uppercase tracking-wider mb-1">{ap?.title}</p>
+                    <h2 className="text-[15px] font-semibold text-[#f0f0f0] leading-snug">{cur.title}</h2>
+                    <p className="text-[12px] text-[#555] leading-relaxed mt-1.5 line-clamp-2">
+                      {cur.summary || "Complete the session and submit proof of work."}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    {steps.map((s, i) => (
+                      <div key={i} className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg border text-[12px] transition-colors ${s.d ? "border-[#1a3028] bg-[#0a1a12] text-[#888]" : "border-[#151515] bg-[#0d0d0d] text-[#444]"}`}>
+                        {s.d
+                          ? <CheckCircle2 size={12} className="text-[#22c55e] shrink-0" />
+                          : <Circle size={12} className="text-[#2a2a2a] shrink-0" />}
+                        <span className="flex-1">{s.l}</span>
+                        <s.I size={11} className={s.d ? "text-[#22c55e]" : "text-[#252525]"} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <Link
+                    to="/topic/$topicId"
+                    params={{ topicId: String(cur.slug || cur.id) }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#22c55e] text-[#030f07] text-[13px] font-semibold hover:bg-[#16a34a] transition-colors"
+                  >
+                    Continue <ArrowRight size={13} />
+                  </Link>
+                </div>
+              ) : (
+                <div className="py-10 flex flex-col items-center justify-center text-center">
+                  <Award size={28} className="text-[#22c55e] mb-3 opacity-30" />
+                  <p className="text-[14px] font-semibold text-[#ddd]">Path complete</p>
+                  <p className="text-[12px] text-[#444] mt-1">All topics mastered.</p>
+                </div>
               )}
             </div>
-          </div>
-          {/* Topics */}
-          <div className="px-3 py-2.5 flex flex-col justify-center">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Topics</span>
-            <span className="text-lg font-semibold tabular-nums text-[#e8e8e8] leading-tight">{done}<span className="text-[#2a2a2a]">/{total}</span></span>
-          </div>
-          {/* Progress */}
-          <div className="px-3 py-2.5 flex flex-col justify-center">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Progress</span>
-            <span className="text-lg font-semibold tabular-nums text-[#22c55e] leading-tight">{cpct}%</span>
-            <div className="h-[3px] bg-[#141414] rounded-full mt-1 overflow-hidden">
-              <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${cpct}%` }} />
+          </Card>
+
+          {/* Topic List */}
+          <Card>
+            <CardHeader
+              left={<SectionLabel>Path Topics</SectionLabel>}
+              right={<span className="text-[10px] font-mono text-[#333]">{done}/{total}</span>}
+            />
+            <div className="overflow-y-auto max-h-[320px]">
+              {topics.length === 0 ? (
+                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">No topics</div>
+              ) : (
+                topics.map((t: any) => {
+                  const d = t.user_progress === "completed";
+                  const a = t.id === cur?.id;
+                  return (
+                    <Link
+                      key={t.id}
+                      to="/topic/$topicId"
+                      params={{ topicId: String(t.slug || t.id) }}
+                      className={`flex items-center gap-3 px-5 py-3 border-b border-[#0e0e0e] hover:bg-[#0d0d0d] transition-colors ${a ? "bg-[#0a1310]" : ""}`}
+                    >
+                      <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${d ? "bg-[#0d2015] border-[#1a3028]" : a ? "bg-[#0a1a12] border-[#22c55e]/40" : "bg-[#0e0e0e] border-[#1a1a1a]"}`}>
+                        {d && <CheckCircle2 size={9} className="text-[#22c55e]" />}
+                        {!d && a && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
+                      </div>
+                      <span className={`text-[12px] flex-1 truncate ${d ? "text-[#2e2e2e] line-through" : a ? "text-[#ddd]" : "text-[#666]"}`}>
+                        {t.title}
+                      </span>
+                      {a && <ChevronRight size={11} className="text-[#22c55e] shrink-0" />}
+                    </Link>
+                  );
+                })
+              )}
             </div>
-          </div>
-          {/* Level */}
-          <div className="px-3 py-2.5 flex flex-col justify-center">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Level</span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <div className="w-6 h-6 rounded bg-[#0d2015] border border-[#1a3028] flex items-center justify-center shrink-0">
-                <span className="text-[10px] font-mono font-bold text-[#22c55e]">{level}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="h-[3px] bg-[#141414] rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#16a34a] to-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+            {total > 0 && (
+              <div className="px-5 py-3 border-t border-[#111]">
+                <div className="h-[2px] bg-[#111] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${cpct}%` }} />
                 </div>
-                <span className="text-[8px] font-mono text-[#2a2a2a] mt-0.5 block">{next - xp} to next</span>
               </div>
-            </div>
-          </div>
+            )}
+          </Card>
         </div>
 
-        {/* ─── ROW 3 LEFT : mission ────────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "mission" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Zap size={11} className="text-[#22c55e]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Mission</span>
-            </div>
-            {cur && <span className="text-[8px] font-mono text-[#22c55e] uppercase tracking-wider">Active</span>}
-          </div>
+        {/* ── Bottom Row: Activity Feed + Heatmap ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
-          <div className="flex-1 px-3.5 py-3 flex flex-col min-h-0">
-            {cur ? (
-              <>
-                <span className="text-[9px] font-mono text-[#333] uppercase tracking-wider mb-1">{ap?.title}</span>
-                <h2 className="text-base font-semibold text-[#f0f0f0] leading-snug mb-1.5 truncate">{cur.title}</h2>
-                <p className="text-[11px] text-[#444] leading-relaxed mb-3 line-clamp-2 flex-shrink-0">
-                  {cur.summary || "Complete the session and submit proof of work."}
-                </p>
-
-                <div className="space-y-1 mb-3 flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-1">
-                  {steps.map((s, i) => (
-                    <div key={i} className={`flex items-center gap-2 px-2.5 py-1.5 rounded border text-[11px] ${s.d ? "border-[#1a3028] bg-[#0a1a12] text-[#a0a0a0]" : "border-[#151515] bg-[#0b0b0b] text-[#444]"}`}>
-                      {s.d ? <CheckCircle2 size={10} className="text-[#22c55e] shrink-0" /> : <Circle size={10} className="text-[#222] shrink-0" />}
-                      <span className="flex-1">{s.l}</span>
-                      <s.I size={9} className={s.d ? "text-[#22c55e]" : "text-[#222]"} />
-                    </div>
+          {/* Activity Feed */}
+          <Card>
+            <CardHeader
+              left={<SectionLabel><Activity size={11} /> Recent Activity</SectionLabel>}
+              right={activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
+            />
+            <div className="overflow-y-auto max-h-[260px] px-4 py-3">
+              {activity.length > 0 ? (
+                <ul className="space-y-px">
+                  {activity.map((a: any, i: number) => (
+                    <li key={a.id} className="flex items-start gap-3 py-2 border-b border-[#0d0d0d] last:border-0">
+                      <div className={`mt-1.5 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#222]"}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[12px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#444]"}`}>{a.label}</p>
+                        <p className="text-[10px] font-mono text-[#2a2a2a] mt-0.5">{timeAgo(a.date)}</p>
+                      </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
+              ) : (
+                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">No activity yet</div>
+              )}
+            </div>
+          </Card>
 
-                <div className="mt-auto">
-                  <Link to="/topic/$topicId" params={{ topicId: String(cur.slug || cur.id) }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#22c55e] text-[#030f07] text-xs font-semibold hover:bg-[#16a34a] transition-colors">
-                    Continue <ArrowRight size={12} />
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center flex-1 text-center">
-                <Award size={24} className="text-[#22c55e] mb-2 opacity-40" />
-                <p className="text-sm font-semibold text-[#ddd]">Path complete</p>
-                <p className="text-[11px] text-[#444]">All topics mastered.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── ROW 3 CENTER : topic list ────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "topics" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Path Topics</span>
-            <span className="text-[9px] font-mono text-[#2e2e2e]">{done}/{total}</span>
-          </div>
-          <div className="flex-1 overflow-y-auto min-h-0">
-            {topics.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No topics</div>
-            ) : (
-              topics.map((t: any) => {
-                const d = t.user_progress === "completed";
-                const a = t.id === cur?.id;
-                return (
-                  <Link key={t.id} to="/topic/$topicId" params={{ topicId: String(t.slug || t.id) }}
-                    className={`flex items-center gap-2.5 px-3.5 py-[7px] border-b border-[#0e0e0e] hover:bg-[#0c0c0c] transition-colors ${a ? "bg-[#0a1310]" : ""}`}>
-                    <div className={`w-3.5 h-3.5 rounded-sm flex items-center justify-center shrink-0 border ${d ? "bg-[#0d2015] border-[#1a3028]" : a ? "bg-[#0a1a12] border-[#22c55e]/40" : "bg-[#0e0e0e] border-[#1a1a1a]"}`}>
-                      {d && <CheckCircle2 size={8} className="text-[#22c55e]" />}
-                      {!d && a && <div className="w-1 h-1 rounded-full bg-[#22c55e]" />}
-                    </div>
-                    <span className={`text-[11px] flex-1 truncate ${d ? "text-[#2e2e2e] line-through" : a ? "text-[#ddd]" : "text-[#666]"}`}>{t.title}</span>
-                    {a && <ChevronRight size={10} className="text-[#22c55e] shrink-0" />}
-                  </Link>
-                );
-              })
-            )}
-          </div>
-          {total > 0 && (
-            <div className="px-3.5 py-2 border-t border-[#111] shrink-0">
-              <div className="h-[2px] bg-[#111] rounded-full overflow-hidden">
-                <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${cpct}%` }} />
+          {/* Heatmap — spans 2 cols */}
+          <Card className="lg:col-span-2">
+            <CardHeader
+              left={<SectionLabel><Github size={11} /> Contributions</SectionLabel>}
+              right={<span className="text-[10px] font-mono text-[#444] uppercase tracking-wider">Last 12 months</span>}
+            />
+            <div className="p-5 overflow-x-auto">
+              <div className="min-w-[480px]">
+                {hl ? (
+                  <div className="h-24 rounded bg-[#0c0c0c] animate-pulse" />
+                ) : (
+                  <ActivityCalendar
+                    data={hd}
+                    theme={{
+                      light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                    }}
+                    colorScheme="dark"
+                    blockSize={11}
+                    blockMargin={4}
+                    fontSize={10}
+                    labels={{ totalCount: "{{count}} contributions in the last year" }}
+                    style={{
+                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                      color: "#555",
+                    }}
+                  />
+                )}
               </div>
             </div>
-          )}
-        </div>
-
-        {/* ─── ROW 3–4 RIGHT : activity ────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "feed" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Activity size={10} className="text-[#333]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Activity</span>
-            </div>
-            {activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
-          </div>
-          <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2">
-            {activity.length > 0 ? (
-              <ul className="space-y-px">
-                {activity.map((a: any, i: number) => (
-                  <li key={a.id} className="flex items-start gap-2 py-1.5 border-b border-[#0d0d0d] last:border-0">
-                    <div className={`mt-1 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#1e1e1e]"}`} />
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#484848]"}`}>{a.label}</p>
-                      <p className="text-[9px] font-mono text-[#252525]">{timeAgo(a.date)}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No activity yet</div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── ROW 4 : heatmap ─────────────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "heat" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Github size={10} className="text-[#333]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Contributions</span>
-            </div>
-            <span className="text-[8px] font-mono text-[#252525]">{xp} total</span>
-          </div>
-          <div className="flex-1 flex items-center px-3.5 py-2 overflow-x-auto min-h-0">
-            {hl ? (
-              <div className="w-full h-full rounded bg-[#0c0c0c] animate-pulse" />
-            ) : (
-              <ActivityCalendar
-                data={hd}
-                theme={{ light: ["#0e0e0e", "#0f2318", "#155e36", "#16a34a", "#22c55e"], dark: ["#0e0e0e", "#0f2318", "#155e36", "#16a34a", "#22c55e"] }}
-                colorScheme="dark"
-                labels={{ totalCount: "{{count}} sessions this year" }}
-                style={{ fontSize: "10px" }}
-              />
-            )}
-          </div>
+          </Card>
         </div>
       </div>
-
-      {/* ── grid definition ────────────────────────────────────────────── */}
-      <style>{`
-        .dashboard-grid {
-          display: grid;
-          gap: 8px;
-          grid-template-columns: 1fr 1fr 240px;
-          grid-template-rows: 36px 64px 1fr auto;
-          grid-template-areas:
-            "hdr     hdr     hdr"
-            "stats   stats   stats"
-            "mission topics  feed"
-            "heat    heat    feed";
-        }
-        @media (max-width: 1024px) {
-          .dashboard-grid {
-            height: auto !important;
-            overflow: auto !important;
-            grid-template-columns: 1fr;
-            grid-template-rows: auto;
-            grid-template-areas:
-              "hdr"
-              "stats"
-              "mission"
-              "topics"
-              "heat"
-              "feed";
-          }
-          .dashboard-grid > * { min-height: unset !important; }
-        }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-      `}</style>
     </PageShell>
   );
 }

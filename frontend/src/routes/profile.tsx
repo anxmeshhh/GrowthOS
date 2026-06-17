@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api-client";
 import { PageShell } from "@/components/growth-ui";
 import {
   User, Calendar, Shield, Award, Flame, BookOpen,
-  ClipboardCheck, Trophy, Star, TrendingUp, Sparkles,
+  ClipboardCheck, Trophy, Star, TrendingUp,
 } from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
 
@@ -37,7 +37,7 @@ function timeAgo(iso: string) {
 }
 
 function Skel({ className = "" }: { className?: string }) {
-  return <div className={`rounded bg-[#141414] animate-pulse ${className}`} />;
+  return <div className={`rounded-md bg-[#141414] animate-pulse ${className}`} />;
 }
 
 /* ── page ─────────────────────────────────────────────────────────────── */
@@ -74,43 +74,40 @@ function ProfilePage() {
 
   return (
     <PageShell>
-      <div className="profile-grid" style={{ height: "calc(100vh - 64px)", overflow: "hidden" }}>
+      <div className="profile-grid">
 
-        {/* ── [A] Identity card — left col, row 1-2 ─────────────────────── */}
+        {/* ── [A] Identity card — left col, spans full height ──────────── */}
         <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "id" }}>
-          {/* Glow bg */}
-          <div className="relative px-5 pt-6 pb-4 flex flex-col items-center text-center">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0d1a2e] to-transparent opacity-40 pointer-events-none" />
-            {/* Avatar */}
-            <div className="relative z-10 w-16 h-16 rounded-full bg-[#0f1e30] border-2 border-[#3b5bdb]/50 flex items-center justify-center mb-3 shadow-[0_0_24px_rgba(59,91,219,0.15)]">
-              <User size={32} className="text-[#60a5fa]" />
+          <div className="px-5 pt-6 pb-4 flex flex-col items-center text-center border-b border-[#111]">
+            <div className="w-16 h-16 rounded-full bg-[#0c140f] border border-[#22c55e]/30 flex items-center justify-center mb-3">
+              <User size={30} className="text-[#22c55e]" />
             </div>
-            <h1 className="relative z-10 text-lg font-semibold text-[#f0f0f0] tracking-tight leading-none mb-1">
+            <h1 className="text-lg font-semibold text-[#f0f0f0] tracking-tight leading-none mb-1">
               {pLoading ? <Skel className="h-5 w-28 mx-auto" /> : profile?.username}
             </h1>
-            <div className="relative z-10 flex items-center gap-3 text-[10px] font-mono text-[#444] uppercase tracking-wider">
+            <div className="flex items-center gap-3 text-[10px] font-mono text-[#444] uppercase tracking-wider">
               <span className="flex items-center gap-1"><Calendar size={9} /> {joined}</span>
               <span className="flex items-center gap-1"><Shield size={9} className="text-[#22c55e]" /> Lv{level}</span>
             </div>
           </div>
 
           {/* Level progress */}
-          <div className="px-5 pb-4 flex-shrink-0">
-            <div className="flex items-center justify-between text-[9px] font-mono text-[#333] mb-1.5 uppercase tracking-wider">
+          <div className="px-5 py-4 border-b border-[#111] shrink-0">
+            <div className="flex items-center justify-between text-[9px] font-mono text-[#444] mb-1.5 uppercase tracking-wider">
               <span>{lvl}</span>
               <span>{pLoading ? "—" : `${xp}/${next}`}</span>
             </div>
             <div className="h-1 bg-[#141414] rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[#3b5bdb] to-[#60a5fa] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+              <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
             </div>
           </div>
 
           {/* Quick stats */}
-          <div className="grid grid-cols-2 divide-x divide-[#111] border-t border-[#111] flex-1">
-            <MiniStat icon={<Flame size={13} className="text-[#f59e0b]" />} label="Streak" value={pLoading ? "—" : `${profile.streak}d`} />
+          <div className="grid grid-cols-2 divide-x divide-y divide-[#111] flex-1">
+            <MiniStat icon={<Flame size={13} className="text-[#22c55e]" />} label="Streak" value={pLoading ? "—" : `${profile.streak}d`} />
             <MiniStat icon={<Trophy size={13} className="text-[#22c55e]" />} label="Points" value={pLoading ? "—" : String(xp)} />
-            <MiniStat icon={<BookOpen size={13} className="text-[#60a5fa]" />} label="Notes" value={pLoading ? "—" : String(profile.notes_written)} />
-            <MiniStat icon={<ClipboardCheck size={13} className="text-[#a78bfa]" />} label="Quizzes" value={pLoading ? "—" : String(profile.quizzes_passed)} />
+            <MiniStat icon={<BookOpen size={13} className="text-[#22c55e]" />} label="Notes" value={pLoading ? "—" : String(profile.notes_written)} />
+            <MiniStat icon={<ClipboardCheck size={13} className="text-[#22c55e]" />} label="Quizzes" value={pLoading ? "—" : String(profile.quizzes_passed)} />
           </div>
         </div>
 
@@ -118,11 +115,11 @@ function ProfilePage() {
         <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "badges" }}>
           <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
             <div className="flex items-center gap-1.5">
-              <Award size={10} className="text-[#f59e0b]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Achievements</span>
+              <Award size={10} className="text-[#22c55e]" />
+              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Achievements</span>
             </div>
             {!pLoading && profile?.badges && (
-              <span className="text-[8px] font-mono text-[#2e2e2e]">{profile.badges.length} earned</span>
+              <span className="text-[8px] font-mono text-[#333]">{profile.badges.length} earned</span>
             )}
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 p-3">
@@ -133,17 +130,19 @@ function ProfilePage() {
             ) : profile?.badges?.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {profile.badges.map((b: any) => (
-                  <div key={b.id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-[#181818] bg-[#0b0b0b] hover:border-[#252525] transition-colors">
-                    <span className="text-lg shrink-0">{b.icon}</span>
+                  <div key={b.id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-md border border-[#181818] bg-[#0b0b0b] hover:border-[#22c55e]/25 transition-colors">
+                    <div className="shrink-0 w-7 h-7 rounded-md bg-[#0c140f] border border-[#22c55e]/20 flex items-center justify-center">
+                      <Award size={13} className="text-[#22c55e]" />
+                    </div>
                     <div className="min-w-0">
                       <p className="text-[11px] font-medium text-[#ddd] truncate">{b.title}</p>
-                      <p className="text-[9px] text-[#444] truncate">{b.desc}</p>
+                      <p className="text-[9px] text-[#555] truncate">{b.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No badges yet</div>
+              <div className="flex items-center justify-center h-full text-[11px] text-[#444]">No badges yet</div>
             )}
           </div>
         </div>
@@ -153,7 +152,7 @@ function ProfilePage() {
           <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
             <div className="flex items-center gap-1.5">
               <TrendingUp size={10} className="text-[#22c55e]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Breakdown</span>
+              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Breakdown</span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 p-3.5">
@@ -171,7 +170,7 @@ function ProfilePage() {
                     <div key={item.action_type}>
                       <div className="flex justify-between text-[10px] mb-1">
                         <span className="text-[#888] truncate">{label}</span>
-                        <span className="font-mono text-[#333] shrink-0 ml-2">{item.total} · {item.count}×</span>
+                        <span className="font-mono text-[#444] shrink-0 ml-2">{item.total} · {item.count}×</span>
                       </div>
                       <div className="h-[3px] bg-[#141414] rounded-full overflow-hidden">
                         <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${w}%` }} />
@@ -181,7 +180,7 @@ function ProfilePage() {
                 })}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No data yet</div>
+              <div className="flex items-center justify-center h-full text-[11px] text-[#444]">No data yet</div>
             )}
           </div>
         </div>
@@ -189,8 +188,8 @@ function ProfilePage() {
         {/* ── [D] Heatmap — bottom center ───────────────────────────────── */}
         <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "heat" }}>
           <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Contribution Heatmap</span>
-            <span className="text-[8px] font-mono text-[#252525]">{pLoading ? "—" : `${xp} total`}</span>
+            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Contribution heatmap</span>
+            <span className="text-[8px] font-mono text-[#333]">{pLoading ? "—" : `${xp} total`}</span>
           </div>
           <div className="flex-1 flex items-center px-3.5 py-2 overflow-x-auto min-h-0">
             {hLoading ? (
@@ -210,7 +209,7 @@ function ProfilePage() {
         {/* ── [E] Activity — bottom right ───────────────────────────────── */}
         <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "activity" }}>
           <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Recent Activity</span>
+            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Recent activity</span>
             {activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2">
@@ -220,14 +219,14 @@ function ProfilePage() {
                   <li key={a.id} className="flex items-start gap-2 py-1.5 border-b border-[#0d0d0d] last:border-0">
                     <div className={`mt-1 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#1e1e1e]"}`} />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#484848]"}`}>{a.label}</p>
-                      <p className="text-[9px] font-mono text-[#252525]">{timeAgo(a.date)}</p>
+                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#555]"}`}>{a.label}</p>
+                      <p className="text-[9px] font-mono text-[#333]">{timeAgo(a.date)}</p>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No activity yet</div>
+              <div className="flex items-center justify-center h-full text-[11px] text-[#444]">No activity yet</div>
             )}
           </div>
         </div>
@@ -236,8 +235,8 @@ function ProfilePage() {
         <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "paths" }}>
           <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
             <div className="flex items-center gap-1.5">
-              <Star size={10} className="text-[#f59e0b]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Completed Roadmaps</span>
+              <Star size={10} className="text-[#22c55e]" />
+              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Completed roadmaps</span>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto min-h-0 px-3.5 py-2">
@@ -248,13 +247,13 @@ function ProfilePage() {
             ) : profile?.completed_paths?.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {profile.completed_paths.map((p: any) => (
-                  <span key={p.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-[#1a3028] bg-[#0a1a12] text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
+                  <span key={p.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[#1a3028] bg-[#0a1a12] text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
                     <Award size={9} /> {p.title}
                   </span>
                 ))}
               </div>
             ) : (
-              <div className="flex items-center h-full text-[11px] text-[#333]">No roadmaps completed yet — keep building!</div>
+              <div className="flex items-center h-full text-[11px] text-[#444]">No roadmaps completed yet — keep building</div>
             )}
           </div>
         </div>
@@ -265,17 +264,30 @@ function ProfilePage() {
         .profile-grid {
           display: grid;
           gap: 8px;
-          grid-template-columns: 220px 1fr 240px;
+          height: calc(100vh - 64px);
+          overflow: hidden;
+          grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(220px, 260px);
           grid-template-rows: 1fr 1fr auto;
           grid-template-areas:
             "id     badges    breakdown"
             "id     heat      activity"
             "paths  paths     paths";
         }
-        @media (max-width: 1024px) {
+        @media (max-width: 1180px) {
           .profile-grid {
-            height: auto !important;
-            overflow: auto !important;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-rows: auto auto auto auto;
+            grid-template-areas:
+              "id        id"
+              "badges    breakdown"
+              "heat      activity"
+              "paths     paths";
+          }
+        }
+        @media (max-width: 720px) {
+          .profile-grid {
+            height: auto;
+            overflow: visible;
             grid-template-columns: 1fr;
             grid-template-rows: auto;
             grid-template-areas:
@@ -298,7 +310,7 @@ function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string
     <div className="flex items-center gap-2 px-3 py-2.5">
       {icon}
       <div>
-        <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">{label}</p>
+        <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">{label}</p>
         <p className="text-sm font-semibold tabular-nums text-[#e8e8e8] leading-tight">{value}</p>
       </div>
     </div>

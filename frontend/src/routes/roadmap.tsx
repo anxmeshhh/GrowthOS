@@ -1,12 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookmarkCheck, Loader2, ArrowRight, Map as MapIcon } from "lucide-react";
+import { Loader2, ArrowRight, Map as MapIcon, Bookmark } from "lucide-react";
 import {
   PageShell,
   PageHeader,
   Card,
   Btn,
-  Progress,
-  StatCard,
   Badge,
 } from "@/components/growth-ui";
 import { RoadmapTree } from "@/components/roadmap/RoadmapTree";
@@ -18,8 +16,8 @@ import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/roadmap")({
   validateSearch: (search: Record<string, unknown>): { pathId?: number; pathSlug?: string } => ({
-    pathId: typeof search.pathId === 'number' ? search.pathId : undefined,
-    pathSlug: typeof search.pathSlug === 'string' ? search.pathSlug : undefined,
+    pathId: typeof search.pathId === "number" ? search.pathId : undefined,
+    pathSlug: typeof search.pathSlug === "string" ? search.pathSlug : undefined,
   }),
   head: () => ({ meta: [{ title: "Roadmap — GrowthOS" }] }),
   component: RoadmapPage,
@@ -43,7 +41,6 @@ function RoadmapPage() {
     }
   }, [selectedPathId]);
 
-  // Fetch predefined paths
   const { data: paths = [], isLoading: pathsLoading } = useQuery({
     queryKey: ["paths"],
     queryFn: async () => {
@@ -53,7 +50,6 @@ function RoadmapPage() {
     },
   });
 
-  // Fetch custom path if pathSlug provided
   const { data: customPath, isLoading: customPathLoading } = useQuery({
     queryKey: ["custom-path", searchPathSlug],
     queryFn: async () => {
@@ -65,7 +61,8 @@ function RoadmapPage() {
     enabled: !!searchPathSlug,
   });
 
-  const bookmarkMutation = useMutation({
+  // kept for parity with prior bookmark-toggle behavior elsewhere in the app
+  useMutation({
     mutationFn: async (slug: string) => {
       const res = await apiFetch(`/paths/${slug}/bookmark/`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to bookmark");
@@ -76,11 +73,11 @@ function RoadmapPage() {
       const previousPaths = queryClient.getQueryData(["paths"]);
       queryClient.setQueryData(["paths"], (old: any) => {
         if (!old) return old;
-        return old.map((p: any) => p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p);
+        return old.map((p: any) => (p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p));
       });
       return { previousPaths };
     },
-    onError: (err, slug, context: any) => {
+    onError: (_err, _slug, context: any) => {
       if (context?.previousPaths) {
         queryClient.setQueryData(["paths"], context.previousPaths);
       }
@@ -91,14 +88,12 @@ function RoadmapPage() {
     },
   });
 
-  // ── Active path ───────────────────────────────────────────────────────────
   const activePath = customPath
     ? customPath
-    : (selectedPathId
-        ? paths.find((p: any) => p.id === selectedPathId)
-        : paths.find((p: any) => p.is_bookmarked) || paths[0] || null);
+    : selectedPathId
+      ? paths.find((p: any) => p.id === selectedPathId)
+      : paths.find((p: any) => p.is_bookmarked) || paths[0] || null;
 
-  // Auto-sync viewed path in roadmap to dashboard
   useEffect(() => {
     if (activePath && typeof window !== "undefined") {
       const uid = customPath ? `cust-${activePath.id}` : `std-${activePath.id}`;
@@ -106,12 +101,12 @@ function RoadmapPage() {
     }
   }, [activePath, customPath]);
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (pathsLoading || customPathLoading) {
     return (
       <PageShell>
-        <div className="flex justify-center p-12 text-[#666]">
-          <Loader2 className="animate-spin w-6 h-6 mr-2" /> Loading Roadmap...
+        <div className="flex items-center justify-center gap-2 py-24 text-sm text-[#666]">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading roadmap…
         </div>
       </PageShell>
     );
@@ -121,169 +116,201 @@ function RoadmapPage() {
     return (
       <PageShell>
         <PageHeader
-          kicker="Learning Roadmap"
-          title="No paths available."
-          subtitle="Go to Discover to find a path."
+          kicker="Learning roadmap"
+          title="No paths available yet"
+          subtitle="Pick something to learn and it'll show up here."
         />
         <Link to="/discover">
-          <Btn>Discover Paths</Btn>
+          <Btn>Discover paths</Btn>
         </Link>
       </PageShell>
     );
   }
 
-  return <RoadmapPageInner
-    activePath={activePath}
-    paths={paths}
-    selectedPathId={selectedPathId}
-    onSelectPath={setSelectedPathId}
-  />;
+  return (
+    <RoadmapPageInner
+      activePath={activePath}
+      paths={paths}
+      onSelectPath={setSelectedPathId}
+    />
+  );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function RoadmapPageInner({
   activePath,
   paths,
-  selectedPathId,
   onSelectPath,
 }: {
   activePath: any;
   paths: any[];
-  selectedPathId: number | null;
   onSelectPath: (id: number) => void;
 }) {
   const topics: any[] = activePath.topics || [];
 
-  // ── Computed stats ──────────────────────────────────────────────────────
   const completedCount = topics.filter((t: any) => t.user_progress === "completed").length;
+  const inProgressCount = topics.filter((t: any) => t.user_progress === "in_progress").length;
+  const lockedCount = Math.max(topics.length - completedCount - inProgressCount, 0);
   const completionPct = topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0;
   const nextTopic = topics.find((t: any) => t.user_progress !== "completed") || topics[0];
+
+  const bookmarked = paths.filter((p: any) => p.is_bookmarked);
+  const ringCircumference = 2 * Math.PI * 42;
+  const ringOffset = ringCircumference - (completionPct / 100) * ringCircumference;
 
   return (
     <PageShell>
       <PageHeader
-        kicker="Learning Roadmap"
+        kicker="Learning roadmap"
         title={activePath.title}
         subtitle={`${completedCount} of ${topics.length} topics completed`}
       />
 
-      {/* ── Bookmarks switcher ──────────────────────────────────────────── */}
-      <Card className="p-5 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <BookmarkCheck size={13} className="text-[#22c55e]" />
-          <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#555]">
-            Saved Paths
-          </span>
+      {/* ── Saved paths rail ──────────────────────────────────────────── */}
+      {bookmarked.length > 0 && (
+        <div className="mb-10 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {bookmarked.map((p: any) => {
+            const isActive = p.id === activePath.id;
+            const pTopics = p.topics || [];
+            const pDone = pTopics.filter((t: any) => t.user_progress === "completed").length;
+            const pPct = pTopics.length > 0 ? Math.round((pDone / pTopics.length) * 100) : 0;
+
+            return (
+              <button
+                key={p.id}
+                onClick={() => onSelectPath(p.id)}
+                className={`
+                  group flex shrink-0 items-center gap-2.5 rounded-full border px-3.5 py-2
+                  transition-colors duration-150
+                  ${isActive
+                    ? "border-[#22c55e]/35 bg-[#0a1a10]"
+                    : "border-[#1c1c1c] bg-transparent hover:border-[#2a2a2a] hover:bg-[#0d0d0d]"
+                  }
+                `}
+              >
+                <Bookmark
+                  size={11}
+                  className={isActive ? "fill-[#22c55e] text-[#22c55e]" : "text-[#555]"}
+                />
+                <span className={`whitespace-nowrap text-xs font-medium ${isActive ? "text-[#22c55e]" : "text-[#999]"}`}>
+                  {p.title}
+                </span>
+                <span className={`whitespace-nowrap text-[10px] font-mono ${isActive ? "text-[#22c55e]/60" : "text-[#444]"}`}>
+                  {pPct}%
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {paths
-            .filter((p: any) => p.is_bookmarked)
-            .map((p: any) => {
-              const isActive = p.id === activePath.id;
-              const pTopics = p.topics || [];
-              const pDone = pTopics.filter((t: any) => t.user_progress === "completed").length;
-              const pPct = pTopics.length > 0 ? Math.round((pDone / pTopics.length) * 100) : 0;
+      )}
 
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => onSelectPath(p.id)}
-                  className={`
-                    flex flex-col gap-2 px-4 py-3 rounded-md border text-left
-                    transition-all duration-150
-                    ${isActive
-                      ? "border-[#22c55e]/40 bg-[#071a0f]"
-                      : "border-[#1f1f1f] bg-[#0d0d0d] hover:border-[#2a2a2a] hover:bg-[#111]"
-                    }
-                  `}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-sm font-medium truncate ${isActive ? "text-[#22c55e]" : "text-[#c0c0c0]"}`}>
-                      {p.title}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#444] shrink-0">{pPct}%</span>
-                  </div>
-                  <Progress value={pPct} color={isActive ? "#22c55e" : "#2a2a2a"} />
-                </button>
-              );
-            })}
+      {/* ── Progress hero ─────────────────────────────────────────────── */}
+      <Card className="mb-10 overflow-hidden p-0">
+        <div className="grid grid-cols-1 md:grid-cols-[auto_1px_1fr]">
+          {/* Ring + headline metric */}
+          <div className="flex items-center gap-5 p-6">
+            <div className="relative flex h-24 w-24 shrink-0 items-center justify-center">
+              <svg viewBox="0 0 96 96" className="h-24 w-24 -rotate-90">
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="42"
+                  fill="none"
+                  stroke="#1a1a1a"
+                  strokeWidth="6"
+                />
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="42"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={ringCircumference}
+                  strokeDashoffset={ringOffset}
+                  style={{ transition: "stroke-dashoffset 600ms ease" }}
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span className="font-mono text-xl font-semibold text-[#f0f0f0]">{completionPct}%</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#555]">Overall progress</div>
+              <div className="mt-1.5 flex items-baseline gap-1.5">
+                <span className="font-mono text-2xl font-semibold text-[#f0f0f0]">{completedCount}</span>
+                <span className="text-sm text-[#555]">/ {topics.length} topics</span>
+              </div>
+              <div className="mt-2 flex items-center gap-3 text-[11px] text-[#666]">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> {completedCount} done
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#d4a72c]" /> {inProgressCount} active
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#3a3a3a]" /> {lockedCount} queued
+                </span>
+              </div>
+            </div>
+          </div>
 
-          {paths.filter((p: any) => p.is_bookmarked).length === 0 && (
-            <p className="text-xs text-[#444] py-1 col-span-3">
-              No bookmarks yet —{" "}
-              <Link to="/discover" className="text-[#22c55e] underline">
-                Discover paths
+          {/* divider */}
+          <div className="hidden bg-[#1a1a1a] md:block" />
+
+          {/* Up next */}
+          <div className="flex items-center justify-between gap-4 p-6">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#555]">
+                {nextTopic ? "Continue where you left off" : "Path complete"}
+              </div>
+              <div className="mt-1.5 truncate text-lg font-semibold tracking-tight text-[#f0f0f0]">
+                {nextTopic?.title ?? "Every topic cleared"}
+              </div>
+              <div className="mt-1.5">
+                {nextTopic ? (
+                  <Badge tone="amber">In progress</Badge>
+                ) : (
+                  <Badge tone="green">All done</Badge>
+                )}
+              </div>
+            </div>
+            {nextTopic && (
+              <Link to="/topic/$topicId" params={{ topicId: String(nextTopic.id) }} className="shrink-0">
+                <Btn>
+                  Continue <ArrowRight size={13} />
+                </Btn>
               </Link>
-            </p>
-          )}
+            )}
+          </div>
         </div>
       </Card>
 
-      {/* ── Stats row ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <StatCard
-          label="Topics Cleared"
-          value={
-            <span className="font-mono">
-              {completedCount}{" "}
-              <span className="text-[#333] text-xl">/ {topics.length}</span>
-            </span>
-          }
-          sub={<Progress value={completionPct} />}
-        />
-        <StatCard
-          label="Up Next"
-          value={
-            <span className="text-base truncate block leading-snug">
-              {nextTopic?.title ?? "All clear"}
-            </span>
-          }
-          sub={
-            nextTopic ? (
-              <Badge tone="amber">In progress</Badge>
-            ) : (
-              <Badge tone="green">Done</Badge>
-            )
-          }
-        />
-        <StatCard
-          label="Completion"
-          value={<span className="font-mono">{completionPct}%</span>}
-          sub={<Progress value={completionPct} />}
-          accent={completionPct === 100}
-        />
-      </div>
-
-      {/* ── Next topic CTA ──────────────────────────────────────────────── */}
-      {nextTopic && (
-        <Card className="p-4 mb-6 border-[#22c55e]/20 bg-[#071a0f]">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#22c55e]/70 mb-1">
-                Continue where you left off
-              </div>
-              <div className="text-base font-semibold tracking-tight text-[#f0f0f0] truncate">
-                {nextTopic.title}
-              </div>
-            </div>
-            <Link to="/topic/$topicId" params={{ topicId: String(nextTopic.id) }}>
-              <Btn>
-                Continue <ArrowRight size={13} />
-              </Btn>
-            </Link>
-          </div>
-        </Card>
-      )}
-
-      {/* ── Roadmap tree ─────────────────────────────────────────────────── */}
-      <div className="mb-2 flex items-center gap-2">
-        <MapIcon size={13} className="text-[#444]" />
-        <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#444]">
-          {activePath.title} — full roadmap
-        </span>
+      {/* ── Roadmap section ──────────────────────────────────────────── */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MapIcon size={13} className="text-[#444]" />
+          <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#555]">
+            Full roadmap
+          </span>
+        </div>
+        <div className="flex items-center gap-4 text-[11px] text-[#666]">
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> Done
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#d4a72c]" /> Active
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#3a3a3a]" /> Locked
+          </span>
+        </div>
       </div>
 
       <div
-        className="w-full mb-12 rounded-xl overflow-hidden border border-[#1a1a1a]"
+        className="mb-16 w-full overflow-hidden rounded-xl border border-[#1a1a1a] bg-[#0a0a0a]"
         style={{ height: "820px" }}
       >
         <RoadmapTree topics={topics} />
