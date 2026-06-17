@@ -66,10 +66,10 @@ function NotesPage() {
   /* ── Derived Data ────────────────────────────────────────────────────── */
   const isLoading = pl || cl || nl || dl;
 
-  const allPathsMap = new Map();
-  paths.forEach((p: any) => allPathsMap.set(p.id, p));
-  customPaths.forEach((p: any) => allPathsMap.set(p.id, p));
-  const combinedPaths = Array.from(allPathsMap.values());
+  const combinedPaths = [
+    ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` }))
+  ];
 
   const resolveTopic = (topicId: string | number) => {
     const key = String(topicId);

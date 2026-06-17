@@ -80,10 +80,10 @@ function ProgressPage() {
   /* ── derived ─────────────────────────────────────────────────────────── */
   const isLoading = pl || cl || hl || prl;
 
-  const allPathsMap = new Map();
-  paths.forEach((p: any) => allPathsMap.set(p.id, p));
-  customPaths.forEach((p: any) => allPathsMap.set(p.id, p));
-  const allPaths = Array.from(allPathsMap.values());
+  const allPaths = [
+    ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` }))
+  ];
 
   const activePaths = useMemo(() => {
     return allPaths.filter(p => p.topics?.some((t: any) => t.user_progress === "in_progress" || t.user_progress === "completed"))

@@ -66,13 +66,12 @@ function DashboardPage() {
     queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
   });
 
-  // Deduplicate paths since /paths/ and /custom-paths/ might both return the user's custom paths
-  const allPathsMap = new Map();
-  paths.forEach((p: any) => allPathsMap.set(p.id, p));
-  customPaths.forEach((p: any) => allPathsMap.set(p.id, p));
-  const allPaths = Array.from(allPathsMap.values());
+  const allPaths = [
+    ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` }))
+  ];
 
-  const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
+  const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
   const { data: heatmap = [], isLoading: hl } = useQuery({
     queryKey: ["heatmap"],
@@ -113,7 +112,7 @@ function DashboardPage() {
   const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
 
   const ap = selectedPathId 
-    ? allPaths.find((p: any) => p.id === selectedPathId)
+    ? allPaths.find((p: any) => p.uniqueId === selectedPathId)
     : allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
       allPaths.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
       allPaths.find((p: any) => p.is_bookmarked) ||
@@ -159,12 +158,12 @@ function DashboardPage() {
           </div>
           {ap && (
             <select
-              value={ap.id}
-              onChange={(e) => setSelectedPathId(Number(e.target.value))}
+              value={ap.uniqueId}
+              onChange={(e) => setSelectedPathId(e.target.value)}
               className="bg-[#0a0a0a] border border-[#222] text-[#888] text-[10px] font-mono uppercase tracking-wider rounded px-2 py-1 outline-none hover:border-[#444] cursor-pointer"
             >
               {allPaths.map((p: any) => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+                <option key={p.uniqueId} value={p.uniqueId}>{p.title}</option>
               ))}
             </select>
           )}
