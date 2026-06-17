@@ -1,229 +1,306 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
-import { PageShell, Card, Progress } from "@/components/growth-ui";
-import { User, Calendar, Trophy, Star, Shield, Award, Flame, BookOpen, ClipboardCheck, Loader2 } from "lucide-react";
+import { PageShell } from "@/components/growth-ui";
+import {
+  User, Calendar, Shield, Award, Flame, BookOpen,
+  ClipboardCheck, Trophy, Star, TrendingUp, Sparkles,
+} from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
 
 export const Route = createFileRoute("/profile")({
-  head: () => ({ meta: [{ title: "Developer Profile — GrowthOS" }] }),
+  head: () => ({ meta: [{ title: "Profile — GrowthOS" }] }),
   component: ProfilePage,
 });
 
+/* ── helpers ──────────────────────────────────────────────────────────── */
+
 function getLevelInfo(xp: number) {
-  if (xp < 20) return { level: 1, title: "Novice", next: 20 };
-  if (xp < 50) return { level: 2, title: "Explorer", next: 50 };
-  if (xp < 100) return { level: 3, title: "Scholar", next: 100 };
-  if (xp < 250) return { level: 4, title: "Adept", next: 250 };
-  if (xp < 500) return { level: 5, title: "Master", next: 500 };
-  return { level: 6, title: "Grandmaster", next: xp };
+  const tiers = [
+    { level: 1, title: "Novice", next: 20 },
+    { level: 2, title: "Explorer", next: 50 },
+    { level: 3, title: "Scholar", next: 100 },
+    { level: 4, title: "Adept", next: 250 },
+    { level: 5, title: "Master", next: 500 },
+  ];
+  return tiers.find((t) => xp < t.next) ?? { level: 6, title: "Grandmaster", next: xp };
 }
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
+  const m = Math.floor(diff / 60_000);
   if (m < 1) return "just now";
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
+function Skel({ className = "" }: { className?: string }) {
+  return <div className={`rounded bg-[#141414] animate-pulse ${className}`} />;
+}
+
+/* ── page ─────────────────────────────────────────────────────────────── */
+
 function ProfilePage() {
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['user_profile'],
-    queryFn: async () => { const res = await apiFetch("/profile/"); if (!res.ok) throw new Error("Failed"); return res.json(); }
+  const { data: profile, isLoading: pLoading } = useQuery({
+    queryKey: ["user_profile"],
+    queryFn: async () => { const r = await apiFetch("/profile/"); if (!r.ok) throw 0; return r.json(); },
   });
 
-  const { data: heatmapData = [], isLoading: heatmapLoading } = useQuery({
-    queryKey: ['heatmap'],
+  const { data: heatmap = [], isLoading: hLoading } = useQuery({
+    queryKey: ["heatmap"],
     queryFn: async () => {
-      const res = await apiFetch("/heatmap/");
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json.map((d: any) => {
-        let level = 0;
-        if (d.count > 0 && d.count <= 2) level = 1;
-        else if (d.count > 2 && d.count <= 4) level = 2;
-        else if (d.count > 4 && d.count <= 6) level = 3;
-        else if (d.count > 6) level = 4;
-        return { date: d.date, count: d.count, level };
-      });
-    }
+      const r = await apiFetch("/heatmap/");
+      if (!r.ok) return [];
+      return (await r.json()).map((d: any) => ({
+        date: d.date, count: d.count,
+        level: d.count === 0 ? 0 : d.count <= 2 ? 1 : d.count <= 4 ? 2 : d.count <= 6 ? 3 : 4,
+      }));
+    },
   });
 
-  const { data: activityData = [] } = useQuery({
-    queryKey: ['recent_activity'],
-    queryFn: async () => { const res = await apiFetch("/activity/"); return res.ok ? res.json() : []; }
+  const { data: activity = [] } = useQuery({
+    queryKey: ["recent_activity"],
+    queryFn: async () => { const r = await apiFetch("/activity/"); return r.ok ? r.json() : []; },
   });
 
-  if (profileLoading) {
-    return <PageShell><div className="flex items-center justify-center py-20 text-[#666]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading Profile...</div></PageShell>;
-  }
-
-  const { level, title, next } = getLevelInfo(profile.total_xp);
-  const xpPct = Math.round((profile.total_xp / next) * 100);
-  const joinedDate = new Date(profile.date_joined).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const xp = profile?.total_xp ?? 0;
+  const { level, title: lvl, next } = getLevelInfo(xp);
+  const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
+  const joined = profile ? new Date(profile.date_joined).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—";
+  const today = new Date().toISOString().split("T")[0];
+  const hd = heatmap.length > 0 ? heatmap : [{ date: today, count: 0, level: 0 }];
 
   return (
     <PageShell>
-      <div className="flex flex-col gap-6">
-        
-        {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl border border-[#1e3060] bg-gradient-to-br from-[#0a0f1e] to-[#05080f] p-8 shadow-2xl">
-          <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#3b5bdb]/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[#1e3060] border-4 border-[#3b5bdb] shadow-[0_0_30px_rgba(59,91,219,0.3)]">
-              <User size={56} className="text-[#60a5fa]" />
+      <div className="profile-grid" style={{ height: "calc(100vh - 64px)", overflow: "hidden" }}>
+
+        {/* ── [A] Identity card — left col, row 1-2 ─────────────────────── */}
+        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "id" }}>
+          {/* Glow bg */}
+          <div className="relative px-5 pt-6 pb-4 flex flex-col items-center text-center">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0d1a2e] to-transparent opacity-40 pointer-events-none" />
+            {/* Avatar */}
+            <div className="relative z-10 w-16 h-16 rounded-full bg-[#0f1e30] border-2 border-[#3b5bdb]/50 flex items-center justify-center mb-3 shadow-[0_0_24px_rgba(59,91,219,0.15)]">
+              <User size={32} className="text-[#60a5fa]" />
             </div>
-            
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold tracking-tight text-white mb-1">{profile.username}</h1>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-sm text-[#a0a0a0] mb-4">
-                <span className="flex items-center gap-1.5"><Calendar size={14} /> Joined {joinedDate}</span>
-                <span className="flex items-center gap-1.5"><Shield size={14} className="text-[#22c55e]" /> Level {level} {title}</span>
-              </div>
-              
-              {/* Level Progress */}
-              <div className="max-w-xs mx-auto md:mx-0">
-                <div className="flex justify-between items-end mb-1">
-                  <span className="text-xs font-mono text-[#60a5fa]">{title}</span>
-                  <span className="text-[10px] font-mono text-[#60a5fa]">{profile.total_xp} / {next} Points</span>
-                </div>
-                <Progress value={xpPct} />
-              </div>
+            <h1 className="relative z-10 text-lg font-semibold text-[#f0f0f0] tracking-tight leading-none mb-1">
+              {pLoading ? <Skel className="h-5 w-28 mx-auto" /> : profile?.username}
+            </h1>
+            <div className="relative z-10 flex items-center gap-3 text-[10px] font-mono text-[#444] uppercase tracking-wider">
+              <span className="flex items-center gap-1"><Calendar size={9} /> {joined}</span>
+              <span className="flex items-center gap-1"><Shield size={9} className="text-[#22c55e]" /> Lv{level}</span>
             </div>
+          </div>
+
+          {/* Level progress */}
+          <div className="px-5 pb-4 flex-shrink-0">
+            <div className="flex items-center justify-between text-[9px] font-mono text-[#333] mb-1.5 uppercase tracking-wider">
+              <span>{lvl}</span>
+              <span>{pLoading ? "—" : `${xp}/${next}`}</span>
+            </div>
+            <div className="h-1 bg-[#141414] rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#3b5bdb] to-[#60a5fa] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+
+          {/* Quick stats */}
+          <div className="grid grid-cols-2 divide-x divide-[#111] border-t border-[#111] flex-1">
+            <MiniStat icon={<Flame size={13} className="text-[#f59e0b]" />} label="Streak" value={pLoading ? "—" : `${profile.streak}d`} />
+            <MiniStat icon={<Trophy size={13} className="text-[#22c55e]" />} label="Points" value={pLoading ? "—" : String(xp)} />
+            <MiniStat icon={<BookOpen size={13} className="text-[#60a5fa]" />} label="Notes" value={pLoading ? "—" : String(profile.notes_written)} />
+            <MiniStat icon={<ClipboardCheck size={13} className="text-[#a78bfa]" />} label="Quizzes" value={pLoading ? "—" : String(profile.quizzes_passed)} />
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatMini icon={<Flame size={18} className="text-[#f59e0b]" />} label="Streak" value={`${profile.streak}d`} />
-          <StatMini icon={<Trophy size={18} className="text-[#22c55e]" />} label="Contributions" value={String(profile.total_xp)} />
-          <StatMini icon={<BookOpen size={18} className="text-[#60a5fa]" />} label="Notes" value={String(profile.notes_written)} />
-          <StatMini icon={<ClipboardCheck size={18} className="text-[#a78bfa]" />} label="Quizzes" value={String(profile.quizzes_passed)} />
-        </div>
-
-        {/* Badges */}
-        {profile.badges && profile.badges.length > 0 && (
-          <Card className="p-5">
-            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">Achievement Badges</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {profile.badges.map((b: any) => (
-                <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl border border-[#222] bg-[#0f0f0f]">
-                  <div className="text-2xl">{b.icon}</div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-[#f0f0f0] truncate">{b.title}</div>
-                    <div className="text-[10px] text-[#666] truncate">{b.desc}</div>
-                  </div>
-                </div>
-              ))}
+        {/* ── [B] Badges — top center ───────────────────────────────────── */}
+        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "badges" }}>
+          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
+            <div className="flex items-center gap-1.5">
+              <Award size={10} className="text-[#f59e0b]" />
+              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Achievements</span>
             </div>
-          </Card>
-        )}
-
-        {/* Heatmap + Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 p-5">
-            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">Contribution Heatmap</h3>
-            <div className="overflow-x-auto pb-2">
-              <div className="min-w-[700px]">
-                {heatmapLoading ? (
-                  <div className="h-32 bg-[#111] animate-pulse rounded" />
-                ) : (
-                  <ActivityCalendar
-                    data={heatmapData}
-                    theme={{ light: ["#161616", "#0e4429", "#006d32", "#26a641", "#39d353"], dark: ["#161616", "#0e4429", "#006d32", "#26a641", "#39d353"] }}
-                    colorScheme="dark"
-                    blockSize={12}
-                    blockMargin={4}
-                    fontSize={12}
-                    labels={{ legend: { less: "Less", more: "More" }, totalCount: "{{count}} contributions in the last year" }}
-                  />
-                )}
+            {!pLoading && profile?.badges && (
+              <span className="text-[8px] font-mono text-[#2e2e2e]">{profile.badges.length} earned</span>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto min-h-0 p-3">
+            {pLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-12 w-full" />)}
               </div>
-            </div>
-          </Card>
-          
-          <Card className="p-5">
-            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">Recent Activity</h3>
-            {activityData.length === 0 ? (
-              <div className="text-sm text-[#888] text-center py-6">No activity yet.</div>
-            ) : (
-              <div className="space-y-3">
-                {activityData.slice(0, 8).map((a: any) => (
-                  <div key={a.id} className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] mt-2 shrink-0" />
+            ) : profile?.badges?.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {profile.badges.map((b: any) => (
+                  <div key={b.id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-[#181818] bg-[#0b0b0b] hover:border-[#252525] transition-colors">
+                    <span className="text-lg shrink-0">{b.icon}</span>
                     <div className="min-w-0">
-                      <div className="text-xs text-[#ccc] truncate">{a.label}</div>
-                      <div className="text-[10px] font-mono text-[#555]">{timeAgo(a.date)}</div>
+                      <p className="text-[11px] font-medium text-[#ddd] truncate">{b.title}</p>
+                      <p className="text-[9px] text-[#444] truncate">{b.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No badges yet</div>
             )}
-          </Card>
+          </div>
         </div>
 
-        {/* Completed Paths + XP Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-5">
-            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">Completed Roadmaps</h3>
-            {profile.completed_paths.length === 0 ? (
-              <div className="text-sm text-[#888] text-center py-6">No roadmaps completed yet. Keep building!</div>
-            ) : (
-              <ul className="space-y-2">
-                {profile.completed_paths.map((p: any) => (
-                  <li key={p.id} className="flex items-center gap-3 bg-[#111] p-3 rounded-lg border border-[#222]">
-                    <Award size={16} className="text-[#f59e0b]" />
-                    <span className="text-sm font-medium text-[#e0e0e0]">{p.title}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-          
-          <Card className="p-5">
-            <h3 className="text-[10px] uppercase tracking-wider font-mono text-[#666] mb-4">Contribution Breakdown</h3>
-            {profile.xp_breakdown && profile.xp_breakdown.length > 0 ? (
+        {/* ── [C] Contribution breakdown — top right ────────────────────── */}
+        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "breakdown" }}>
+          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
+            <div className="flex items-center gap-1.5">
+              <TrendingUp size={10} className="text-[#22c55e]" />
+              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Breakdown</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto min-h-0 p-3.5">
+            {pLoading ? (
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-6 w-full" />)}
+              </div>
+            ) : profile?.xp_breakdown?.length > 0 ? (
               <div className="space-y-3">
                 {profile.xp_breakdown.map((item: any) => {
-                  const maxXp = profile.xp_breakdown[0].total;
-                  const pct = Math.round((item.total / maxXp) * 100);
+                  const max = profile.xp_breakdown[0].total;
+                  const w = Math.round((item.total / max) * 100);
                   const label = item.action_type.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
                   return (
                     <div key={item.action_type}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[#ccc]">{label}</span>
-                        <span className="font-mono text-[#666]">{item.total} pts ({item.count}×)</span>
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span className="text-[#888] truncate">{label}</span>
+                        <span className="font-mono text-[#333] shrink-0 ml-2">{item.total} · {item.count}×</span>
                       </div>
-                      <div className="h-1.5 bg-[#222] rounded-full">
-                        <div className="h-1.5 rounded-full bg-[#22c55e] transition-all" style={{ width: `${pct}%` }} />
+                      <div className="h-[3px] bg-[#141414] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${w}%` }} />
                       </div>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="text-sm text-[#888] text-center py-6">No contributions yet.</div>
+              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No data yet</div>
             )}
-          </Card>
+          </div>
+        </div>
+
+        {/* ── [D] Heatmap — bottom center ───────────────────────────────── */}
+        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "heat" }}>
+          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
+            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Contribution Heatmap</span>
+            <span className="text-[8px] font-mono text-[#252525]">{pLoading ? "—" : `${xp} total`}</span>
+          </div>
+          <div className="flex-1 flex items-center px-3.5 py-2 overflow-x-auto min-h-0">
+            {hLoading ? (
+              <Skel className="h-full w-full" />
+            ) : (
+              <ActivityCalendar
+                data={hd}
+                theme={{ light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"], dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"] }}
+                colorScheme="dark"
+                labels={{ totalCount: "{{count}} contributions this year" }}
+                style={{ fontSize: "10px" }}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* ── [E] Activity — bottom right ───────────────────────────────── */}
+        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "activity" }}>
+          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
+            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Recent Activity</span>
+            {activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
+          </div>
+          <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2">
+            {activity.length > 0 ? (
+              <ul className="space-y-px">
+                {activity.slice(0, 10).map((a: any, i: number) => (
+                  <li key={a.id} className="flex items-start gap-2 py-1.5 border-b border-[#0d0d0d] last:border-0">
+                    <div className={`mt-1 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#1e1e1e]"}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#484848]"}`}>{a.label}</p>
+                      <p className="text-[9px] font-mono text-[#252525]">{timeAgo(a.date)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex items-center justify-center h-full text-[11px] text-[#333]">No activity yet</div>
+            )}
+          </div>
+        </div>
+
+        {/* ── [F] Completed paths — very bottom ────────────────────────── */}
+        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "paths" }}>
+          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
+            <div className="flex items-center gap-1.5">
+              <Star size={10} className="text-[#f59e0b]" />
+              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">Completed Roadmaps</span>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto min-h-0 px-3.5 py-2">
+            {pLoading ? (
+              <div className="flex gap-2">
+                {Array.from({ length: 3 }).map((_, i) => <Skel key={i} className="h-7 w-28" />)}
+              </div>
+            ) : profile?.completed_paths?.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.completed_paths.map((p: any) => (
+                  <span key={p.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-[#1a3028] bg-[#0a1a12] text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
+                    <Award size={9} /> {p.title}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center h-full text-[11px] text-[#333]">No roadmaps completed yet — keep building!</div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* ── grid definition ─────────────────────────────────────────────── */}
+      <style>{`
+        .profile-grid {
+          display: grid;
+          gap: 8px;
+          grid-template-columns: 220px 1fr 240px;
+          grid-template-rows: 1fr 1fr auto;
+          grid-template-areas:
+            "id     badges    breakdown"
+            "id     heat      activity"
+            "paths  paths     paths";
+        }
+        @media (max-width: 1024px) {
+          .profile-grid {
+            height: auto !important;
+            overflow: auto !important;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto;
+            grid-template-areas:
+              "id"
+              "badges"
+              "breakdown"
+              "heat"
+              "activity"
+              "paths";
+          }
+        }
+      `}</style>
     </PageShell>
   );
 }
 
-function StatMini({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+/* ── mini stat cell ───────────────────────────────────────────────────── */
+function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <Card className="p-4 flex items-center gap-3">
+    <div className="flex items-center gap-2 px-3 py-2.5">
       {icon}
       <div>
-        <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">{label}</div>
-        <div className="text-xl font-bold text-[#f0f0f0]">{value}</div>
+        <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#333]">{label}</p>
+        <p className="text-sm font-semibold tabular-nums text-[#e8e8e8] leading-tight">{value}</p>
       </div>
-    </Card>
+    </div>
   );
 }
