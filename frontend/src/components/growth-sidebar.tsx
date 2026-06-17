@@ -45,20 +45,29 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
+
 function SidebarFooter() {
-  const { state } = useGrowth();
-  const streak = computeStreak(state.activeDays);
-  const path = PATHS.find((p) => p.id === state.settings.pathId);
+  const { data: profile } = useQuery({
+    queryKey: ["user_profile"],
+    queryFn: async () => { const r = await apiFetch("/profile/"); if (!r.ok) throw 0; return r.json(); },
+  });
+
+  const streak = profile?.streak ?? 0;
+  const username = profile?.user?.username || "Hacker";
+  const email = profile?.user?.email || "Developer";
+
   return (
     <div className="border-t border-[#1a1a1a] p-4 mt-auto">
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-[#161616] border border-[#1a1a1a] flex items-center justify-center text-[10px] font-medium text-[#888]">
-          {state.settings.displayName.slice(0, 2).toUpperCase()}
+        <div className="h-8 w-8 rounded-lg bg-[#161616] border border-[#1a1a1a] flex items-center justify-center text-[10px] font-medium text-[#888] uppercase">
+          {username.slice(0, 2)}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] text-[#ccc] truncate">{state.settings.displayName}</div>
+          <div className="text-[13px] text-[#ccc] truncate font-medium">{username}</div>
           <div className="text-[10px] text-[#555] truncate">
-            {path?.name ?? "No path selected"}
+            {email}
           </div>
         </div>
       </div>
