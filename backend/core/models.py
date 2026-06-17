@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     selected_path = models.ForeignKey('LearningPath', on_delete=models.SET_NULL, null=True, blank=True)
+    selected_title = models.CharField(max_length=100, default='Novice')
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     github_username = models.CharField(max_length=100, blank=True, default='')

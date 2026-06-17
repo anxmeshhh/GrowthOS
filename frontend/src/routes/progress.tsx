@@ -5,6 +5,7 @@ import { PageShell } from "@/components/growth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { ActivityCalendar } from "react-activity-calendar";
+import { TITLES, type TitleTag } from "@/lib/tags";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({ meta: [{ title: "Progress — GrowthOS" }] }),
@@ -12,14 +13,10 @@ export const Route = createFileRoute("/progress")({
 });
 
 function getLevelInfo(xp: number) {
-  if (xp < 50) return { level: 1, title: "Novice", next: 50 };
-  if (xp < 150) return { level: 2, title: "Apprentice", next: 150 };
-  if (xp < 350) return { level: 3, title: "Scholar", next: 350 };
-  if (xp < 750) return { level: 4, title: "Adept", next: 750 };
-  if (xp < 1500) return { level: 5, title: "Expert", next: 1500 };
-  if (xp < 3000) return { level: 6, title: "Master", next: 3000 };
-  if (xp < 5000) return { level: 7, title: "Grandmaster", next: 5000 };
-  return { level: 8, title: "Legend", next: 0 };
+  let l = 1; let n = 100;
+  let temp_xp = xp;
+  while(temp_xp >= n) { temp_xp -= n; l++; n = Math.floor(n * 1.5); }
+  return { level: l, currentXP: temp_xp, next: n };
 }
 
 function computeStreak(activeDays: string[]) {
@@ -113,6 +110,22 @@ function ProgressPage() {
     { id: 3, icon: Sparkles, color: "#a855f7", label: "Fast Learner", desc: "Finished a module in 1 day" },
   ];
 
+  const [savingTitle, setSavingTitle] = useState(false);
+  const equipTitle = async (titleId: string) => {
+    setSavingTitle(true);
+    try {
+      const res = await apiFetch("/profile/", {
+        method: "PATCH",
+        body: JSON.stringify({ selected_title: titleId })
+      });
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      }
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
   /* ── render ──────────────────────────────────────────────────────────── */
 
   if (isLoading) {
@@ -140,10 +153,10 @@ function ProgressPage() {
             grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.2fr);
             grid-template-rows: auto 160px minmax(0, 1fr) 180px;
             grid-template-areas:
-              "hdr    hdr    hdr"
-              "lvl    streak badges"
-              "paths  paths  xp"
-              "heatmap heatmap heatmap";
+              "hdr     hdr     hdr"
+              "lvl     streak  badges"
+              "paths   xp      badges"
+              "heatmap heatmap badges";
             height: calc(100vh - 64px);
             overflow: hidden;
           }
@@ -198,24 +211,49 @@ function ProgressPage() {
           <div className="text-[9px] uppercase font-mono tracking-wider text-[#666] mt-1">Day Streak</div>
         </div>
 
-        {/* ── [BADGES] ───────────────────────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] bg-[#0a0a0a] rounded-lg p-4 flex flex-col" style={{ gridArea: "badges" }}>
-          <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#444] mb-4 shrink-0 flex items-center justify-between">
-            Recent Unlocks
+        {/* ── [TITLES / TAGS] ────────────────────────────────────────────── */}
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] rounded-lg flex flex-col min-h-0" style={{ gridArea: "badges" }}>
+          <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#444] px-4 py-3 border-b border-[#131313] shrink-0 flex items-center justify-between">
+            <span>Title Collection</span>
+            <span className="text-[#eab308]">{TITLES.filter(t => level >= t.levelReq).length} / {TITLES.length} Unlocked</span>
           </div>
-          <div className="flex-1 flex items-center justify-center gap-3">
-            {achievements.map((a, i) => {
-              const Icon = a.icon;
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+            {TITLES.map((tag) => {
+              const unlocked = level >= tag.levelReq;
+              const isEquipped = profile?.selected_title === tag.name;
+              
+              let rarityColors = "";
+              if (tag.rarity === "common") rarityColors = "text-[#888] border-[#222]";
+              if (tag.rarity === "uncommon") rarityColors = "text-[#22c55e] border-[#0e4429]";
+              if (tag.rarity === "rare") rarityColors = "text-[#3b82f6] border-[#1e3a8a]";
+              if (tag.rarity === "epic") rarityColors = "text-[#a855f7] border-[#581c87]";
+              if (tag.rarity === "legendary") rarityColors = "text-[#f59e0b] border-[#78350f]";
+              if (tag.rarity === "mythic") rarityColors = "text-[#ef4444] border-[#7f1d1d]";
+
               return (
-                <div key={a.id} className="relative group cursor-help">
-                  <div className="w-12 h-12 rounded-full border border-[#222] bg-[#111] flex items-center justify-center hover:scale-110 transition-transform">
-                    <Icon size={20} color={a.color} opacity={0.9} />
+                <button
+                  key={tag.id}
+                  disabled={!unlocked || savingTitle || isEquipped}
+                  onClick={() => equipTitle(tag.name)}
+                  className={`w-full flex items-center justify-between p-3 rounded-md border text-left transition-all ${
+                    unlocked 
+                      ? isEquipped
+                        ? "bg-[#111] border-[#444]" 
+                        : "bg-[#0a0a0a] hover:bg-[#111] cursor-pointer hover:scale-[1.01]" 
+                      : "opacity-40 grayscale cursor-not-allowed bg-[#050505] border-[#111]"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-semibold tracking-tight ${unlocked ? rarityColors.split(" ")[0] : "text-[#555]"}`}>
+                        {tag.name}
+                      </span>
+                      {isEquipped && <span className="text-[9px] font-mono uppercase bg-[#22c55e]/20 text-[#22c55e] px-1.5 py-0.5 rounded">Equipped</span>}
+                      {!unlocked && <span className="text-[9px] font-mono uppercase bg-[#111] text-[#555] px-1.5 py-0.5 rounded">Lvl {tag.levelReq}</span>}
+                    </div>
+                    <div className="text-[10px] text-[#666] mt-1 pr-4 leading-snug">{tag.desc}</div>
                   </div>
-                  {/* Tooltip */}
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#222] text-[#eee] text-[10px] whitespace-nowrap px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 font-mono">
-                    {a.label}
-                  </div>
-                </div>
+                </button>
               );
             })}
           </div>

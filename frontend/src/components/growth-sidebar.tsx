@@ -66,8 +66,8 @@ function SidebarFooter() {
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-[13px] text-[#ccc] truncate font-medium">{username}</div>
-          <div className="text-[10px] text-[#555] truncate">
-            {email}
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#22c55e] truncate mt-0.5">
+            {profile?.selected_title || "Novice"}
           </div>
         </div>
       </div>

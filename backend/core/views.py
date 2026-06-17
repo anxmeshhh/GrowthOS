@@ -757,11 +757,12 @@ class UserProfileView(views.APIView):
         total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
         
         level = 1
-        if total_xp >= 100: level = 6
-        elif total_xp >= 50: level = 5
-        elif total_xp >= 25: level = 4
-        elif total_xp >= 10: level = 3
-        elif total_xp >= 5: level = 2
+        n = 100
+        temp_xp = total_xp
+        while temp_xp >= n:
+            temp_xp -= n
+            level += 1
+            n = int(n * 1.5)
 
         # Stats
         topics_completed = TopicProgress.objects.filter(user=user, status='completed').count()
@@ -881,16 +882,32 @@ class UserProfileView(views.APIView):
             "badges": badges,
             "github_username": profile.github_username,
             "can_revive_streak": can_revive_streak,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            "selected_title": profile.selected_title,
         })
 
     def patch(self, request):
         user = request.user
         profile, _ = UserProfile.objects.get_or_create(user=user)
+        
         github_username = request.data.get('github_username')
         if github_username is not None:
             profile.github_username = github_username
-            profile.save()
-        return Response({"status": "updated", "github_username": profile.github_username})
+            
+        selected_title = request.data.get('selected_title')
+        if selected_title is not None:
+            profile.selected_title = selected_title
+            
+        profile.save()
+        return Response({
+            "status": "updated", 
+            "github_username": profile.github_username,
+            "selected_title": profile.selected_title
+        })
 
 class GitHubReposView(views.APIView):
     permission_classes = [IsAuthenticated]
