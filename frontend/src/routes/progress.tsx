@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Flame, Trophy, Target, Sparkles, Star, ChevronRight, Loader2, Zap } from "lucide-react";
+import { Flame, Trophy, Target, Sparkles, Star, ChevronRight, Loader2, Zap, Shield, Sword, Crown, Hexagon } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -231,6 +231,13 @@ function ProgressPage() {
               if (tag.rarity === "legendary") rarityColors = "text-[#f59e0b] border-[#78350f]";
               if (tag.rarity === "mythic") rarityColors = "text-[#ef4444] border-[#7f1d1d]";
 
+              let Icon = Star;
+              if (tag.rarity === "uncommon") Icon = Shield;
+              if (tag.rarity === "rare") Icon = Sword;
+              if (tag.rarity === "epic") Icon = Crown;
+              if (tag.rarity === "legendary") Icon = Flame;
+              if (tag.rarity === "mythic") Icon = Hexagon;
+
               return (
                 <button
                   key={tag.id}
@@ -246,6 +253,7 @@ function ProgressPage() {
                 >
                   <div>
                     <div className="flex items-center gap-2">
+                      <Icon size={14} className={unlocked ? rarityColors.split(" ")[0] : "text-[#555]"} />
                       <span className={`text-sm font-semibold tracking-tight ${unlocked ? rarityColors.split(" ")[0] : "text-[#555]"}`}>
                         {tag.name}
                       </span>
