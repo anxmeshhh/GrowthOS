@@ -1,16 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Flame, Shield, Sword, Crown, Hexagon, Star, 
-  Target, BarChart2, Zap, Lock
+  Flame, Trophy, Zap, Star, ChevronRight, Loader2,
+  Shield, Sword, Crown, Hexagon, Map, BarChart2, Tag, CalendarDays,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
+import { ActivityCalendar } from "react-activity-calendar";
 import { TITLES, type TitleTag } from "@/lib/tags";
 
 export const Route = createFileRoute("/progress")({
-  head: () => ({ meta: [{ title: "Holo Core — GrowthOS" }] }),
+  head: () => ({ meta: [{ title: "Progress — GrowthOS" }] }),
   component: ProgressPage,
 });
 
@@ -51,46 +52,48 @@ function computeStreak(activeDays: string[]) {
 
 const RARITY_CONFIG: Record<
   string,
-  { color: string; border: string; glow: string; label: string; Icon: any }
+  { color: string; bg: string; border: string; label: string; Icon: any }
 > = {
-  common: { color: "#a0aab5", border: "#1f2330", glow: "rgba(160,170,181,0.15)", label: "Common", Icon: Star },
-  uncommon: { color: "#00e5ff", border: "#005566", glow: "rgba(0,229,255,0.25)", label: "Uncommon", Icon: Shield },
-  rare: { color: "#4d79ff", border: "#1a2c66", glow: "rgba(77,121,255,0.25)", label: "Rare", Icon: Sword },
-  epic: { color: "#ccff00", border: "#4d6600", glow: "rgba(204,255,0,0.2)", label: "Epic", Icon: Crown },
-  legendary: { color: "#ff4d4d", border: "#661a1a", glow: "rgba(255,77,77,0.3)", label: "Legendary", Icon: Flame },
-  mythic: { color: "#ff00aa", border: "#660044", glow: "rgba(255,0,170,0.3)", label: "Mythic", Icon: Hexagon },
+  common: { color: "#888", bg: "#88888818", border: "#333", label: "Common", Icon: Star },
+  uncommon: { color: "#22c55e", bg: "#22c55e18", border: "#14532d", label: "Uncommon", Icon: Shield },
+  rare: { color: "#3b82f6", bg: "#3b82f618", border: "#1e3a8a", label: "Rare", Icon: Sword },
+  epic: { color: "#a855f7", bg: "#a855f718", border: "#581c87", label: "Epic", Icon: Crown },
+  legendary: { color: "#f59e0b", bg: "#f59e0b18", border: "#78350f", label: "Legendary", Icon: Flame },
+  mythic: { color: "#ef4444", bg: "#ef444418", border: "#7f1d1d", label: "Mythic", Icon: Hexagon },
 };
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/*  Holographic Primitives                                                     */
+/*  Sub-components                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-function HoloCard({ children, className = "", animateBorder = true }: { children: React.ReactNode; className?: string, animateBorder?: boolean }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`relative rounded-2xl p-[1px] overflow-hidden group ${className}`}>
-      {/* Base border */}
-      <div className="absolute inset-0 bg-[#1f2330]" />
-      
-      {/* Animated spinning gradient border */}
-      {animateBorder && (
-        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0%,rgba(0,229,255,0.4)_25%,transparent_50%,rgba(255,77,77,0.4)_75%,transparent_100%)] animate-[spin_6s_linear_infinite] opacity-40 group-hover:opacity-100 transition-opacity duration-700" />
-      )}
-      
-      {/* Card Content Surface */}
-      <div className="relative h-full bg-[#10121a] rounded-[15px] z-10 overflow-hidden">
-        {/* Subtle mesh background inside card */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-        <div className="relative z-10">{children}</div>
-      </div>
+    <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#555] flex items-center gap-1.5">
+      {children}
+    </p>
+  );
+}
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden ${className}`}>
+      {children}
     </div>
   );
 }
 
-function SectionLabel({ children, color = "#00e5ff" }: { children: React.ReactNode; color?: string }) {
+function CardHeader({
+  left,
+  right,
+}: {
+  left: React.ReactNode;
+  right?: React.ReactNode;
+}) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.25em] font-mono flex items-center gap-2 drop-shadow-[0_0_5px_currentColor]" style={{ color }}>
-      {children}
-    </p>
+    <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#131313]">
+      <div>{left}</div>
+      {right && <div>{right}</div>}
+    </div>
   );
 }
 
@@ -156,10 +159,14 @@ function ProgressPage() {
   }, [paths, customPaths]);
 
   const xp = profile?.total_xp ?? 0;
-  const { level, currentXP, next } = getLevelInfo(xp);
+  const { level, next } = getLevelInfo(xp);
   const lvlTitle = profile?.selected_title || "Novice";
   const xpPct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
+  const xpRemaining = next > 0 ? next - xp : 0;
   const streak = profile?.streak ?? computeStreak(profile?.heatmap?.map((h: any) => h.date) || []);
+
+  const today = new Date().toISOString().split("T")[0];
+  const hd = heatmap.length > 0 ? heatmap : [{ date: today, count: 0, level: 0 }];
 
   const unlockedCount = TITLES.filter((t) => level >= t.levelReq).length;
 
@@ -180,8 +187,8 @@ function ProgressPage() {
   if (isLoading) {
     return (
       <PageShell>
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="w-10 h-10 border-2 border-transparent border-t-[#00e5ff] border-r-[#ff4d4d] rounded-full animate-spin shadow-[0_0_15px_#00e5ff]" />
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-4 h-4 text-[#444] animate-spin" />
         </div>
       </PageShell>
     );
@@ -190,183 +197,309 @@ function ProgressPage() {
   /* ── render ── */
   return (
     <PageShell>
-      {/* Base page tint to separate from Dashboard */}
-      <div className="fixed inset-0 bg-[#0a0b10] z-[-2]" />
-      
-      <div className="p-6 lg:p-10 max-w-[1400px] mx-auto min-h-screen">
+      <div className="p-5 lg:p-6 space-y-4 max-w-screen-xl mx-auto">
 
-        <div className="grid grid-cols-12 gap-8">
+        {/* ── Page Header ── */}
+        <div className="flex items-end justify-between mb-1">
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1.5">GrowthOS</p>
+            <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">
+              Your Progress
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-mono text-[#555] uppercase tracking-wider">
+            <Trophy size={12} className="text-[#a855f7]" />
+            {lvlTitle} Status
+          </div>
+        </div>
 
-          {/* ── 1. The ID Card (Hero Stats) - Spans 12 cols ── */}
-          <HoloCard className="col-span-12 p-8 md:p-10">
-            <div className="flex flex-col md:flex-row items-center gap-10">
-              
-              {/* Profile Avatar / Rank Ring */}
-              <div className="relative flex items-center justify-center w-36 h-36 shrink-0">
-                <svg className="absolute inset-0 w-full h-full rotate-[-90deg] drop-shadow-[0_0_10px_#00e5ff]">
-                  <circle cx="72" cy="72" r="66" fill="none" stroke="#1f2330" strokeWidth="6" />
-                  <circle 
-                    cx="72" cy="72" r="66" fill="none" stroke="#00e5ff" strokeWidth="6" 
-                    strokeLinecap="round" strokeDasharray="414" strokeDashoffset={414 - (414 * xpPct) / 100}
-                    className="transition-all duration-1000 ease-out"
-                  />
-                </svg>
-                <div className="flex flex-col items-center justify-center bg-[#0a0b10] w-28 h-28 rounded-full border border-[#1f2330] z-10 shadow-[inset_0_0_20px_rgba(0,229,255,0.1)]">
-                  <span className="text-4xl font-bold font-mono text-white tracking-tighter">{level}</span>
-                  <span className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#00e5ff]">Level</span>
-                </div>
+        {/* ── Top Stats Row ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+          {/* Level + XP bar */}
+          <div className="bg-[#0d0914] border border-[#1f1938] rounded-xl p-5 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-[#a855f7] opacity-[0.06] rounded-full blur-3xl pointer-events-none" />
+            <SectionLabel>
+              <Zap size={11} className="text-[#a855f7]" /> Current Level
+            </SectionLabel>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tracking-tight text-[#a855f7]">{level}</span>
+              <span className="text-sm text-[#555] font-mono">— {lvlTitle}</span>
+            </div>
+            <div className="text-[11px] font-mono text-[#666] mt-0.5">{xp} XP total</div>
+
+            <div className="mt-4 space-y-1.5">
+              <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider">
+                <span className="text-[#666]">{xpPct}% to Level {level + 1}</span>
+                <span className="text-[#a855f7]">{xpRemaining} XP needed</span>
               </div>
-
-              {/* Identity & Core Metrics */}
-              <div className="flex-1 min-w-0 w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-                
-                {/* Title */}
-                <div className="flex flex-col">
-                  <SectionLabel color="#ccff00"><Zap size={12} /> Active Class</SectionLabel>
-                  <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-[#a0aab5] mt-2 uppercase tracking-tight">
-                    {lvlTitle}
-                  </h1>
-                  <div className="mt-4 flex items-center gap-6">
-                    <div>
-                      <span className="text-[10px] font-mono text-[#7a8599] uppercase tracking-widest block mb-1">Total XP</span>
-                      <span className="text-xl font-mono text-[#00e5ff] font-bold">{xp} <span className="text-sm text-[#4d5a73] font-normal">/ {next}</span></span>
-                    </div>
-                    <div className="w-px h-8 bg-[#1f2330]" />
-                    <div>
-                      <span className="text-[10px] font-mono text-[#7a8599] uppercase tracking-widest block mb-1">Network Streak</span>
-                      <div className="flex items-center gap-2">
-                        <Flame size={16} className={streak > 0 ? "text-[#ff4d4d]" : "text-[#4d5a73]"} />
-                        <span className={`text-xl font-mono font-bold ${streak > 0 ? "text-[#ff4d4d]" : "text-white"}`}>{streak}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+              <div className="h-1 w-full bg-[#111] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#a855f7] rounded-full transition-all duration-700"
+                  style={{ width: `${xpPct}%` }}
+                />
               </div>
             </div>
-          </HoloCard>
-
-          {/* ── 2. Telemetry Matrix (Stats) - Spans 4 cols ── */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
-            <HoloCard animateBorder={false} className="flex-1 p-8">
-              <SectionLabel color="#ff4d4d"><BarChart2 size={12} /> Live Telemetry</SectionLabel>
-              <div className="mt-8 flex flex-col gap-6">
-                <div className="flex justify-between items-end border-b border-[#1f2330] pb-3">
-                  <span className="text-xs font-mono text-[#7a8599] uppercase tracking-wider">Nodes Conquered</span>
-                  <span className="text-3xl font-mono text-white font-black">{profile?.stats?.topics_completed || 0}</span>
-                </div>
-                <div className="flex justify-between items-end border-b border-[#1f2330] pb-3">
-                  <span className="text-xs font-mono text-[#7a8599] uppercase tracking-wider">Data Synced</span>
-                  <span className="text-3xl font-mono text-white font-black">{profile?.stats?.notes_written || 0}</span>
-                </div>
-                <div className="flex justify-between items-end border-b border-[#1f2330] pb-3">
-                  <span className="text-xs font-mono text-[#7a8599] uppercase tracking-wider">Trials Passed</span>
-                  <span className="text-3xl font-mono text-white font-black">{profile?.stats?.quizzes_passed || 0}</span>
-                </div>
-              </div>
-            </HoloCard>
-
-            <HoloCard animateBorder={false} className="flex-1 p-8">
-              <SectionLabel color="#ccff00"><Target size={12} /> Sector Progression</SectionLabel>
-              <div className="mt-8 space-y-6">
-                {activePaths.length === 0 ? (
-                  <div className="text-xs font-mono text-[#4d5a73] uppercase tracking-widest text-center mt-10">No sectors active</div>
-                ) : (
-                  activePaths.map((p) => (
-                    <div key={p.uniqueId} className="group">
-                      <div className="flex justify-between items-baseline mb-2">
-                        <span className="text-xs font-bold text-white tracking-wide uppercase truncate mr-4">{p.title}</span>
-                        <span className="text-[10px] font-mono text-[#ccff00]">{p.pct}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-[#1f2330] rounded-full overflow-hidden relative">
-                        <div 
-                          className="absolute inset-y-0 left-0 bg-[#ccff00] rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(204,255,0,0.6)] relative overflow-hidden" 
-                          style={{ width: `${p.pct}%` }} 
-                        >
-                          {/* Glare sweep animation */}
-                          <div className="absolute inset-0 w-[20px] bg-white/50 -skew-x-12 animate-[sweep_2s_linear_infinite]" />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </HoloCard>
           </div>
 
-          {/* ── 3. Tokens (Titles) - Spans 8 cols ── */}
-          <HoloCard className="col-span-12 lg:col-span-8 p-8 flex flex-col h-[700px]">
-            <div className="flex justify-between items-center mb-6">
-              <SectionLabel color="#00e5ff"><Crown size={12} /> Artifact Collection</SectionLabel>
-              <span className="text-[10px] font-mono text-[#7a8599] uppercase tracking-widest bg-[#1f2330] px-3 py-1 rounded-full">{unlockedCount} / {TITLES.length}</span>
+          {/* Streak */}
+          <div className="bg-[#0d0b04] border border-[#221a05] rounded-xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-[#f59e0b] opacity-[0.07] rounded-full blur-2xl pointer-events-none" />
+            <SectionLabel>
+              <Flame size={11} className="text-[#f59e0b]" /> Day Streak
+            </SectionLabel>
+            <div className={`text-4xl font-mono font-semibold mt-3 ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
+              {streak}
             </div>
+            <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-1">
+              {streak > 0 ? "Keep it alive!" : "Start today"}
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 overflow-y-auto pr-2 custom-scrollbar pb-6">
-              {TITLES.map((t: TitleTag, i: number) => {
-                const isUnlocked = level >= t.levelReq;
-                const isEquipped = lvlTitle === t.id;
-                const r = RARITY_CONFIG[t.rarity] || RARITY_CONFIG.common;
-                const Icon = r.Icon;
+          {/* Total XP */}
+          <div className="bg-[#040d07] border border-[#0d2214] rounded-xl p-5 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-[#22c55e] opacity-[0.06] rounded-full blur-2xl pointer-events-none" />
+            <SectionLabel>
+              <Star size={11} className="text-[#22c55e]" /> Total XP Earned
+            </SectionLabel>
+            <div className="text-3xl font-semibold tracking-tight text-[#f0f0f0] mt-3">
+              {xp.toLocaleString()}
+              <span className="text-base text-[#555] ml-1.5">XP</span>
+            </div>
+            <div className="text-[11px] font-mono text-[#22c55e] mt-1">
+              +120 this week
+            </div>
+          </div>
+        </div>
 
-                if (!isUnlocked) {
+        {/* ── Middle Row: Missions + XP Sources ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+          {/* Active Missions */}
+          <Card>
+            <CardHeader
+              left={
+                <SectionLabel>
+                  <Map size={11} /> Active Missions
+                </SectionLabel>
+              }
+              right={
+                <span className="text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
+                  {activePaths.length} active
+                </span>
+              }
+            />
+            <div className="p-3 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+              {activePaths.length === 0 ? (
+                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">
+                  No active paths — start a mission!
+                </div>
+              ) : (
+                activePaths.map((p) => (
+                  <Link
+                    key={p.uniqueId}
+                    to="/roadmap"
+                    className="flex items-start gap-4 p-4 border border-[#161616] hover:border-[#252525] bg-[#0d0d0d] hover:bg-[#0f0f0f] rounded-lg transition-all group"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3 mb-2.5">
+                        <div className="min-w-0">
+                          <h3 className="text-[13px] font-medium text-[#ccc] group-hover:text-[#f0f0f0] transition-colors truncate">
+                            {p.title}
+                          </h3>
+                          <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-0.5">
+                            {p.done} / {p.total} Topics
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[12px] font-mono text-[#22c55e]">{p.pct}%</span>
+                          <ChevronRight size={13} className="text-[#444] group-hover:text-[#888] transition-colors" />
+                        </div>
+                      </div>
+                      <div className="h-[3px] w-full bg-[#151515] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#22c55e] rounded-full transition-all duration-700"
+                          style={{ width: `${p.pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </Card>
+
+          {/* XP Sources */}
+          <Card>
+            <CardHeader
+              left={
+                <SectionLabel>
+                  <BarChart2 size={11} className="text-[#f59e0b]" /> XP Sources
+                </SectionLabel>
+              }
+            />
+            <div className="p-5 space-y-5 max-h-[300px] overflow-y-auto custom-scrollbar">
+              {profile?.xp_breakdown && profile.xp_breakdown.length > 0 ? (
+                profile.xp_breakdown.map((item: any, i: number) => {
+                  const maxXp = profile.xp_breakdown[0].total;
+                  const pct = Math.round((item.total / maxXp) * 100);
+                  const label = item.action_type
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c: string) => c.toUpperCase());
                   return (
-                    <div key={t.id} className="relative p-5 rounded-xl border border-[#1f2330] bg-[#151821] flex flex-col items-center justify-center text-center h-[140px] opacity-40">
-                      <Lock size={20} className="text-[#4d5a73] mb-3" />
-                      <span className="text-[10px] font-mono text-[#7a8599] tracking-widest uppercase">Lv {t.levelReq}</span>
+                    <div key={item.action_type}>
+                      <div className="flex justify-between items-baseline mb-1.5">
+                        <span className="text-[11px] uppercase font-mono tracking-wider text-[#666]">
+                          {label}
+                        </span>
+                        <span className="text-[12px] font-mono text-[#bbb] tabular-nums">
+                          {item.total.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="h-[3px] w-full bg-[#111] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${i === 0 ? "bg-[#f59e0b]" : "bg-[#2a2a2a]"}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </div>
                   );
-                }
-
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => equipTitle(t.id)}
-                    disabled={savingTitle || isEquipped}
-                    className={`relative p-5 rounded-xl border flex flex-col items-center justify-center text-center h-[140px] transition-all duration-300 group ${isEquipped ? 'scale-105' : 'hover:scale-105 hover:-translate-y-2'} animate-float`}
-                    style={{
-                      borderColor: isEquipped ? r.color : r.border,
-                      backgroundColor: isEquipped ? r.glow : '#151821',
-                      boxShadow: isEquipped ? `0 0 20px ${r.glow}, inset 0 0 10px ${r.glow}` : '0 10px 30px rgba(0,0,0,0.5)',
-                      animationDelay: `${i * 0.1}s` // Stagger the floating animation
-                    }}
-                  >
-                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
-                    <Icon size={24} className="mb-3 drop-shadow-[0_0_8px_currentColor]" style={{ color: r.color }} />
-                    <span className="text-[13px] font-black uppercase tracking-wider text-white drop-shadow-md">{t.label}</span>
-                    <span className="text-[9px] font-mono tracking-[0.2em] uppercase mt-2" style={{ color: r.color }}>{r.label}</span>
-                    
-                    {isEquipped && (
-                      <div className="absolute top-3 right-3 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: r.color }}></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: r.color }}></span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+                })
+              ) : (
+                <div className="py-10 text-center text-[10px] text-[#444] font-mono uppercase tracking-widest">
+                  No XP data yet
+                </div>
+              )}
             </div>
-          </HoloCard>
-
+          </Card>
         </div>
-      </div>
 
-      <style>{`
-        @keyframes sweep {
-          0% { transform: translateX(-100%) skewX(-12deg); }
-          100% { transform: translateX(500%) skewX(-12deg); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
-        }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2330; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4d5a73; }
-      `}</style>
+        {/* ── Title Collection ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <Tag size={11} /> Title Collection
+              </SectionLabel>
+            }
+            right={
+              <span className="text-[10px] font-mono text-[#f59e0b] uppercase tracking-wider">
+                {unlockedCount} / {TITLES.length} Unlocked
+              </span>
+            }
+          />
+          <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+            {TITLES.map((tag) => {
+              const unlocked = level >= tag.levelReq;
+              const isEquipped = profile?.selected_title === tag.name;
+              const cfg = RARITY_CONFIG[tag.rarity] ?? RARITY_CONFIG.common;
+              const { Icon } = cfg;
+
+              return (
+                <button
+                  key={tag.id}
+                  disabled={!unlocked || savingTitle || isEquipped}
+                  onClick={() => equipTitle(tag.name)}
+                  className={`
+                    flex items-center gap-3 p-3.5 rounded-lg border text-left transition-all
+                    ${unlocked
+                      ? isEquipped
+                        ? "border-[#22c55e]/40 bg-[#22c55e]/[0.04]"
+                        : "border-[#1a1a1a] hover:border-[#272727] hover:bg-[#0d0d0d] cursor-pointer"
+                      : "border-[#111] bg-[#050505] opacity-40 cursor-not-allowed"
+                    }
+                  `}
+                >
+                  {/* Icon badge */}
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: unlocked ? cfg.bg : "#88888810" }}
+                  >
+                    <Icon
+                      size={14}
+                      style={{ color: unlocked ? cfg.color : "#555" }}
+                    />
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="text-[13px] font-medium leading-none"
+                        style={{ color: unlocked ? cfg.color : "#555" }}
+                      >
+                        {tag.name}
+                      </span>
+                      {isEquipped && (
+                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] leading-none">
+                          Equipped
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-[#555] mt-1 leading-snug truncate">
+                      {tag.desc}
+                    </div>
+                  </div>
+
+                  {/* Rarity / lock pill */}
+                  <div className="shrink-0">
+                    {unlocked ? (
+                      <span
+                        className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded leading-none"
+                        style={{ background: cfg.bg, color: cfg.color }}
+                      >
+                        {cfg.label}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#111] text-[#444] leading-none">
+                        Lvl {tag.levelReq}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* ── Activity Heatmap ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <CalendarDays size={11} /> Activity Heatmap
+              </SectionLabel>
+            }
+            right={
+              <span className="text-[10px] font-mono text-[#444] uppercase tracking-wider">
+                Last 12 months
+              </span>
+            }
+          />
+          <div className="p-5 overflow-x-auto">
+            <div className="min-w-[680px]">
+              <ActivityCalendar
+                data={hd}
+                theme={{
+                  light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                }}
+                colorScheme="dark"
+                blockSize={11}
+                blockMargin={4}
+                fontSize={10}
+                labels={{ totalCount: "{{count}} contributions in the last year" }}
+                style={{
+                  fontFamily:
+                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                  color: "#555",
+                }}
+              />
+            </div>
+          </div>
+        </Card>
+
+      </div>
     </PageShell>
   );
 }
