@@ -1,11 +1,11 @@
-import { CheckCircle2, Circle, Lock, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Handle, Position } from '@xyflow/react';
 import { memo } from 'react';
 
 export type RoadmapNodeData = {
   label: string;
   topicId: string;
-  status: 'locked' | 'available' | 'in_progress' | 'completed';
+  status: 'available' | 'in_progress' | 'completed';
   bgColor?: string;
   textColor?: string;
   width?: number;
@@ -40,13 +40,7 @@ type S = {
 
 function resolveStyles(kind: NodeKind, status: string): S {
   const isCompleted = status === 'completed';
-  const isLocked = status === 'locked';
   const isInProgress = status === 'in_progress';
-
-  if (isLocked) return {
-    bg: '#0a0a0a', bgHov: '#0a0a0a', border: '#181818', bdStyle: 'solid',
-    text: '#252525', dot: '#1e1e1e', opacity: '0.4',
-  };
   if (kind === 'milestone') return {
     bg: isCompleted ? '#0a1a2e' : '#0a0f1e',
     bgHov: '#0d1428',
@@ -111,7 +105,6 @@ export const RoadmapNode = memo(function RoadmapNode({
   ensureHoverStyle();
 
   const isCompleted = data.status === 'completed';
-  const isLocked = data.status === 'locked';
   const isInProgress = data.status === 'in_progress';
   const kind = getKind(data.bgColor);
 
@@ -143,9 +136,7 @@ export const RoadmapNode = memo(function RoadmapNode({
             ? <CheckCircle2 size={12} style={{ color: s.dot }} strokeWidth={2.5} />
             : isInProgress
               ? <span className="w-[10px] h-[10px] rounded-full animate-pulse" style={{ background: '#f59e0b' }} />
-              : isLocked
-                ? <Lock size={10} style={{ color: s.dot }} strokeWidth={2} />
-                : <Circle size={11} style={{ color: s.dot }} strokeWidth={1.5} />
+              : <Circle size={11} style={{ color: s.dot }} strokeWidth={1.5} />
           }
         </span>
         <span

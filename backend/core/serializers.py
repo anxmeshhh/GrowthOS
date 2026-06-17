@@ -38,7 +38,8 @@ class TopicSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             progress = TopicProgress.objects.filter(user=request.user, topic=obj).first()
             if progress:
-                return progress.status
+                # Never expose 'locked' — treat it as 'available'
+                return 'available' if progress.status == 'locked' else progress.status
         return 'available'
 
     def get_verified_project(self, obj):
