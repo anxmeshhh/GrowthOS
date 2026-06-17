@@ -2,15 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   Flame, Shield, Sword, Crown, Hexagon, Star, 
-  Target, BarChart2, Zap, Layers, Activity, Unlock, Lock
+  Target, BarChart2, Zap, Lock
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { TITLES, type TitleTag } from "@/lib/tags";
 
 export const Route = createFileRoute("/progress")({
-  head: () => ({ meta: [{ title: "The Vault — GrowthOS" }] }),
+  head: () => ({ meta: [{ title: "Holo Core — GrowthOS" }] }),
   component: ProgressPage,
 });
 
@@ -51,33 +51,44 @@ function computeStreak(activeDays: string[]) {
 
 const RARITY_CONFIG: Record<
   string,
-  { color: string; bg: string; border: string; glow: string; label: string; Icon: any }
+  { color: string; border: string; glow: string; label: string; Icon: any }
 > = {
-  common: { color: "#8a8a8a", bg: "#141414", border: "#2a2a2a", glow: "rgba(138,138,138,0.1)", label: "Common", Icon: Star },
-  uncommon: { color: "#22c55e", bg: "#0d2015", border: "#14532d", glow: "rgba(34,197,94,0.15)", label: "Uncommon", Icon: Shield },
-  rare: { color: "#3b82f6", bg: "#0e1a30", border: "#1e3a8a", glow: "rgba(59,130,246,0.15)", label: "Rare", Icon: Sword },
-  epic: { color: "#a855f7", bg: "#1f0f2e", border: "#581c87", glow: "rgba(168,85,247,0.2)", label: "Epic", Icon: Crown },
-  legendary: { color: "#f59e0b", bg: "#261a08", border: "#78350f", glow: "rgba(245,158,11,0.2)", label: "Legendary", Icon: Flame },
-  mythic: { color: "#ef4444", bg: "#2b0f0f", border: "#7f1d1d", glow: "rgba(239,68,68,0.25)", label: "Mythic", Icon: Hexagon },
+  common: { color: "#a0aab5", border: "#1f2330", glow: "rgba(160,170,181,0.15)", label: "Common", Icon: Star },
+  uncommon: { color: "#00e5ff", border: "#005566", glow: "rgba(0,229,255,0.25)", label: "Uncommon", Icon: Shield },
+  rare: { color: "#4d79ff", border: "#1a2c66", glow: "rgba(77,121,255,0.25)", label: "Rare", Icon: Sword },
+  epic: { color: "#ccff00", border: "#4d6600", glow: "rgba(204,255,0,0.2)", label: "Epic", Icon: Crown },
+  legendary: { color: "#ff4d4d", border: "#661a1a", glow: "rgba(255,77,77,0.3)", label: "Legendary", Icon: Flame },
+  mythic: { color: "#ff00aa", border: "#660044", glow: "rgba(255,0,170,0.3)", label: "Mythic", Icon: Hexagon },
 };
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/*  Cyber-Industrial Primitives                                                */
+/*  Holographic Primitives                                                     */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-function VaultPlate({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function HoloCard({ children, className = "", animateBorder = true }: { children: React.ReactNode; className?: string, animateBorder?: boolean }) {
   return (
-    <div className={`bg-[#050505] border-2 border-[#151515] shadow-[inset_0_2px_4px_rgba(255,255,255,0.02),0_8px_20px_rgba(0,0,0,0.8)] relative overflow-hidden ${className}`}>
-      {/* Industrial noise overlay */}
-      <div className="absolute inset-0 opacity-[0.015] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZmlsdGVyIGlkPSJub2lzZUZpbHRlciI+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC45IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+CiAgPC9maWx0ZXI+CiAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI25vaXNlRmlsdGVyKSIvPgo8L3N2Zz4=')]" />
-      <div className="relative z-10">{children}</div>
+    <div className={`relative rounded-2xl p-[1px] overflow-hidden group ${className}`}>
+      {/* Base border */}
+      <div className="absolute inset-0 bg-[#1f2330]" />
+      
+      {/* Animated spinning gradient border */}
+      {animateBorder && (
+        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0%,rgba(0,229,255,0.4)_25%,transparent_50%,rgba(255,77,77,0.4)_75%,transparent_100%)] animate-[spin_6s_linear_infinite] opacity-40 group-hover:opacity-100 transition-opacity duration-700" />
+      )}
+      
+      {/* Card Content Surface */}
+      <div className="relative h-full bg-[#10121a] rounded-[15px] z-10 overflow-hidden">
+        {/* Subtle mesh background inside card */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        <div className="relative z-10">{children}</div>
+      </div>
     </div>
   );
 }
 
-function TermLabel({ children, color = "#555" }: { children: React.ReactNode; color?: string }) {
+function SectionLabel({ children, color = "#00e5ff" }: { children: React.ReactNode; color?: string }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.25em] font-mono flex items-center gap-2" style={{ color }}>
+    <p className="text-[10px] uppercase tracking-[0.25em] font-mono flex items-center gap-2 drop-shadow-[0_0_5px_currentColor]" style={{ color }}>
       {children}
     </p>
   );
@@ -147,6 +158,7 @@ function ProgressPage() {
   const xp = profile?.total_xp ?? 0;
   const { level, currentXP, next } = getLevelInfo(xp);
   const lvlTitle = profile?.selected_title || "Novice";
+  const xpPct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
   const streak = profile?.streak ?? computeStreak(profile?.heatmap?.map((h: any) => h.date) || []);
 
   const unlockedCount = TITLES.filter((t) => level >= t.levelReq).length;
@@ -169,117 +181,128 @@ function ProgressPage() {
     return (
       <PageShell>
         <div className="flex items-center justify-center h-[80vh]">
-          <div className="w-8 h-8 border-2 border-[#333] border-t-[#22c55e] rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-transparent border-t-[#00e5ff] border-r-[#ff4d4d] rounded-full animate-spin shadow-[0_0_15px_#00e5ff]" />
         </div>
       </PageShell>
     );
   }
 
-  /* ── segmented energy bar calculation ── */
-  const BLOCKS = 20;
-  const filledBlocks = Math.floor((currentXP / next) * BLOCKS);
-
   /* ── render ── */
   return (
     <PageShell>
-      <div className="p-6 lg:p-8 max-w-[1400px] mx-auto min-h-screen">
+      {/* Base page tint to separate from Dashboard */}
+      <div className="fixed inset-0 bg-[#0a0b10] z-[-2]" />
+      
+      <div className="p-6 lg:p-10 max-w-[1400px] mx-auto min-h-screen">
 
-        <div className="mb-8 flex items-center gap-3 border-b border-[#111] pb-4">
-          <Hexagon className="w-6 h-6 text-[#444]" />
-          <h1 className="text-xl font-bold tracking-[0.1em] text-[#cfcfcf] uppercase">The Vault</h1>
-        </div>
+        <div className="grid grid-cols-12 gap-8">
 
-        <div className="grid grid-cols-12 gap-6">
-
-          {/* ── 1. The Core (Hero Stats) - Spans 12 cols ── */}
-          <VaultPlate className="col-span-12 p-8 md:p-12 flex flex-col md:flex-row items-center md:items-stretch justify-between gap-10">
-            <div className="flex flex-col items-center md:items-start flex-1 min-w-0">
-              <TermLabel color="#a855f7"><Zap size={12} /> Combat Rating</TermLabel>
-              <div className="mt-4 flex items-baseline gap-4">
-                <span className="text-6xl md:text-8xl font-black tracking-tighter text-[#e0e0e0] drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{level}</span>
-                <div className="flex flex-col">
-                  <span className="text-xl md:text-2xl font-bold text-[#a855f7] tracking-widest uppercase">{lvlTitle}</span>
-                  <span className="text-[12px] font-mono text-[#555] uppercase tracking-[0.2em] mt-1">Global Rank</span>
-                </div>
-              </div>
+          {/* ── 1. The ID Card (Hero Stats) - Spans 12 cols ── */}
+          <HoloCard className="col-span-12 p-8 md:p-10">
+            <div className="flex flex-col md:flex-row items-center gap-10">
               
-              {/* Segmented Energy Bar */}
-              <div className="mt-8 w-full max-w-2xl">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">Experience Buffer</span>
-                  <span className="text-[13px] font-mono text-[#a855f7] font-bold">{currentXP} <span className="text-[#444]">/ {next}</span></span>
-                </div>
-                <div className="flex gap-1 h-3 w-full p-1 bg-[#050505] border border-[#1a1a1a]">
-                  {Array.from({ length: BLOCKS }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`flex-1 ${i < filledBlocks ? "bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.6)]" : "bg-[#111]"}`} 
-                      style={{ transitionDelay: `${i * 20}ms` }}
-                    />
-                  ))}
+              {/* Profile Avatar / Rank Ring */}
+              <div className="relative flex items-center justify-center w-36 h-36 shrink-0">
+                <svg className="absolute inset-0 w-full h-full rotate-[-90deg] drop-shadow-[0_0_10px_#00e5ff]">
+                  <circle cx="72" cy="72" r="66" fill="none" stroke="#1f2330" strokeWidth="6" />
+                  <circle 
+                    cx="72" cy="72" r="66" fill="none" stroke="#00e5ff" strokeWidth="6" 
+                    strokeLinecap="round" strokeDasharray="414" strokeDashoffset={414 - (414 * xpPct) / 100}
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="flex flex-col items-center justify-center bg-[#0a0b10] w-28 h-28 rounded-full border border-[#1f2330] z-10 shadow-[inset_0_0_20px_rgba(0,229,255,0.1)]">
+                  <span className="text-4xl font-bold font-mono text-white tracking-tighter">{level}</span>
+                  <span className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#00e5ff]">Level</span>
                 </div>
               </div>
-            </div>
 
-            <div className="hidden md:block w-px bg-gradient-to-b from-transparent via-[#222] to-transparent self-stretch" />
-
-            <div className="flex flex-col items-center justify-center min-w-[200px]">
-              <TermLabel color="#f59e0b"><Flame size={12} /> Active Streak</TermLabel>
-              <div className="mt-4 text-7xl font-black font-mono text-[#f59e0b] drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                {streak}
-              </div>
-              <p className="text-[10px] font-mono text-[#555] tracking-[0.25em] uppercase mt-2">Consecutive Days</p>
-            </div>
-          </VaultPlate>
-
-          {/* ── 2. Mastery Matrix (Path Progress) - Spans 4 cols ── */}
-          <VaultPlate className="col-span-12 lg:col-span-4 p-6 flex flex-col">
-            <div className="border-b border-[#1a1a1a] pb-4 mb-5">
-              <TermLabel><Target size={12} /> Sector Mastery</TermLabel>
-            </div>
-            
-            <div className="flex-1 space-y-6">
-              {activePaths.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 opacity-30">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-[#888]">No sectors activated</span>
-                </div>
-              ) : (
-                activePaths.map((p) => {
-                  const blocks = 10;
-                  const filled = Math.floor((p.pct / 100) * blocks);
-                  return (
-                    <div key={p.uniqueId} className="group">
-                      <div className="flex justify-between items-baseline mb-2">
-                        <span className="text-[13px] font-bold text-[#cfcfcf] tracking-wide uppercase truncate mr-4">{p.title}</span>
-                        <span className="text-[11px] font-mono text-[#22c55e]">{p.pct}%</span>
-                      </div>
-                      <div className="flex gap-1 h-2 w-full">
-                        {Array.from({ length: blocks }).map((_, i) => (
-                          <div 
-                            key={i} 
-                            className={`flex-1 rounded-sm ${i < filled ? "bg-[#22c55e] shadow-[0_0_5px_rgba(34,197,94,0.4)]" : "bg-[#111]"}`} 
-                          />
-                        ))}
-                      </div>
-                      <div className="mt-1.5 flex justify-end">
-                         <span className="text-[9px] font-mono text-[#444] uppercase tracking-widest">{p.done} / {p.total} Nodes</span>
+              {/* Identity & Core Metrics */}
+              <div className="flex-1 min-w-0 w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+                
+                {/* Title */}
+                <div className="flex flex-col">
+                  <SectionLabel color="#ccff00"><Zap size={12} /> Active Class</SectionLabel>
+                  <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-[#a0aab5] mt-2 uppercase tracking-tight">
+                    {lvlTitle}
+                  </h1>
+                  <div className="mt-4 flex items-center gap-6">
+                    <div>
+                      <span className="text-[10px] font-mono text-[#7a8599] uppercase tracking-widest block mb-1">Total XP</span>
+                      <span className="text-xl font-mono text-[#00e5ff] font-bold">{xp} <span className="text-sm text-[#4d5a73] font-normal">/ {next}</span></span>
+                    </div>
+                    <div className="w-px h-8 bg-[#1f2330]" />
+                    <div>
+                      <span className="text-[10px] font-mono text-[#7a8599] uppercase tracking-widest block mb-1">Network Streak</span>
+                      <div className="flex items-center gap-2">
+                        <Flame size={16} className={streak > 0 ? "text-[#ff4d4d]" : "text-[#4d5a73]"} />
+                        <span className={`text-xl font-mono font-bold ${streak > 0 ? "text-[#ff4d4d]" : "text-white"}`}>{streak}</span>
                       </div>
                     </div>
-                  );
-                })
-              )}
+                  </div>
+                </div>
+
+              </div>
             </div>
-          </VaultPlate>
+          </HoloCard>
+
+          {/* ── 2. Telemetry Matrix (Stats) - Spans 4 cols ── */}
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
+            <HoloCard animateBorder={false} className="flex-1 p-8">
+              <SectionLabel color="#ff4d4d"><BarChart2 size={12} /> Live Telemetry</SectionLabel>
+              <div className="mt-8 flex flex-col gap-6">
+                <div className="flex justify-between items-end border-b border-[#1f2330] pb-3">
+                  <span className="text-xs font-mono text-[#7a8599] uppercase tracking-wider">Nodes Conquered</span>
+                  <span className="text-3xl font-mono text-white font-black">{profile?.stats?.topics_completed || 0}</span>
+                </div>
+                <div className="flex justify-between items-end border-b border-[#1f2330] pb-3">
+                  <span className="text-xs font-mono text-[#7a8599] uppercase tracking-wider">Data Synced</span>
+                  <span className="text-3xl font-mono text-white font-black">{profile?.stats?.notes_written || 0}</span>
+                </div>
+                <div className="flex justify-between items-end border-b border-[#1f2330] pb-3">
+                  <span className="text-xs font-mono text-[#7a8599] uppercase tracking-wider">Trials Passed</span>
+                  <span className="text-3xl font-mono text-white font-black">{profile?.stats?.quizzes_passed || 0}</span>
+                </div>
+              </div>
+            </HoloCard>
+
+            <HoloCard animateBorder={false} className="flex-1 p-8">
+              <SectionLabel color="#ccff00"><Target size={12} /> Sector Progression</SectionLabel>
+              <div className="mt-8 space-y-6">
+                {activePaths.length === 0 ? (
+                  <div className="text-xs font-mono text-[#4d5a73] uppercase tracking-widest text-center mt-10">No sectors active</div>
+                ) : (
+                  activePaths.map((p) => (
+                    <div key={p.uniqueId} className="group">
+                      <div className="flex justify-between items-baseline mb-2">
+                        <span className="text-xs font-bold text-white tracking-wide uppercase truncate mr-4">{p.title}</span>
+                        <span className="text-[10px] font-mono text-[#ccff00]">{p.pct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-[#1f2330] rounded-full overflow-hidden relative">
+                        <div 
+                          className="absolute inset-y-0 left-0 bg-[#ccff00] rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(204,255,0,0.6)] relative overflow-hidden" 
+                          style={{ width: `${p.pct}%` }} 
+                        >
+                          {/* Glare sweep animation */}
+                          <div className="absolute inset-0 w-[20px] bg-white/50 -skew-x-12 animate-[sweep_2s_linear_infinite]" />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </HoloCard>
+          </div>
 
           {/* ── 3. Tokens (Titles) - Spans 8 cols ── */}
-          <VaultPlate className="col-span-12 lg:col-span-8 p-6 flex flex-col">
-            <div className="border-b border-[#1a1a1a] pb-4 mb-5 flex justify-between items-center">
-              <TermLabel><Crown size={12} /> Artifact Tokens</TermLabel>
-              <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">{unlockedCount} / {TITLES.length} Acquired</span>
+          <HoloCard className="col-span-12 lg:col-span-8 p-8 flex flex-col h-[700px]">
+            <div className="flex justify-between items-center mb-6">
+              <SectionLabel color="#00e5ff"><Crown size={12} /> Artifact Collection</SectionLabel>
+              <span className="text-[10px] font-mono text-[#7a8599] uppercase tracking-widest bg-[#1f2330] px-3 py-1 rounded-full">{unlockedCount} / {TITLES.length}</span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-              {TITLES.map((t: TitleTag) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 overflow-y-auto pr-2 custom-scrollbar pb-6">
+              {TITLES.map((t: TitleTag, i: number) => {
                 const isUnlocked = level >= t.levelReq;
                 const isEquipped = lvlTitle === t.id;
                 const r = RARITY_CONFIG[t.rarity] || RARITY_CONFIG.common;
@@ -287,9 +310,9 @@ function ProgressPage() {
 
                 if (!isUnlocked) {
                   return (
-                    <div key={t.id} className="relative p-4 rounded-lg border-2 border-[#111] bg-[#080808] opacity-50 flex flex-col items-center justify-center text-center h-28">
-                      <Lock size={16} className="text-[#333] mb-2" />
-                      <span className="text-[10px] font-mono text-[#444] tracking-widest uppercase">Lv {t.levelReq} Required</span>
+                    <div key={t.id} className="relative p-5 rounded-xl border border-[#1f2330] bg-[#151821] flex flex-col items-center justify-center text-center h-[140px] opacity-40">
+                      <Lock size={20} className="text-[#4d5a73] mb-3" />
+                      <span className="text-[10px] font-mono text-[#7a8599] tracking-widest uppercase">Lv {t.levelReq}</span>
                     </div>
                   );
                 }
@@ -299,67 +322,50 @@ function ProgressPage() {
                     key={t.id}
                     onClick={() => equipTitle(t.id)}
                     disabled={savingTitle || isEquipped}
-                    className="relative p-4 rounded-lg border-2 flex flex-col items-center justify-center text-center h-28 transition-all group overflow-hidden"
+                    className={`relative p-5 rounded-xl border flex flex-col items-center justify-center text-center h-[140px] transition-all duration-300 group ${isEquipped ? 'scale-105' : 'hover:scale-105 hover:-translate-y-2'} animate-float`}
                     style={{
                       borderColor: isEquipped ? r.color : r.border,
-                      backgroundColor: r.bg,
-                      boxShadow: isEquipped ? `inset 0 0 20px ${r.glow}, 0 0 15px ${r.glow}` : 'none'
+                      backgroundColor: isEquipped ? r.glow : '#151821',
+                      boxShadow: isEquipped ? `0 0 20px ${r.glow}, inset 0 0 10px ${r.glow}` : '0 10px 30px rgba(0,0,0,0.5)',
+                      animationDelay: `${i * 0.1}s` // Stagger the floating animation
                     }}
                   >
-                    <Icon size={20} className="mb-2" style={{ color: r.color }} />
-                    <span className="text-[12px] font-bold uppercase tracking-wider text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{t.label}</span>
-                    <span className="text-[9px] font-mono tracking-widest uppercase mt-1 opacity-70" style={{ color: r.color }}>{r.label}</span>
-                    
-                    {/* Hover glare */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.05] to-transparent translate-x-[-100%] group-hover:animate-[glare_1.5s_ease-in-out_infinite]" />
+                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
+                    <Icon size={24} className="mb-3 drop-shadow-[0_0_8px_currentColor]" style={{ color: r.color }} />
+                    <span className="text-[13px] font-black uppercase tracking-wider text-white drop-shadow-md">{t.label}</span>
+                    <span className="text-[9px] font-mono tracking-[0.2em] uppercase mt-2" style={{ color: r.color }}>{r.label}</span>
                     
                     {isEquipped && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-1.5 h-1.5 rounded-full animate-pulse shadow-[0_0_5px_#fff]" style={{ backgroundColor: r.color }} />
+                      <div className="absolute top-3 right-3 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: r.color }}></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: r.color }}></span>
                       </div>
                     )}
                   </button>
                 );
               })}
             </div>
-          </VaultPlate>
-
-          {/* ── 4. Raw Stats Terminal - Spans 12 cols ── */}
-          <VaultPlate className="col-span-12 p-6 md:p-8">
-            <TermLabel><BarChart2 size={12} /> System Telemetry</TermLabel>
-            
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-10">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1">Topics Mastered</span>
-                <span className="text-3xl md:text-4xl font-mono text-[#e0e0e0] font-black">{profile?.stats?.topics_completed || 0}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1">Documents Uploaded</span>
-                <span className="text-3xl md:text-4xl font-mono text-[#e0e0e0] font-black">{profile?.stats?.notes_written || 0}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1">Quizzes Passed</span>
-                <span className="text-3xl md:text-4xl font-mono text-[#e0e0e0] font-black">{profile?.stats?.quizzes_passed || 0}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest mb-1">Total Experience</span>
-                <span className="text-3xl md:text-4xl font-mono text-[#a855f7] font-black">{xp}</span>
-              </div>
-            </div>
-          </VaultPlate>
+          </HoloCard>
 
         </div>
       </div>
 
       <style>{`
-        @keyframes glare {
-          0% { transform: translateX(-100%) skewX(-15deg); }
-          50%, 100% { transform: translateX(200%) skewX(-15deg); }
+        @keyframes sweep {
+          0% { transform: translateX(-100%) skewX(-12deg); }
+          100% { transform: translateX(500%) skewX(-12deg); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+          animation: float 4s ease-in-out infinite;
         }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f2330; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4d5a73; }
       `}</style>
     </PageShell>
   );
