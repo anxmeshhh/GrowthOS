@@ -3,7 +3,7 @@ import {
   ArrowRight, Target, BookOpen, ClipboardCheck,
   Zap, Award, CheckCircle2, Circle,
   Activity, ChevronRight, Github,
-  RotateCcw, Flame, Trophy, Star,
+  RotateCcw, Flame, Star, Sparkles, Hexagon
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
@@ -15,8 +15,8 @@ import { useState, useEffect, useMemo } from "react";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — GrowthOS" },
-      { name: "description", content: "Today's mission, streak, and proof checklist." },
+      { title: "Command Center — GrowthOS" },
+      { name: "description", content: "Your high-fidelity intelligence and mission control." },
     ],
   }),
   component: DashboardPage,
@@ -45,30 +45,24 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-/* ── sub-components (matching Progress page) ─────────────────────────────── */
+/* ── premium primitives ─────────────────────────────────────────────────── */
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function GlassPanel({ children, className = "", glowing = false }: { children: React.ReactNode; className?: string, glowing?: boolean }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#555] flex items-center gap-1.5">
+    <div className={`relative rounded-2xl border border-white/[0.04] bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-3xl overflow-hidden ${className}`}>
+      {glowing && (
+        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent opacity-50" />
+      )}
+      {children}
+    </div>
+  );
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] uppercase tracking-[0.25em] font-mono text-white/40 flex items-center gap-2">
       {children}
     </p>
-  );
-}
-
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-function CardHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#131313]">
-      <div>{left}</div>
-      {right && <div>{right}</div>}
-    </div>
   );
 }
 
@@ -179,9 +173,9 @@ function DashboardPage() {
   const verified = cur?.verified_project != null || cur?.user_progress === "completed";
 
   const steps = [
-    { l: "Study concepts", d: started || proof || verified, I: BookOpen },
-    { l: "Submit proof", d: proof || verified, I: ClipboardCheck },
-    { l: "AI verify", d: verified, I: Target },
+    { l: "Study", d: started || proof || verified, I: BookOpen },
+    { l: "Submit", d: proof || verified, I: ClipboardCheck },
+    { l: "Verify", d: verified, I: Target },
   ];
 
   const today = new Date().toISOString().split("T")[0];
@@ -190,130 +184,69 @@ function DashboardPage() {
   /* ── render ── */
   return (
     <PageShell>
-      {/* Toast */}
+      {/* Dynamic Background Noise */}
+      <div className="fixed inset-0 pointer-events-none z-[-1] opacity-50 mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZmlsdGVyIGlkPSJub2lzZUZpbHRlciI+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC42NSIgbnVtT2N0YXZlcz0iMyIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPgogIDwvZmlsdGVyPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNub2lzZUZpbHRlcikiLz4KPC9zdmc+')]"/>
+      
       {toast && (
-        <div className="fixed bottom-4 right-4 z-50 px-4 py-2.5 rounded-lg border border-[#1a3d28] bg-[#0a1a12] text-[#22c55e] text-xs font-mono shadow-xl flex items-center gap-2">
-          <CheckCircle2 size={13} /> {toast}
+        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl border border-white/10 bg-black/80 backdrop-blur-xl text-white text-[13px] tracking-wide shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <div className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_10px_#22c55e]" /> {toast}
         </div>
       )}
 
-      <div className="p-5 lg:p-6 space-y-4 max-w-screen-xl mx-auto">
+      <div className="p-6 lg:p-8 max-w-[1400px] mx-auto min-h-screen">
 
-        {/* ── Page Header ── */}
-        <div className="flex items-end justify-between mb-1">
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1.5">GrowthOS</p>
-            <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Dashboard</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-white flex items-center gap-3">
+              <Hexagon className="w-6 h-6 text-[#22c55e]" strokeWidth={1.5} />
+              Command Center
+            </h1>
           </div>
           {ap && (
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#22c55e] hidden sm:block animate-pulse">
-                Live Status
-              </span>
+            <div className="relative group">
               <select
                 value={selectedPathId || "auto"}
                 onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
-                className="bg-[#0a1a12] border border-[#22c55e]/40 text-[#22c55e] text-[10px] font-mono uppercase tracking-wider rounded-lg px-3 py-1.5 outline-none hover:border-[#22c55e]/70 transition-all cursor-pointer"
+                className="appearance-none bg-white/[0.03] border border-white/10 text-white/70 text-[11px] font-mono uppercase tracking-widest rounded-full pl-5 pr-10 py-2.5 outline-none hover:bg-white/[0.06] hover:text-white transition-all cursor-pointer backdrop-blur-md"
               >
-                <option value="auto" className="bg-[#0a0a0a] font-sans normal-case">✨ Auto-Track Active</option>
-                <optgroup label="Available Paths" className="bg-[#0a0a0a] text-[#555] font-sans">
+                <option value="auto" className="bg-black font-sans normal-case">✦ Auto-Track Active</option>
+                <optgroup label="Available Paths" className="bg-black text-white/50 font-sans">
                   {allPaths.map((p: any) => (
-                    <option key={p.uniqueId} value={p.uniqueId} className="bg-[#0a0a0a] text-[#888] font-sans normal-case text-xs">
+                    <option key={p.uniqueId} value={p.uniqueId} className="bg-black text-white font-sans normal-case text-xs">
                       {p.title}
                     </option>
                   ))}
                 </optgroup>
               </select>
+              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#22c55e]/50 group-hover:bg-[#22c55e] transition-colors shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
             </div>
           )}
         </div>
 
-        {/* ── Stats Row (matching Progress top cards) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* ── BENTO GRID ── */}
+        <div className="grid grid-cols-12 gap-5 auto-rows-[minmax(140px,auto)]">
 
-          {/* XP + Level — purple tint */}
-          <div className="bg-[#0d0914] border border-[#1f1938] rounded-xl p-5 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-[#a855f7] opacity-[0.06] rounded-full blur-3xl pointer-events-none" />
-            <SectionLabel><Zap size={11} className="text-[#a855f7]" /> Level & XP</SectionLabel>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-[#a855f7]">{level}</span>
-              <span className="text-sm text-[#555] font-mono">— {lvl}</span>
-            </div>
-            <div className="text-[11px] font-mono text-[#666] mt-0.5">{xp} XP total</div>
-            <div className="mt-4 space-y-1.5">
-              <div className="flex justify-between text-[10px] font-mono">
-                <span className="text-[#666]">{xpPct}% to Lv{level + 1}</span>
-                <span className="text-[#a855f7]">{next - xp} XP left</span>
-              </div>
-              <div className="h-1 w-full bg-[#111] rounded-full overflow-hidden">
-                <div className="h-full bg-[#a855f7] rounded-full transition-all duration-700" style={{ width: `${xpPct}%` }} />
-              </div>
-            </div>
-          </div>
+          {/* 1. Hero Mission (Spans 8 cols) */}
+          <GlassPanel className="col-span-12 lg:col-span-8 p-8 flex flex-col justify-between group" glowing>
+            {cur ? (
+              <>
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.15),transparent_60%)] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                
+                <div className="relative z-10">
+                  <Label><Sparkles size={12} className="text-[#22c55e]" /> Active Protocol</Label>
+                  <p className="mt-4 text-[13px] font-mono text-white/50 tracking-widest uppercase">{ap?.title}</p>
+                  <h2 className="mt-1 text-3xl md:text-4xl font-semibold text-white tracking-tight leading-tight max-w-2xl">
+                    {cur.title}
+                  </h2>
+                </div>
 
-          {/* Streak — amber tint */}
-          <div className="bg-[#0d0b04] border border-[#221a05] rounded-xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-[#f59e0b] opacity-[0.07] rounded-full blur-2xl pointer-events-none" />
-            <SectionLabel><Flame size={11} className="text-[#f59e0b]" /> Day Streak</SectionLabel>
-            <div className={`text-4xl font-mono font-semibold mt-3 ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
-              {streak}
-            </div>
-            <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-1">
-              {streak > 0 ? "Keep it alive!" : "Start today"}
-            </div>
-            {profile?.can_revive_streak && (
-              <button
-                onClick={() => revive.mutate()}
-                disabled={revive.isPending}
-                className="mt-3 flex items-center gap-1 text-[9px] font-mono text-[#f59e0b] border border-[#f59e0b]/25 rounded px-2 py-1 hover:bg-[#f59e0b]/10 transition-colors"
-              >
-                <RotateCcw size={9} /> Revive Streak
-              </button>
-            )}
-          </div>
-
-          {/* Path Progress — green tint */}
-          <div className="bg-[#040d07] border border-[#0d2214] rounded-xl p-5 flex flex-col justify-center relative overflow-hidden">
-            <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-[#22c55e] opacity-[0.06] rounded-full blur-2xl pointer-events-none" />
-            <SectionLabel><Star size={11} className="text-[#22c55e]" /> Path Progress</SectionLabel>
-            <div className="text-3xl font-semibold tracking-tight text-[#f0f0f0] mt-3">
-              {cpct}<span className="text-base text-[#555] ml-1">%</span>
-            </div>
-            <div className="text-[11px] font-mono text-[#22c55e] mt-0.5">{done} / {total} topics done</div>
-            <div className="mt-4 h-1 w-full bg-[#111] rounded-full overflow-hidden">
-              <div className="h-full bg-[#22c55e] rounded-full transition-all duration-700" style={{ width: `${cpct}%` }} />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Middle Row: Mission + Topics ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-
-          {/* Mission Card */}
-          <Card>
-            <CardHeader
-              left={<SectionLabel><Zap size={11} className="text-[#22c55e]" /> Today's Mission</SectionLabel>}
-              right={cur && <span className="text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">Active</span>}
-            />
-            <div className="p-5">
-              {cur ? (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-[9px] font-mono text-[#444] uppercase tracking-wider mb-1">{ap?.title}</p>
-                    <h2 className="text-[15px] font-semibold text-[#f0f0f0] leading-snug">{cur.title}</h2>
-                    <p className="text-[12px] text-[#555] leading-relaxed mt-1.5 line-clamp-2">
-                      {cur.summary || "Complete the session and submit proof of work."}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
+                <div className="mt-8 flex flex-wrap items-end justify-between gap-6 relative z-10">
+                  <div className="flex items-center gap-3 bg-black/40 rounded-full p-1.5 border border-white/5 backdrop-blur-md">
                     {steps.map((s, i) => (
-                      <div key={i} className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg border text-[12px] transition-colors ${s.d ? "border-[#1a3028] bg-[#0a1a12] text-[#888]" : "border-[#151515] bg-[#0d0d0d] text-[#444]"}`}>
-                        {s.d
-                          ? <CheckCircle2 size={12} className="text-[#22c55e] shrink-0" />
-                          : <Circle size={12} className="text-[#2a2a2a] shrink-0" />}
-                        <span className="flex-1">{s.l}</span>
-                        <s.I size={11} className={s.d ? "text-[#22c55e]" : "text-[#252525]"} />
+                      <div key={i} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-mono uppercase tracking-widest transition-colors ${s.d ? "bg-[#22c55e]/10 text-[#22c55e]" : "text-white/30"}`}>
+                        {s.d ? <CheckCircle2 size={12} /> : <Circle size={12} />}
+                        {s.l}
                       </div>
                     ))}
                   </div>
@@ -321,125 +254,191 @@ function DashboardPage() {
                   <Link
                     to="/topic/$topicId"
                     params={{ topicId: String(cur.slug || cur.id) }}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#22c55e] text-[#030f07] text-[13px] font-semibold hover:bg-[#16a34a] transition-colors"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white text-black text-[13px] font-bold tracking-wide hover:scale-105 hover:bg-[#22c55e] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
                   >
-                    Continue <ArrowRight size={13} />
+                    Engage Mission <ArrowRight size={15} />
                   </Link>
                 </div>
-              ) : (
-                <div className="py-10 flex flex-col items-center justify-center text-center">
-                  <Award size={28} className="text-[#22c55e] mb-3 opacity-30" />
-                  <p className="text-[14px] font-semibold text-[#ddd]">Path complete</p>
-                  <p className="text-[12px] text-[#444] mt-1">All topics mastered.</p>
-                </div>
-              )}
-            </div>
-          </Card>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full opacity-50">
+                <Target size={32} className="mb-4" />
+                <p className="font-mono text-xs uppercase tracking-widest">No active protocol detected</p>
+              </div>
+            )}
+          </GlassPanel>
 
-          {/* Topic List */}
-          <Card>
-            <CardHeader
-              left={<SectionLabel>Path Topics</SectionLabel>}
-              right={<span className="text-[10px] font-mono text-[#333]">{done}/{total}</span>}
-            />
-            <div className="overflow-y-auto max-h-[320px]">
-              {topics.length === 0 ? (
-                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">No topics</div>
-              ) : (
-                topics.map((t: any) => {
+          {/* 2. Metrics Stack (Spans 4 cols, nested grid) */}
+          <div className="col-span-12 lg:col-span-4 grid grid-cols-2 gap-5 grid-rows-2">
+            
+            {/* Level Square */}
+            <GlassPanel className="col-span-1 flex flex-col justify-between p-5 relative overflow-hidden group">
+              <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[radial-gradient(circle,rgba(168,85,247,0.2),transparent_70%)] pointer-events-none group-hover:scale-150 transition-transform duration-700" />
+              <Label>Level</Label>
+              <div>
+                <div className="text-4xl font-mono text-white mt-2">{level}</div>
+                <div className="text-[11px] font-mono text-[#a855f7] uppercase tracking-widest mt-1">{lvl}</div>
+              </div>
+            </GlassPanel>
+
+            {/* Streak Square */}
+            <GlassPanel className="col-span-1 flex flex-col justify-between p-5 relative overflow-hidden group">
+              <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[radial-gradient(circle,rgba(245,158,11,0.15),transparent_70%)] pointer-events-none group-hover:scale-150 transition-transform duration-700" />
+              <div className="flex justify-between items-start">
+                <Label>Streak</Label>
+                {profile?.can_revive_streak && (
+                  <button onClick={() => revive.mutate()} disabled={revive.isPending} className="text-[#f59e0b] hover:bg-[#f59e0b]/20 p-1.5 rounded-md transition-colors" title="Revive Streak">
+                    <RotateCcw size={12} />
+                  </button>
+                )}
+              </div>
+              <div>
+                <div className={`text-4xl font-mono mt-2 ${streak > 0 ? "text-white" : "text-white/20"}`}>{streak}</div>
+                <div className="text-[11px] font-mono text-[#f59e0b] uppercase tracking-widest mt-1">Days Active</div>
+              </div>
+            </GlassPanel>
+
+            {/* XP Bar Rectangle */}
+            <GlassPanel className="col-span-2 flex flex-col justify-center p-6 relative">
+              <div className="flex justify-between items-end mb-3">
+                <div>
+                  <Label>Experience</Label>
+                  <div className="text-xl font-mono text-white mt-1">{xp} <span className="text-xs text-white/30">/ {next}</span></div>
+                </div>
+                <div className="text-[10px] font-mono text-[#a855f7]">{next - xp} to next</div>
+              </div>
+              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#a855f7] to-[#d8b4fe] rounded-full transition-all duration-1000 ease-out" style={{ width: `${xpPct}%` }} />
+              </div>
+            </GlassPanel>
+          </div>
+
+          {/* 3. Subway Map Timeline (Spans 8 cols) */}
+          <GlassPanel className="col-span-12 lg:col-span-8 p-6 flex flex-col h-[320px]">
+            <div className="flex justify-between items-center mb-6">
+              <Label><Award size={12} /> Path Trajectory</Label>
+              <div className="text-[11px] font-mono text-white/40 tracking-widest">{cpct}% Completed</div>
+            </div>
+            
+            <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
+              <div className="flex items-center h-full min-w-max px-4 relative">
+                {/* The Rail */}
+                <div className="absolute left-8 right-8 h-0.5 bg-white/10 top-1/2 -translate-y-1/2" />
+                <div 
+                  className="absolute left-8 h-0.5 bg-[#22c55e] top-1/2 -translate-y-1/2 transition-all duration-1000 shadow-[0_0_10px_#22c55e]" 
+                  style={{ width: `calc(${cpct}% - 3rem)` }} 
+                />
+
+                {/* Nodes */}
+                {topics.map((t: any, i: number) => {
                   const d = t.user_progress === "completed";
                   const a = t.id === cur?.id;
                   return (
-                    <Link
-                      key={t.id}
-                      to="/topic/$topicId"
-                      params={{ topicId: String(t.slug || t.id) }}
-                      className={`flex items-center gap-3 px-5 py-3 border-b border-[#0e0e0e] hover:bg-[#0d0d0d] transition-colors ${a ? "bg-[#0a1310]" : ""}`}
-                    >
-                      <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${d ? "bg-[#0d2015] border-[#1a3028]" : a ? "bg-[#0a1a12] border-[#22c55e]/40" : "bg-[#0e0e0e] border-[#1a1a1a]"}`}>
-                        {d && <CheckCircle2 size={9} className="text-[#22c55e]" />}
-                        {!d && a && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
+                    <div key={t.id} className="relative z-10 flex flex-col items-center justify-center w-28 group">
+                      {/* Top Label */}
+                      <div className={`absolute bottom-full mb-4 text-center transition-all ${a ? "opacity-100 -translate-y-1" : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"}`}>
+                        <div className="text-[10px] font-mono text-white/50 tracking-wider mb-1">NODE {i + 1}</div>
                       </div>
-                      <span className={`text-[12px] flex-1 truncate ${d ? "text-[#2e2e2e] line-through" : a ? "text-[#ddd]" : "text-[#666]"}`}>
-                        {t.title}
-                      </span>
-                      {a && <ChevronRight size={11} className="text-[#22c55e] shrink-0" />}
-                    </Link>
+
+                      {/* Node Circle */}
+                      <Link
+                        to="/topic/$topicId"
+                        params={{ topicId: String(t.slug || t.id) }}
+                        className={`w-5 h-5 rounded-full flex items-center justify-center transition-all outline outline-4 outline-[#0a0a0a] ${
+                          d ? "bg-[#22c55e] shadow-[0_0_15px_rgba(34,197,94,0.4)]" : 
+                          a ? "bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-125" : 
+                          "bg-[#222] hover:bg-[#333]"
+                        }`}
+                      >
+                        {a && <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse" />}
+                      </Link>
+
+                      {/* Bottom Label */}
+                      <div className="absolute top-full mt-4 text-center w-32 px-2">
+                        <div className={`text-[11px] truncate transition-colors ${d ? "text-white/40" : a ? "text-white font-medium" : "text-white/30"}`}>
+                          {t.title}
+                        </div>
+                      </div>
+                    </div>
                   );
-                })
-              )}
-            </div>
-            {total > 0 && (
-              <div className="px-5 py-3 border-t border-[#111]">
-                <div className="h-[2px] bg-[#111] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${cpct}%` }} />
-                </div>
+                })}
               </div>
-            )}
-          </Card>
-        </div>
+            </div>
+          </GlassPanel>
 
-        {/* ── Bottom Row: Activity Feed + Heatmap ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-
-          {/* Activity Feed */}
-          <Card>
-            <CardHeader
-              left={<SectionLabel><Activity size={11} /> Recent Activity</SectionLabel>}
-              right={activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
-            />
-            <div className="overflow-y-auto max-h-[260px] px-4 py-3">
+          {/* 4. Live Terminal / Activity (Spans 4 cols) */}
+          <GlassPanel className="col-span-12 lg:col-span-4 p-6 flex flex-col h-[320px]">
+            <div className="flex justify-between items-center mb-6">
+              <Label><Activity size={12} /> System Logs</Label>
+              <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
+            </div>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
               {activity.length > 0 ? (
-                <ul className="space-y-px">
-                  {activity.map((a: any, i: number) => (
-                    <li key={a.id} className="flex items-start gap-3 py-2 border-b border-[#0d0d0d] last:border-0">
-                      <div className={`mt-1.5 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#222]"}`} />
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-[12px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#444]"}`}>{a.label}</p>
-                        <p className="text-[10px] font-mono text-[#2a2a2a] mt-0.5">{timeAgo(a.date)}</p>
+                activity.map((a: any, i: number) => (
+                  <div key={a.id} className="flex gap-4 group">
+                    <div className="flex flex-col items-center mt-1.5">
+                      <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-[#22c55e] shadow-[0_0_8px_#22c55e]" : "bg-white/20"}`} />
+                      {i !== activity.length - 1 && <div className="w-px h-full bg-white/5 mt-1" />}
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className={`text-[13px] leading-tight ${i === 0 ? "text-white" : "text-white/60 group-hover:text-white/80"} transition-colors`}>
+                        {a.label}
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                      <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-1.5">
+                        {timeAgo(a.date)}
+                      </div>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">No activity yet</div>
+                <div className="h-full flex flex-col items-center justify-center opacity-30">
+                  <span className="font-mono text-[10px] uppercase tracking-widest">Awaiting input...</span>
+                </div>
               )}
             </div>
-          </Card>
+          </GlassPanel>
 
-          {/* Heatmap — spans 2 cols */}
-          <Card className="lg:col-span-2">
-            <CardHeader
-              left={<SectionLabel><Github size={11} /> Contributions</SectionLabel>}
-              right={<span className="text-[10px] font-mono text-[#444] uppercase tracking-wider">Last 12 months</span>}
-            />
-            <div className="p-5 overflow-x-auto">
-              <div className="min-w-[480px]">
-                {hl ? (
-                  <div className="h-24 rounded bg-[#0c0c0c] animate-pulse" />
-                ) : (
-                  <ActivityCalendar
-                    data={hd}
-                    theme={{
-                      light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                      dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                    }}
-                    colorScheme="dark"
-                    blockSize={11}
-                    blockMargin={4}
-                    fontSize={10}
-                    labels={{ totalCount: "{{count}} contributions in the last year" }}
-                    style={{
-                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                      color: "#555",
-                    }}
-                  />
-                )}
-              </div>
+          {/* 5. GitHub Heatmap Span (12 cols) */}
+          <GlassPanel className="col-span-12 p-6 flex items-center justify-between flex-wrap gap-6">
+            <div>
+              <Label><Github size={12} /> Matrix</Label>
+              <p className="text-[11px] font-mono text-white/30 tracking-widest uppercase mt-2">Annual Trace</p>
             </div>
-          </Card>
+            <div className="overflow-x-auto min-w-[480px]">
+              {hl ? (
+                <div className="h-[90px] bg-white/[0.02] rounded-lg animate-pulse" />
+              ) : (
+                <ActivityCalendar
+                  data={hd}
+                  theme={{
+                    light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                    dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  }}
+                  colorScheme="dark"
+                  blockSize={12}
+                  blockMargin={4}
+                  fontSize={10}
+                  labels={{ totalCount: "{{count}} interactions" }}
+                  style={{
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                    color: "rgba(255,255,255,0.3)",
+                  }}
+                />
+              )}
+            </div>
+          </GlassPanel>
+
         </div>
       </div>
+      
+      {/* Custom Scrollbar Styles for this page only */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+      `}</style>
     </PageShell>
   );
 }
