@@ -8,18 +8,7 @@ def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     
-    # Silence BrokenPipeError in Django development server
-    from django.core.servers.basehttp import WSGIRequestHandler
-    import logging
-    
-    original_handle_error = WSGIRequestHandler.handle_error
-    def handle_error_quietly(self, request, client_address):
-        if sys.exc_info()[0] in (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
-            pass # Ignore broken pipes completely
-        else:
-            original_handle_error(self, request, client_address)
-            
-    WSGIRequestHandler.handle_error = handle_error_quietly
+
 
     try:
         from django.core.management import execute_from_command_line
