@@ -129,7 +129,7 @@ function DashboardPage() {
   }
 
   const topics: any[] = ap?.topics || [];
-  const cur = topics.find((t: any) => t.user_progress !== "completed") || topics[0] || null;
+  const cur = topics.find((t: any) => t.user_progress === "in_progress") || topics.find((t: any) => t.user_progress !== "completed") || topics[0] || null;
   const done = topics.filter((t: any) => t.user_progress === "completed").length;
   const total = topics.length;
   const cpct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -250,7 +250,7 @@ function DashboardPage() {
                   {cur.summary || "Complete the session and submit proof of work."}
                 </p>
 
-                <div className="space-y-1 mb-3 flex-shrink-0">
+                <div className="space-y-1 mb-3 flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-1">
                   {steps.map((s, i) => (
                     <div key={i} className={`flex items-center gap-2 px-2.5 py-1.5 rounded border text-[11px] ${s.d ? "border-[#1a3028] bg-[#0a1a12] text-[#a0a0a0]" : "border-[#151515] bg-[#0b0b0b] text-[#444]"}`}>
                       {s.d ? <CheckCircle2 size={10} className="text-[#22c55e] shrink-0" /> : <Circle size={10} className="text-[#222] shrink-0" />}
