@@ -1,339 +1,359 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Search, FileText, BookOpen, Loader2, ChevronDown, ChevronRight, ExternalLink, LayoutList, FolderOpen } from "lucide-react";
-import { PageShell, PageHeader, Card, Btn } from "@/components/growth-ui";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useMemo } from "react";
+import { Search, FileText, BookOpen, Loader2, ExternalLink, Plus, Trash2, Edit2, Save, X, Layers } from "lucide-react";
+import { PageShell, Card, Btn } from "@/components/growth-ui";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 
 export const Route = createFileRoute("/notes")({
-  head: () => ({ meta: [{ title: "Notes — GrowthOS" }, { name: "description", content: "All your study notes in one place." }] }),
+  head: () => ({ meta: [{ title: "Library — GrowthOS" }] }),
   component: NotesPage,
 });
 
-type ViewMode = "all" | "topics";
-
 function NotesPage() {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+
   const [q, setQ] = useState("");
   const [filterPath, setFilterPath] = useState<string>("all");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<ViewMode>("all");
+  
+  // Inline edit state mapping note id to its draft content
+  const [editDrafts, setEditDrafts] = useState<Record<string, string>>({});
+  
+  const [showNewModal, setShowNewModal] = useState(false);
 
-  const { data: paths = [], isLoading: pathsLoading } = useQuery({
+  /* ── Queries ─────────────────────────────────────────────────────────── */
+  const { data: paths = [], isLoading: pl } = useQuery({
     queryKey: ["paths"],
     queryFn: async () => { const res = await apiFetch("/paths/"); return res.ok ? res.json() : []; },
   });
 
-  const { data: allNotes = [], isLoading: notesLoading } = useQuery({
+  const { data: customPaths = [], isLoading: cl } = useQuery({
+    queryKey: ["custom-paths"],
+    queryFn: async () => { const res = await apiFetch("/custom-paths/"); return res.ok ? res.json() : []; },
+  });
+
+  const { data: allNotes = [], isLoading: nl } = useQuery({
     queryKey: ["all-notes"],
     queryFn: async () => { const res = await apiFetch("/all-notes/"); return res.ok ? res.json() : []; },
   });
 
-  const { data: allDocs = [], isLoading: docsLoading } = useQuery({
+  const { data: allDocs = [], isLoading: dl } = useQuery({
     queryKey: ["all-note-documents"],
     queryFn: async () => { const res = await apiFetch("/all-note-documents/"); return res.ok ? res.json() : []; },
   });
 
-  const isLoading = pathsLoading || notesLoading || docsLoading;
+  /* ── Mutations ───────────────────────────────────────────────────────── */
+  const saveNoteMutation = useMutation({
+    mutationFn: async ({ topicId, content }: { topicId: string, content: string }) => {
+      const res = await apiFetch(`/topics/${topicId}/notes/`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) throw new Error("Failed to save note");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["all-notes"] }),
+  });
 
-  // Resolve topic info from paths
+  const deleteDocMutation = useMutation({
+    mutationFn: async ({ topicId, docId }: { topicId: string, docId: number }) => {
+      const res = await apiFetch(`/topics/${topicId}/note-documents/?id=${docId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete document");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["all-note-documents"] }),
+  });
+
+  /* ── Derived Data ────────────────────────────────────────────────────── */
+  const isLoading = pl || cl || nl || dl;
+
+  const allPathsMap = new Map();
+  paths.forEach((p: any) => allPathsMap.set(p.id, p));
+  customPaths.forEach((p: any) => allPathsMap.set(p.id, p));
+  const combinedPaths = Array.from(allPathsMap.values());
+
   const resolveTopic = (topicId: string | number) => {
     const key = String(topicId);
-    for (const p of paths) {
+    for (const p of combinedPaths) {
       const t = p.topics?.find((t: any) => String(t.id) === key);
       if (t) return { pathTitle: p.title, topicTitle: t.title, topicSlug: t.slug || key };
     }
-    return { pathTitle: "Unknown", topicTitle: `Topic #${topicId}`, topicSlug: key };
+    return { pathTitle: "Unknown Path", topicTitle: `Topic #${topicId}`, topicSlug: key };
   };
 
-  // Group notes and docs by topic
-  const topicMap = new Map<string, { pathTitle: string; topicTitle: string; topicSlug: string; topicId: string; notes: any[]; docs: any[] }>();
-  for (const note of allNotes) {
-    const key = String(note.topic);
-    if (!topicMap.has(key)) {
-      const info = resolveTopic(key);
-      topicMap.set(key, { ...info, topicId: key, notes: [], docs: [] });
+  const pathTitles = [...new Set(combinedPaths.map((p: any) => p.title))];
+
+  const flatItems = useMemo(() => {
+    const items: any[] = [];
+    for (const note of allNotes) {
+      if (!note.content) continue;
+      const info = resolveTopic(note.topic);
+      items.push({ id: `n-${note.id}`, rawId: note.id, topicId: note.topic, type: "note", ...info, content: note.content, date: note.updated_at });
     }
-    topicMap.get(key)!.notes.push(note);
-  }
-  for (const doc of allDocs) {
-    const key = String(doc.topic);
-    if (!topicMap.has(key)) {
-      const info = resolveTopic(key);
-      topicMap.set(key, { ...info, topicId: key, notes: [], docs: [] });
+    for (const doc of allDocs) {
+      const info = resolveTopic(doc.topic);
+      items.push({ id: `d-${doc.id}`, rawId: doc.id, topicId: doc.topic, type: "doc", ...info, filename: doc.filename, fileUrl: doc.file_url || doc.file, date: doc.uploaded_at });
     }
-    topicMap.get(key)!.docs.push(doc);
-  }
+    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allNotes, allDocs, combinedPaths]);
 
-  const pathTitles = [...new Set([...topicMap.values()].map(v => v.pathTitle))];
-
-  // Build flat items list for "all" view
-  const flatItems: { id: string; type: "note" | "doc"; topicTitle: string; pathTitle: string; topicSlug: string; content?: string; filename?: string; fileUrl?: string; date?: string }[] = [];
-  for (const note of allNotes) {
-    if (!note.content) continue;
-    const info = resolveTopic(note.topic);
-    flatItems.push({ id: `n-${note.id}`, type: "note", ...info, content: note.content, date: note.updated_at });
-  }
-  for (const doc of allDocs) {
-    const info = resolveTopic(doc.topic);
-    flatItems.push({ id: `d-${doc.id}`, type: "doc", ...info, filename: doc.filename, fileUrl: doc.file_url || doc.file, date: doc.uploaded_at });
-  }
-
-  // Sort: newest first
-  flatItems.sort((a, b) => {
-    const da = a.date ? new Date(a.date).getTime() : 0;
-    const db = b.date ? new Date(b.date).getTime() : 0;
-    return db - da;
-  });
-
-  // Filter
-  const filterItem = (item: { topicTitle: string; pathTitle: string; content?: string; filename?: string }) => {
+  const filteredItems = flatItems.filter(item => {
     if (filterPath !== "all" && item.pathTitle !== filterPath) return false;
     if (q) {
       const lower = q.toLowerCase();
       return item.topicTitle.toLowerCase().includes(lower) || item.content?.toLowerCase().includes(lower) || item.filename?.toLowerCase().includes(lower);
     }
     return true;
-  };
-
-  const filteredFlat = flatItems.filter(filterItem);
-  const filteredTopics = [...topicMap.values()].filter(item => {
-    if (filterPath !== "all" && item.pathTitle !== filterPath) return false;
-    if (q) {
-      const lower = q.toLowerCase();
-      return item.topicTitle.toLowerCase().includes(lower) || item.notes.some(n => n.content?.toLowerCase().includes(lower)) || item.docs.some(d => d.filename?.toLowerCase().includes(lower));
-    }
-    return true;
   });
 
-  const toggleExpand = (id: string) => {
-    setExpanded(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  /* ── Handlers ────────────────────────────────────────────────────────── */
+  const handleEditNote = (item: any) => {
+    setEditDrafts({ ...editDrafts, [item.id]: item.content });
   };
 
+  const handleCancelEdit = (item: any) => {
+    const next = { ...editDrafts };
+    delete next[item.id];
+    setEditDrafts(next);
+  };
+
+  const handleSaveNote = (item: any) => {
+    const content = editDrafts[item.id];
+    saveNoteMutation.mutate({ topicId: item.topicId, content }, {
+      onSuccess: () => handleCancelEdit(item)
+    });
+  };
+
+  const handleDeleteNote = (item: any) => {
+    if (!window.confirm("Delete this note entirely?")) return;
+    saveNoteMutation.mutate({ topicId: item.topicId, content: "" });
+  };
+
+  const handleDeleteDoc = (item: any) => {
+    if (!window.confirm(`Delete document "${item.filename}"?`)) return;
+    deleteDocMutation.mutate({ topicId: item.topicId, docId: item.rawId });
+  };
+
+  /* ── Render ──────────────────────────────────────────────────────────── */
   if (isLoading) {
-    return <PageShell><div className="flex items-center justify-center p-12 text-[#555]"><Loader2 className="w-5 h-5 animate-spin mr-3" /> Loading your library...</div></PageShell>;
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-5 h-5 text-[#444] animate-spin" />
+        </div>
+      </PageShell>
+    );
   }
+
+  // Active topics for the "New" modal
+  const activeTopics = combinedPaths
+    .flatMap((p: any) => (p.topics || []).map((t: any) => ({ ...t, pathTitle: p.title })))
+    .filter((t: any) => t.user_progress === "in_progress" || t.user_progress === "completed");
 
   return (
     <PageShell>
-      <PageHeader
-        kicker="Library"
-        title="Notes & Documents"
-        subtitle={`${allNotes.filter((n: any) => n.content).length} notes · ${allDocs.length} documents across ${topicMap.size} topics`}
-      />
+      <style>{`
+        .notes-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          padding: 1rem;
+        }
+        @media (min-width: 1024px) {
+          .notes-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: auto 1fr;
+            grid-template-areas:
+              "hdr hdr"
+              "side main";
+            height: calc(100vh - 64px);
+            overflow: hidden;
+          }
+        }
+      `}</style>
 
-      {/* Sticky controls */}
-      <div className="sticky top-0 z-20 bg-[#0a0a0a] pb-3 pt-1">
-        {/* Search */}
-        <div className="flex items-center gap-2 bg-[#111] border border-[#1a1a1a] rounded-lg px-3 py-2.5 mb-3">
-          <Search size={14} className="text-[#555]" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search notes, documents..."
-            className="flex-1 bg-transparent outline-none text-sm text-[#e0e0e0] placeholder:text-[#555]"
-          />
-          {q && <button onClick={() => setQ("")} className="text-[10px] text-[#666] hover:text-[#ccc]">Clear</button>}
+      <div className="notes-grid">
+        
+        {/* ── [HDR] ──────────────────────────────────────────────────────── */}
+        <div className="col-span-full flex flex-col md:flex-row md:items-end justify-between pb-1 gap-2 shrink-0" style={{ gridArea: "hdr" }}>
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1">GrowthOS</p>
+            <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Library</h1>
+          </div>
+          <Btn onClick={() => setShowNewModal(true)} size="sm" variant="solid" tone="green" className="w-full md:w-auto">
+            <Plus size={14} /> New Material
+          </Btn>
         </div>
 
-        {/* View toggle + path filters */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex bg-[#111] border border-[#1a1a1a] rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode("all")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${viewMode === "all" ? "bg-[#1a1a1a] text-[#e0e0e0]" : "text-[#555] hover:text-[#ccc]"}`}
-            >
-              <LayoutList size={12} /> All Items
-            </button>
-            <button
-              onClick={() => setViewMode("topics")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${viewMode === "topics" ? "bg-[#1a1a1a] text-[#e0e0e0]" : "text-[#555] hover:text-[#ccc]"}`}
-            >
-              <FolderOpen size={12} /> By Topic
-            </button>
+        {/* ── [SIDE] ─────────────────────────────────────────────────────── */}
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] rounded-lg flex flex-col overflow-hidden" style={{ gridArea: "side" }}>
+          <div className="p-4 border-b border-[#131313] shrink-0 space-y-4">
+            <div className="flex items-center gap-2 bg-[#111] border border-[#222] rounded-lg px-3 py-2 focus-within:border-[#444] transition-colors">
+              <Search size={14} className="text-[#555]" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search materials..."
+                className="flex-1 bg-transparent outline-none text-xs text-[#e0e0e0] placeholder:text-[#555]"
+              />
+              {q && <button onClick={() => setQ("")} className="text-[10px] text-[#666] hover:text-[#ccc]"><X size={12} /></button>}
+            </div>
           </div>
-          <div className="h-4 w-px bg-[#222]" />
-          <Pill active={filterPath === "all"} onClick={() => setFilterPath("all")}>All</Pill>
-          {pathTitles.map(pt => <Pill key={pt} active={filterPath === pt} onClick={() => setFilterPath(pt)}>{pt}</Pill>)}
+          
+          <div className="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar">
+            <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#555] mb-3">Filter By Path</div>
+            <div className="flex flex-col gap-1.5">
+              <FilterPill active={filterPath === "all"} onClick={() => setFilterPath("all")} icon={Layers} label="All Paths" />
+              {pathTitles.map(pt => (
+                <FilterPill key={pt} active={filterPath === pt} onClick={() => setFilterPath(pt)} label={pt} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── [MAIN] ─────────────────────────────────────────────────────── */}
+        <div className="border border-[#1a1a1a] bg-[#0a0a0a] rounded-lg flex flex-col overflow-hidden relative" style={{ gridArea: "main" }}>
+          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#050505]">
+            {filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center text-[#555] space-y-3">
+                <BookOpen size={32} className="opacity-20" />
+                <div className="text-xs font-mono uppercase tracking-wider">No materials found.</div>
+              </div>
+            ) : (
+              <div className="columns-1 md:columns-2 xl:columns-3 gap-4 space-y-4">
+                {filteredItems.map(item => {
+                  const isEditing = editDrafts[item.id] !== undefined;
+                  
+                  return (
+                    <div key={item.id} className="break-inside-avoid bg-[#0f0f0f] border border-[#1a1a1a] rounded-xl overflow-hidden hover:border-[#2a2a2a] transition-all group flex flex-col">
+                      
+                      {/* Card Header */}
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#151515] bg-[#0a0a0a]">
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          {item.type === "note" ? <BookOpen size={12} className="text-[#22c55e] shrink-0" /> : <FileText size={12} className="text-[#3b82f6] shrink-0" />}
+                          <div className="text-[10px] font-mono text-[#777] uppercase tracking-wider truncate">{item.topicTitle}</div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {item.type === "note" && !isEditing && (
+                            <button onClick={() => handleEditNote(item)} className="text-[#555] hover:text-[#fff] transition-colors"><Edit2 size={12} /></button>
+                          )}
+                          <button onClick={() => item.type === "note" ? handleDeleteNote(item) : handleDeleteDoc(item)} className="text-[#555] hover:text-[#ef4444] transition-colors"><Trash2 size={12} /></button>
+                          <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} className="text-[#555] hover:text-[#fff] transition-colors"><ExternalLink size={12} /></Link>
+                        </div>
+                      </div>
+                      
+                      {/* Card Body */}
+                      <div className="p-4 relative">
+                        {item.type === "note" ? (
+                          isEditing ? (
+                            <div className="flex flex-col gap-3">
+                              <textarea
+                                autoFocus
+                                value={editDrafts[item.id]}
+                                onChange={(e) => setEditDrafts({ ...editDrafts, [item.id]: e.target.value })}
+                                className="w-full bg-[#0a0a0a] border border-[#333] rounded-md p-3 text-sm text-[#e0e0e0] outline-none focus:border-[#555] min-h-[150px] resize-none custom-scrollbar"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Btn size="sm" variant="outline" onClick={() => handleCancelEdit(item)}>Cancel</Btn>
+                                <Btn size="sm" variant="solid" tone="green" onClick={() => handleSaveNote(item)}>
+                                  {saveNoteMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
+                                </Btn>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-[13px] text-[#b0b0b0] leading-relaxed whitespace-pre-wrap font-sans">
+                              {item.content}
+                            </div>
+                          )
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-4">
+                            <div className="w-12 h-12 rounded-full bg-[#3b82f6]/10 flex items-center justify-center mb-3">
+                              <FileText size={20} className="text-[#3b82f6]" />
+                            </div>
+                            <span className="text-[12px] font-medium text-[#ccc] text-center line-clamp-2 px-2 mb-4">{item.filename}</span>
+                            <a href={item.fileUrl} target="_blank" rel="noreferrer" className="text-[10px] font-mono text-[#3b82f6] uppercase tracking-wider hover:text-[#60a5fa] transition-colors">
+                              Download / View
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Card Footer */}
+                      {!isEditing && (
+                        <div className="px-4 py-2 bg-[#0a0a0a] border-t border-[#151515] flex justify-between items-center mt-auto">
+                          <span className="text-[9px] text-[#444] font-mono uppercase tracking-wider truncate mr-4">{item.pathTitle}</span>
+                          <span className="text-[9px] text-[#444] font-mono">{new Date(item.date).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ─── ALL ITEMS VIEW ─── */}
-      {viewMode === "all" && (
-        filteredFlat.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
-            {filteredFlat.map(item => (
-              <div key={item.id} className="flex flex-col bg-[#0d0d0d] border border-[#1a1a1a] rounded-xl overflow-hidden hover:border-[#333] transition-colors group h-64 relative">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a] bg-[#111]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {item.type === "note" ? <BookOpen size={14} className="text-[#22c55e] shrink-0" /> : <FileText size={14} className="text-[#3b82f6] shrink-0" />}
-                    <div className="text-[11px] font-medium text-[#ccc] truncate">{item.topicTitle}</div>
-                  </div>
-                  <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} className="text-[#555] hover:text-[#e0e0e0] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ExternalLink size={14} />
-                  </Link>
-                </div>
-                
-                <div className="flex-1 p-4 overflow-hidden relative">
-                  {item.type === "note" ? (
-                    <p className="text-[13px] text-[#999] leading-relaxed whitespace-pre-wrap line-clamp-[7]">
-                      {item.content}
-                    </p>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center">
-                      <div className="w-12 h-12 rounded-full bg-[#111] flex items-center justify-center mb-3">
-                        <FileText size={20} className="text-[#3b82f6]" />
-                      </div>
-                      <span className="text-[13px] text-[#ccc] font-medium px-2 line-clamp-2">{item.filename}</span>
-                      <a href={item.fileUrl} target="_blank" rel="noreferrer" className="mt-3 text-[11px] text-[#3b82f6] hover:text-[#60a5fa] px-3 py-1.5 rounded-full bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-colors">
-                        Download / View
-                      </a>
-                    </div>
-                  )}
-                  {item.type === "note" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#0d0d0d] to-transparent pointer-events-none" />
-                  )}
-                </div>
-                
-                <div className="px-4 py-3 bg-[#0a0a0a] border-t border-[#1a1a1a] flex items-center justify-between mt-auto">
-                  <div className="text-[10px] text-[#555] truncate max-w-[60%]">{item.pathTitle}</div>
-                  {item.date && <div className="text-[10px] text-[#444]">{new Date(item.date).toLocaleDateString()}</div>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      )}
-
-      {/* ─── BY TOPIC VIEW ─── */}
-      {viewMode === "topics" && (
-        filteredTopics.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="space-y-3 mt-4">
-            {filteredTopics.map(item => {
-              const isOpen = expanded.has(item.topicId);
-              const noteCount = item.notes.filter(n => n.content).length;
-              const docCount = item.docs.length;
-              return (
-                <div key={item.topicId} className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden hover:border-[#2a2a2a] transition-all">
-                  <div 
-                    className="flex items-center gap-4 px-5 py-4 cursor-pointer group bg-[#111]"
-                    onClick={() => toggleExpand(item.topicId)}
+      {/* New Material Modal */}
+      {showNewModal && (
+        <Modal onClose={() => setShowNewModal(false)}>
+          <div className="w-[400px]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-[#f0f0f0]">New Material</h3>
+              <button onClick={() => setShowNewModal(false)} className="text-[#666] hover:text-[#fff]"><X size={18}/></button>
+            </div>
+            <p className="text-sm text-[#888] mb-6">Select an active topic to upload documents or write comprehensive notes in its workspace.</p>
+            
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar space-y-2 pr-2">
+              {activeTopics.length === 0 ? (
+                <div className="text-center text-[#555] text-xs font-mono py-4">No active topics found. Start a roadmap first.</div>
+              ) : (
+                activeTopics.map((t: any) => (
+                  <button 
+                    key={t.id}
+                    onClick={() => {
+                      setShowNewModal(false);
+                      navigate({ to: "/topic/$topicId", params: { topicId: t.slug || t.id }});
+                    }}
+                    className="w-full flex items-center justify-between p-3 rounded-lg border border-[#222] bg-[#111] hover:border-[#444] hover:bg-[#1a1a1a] transition-all text-left group"
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${isOpen ? "bg-[#22c55e]/10 text-[#22c55e]" : "bg-[#1a1a1a] text-[#555] group-hover:text-[#ccc]"}`}>
-                      {isOpen ? <FolderOpen size={16} /> : <FolderOpen size={16} />}
+                    <div className="min-w-0 pr-4">
+                      <div className="text-[13px] font-medium text-[#ccc] group-hover:text-[#fff] truncate">{t.title}</div>
+                      <div className="text-[10px] font-mono text-[#666] uppercase tracking-wider truncate mt-0.5">{t.pathTitle}</div>
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[15px] font-medium text-[#e0e0e0] truncate group-hover:text-white transition-colors">{item.topicTitle}</div>
-                      <div className="text-[11px] text-[#666] mt-1">{item.pathTitle}</div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="hidden sm:flex items-center gap-4 mr-4">
-                        <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
-                          <BookOpen size={12} className={noteCount > 0 ? "text-[#22c55e]/70" : ""} />
-                          <span className={noteCount > 0 ? "text-[#ccc]" : ""}>{noteCount} Notes</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
-                          <FileText size={12} className={docCount > 0 ? "text-[#3b82f6]/70" : ""} />
-                          <span className={docCount > 0 ? "text-[#ccc]" : ""}>{docCount} Docs</span>
-                        </div>
-                      </div>
-                      <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} onClick={(e) => e.stopPropagation()}>
-                        <Btn variant="outline" size="sm" className="h-8 bg-[#1a1a1a] hover:bg-[#222] border-transparent">View Topic</Btn>
-                      </Link>
-                      <div className="w-8 flex items-center justify-center text-[#444] group-hover:text-[#ccc] transition-colors">
-                        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                      </div>
-                    </div>
-                  </div>
-
-                  {isOpen && (
-                    <div className="p-5 border-t border-[#1a1a1a] bg-[#0d0d0d] grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Notes Column */}
-                      <div className="space-y-4">
-                        <h4 className="text-[12px] font-semibold text-[#888] uppercase tracking-wider flex items-center gap-2">
-                          <BookOpen size={14} className="text-[#22c55e]" /> Written Notes
-                        </h4>
-                        {item.notes.length === 0 || !item.notes.some(n => n.content) ? (
-                          <div className="text-[12px] text-[#444] italic">No written notes.</div>
-                        ) : (
-                          <div className="space-y-3">
-                            {item.notes.filter(n => n.content).map(note => (
-                              <div key={note.id} className="bg-[#111] border border-[#1a1a1a] rounded-xl p-4 relative group">
-                                <div className="text-[13px] text-[#ccc] leading-relaxed whitespace-pre-wrap">
-                                  {note.content}
-                                </div>
-                                <div className="text-[10px] text-[#555] mt-3">
-                                  Last updated: {new Date(note.updated_at).toLocaleString()}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Docs Column */}
-                      <div className="space-y-4">
-                        <h4 className="text-[12px] font-semibold text-[#888] uppercase tracking-wider flex items-center gap-2">
-                          <FileText size={14} className="text-[#3b82f6]" /> Documents
-                        </h4>
-                        {item.docs.length === 0 ? (
-                          <div className="text-[12px] text-[#444] italic">No documents uploaded.</div>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {item.docs.map((doc: any) => (
-                              <a 
-                                key={doc.id} 
-                                href={doc.file_url || doc.file} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="flex flex-col items-center justify-center p-4 bg-[#111] border border-[#1a1a1a] rounded-xl hover:bg-[#161616] hover:border-[#222] transition-colors text-center group"
-                              >
-                                <div className="w-10 h-10 rounded-full bg-[#3b82f6]/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                  <FileText size={18} className="text-[#3b82f6]" />
-                                </div>
-                                <span className="text-[12px] font-medium text-[#ccc] line-clamp-2 px-2">{doc.filename}</span>
-                                <span className="text-[10px] mt-1 text-[#3b82f6] opacity-0 group-hover:opacity-100 transition-opacity">Click to open</span>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    <ExternalLink size={14} className="text-[#555] group-hover:text-[#22c55e] shrink-0" />
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        )
+        </Modal>
       )}
     </PageShell>
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="text-center py-16">
-      <BookOpen size={28} className="mx-auto mb-3 text-[#333]" />
-      <div className="text-sm text-[#555]">No notes found. Start studying a topic to create notes.</div>
-    </div>
-  );
-}
-
-function Pill({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
+function FilterPill({ active, onClick, label, icon: Icon }: { active: boolean, onClick: () => void, label: string, icon?: React.ElementType }) {
   return (
     <button
       onClick={onClick}
-      className={
-        "px-2.5 py-1 rounded-md text-[11px] transition-colors " +
-        (active ? "bg-[#1a1a1a] text-[#e0e0e0]" : "text-[#555] hover:text-[#ccc] hover:bg-[#111]")
-      }
+      className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[11px] transition-colors text-left ${
+        active ? "bg-[#1a1a1a] text-[#e0e0e0] font-medium" : "text-[#777] hover:bg-[#111] hover:text-[#bbb]"
+      }`}
     >
-      {children}
+      {Icon && <Icon size={14} className={active ? "text-[#e0e0e0]" : "text-[#555]"} />}
+      <span className="truncate">{label}</span>
     </button>
+  );
+}
+
+function Modal({ children, onClose }: { children: React.ReactNode, onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="absolute inset-0" onClick={onClose} />
+      <div className="relative bg-[#0d0d0d] border border-[#222] rounded-xl p-6 shadow-2xl max-w-[90vw] max-h-[90vh]">
+        {children}
+      </div>
+    </div>
   );
 }

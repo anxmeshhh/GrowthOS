@@ -646,6 +646,14 @@ class NoteDocumentView(views.APIView):
         serializer = NoteDocumentSerializer(doc, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def delete(self, request, topic_id):
+        doc_id = request.query_params.get('id')
+        if not doc_id:
+            return Response({'error': 'No document ID provided'}, status=status.HTTP_400_BAD_REQUEST)
+        doc = get_object_or_404(NoteDocument, id=doc_id, user=request.user)
+        doc.delete()
+        return Response({'status': 'deleted'})
+
 class TopicScreenshotView(views.APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
