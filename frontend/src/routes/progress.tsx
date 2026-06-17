@@ -94,7 +94,8 @@ function ProgressPage() {
   }, [allPaths]);
 
   const xp = profile?.total_xp ?? 0;
-  const { level, title: lvlTitle, next } = getLevelInfo(xp);
+  const { level, next } = getLevelInfo(xp);
+  const lvlTitle = profile?.selected_title || "Novice";
   const xpPct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
   const xpRemaining = next > 0 ? next - xp : 0;
 
@@ -119,7 +120,7 @@ function ProgressPage() {
         body: JSON.stringify({ selected_title: titleId })
       });
       if (res.ok) {
-        queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+        qc.invalidateQueries({ queryKey: ["user_profile"] });
       }
     } finally {
       setSavingTitle(false);
