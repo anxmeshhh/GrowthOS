@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
@@ -16,6 +16,190 @@ from .serializers import (
     NoteDocumentSerializer, VerifiedProjectSerializer, PathSharingSerializer, CustomPathCreateSerializer, PathCloneSerializer,
     TopicScreenshotSerializer
 )
+from django.core.mail import send_mail
+from django.conf import settings
+
+class SendOTPView(views.APIView):
+    permission_classes = (AllowAny,)
+    
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # In case the user already exists
+        from django.contrib.auth.models import User
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'Email already registered'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        otp_record, created = OTPVerification.objects.get_or_create(email=email)
+        otp_record.generate_otp()
+        
+        if getattr(settings, 'OTP_ENABLED', True):
+            try:
+                send_mail(
+                    'Your GrowthOS Verification Code',
+                    f'Your verification code is: {otp_record.otp}\nThis code will expire in 10 minutes.',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response({'message': 'OTP sent successfully'})
+
+class VerifyOTPView(views.APIView):
+    permission_classes = (AllowAny,)
+    
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        
+        if not email or not otp:
+            return Response({'error': 'Email and OTP are required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            otp_record = OTPVerification.objects.get(email=email)
+            if not otp_record.is_valid():
+                return Response({'error': 'OTP has expired or already used'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            if otp_record.otp == otp:
+                otp_record.is_verified = True
+                otp_record.save()
+                return Response({'message': 'Email verified successfully'})
+            else:
+                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        except OTPVerification.DoesNotExist:
+            return Response({'error': 'OTP not requested for this email'}, status=status.HTTP_400_BAD_REQUEST)
+
+import requests
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.models import User
+
+class GoogleLoginView(views.APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        access_token = request.data.get('access_token')
+        if not access_token:
+            return Response({'error': 'Missing access token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify token with Google
+        try:
+            google_response = requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'}
+            )
+            if not google_response.ok:
+                return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            user_info = google_response.json()
+            email = user_info.get('email')
+            first_name = user_info.get('given_name', '')
+            last_name = user_info.get('family_name', '')
+            
+            if not email:
+                return Response({'error': 'Google account must have an email'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get or Create User
+            user, created = User.objects.get_or_create(username=email, defaults={
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name
+            })
+            
+            # Setup Profile and Bonus if new
+            if created:
+                user.set_unusable_password()
+                user.save()
+                UserProfile.objects.get_or_create(user=user)
+                Contribution.objects.create(user=user, action_type='signup_bonus', points=1)
+                
+            # Issue JWTs
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GitHubLoginView(views.APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        code = request.data.get('code')
+        if not code:
+            return Response({'error': 'Missing GitHub code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        client_id = os.environ.get('GITHUB_CLIENT_ID', '')
+        client_secret = os.environ.get('GITHUB_CLIENT_SECRET', '')
+
+        # Exchange code for access token
+        try:
+            token_response = requests.post(
+                'https://github.com/login/oauth/access_token',
+                headers={'Accept': 'application/json'},
+                data={
+                    'client_id': client_id,
+                    'client_secret': client_secret,
+                    'code': code
+                }
+            )
+            token_data = token_response.json()
+            access_token = token_data.get('access_token')
+
+            if not access_token:
+                return Response({'error': 'Failed to get GitHub token'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch user info
+            user_response = requests.get(
+                'https://api.github.com/user',
+                headers={'Authorization': f'token {access_token}'}
+            )
+            user_info = user_response.json()
+            github_login = user_info.get('login')
+
+            # Fetch emails
+            emails_response = requests.get(
+                'https://api.github.com/user/emails',
+                headers={'Authorization': f'token {access_token}'}
+            )
+            emails_data = emails_response.json()
+            primary_email = next((e['email'] for e in emails_data if e.get('primary')), None)
+
+            if not primary_email:
+                return Response({'error': 'GitHub account must have a primary email'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get or Create User
+            user, created = User.objects.get_or_create(username=primary_email, defaults={
+                'email': primary_email,
+                'first_name': user_info.get('name', '').split()[0] if user_info.get('name') else github_login,
+                'last_name': ''
+            })
+
+            # Setup Profile and save GitHub username
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            if profile.github_username != github_login:
+                profile.github_username = github_login
+                profile.save()
+
+            if created:
+                user.set_unusable_password()
+                user.save()
+                Contribution.objects.create(user=user, action_type='signup_bonus', points=1)
+
+            # Issue JWTs
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class RegisterView(generics.CreateAPIView):
     queryset = UserSerializer.Meta.model.objects.all()
@@ -23,6 +207,15 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        # Enforce OTP verification before allowing registration
+        try:
+            otp_record = OTPVerification.objects.get(email=email)
+            if not otp_record.is_verified:
+                return Response({'error': 'Email not verified. Please verify OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
+        except OTPVerification.DoesNotExist:
+            return Response({'error': 'Email verification required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
         response = super().create(request, *args, **kwargs)
         from django.contrib.auth.models import User
         user = User.objects.get(username=request.data.get('username'))

@@ -161,18 +161,23 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   );
 }
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GrowthProvider>
-        <ToastProvider>
-          <GlobalGamificationWrapper>
-            <Outlet />
-          </GlobalGamificationWrapper>
-        </ToastProvider>
-      </GrowthProvider>
-    </QueryClientProvider>
+    <GoogleOAuthProvider clientId={clientId}>
+      <QueryClientProvider client={queryClient}>
+        <GrowthProvider>
+          <ToastProvider>
+            <GlobalGamificationWrapper>
+              <Outlet />
+            </GlobalGamificationWrapper>
+          </ToastProvider>
+        </GrowthProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }

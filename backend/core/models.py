@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+import random
+import string
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -12,6 +15,25 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+
+class OTPVerification(models.Model):
+    email = models.EmailField(unique=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def generate_otp(self):
+        self.otp = ''.join(random.choices(string.digits, k=6))
+        self.created_at = timezone.now()
+        self.is_verified = False
+        self.save()
+
+    def is_valid(self):
+        # Valid for 10 minutes
+        return not self.is_verified and (timezone.now() - self.created_at).total_seconds() < 600
+
+    def __str__(self):
+        return f"{self.email} - {self.otp}"
 
 class LearningPath(models.Model):
     VISIBILITY_CHOICES = [

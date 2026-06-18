@@ -6,7 +6,8 @@ from .views import (
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView
+    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView,
+    SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
 
@@ -19,9 +20,13 @@ urlpatterns = [
     # Auth Endpoints
     path('auth/register/', RegisterView.as_view(), name='auth_register'),
     path('auth/login/', TokenObtainPairView.as_view(), name='auth_login'),
+    path('auth/google/', GoogleLoginView.as_view(), name='auth_google'),
+    path('auth/github/', GitHubLoginView.as_view(), name='auth_github'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='auth_refresh'),
     path('auth/daily-login/', DailyLoginView.as_view(), name='daily_login'),
     path('auth/add-contribution/', AddContributionView.as_view(), name='add_contribution'),
+    path('auth/send-otp/', SendOTPView.as_view(), name='send_otp'),
+    path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
     
     # Path Endpoints
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),
