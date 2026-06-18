@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Github, ExternalLink, Star, Loader2, GitBranch, ShieldCheck } from "lucide-react";
+import { Github, ExternalLink, Star, Loader2, GitBranch, ShieldCheck, Plus, CheckCircle2 } from "lucide-react";
 import { PageShell, PageHeader, Card, Btn, Badge } from "@/components/growth-ui";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 
 export const Route = createFileRoute("/projects")({
@@ -32,6 +32,38 @@ function ProjectsPage() {
   const repos = repoData?.repos || [];
   const message = repoData?.message;
 
+  const qc = useQueryClient();
+  const [showGuide, setShowGuide] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [repoName, setRepoName] = useState("");
+  const [repoDesc, setRepoDesc] = useState("");
+  const [repoPrivate, setRepoPrivate] = useState(false);
+
+  const createRepoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/github/repo/create/", {
+        method: "POST",
+        body: JSON.stringify({ name: repoName, description: repoDesc, private: repoPrivate }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create repository");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['github_repos'] });
+      setShowCreateModal(false);
+      setRepoName("");
+      setRepoDesc("");
+      setRepoPrivate(false);
+      alert(`Repository created successfully!\nClone URL: ${data.clone_url}`);
+    },
+    onError: (err: any) => {
+      alert(err.message);
+    }
+  });
+
   if (reposLoading || portfolioLoading) {
     return <PageShell><div className="flex items-center justify-center p-12 text-[#eee]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading portfolio...</div></PageShell>;
   }
@@ -55,10 +87,97 @@ function ProjectsPage() {
 
   return (
     <PageShell>
+      {showGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-lg p-6 bg-[#0a0a0a] border-[#252525]">
+            <h2 className="text-xl font-bold text-white mb-4">How GitHub Integration Works</h2>
+            <div className="space-y-4 text-[#ccc] text-sm leading-relaxed">
+              <p>
+                GrowthOS acts as your personal command center. By securely connecting your GitHub, you unlock the ability to orchestrate your developer workflow directly from this interface.
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-[#aaa]">
+                <li><strong>Verified Projects:</strong> When you complete an AI assessment for a repository, GrowthOS permanently records it here as "Build Proof."</li>
+                <li><strong>Public Repositories:</strong> We pull your live public repositories so you can monitor your stars, branches, and code footprint in one place.</li>
+                <li><strong>Active Execution:</strong> With your upgraded permissions, you will soon be able to create repositories and publish Gists instantly from the topics and notes you create within GrowthOS!</li>
+              </ul>
+              <p className="italic text-[#888] pt-2">
+                Your tokens are encrypted using military-grade security.
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <Btn onClick={() => setShowGuide(false)} variant="solid" tone="green">Understood</Btn>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-lg p-6 bg-[#0a0a0a] border-[#252525]">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Github className="text-[#eee]" size={20} /> Create Workspace
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-[#888] mb-1">Repository Name</label>
+                <input
+                  type="text"
+                  value={repoName}
+                  onChange={(e) => setRepoName(e.target.value)}
+                  className="w-full bg-[#111] border border-[#252525] rounded-md px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#22c55e]"
+                  placeholder="e.g. awesome-project"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-[#888] mb-1">Description</label>
+                <input
+                  type="text"
+                  value={repoDesc}
+                  onChange={(e) => setRepoDesc(e.target.value)}
+                  className="w-full bg-[#111] border border-[#252525] rounded-md px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#22c55e]"
+                  placeholder="Short description..."
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="repoPrivate"
+                  checked={repoPrivate}
+                  onChange={(e) => setRepoPrivate(e.target.checked)}
+                  className="accent-[#22c55e]"
+                />
+                <label htmlFor="repoPrivate" className="text-sm text-[#aaa] cursor-pointer">Make this repository private</label>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Btn onClick={() => setShowCreateModal(false)} variant="outline">Cancel</Btn>
+              <Btn
+                onClick={() => createRepoMutation.mutate()}
+                variant="solid"
+                tone="green"
+                disabled={!repoName || createRepoMutation.isPending}
+              >
+                {createRepoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create & Init"}
+              </Btn>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <PageHeader
         kicker="Build Proof"
         title="Your Portfolio"
         subtitle={`${portfolio.length} verified projects • ${repos.length} public repositories`}
+        actions={
+          <>
+            <Btn variant="solid" tone="green" size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus size={14} className="mr-2" /> Create Workspace
+            </Btn>
+            <Btn variant="outline" size="sm" onClick={() => setShowGuide(true)}>
+              <ShieldCheck size={14} className="mr-2" /> Integration Guide
+            </Btn>
+          </>
+        }
       />
 
       {portfolio.length > 0 && (

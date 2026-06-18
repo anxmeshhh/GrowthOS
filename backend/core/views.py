@@ -7,6 +7,8 @@ from django.db.models import Sum, Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
+import requests
+import os
 
 from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification
 from .serializers import (
@@ -180,11 +182,13 @@ class GitHubLoginView(views.APIView):
                 'last_name': ''
             })
 
-            # Setup Profile and save GitHub username
+            from .encryption import encrypt_token
+
+            # Setup Profile and save GitHub username ONLY
             profile, _ = UserProfile.objects.get_or_create(user=user)
-            if profile.github_username != github_login:
-                profile.github_username = github_login
-                profile.save()
+            
+            profile.github_username = github_login
+            profile.save()
 
             if created:
                 user.set_unusable_password()
@@ -197,6 +201,53 @@ class GitHubLoginView(views.APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GitHubConnectView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        code = request.data.get('code')
+        if not code:
+            return Response({'error': 'Missing GitHub code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        client_id = os.environ.get('GITHUB_CLIENT_ID', '')
+        client_secret = os.environ.get('GITHUB_CLIENT_SECRET', '')
+
+        try:
+            token_response = requests.post(
+                'https://github.com/login/oauth/access_token',
+                headers={'Accept': 'application/json'},
+                data={
+                    'client_id': client_id,
+                    'client_secret': client_secret,
+                    'code': code
+                }
+            )
+            token_data = token_response.json()
+            access_token = token_data.get('access_token')
+
+            if not access_token:
+                return Response({'error': 'Failed to get GitHub token'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch user info
+            user_response = requests.get(
+                'https://api.github.com/user',
+                headers={'Authorization': f'token {access_token}'}
+            )
+            user_info = user_response.json()
+            github_login = user_info.get('login')
+
+            from .encryption import encrypt_token
+
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            profile.github_username = github_login
+            profile.github_access_token = encrypt_token(access_token)
+            profile.save()
+
+            return Response({'message': 'GitHub connected successfully'}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1066,6 +1117,7 @@ class UserProfileView(views.APIView):
             "completed_paths": path_list,
             "badges": badges,
             "github_username": profile.github_username,
+            "has_github_workspace_access": bool(profile.github_access_token),
             "can_revive_streak": can_revive_streak,
             "user": {
                 "id": user.id,
@@ -1127,6 +1179,365 @@ class GitHubReposView(views.APIView):
             return Response({"repos": data})
         except Exception as e:
             return Response({"repos": [], "message": f"Failed to fetch: {str(e)}"})
+
+class PublishGistView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .encryption import decrypt_token
+        import requests as http_requests
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        encrypted_token = profile.github_access_token
+        
+        if not encrypted_token:
+            return Response({'error': 'GitHub is not connected or missing required permissions. Please reconnect your account.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        access_token = decrypt_token(encrypted_token)
+        if not access_token:
+            return Response({'error': 'Failed to decrypt GitHub token.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        title = request.data.get('title', 'GrowthOS Note')
+        description = request.data.get('description', 'Exported from GrowthOS')
+        content = request.data.get('content')
+        filename = request.data.get('filename', 'note.md')
+
+        if not content:
+            return Response({'error': 'Content is required to publish a Gist.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        gist_data = {
+            "description": description,
+            "public": True,
+            "files": {
+                filename: {
+                    "content": f"# {title}\n\n{content}"
+                }
+            }
+        }
+
+        try:
+            resp = http_requests.post(
+                "https://api.github.com/gists",
+                headers={
+                    "Authorization": f"token {access_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                json=gist_data,
+                timeout=10
+            )
+            
+            if resp.status_code == 201:
+                return Response({"url": resp.json().get("html_url")}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error": f"GitHub API error: {resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Failed to publish gist: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CreateGitHubRepoView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .encryption import decrypt_token
+        import requests as http_requests
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        encrypted_token = profile.github_access_token
+        
+        if not encrypted_token:
+            return Response({'error': 'GitHub is not connected or missing required permissions. Please reconnect your account in Settings.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        access_token = decrypt_token(encrypted_token)
+        if not access_token:
+            return Response({'error': 'Failed to decrypt GitHub token.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        name = request.data.get('name')
+        description = request.data.get('description', 'Auto-generated by GrowthOS')
+        private = request.data.get('private', False)
+
+        if not name:
+            return Response({'error': 'Repository name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        repo_data = {
+            "name": name,
+            "description": description,
+            "private": private,
+            "auto_init": True,
+        }
+
+        try:
+            resp = http_requests.post(
+                "https://api.github.com/user/repos",
+                headers={
+                    "Authorization": f"token {access_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                json=repo_data,
+                timeout=15
+            )
+            
+            if resp.status_code == 201:
+                return Response(resp.json(), status=status.HTTP_201_CREATED)
+            elif resp.status_code == 404:
+                return Response({"error": "Your GitHub account lacks repository permissions. Please go to Settings -> Reconnect Workspace to grant full access."}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({"error": f"GitHub API error: {resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Failed to create repository: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class SyncPathToGitHubView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .encryption import decrypt_token
+        import requests as http_requests
+
+        path_slug = request.data.get('path_slug')
+        if not path_slug:
+            return Response({'error': 'Path slug is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Get path
+        path = get_object_or_404(LearningPath, slug=path_slug)
+        
+        # Security: ensure user has access (creator or shared)
+        from django.db.models import Q
+        has_access = LearningPath.objects.filter(
+            Q(id=path.id) & (
+                Q(created_by=request.user) |
+                Q(shared_with_users__shared_to=request.user)
+            )
+        ).exists()
+        if not has_access and path.visibility != 'public':
+            return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 2. Get GitHub Token
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        encrypted_token = profile.github_access_token
+        if not encrypted_token:
+            return Response({'error': 'GitHub is not connected. Please connect in Settings.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        access_token = decrypt_token(encrypted_token)
+        if not access_token:
+            return Response({'error': 'Failed to decrypt GitHub token.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 3. Create Repo
+        repo_name = f"growthos-{path.slug}"[:100]
+        repo_data = {
+            "name": repo_name,
+            "description": path.description or f"Learning Path: {path.title}",
+            "private": True,
+            "auto_init": True,
+            "has_issues": True,
+            "has_projects": True
+        }
+
+        headers = {
+            "Authorization": f"token {access_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+
+        try:
+            repo_resp = http_requests.post("https://api.github.com/user/repos", headers=headers, json=repo_data, timeout=15)
+            # 422 usually means it already exists, which is fine, we can just use it
+            if repo_resp.status_code == 404:
+                return Response({"error": "Your GitHub account lacks repository permissions. Please go to Settings -> Reconnect Workspace to grant full access."}, status=status.HTTP_403_FORBIDDEN)
+            elif repo_resp.status_code not in [201, 422]:
+                return Response({"error": f"GitHub API error creating repo: {repo_resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            github_username = profile.github_username
+            
+            path.github_repo_name = repo_name
+            path.save()
+            
+            # 4. Create Issues for Topics
+            created_issues = []
+            topics = path.topics.all().order_by('order')
+            for topic in topics:
+                issue_data = {
+                    "title": topic.title,
+                    "body": f"## Overview\n{topic.summary}\n\n*Generated by GrowthOS*"
+                }
+                issue_resp = http_requests.post(
+                    f"https://api.github.com/repos/{github_username}/{repo_name}/issues",
+                    headers=headers,
+                    json=issue_data,
+                    timeout=10
+                )
+                if issue_resp.status_code == 201:
+                    created_issues.append(issue_resp.json().get('html_url'))
+
+            return Response({
+                "message": "Successfully synced to GitHub Issues",
+                "repo_url": f"https://github.com/{github_username}/{repo_name}",
+                "issues_created": len(created_issues)
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": f"Failed to sync to GitHub: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+import base64
+
+class CommitWorkspaceToGitHubView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .encryption import decrypt_token
+        import requests as http_requests
+
+        topic_slug = request.data.get('topic_slug')
+        if not topic_slug:
+            return Response({'error': 'Topic slug is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        topic = get_object_or_404(Topic, slug=topic_slug)
+        path = topic.path
+
+        # Get Note
+        note = TopicNote.objects.filter(user=request.user, topic=topic).first()
+        content = note.content if note else ""
+
+        # Get Repo
+        repo_name = request.data.get('repo_name')
+        if not repo_name:
+            repo_name = path.github_repo_name
+            if not repo_name:
+                repo_name = f"growthos-{path.slug}"[:100]
+        else:
+            if repo_name != path.github_repo_name:
+                path.github_repo_name = repo_name
+                path.save()
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        encrypted_token = profile.github_access_token
+        if not encrypted_token:
+            return Response({'error': 'GitHub is not connected. Please connect in Settings.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        access_token = decrypt_token(encrypted_token)
+        if not access_token:
+            return Response({'error': 'Failed to decrypt GitHub token.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        github_username = profile.github_username
+        headers = {
+            "Authorization": f"token {access_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+
+        # 1. Ensure repo exists
+        repo_resp = http_requests.get(f"https://api.github.com/repos/{github_username}/{repo_name}", headers=headers)
+        if repo_resp.status_code == 404:
+            # Create repo
+            repo_data = {
+                "name": repo_name,
+                "description": path.description or f"Learning Path: {path.title}",
+                "private": path.visibility == 'private',
+                "auto_init": True
+            }
+            create_resp = http_requests.post("https://api.github.com/user/repos", headers=headers, json=repo_data, timeout=15)
+            if create_resp.status_code == 404:
+                return Response({"error": "Your GitHub account lacks repository permissions. Please go to Settings -> Reconnect Workspace to grant full access."}, status=status.HTTP_403_FORBIDDEN)
+            elif create_resp.status_code != 201:
+                return Response({"error": f"Failed to create GitHub repository automatically: {create_resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
+            path.github_repo_name = repo_name
+            path.save()
+
+        # 2. Get existing file SHA if exists to update
+        file_path = f"{topic.slug}/notes.md"
+        url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{file_path}"
+        
+        get_file = http_requests.get(url, headers=headers)
+        sha = None
+        if get_file.status_code == 200:
+            sha = get_file.json().get('sha')
+
+        # 3. Commit file (only if we have content)
+        put_resp = None
+        if content.strip():
+            encoded_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+            commit_data = {
+                "message": f"Update notes for {topic.title}",
+                "content": encoded_content
+            }
+            if sha:
+                commit_data["sha"] = sha
+            put_resp = http_requests.put(url, headers=headers, json=commit_data, timeout=10)
+        
+        # Helper to push arbitrary file
+        def push_to_github(file_path, file_content, message):
+            file_url = f"https://api.github.com/repos/{github_username}/{repo_name}/contents/{file_path}"
+            get_res = http_requests.get(file_url, headers=headers)
+            file_sha = get_res.json().get('sha') if get_res.status_code == 200 else None
+            
+            commit_payload = {
+                "message": message,
+                "content": base64.b64encode(file_content).decode('utf-8')
+            }
+            if file_sha:
+                commit_payload["sha"] = file_sha
+                
+            return http_requests.put(file_url, headers=headers, json=commit_payload, timeout=10)
+
+        # If notes failed (and were attempted), return error
+        if put_resp and put_resp.status_code not in [200, 201]:
+            return Response({"error": f"Failed to push commit: {put_resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        commit_url = put_resp.json().get('commit', {}).get('html_url') if put_resp else None
+        # Push screenshots
+        screenshots = topic.screenshots.filter(user=request.user)
+        for screenshot in screenshots:
+            try:
+                img_path = screenshot.image.path
+                if os.path.exists(img_path):
+                    with open(img_path, 'rb') as img_file:
+                        push_to_github(
+                            f"{topic.slug}/images/{os.path.basename(img_path)}",
+                            img_file.read(),
+                            f"Upload screenshot {os.path.basename(img_path)}"
+                        )
+            except Exception as e:
+                print(f"Failed to push screenshot {screenshot.id}: {e}")
+
+        # Push documents
+        documents = NoteDocument.objects.filter(user=request.user, topic=topic)
+        for doc in documents:
+            try:
+                doc_path = doc.file.path
+                if os.path.exists(doc_path):
+                    with open(doc_path, 'rb') as doc_file:
+                        push_to_github(
+                            f"{topic.slug}/documents/{doc.filename}",
+                            doc_file.read(),
+                            f"Upload document {doc.filename}"
+                        )
+            except Exception as e:
+                print(f"Failed to push document {doc.id}: {e}")
+
+        # Push flashcards
+        import json
+        flashcards = TopicFlashcard.objects.filter(user=request.user, topic=topic).first()
+        if flashcards and flashcards.cards:
+            push_to_github(
+                f"{topic.slug}/flashcards.json",
+                json.dumps(flashcards.cards, indent=2).encode('utf-8'),
+                f"Update flashcards for {topic.title}"
+            )
+
+        # Push quizzes
+        quizzes = TopicQuiz.objects.filter(user=request.user, topic=topic)
+        if quizzes.exists():
+            quiz_data = [{"difficulty": q.difficulty, "questions": q.questions} for q in quizzes]
+            push_to_github(
+                f"{topic.slug}/quizzes.json",
+                json.dumps(quiz_data, indent=2).encode('utf-8'),
+                f"Update quizzes for {topic.title}"
+            )
+
+        # Award XP Points for GitHub Contribution
+        Contribution.objects.create(user=request.user, action_type='github_commit', points=5)
+
+        commit_url = commit_url or f"https://github.com/{github_username}/{repo_name}"
+        return Response({
+            "message": "Successfully committed notes and files to GitHub",
+            "commit_url": commit_url,
+            "repo_url": f"https://github.com/{github_username}/{repo_name}/tree/main/{topic.slug}"
+        }, status=status.HTTP_200_OK)
 
 class PortfolioView(views.APIView):
     permission_classes = [IsAuthenticated]

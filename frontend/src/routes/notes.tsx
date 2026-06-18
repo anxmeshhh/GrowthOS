@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import {
   Search, FileText, BookOpen, Loader2, ExternalLink,
-  Plus, Trash2, Edit2, Save, X, Layers, Award,
+  Plus, Trash2, Edit2, Save, X, Layers, Award, Github
 } from "lucide-react";
 import { PageShell, Btn } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -107,6 +107,27 @@ function NotesPage() {
       if (!res.ok) throw new Error("Failed to delete document");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["all-note-documents"] }),
+  });
+
+  const publishGistMutation = useMutation({
+    mutationFn: async ({ title, content }: { title: string; content: string }) => {
+      const res = await apiFetch("/github/gist/", {
+        method: "POST",
+        body: JSON.stringify({ title, content, description: "Exported from GrowthOS Notes", filename: `${title.replace(/\s+/g, "_").toLowerCase()}.md` }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to publish Gist");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      alert(`Successfully published to Gist!\nURL: ${data.url}`);
+      window.open(data.url, '_blank');
+    },
+    onError: (err: any) => {
+      alert(err.message);
+    }
   });
 
   /* ── Derived Data ─────────────────────────────────────────────────── */
@@ -339,13 +360,26 @@ function NotesPage() {
                       </div>
                       <div className="lib-item-actions">
                         {isNote && !isEditing && (
-                          <button
-                            onClick={() => handleEditNote(item)}
-                            className="lib-action-btn"
-                            title="Edit"
-                          >
-                            <Edit2 size={11} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                if(window.confirm("Publish this note as a public GitHub Gist?")) {
+                                  publishGistMutation.mutate({ title: item.topicTitle, content: item.content });
+                                }
+                              }}
+                              className="lib-action-btn"
+                              title="Publish to GitHub Gist"
+                            >
+                              <Github size={11} />
+                            </button>
+                            <button
+                              onClick={() => handleEditNote(item)}
+                              className="lib-action-btn"
+                              title="Edit"
+                            >
+                              <Edit2 size={11} />
+                            </button>
+                          </>
                         )}
                         <button
                           onClick={() =>

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/toast-context";
 import { Logo } from "@/components/logo";
+import { apiFetch } from "@/lib/api-client";
 
 export const Route = createFileRoute("/auth/github/callback")({
   component: GithubCallbackPage,
@@ -29,29 +30,38 @@ function GithubCallbackPage() {
       return;
     }
 
-    // Exchange the code for JWTs via our backend
+    const state = urlParams.get("state");
+
+    // Choose backend endpoint based on state
+    const isConnect = state === "connect_workspace";
+    const endpoint = isConnect ? "/auth/github/connect/" : "/auth/github/";
+    const redirectUrl = isConnect ? "/settings" : "/dashboard";
+
+    // Exchange the code via our backend
     const authenticate = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/auth/github/", {
+        const res = await apiFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code }),
         });
 
         if (res.ok) {
-          const data = await res.json();
-          localStorage.setItem("access_token", data.access);
-          localStorage.setItem("refresh_token", data.refresh);
-          showToast("Successfully connected with GitHub!", "success");
-          window.location.href = "/dashboard";
+          if (!isConnect) {
+            const data = await res.json();
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
+          }
+          showToast(isConnect ? "Successfully connected GitHub Workspace!" : "Successfully connected with GitHub!", "success");
+          window.location.href = redirectUrl;
         } else {
           const errData = await res.json().catch(() => ({}));
-          setError(errData.error || "Failed to authenticate with GitHub.");
-          setTimeout(() => navigate({ to: "/login" }), 3000);
+          setError(errData.error || `Failed to ${isConnect ? "connect workspace" : "authenticate"} with GitHub.`);
+          setTimeout(() => navigate({ to: isConnect ? "/settings" : "/login" }), 3000);
         }
       } catch (err) {
         setError("Error connecting to server. Please try again.");
-        setTimeout(() => navigate({ to: "/login" }), 3000);
+        setTimeout(() => navigate({ to: isConnect ? "/settings" : "/login" }), 3000);
       }
     };
 

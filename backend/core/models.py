@@ -11,6 +11,7 @@ class UserProfile(models.Model):
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     github_username = models.CharField(max_length=100, blank=True, default='')
+    github_access_token = models.TextField(blank=True, default='')
     streak_revive_used_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -50,6 +51,7 @@ class LearningPath(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_paths', null=True, blank=True)
     visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='private')
     original_path = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='clones')
+    github_repo_name = models.CharField(max_length=255, null=True, blank=True)
     estimated_weeks = models.IntegerField(default=12, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)

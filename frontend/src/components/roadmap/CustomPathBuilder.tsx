@@ -361,6 +361,8 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
     }
   };
 
+  const [syncGitHub, setSyncGitHub] = useState(false);
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   // Sends to CustomPathView (/api/custom-paths/) which accepts:
   //   { title, topics: [{title, summary, node_kind, order, dependencies:[]}] }
@@ -373,7 +375,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
     setSubmitting(true);
     setError('');
     try {
-      await apiClient.post('/api/custom-paths/', {
+      const res = await apiClient.post('/api/custom-paths/', {
         title: title.trim(),
         slug: generateSlug(title.trim()),
         description,
@@ -386,6 +388,16 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           dependencies: [],
         })),
       });
+
+      if (syncGitHub) {
+        try {
+          await apiClient.post('/api/github/path/sync/', { path_slug: res.data.slug });
+        } catch (syncErr: any) {
+          console.error("Failed to sync to GitHub", syncErr);
+          alert("Path created, but failed to sync to GitHub Issues.");
+        }
+      }
+
       setSuccess(true);
       setTimeout(() => {
         setOpen(false);
@@ -513,6 +525,21 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                   style={{ background: '#0a0a0a', border: '1px solid #1e2e1e', color: '#4a6a4a' }}
                 />
                 <span className="text-[11px] font-mono" style={{ color: '#2a3a2a' }}>weeks</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="syncGitHub"
+                  checked={syncGitHub}
+                  onChange={(e) => setSyncGitHub(e.target.checked)}
+                  className="accent-[#22c55e] w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="syncGitHub" className="text-sm font-mono text-[#a8c078] cursor-pointer flex items-center gap-2">
+                  Sync to GitHub Issues
+                </label>
               </div>
             </div>
           </div>

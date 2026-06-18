@@ -7,7 +7,7 @@ from .views import (
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
     AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView,
-    SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView
+    SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
 
@@ -22,6 +22,7 @@ urlpatterns = [
     path('auth/login/', TokenObtainPairView.as_view(), name='auth_login'),
     path('auth/google/', GoogleLoginView.as_view(), name='auth_google'),
     path('auth/github/', GitHubLoginView.as_view(), name='auth_github'),
+    path('auth/github/connect/', GitHubConnectView.as_view(), name='auth_github_connect'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='auth_refresh'),
     path('auth/daily-login/', DailyLoginView.as_view(), name='daily_login'),
     path('auth/add-contribution/', AddContributionView.as_view(), name='add_contribution'),
@@ -63,6 +64,10 @@ urlpatterns = [
     # User Profile & GitHub
     path('profile/', UserProfileView.as_view(), name='user_profile'),
     path('github/repos/', GitHubReposView.as_view(), name='github_repos'),
+    path('github/gist/', PublishGistView.as_view(), name='publish_gist'),
+    path('github/repo/create/', CreateGitHubRepoView.as_view(), name='create_github_repo'),
+    path('github/path/sync/', SyncPathToGitHubView.as_view(), name='sync_github_path'),
+    path('github/workspace/commit/', CommitWorkspaceToGitHubView.as_view(), name='commit_github_workspace'),
     path('portfolio/', PortfolioView.as_view(), name='portfolio'),
     path('profile/reset/', ResetProgressView.as_view(), name='profile_reset'),
     

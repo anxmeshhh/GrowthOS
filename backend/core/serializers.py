@@ -28,10 +28,11 @@ class TopicSerializer(serializers.ModelSerializer):
     dependencies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     verified_project = serializers.SerializerMethodField()
     has_submitted_work = serializers.SerializerMethodField()
+    path_github_repo_name = serializers.CharField(source='path.github_repo_name', read_only=True)
 
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project', 'has_submitted_work']
+        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project', 'has_submitted_work', 'path_github_repo_name']
 
     def get_user_progress(self, obj):
         if hasattr(obj, 'user_progress_cache'):

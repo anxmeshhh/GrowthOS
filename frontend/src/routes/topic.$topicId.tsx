@@ -4,7 +4,7 @@ import {
   ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud,
   Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2,
   CheckCircle2, ChevronRight, RefreshCw, Github, Zap, BookOpen,
-  Layers, Hammer, Plus, RotateCcw
+  Layers, Hammer, Plus, RotateCcw, GitBranch
 } from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +33,7 @@ function formatTime(s: number) {
 function TopicWorkspace() {
   const { topicId } = useParams({ from: "/topic/$topicId" });
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const { data, isLoading } = useQuery({
     queryKey: ["topic", topicId],
@@ -59,6 +60,15 @@ function TopicWorkspace() {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const pasteZoneRef = useRef<HTMLDivElement>(null);
+  
+  const [showCommitModal, setShowCommitModal] = useState(false);
+  const [repoName, setRepoName] = useState("");
+
+  useEffect(() => {
+    if (data?.topic?.path_github_repo_name) {
+      setRepoName(data.topic.path_github_repo_name);
+    }
+  }, [data?.topic?.path_github_repo_name]);
 
   const { data: screenshots = [], refetch: refetchScreenshots } = useQuery({
     queryKey: ["screenshots", topicId],
@@ -110,6 +120,32 @@ function TopicWorkspace() {
       queryClient.invalidateQueries({ queryKey: ["topic", topicId] });
       queryClient.invalidateQueries({ queryKey: ["paths"] });
     },
+  });
+
+  const commitGitHubMutation = useMutation({
+    mutationFn: async (customRepoName?: string) => {
+      const res = await apiFetch(`/github/workspace/commit/`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          topic_slug: topicId,
+          ...(customRepoName ? { repo_name: customRepoName } : {})
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to commit to GitHub");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setShowCommitModal(false);
+      showToast("Successfully committed to GitHub Workspace!", "success");
+      // Open the exact folder in GitHub where the notes/images landed
+      window.open(data.repo_url, "_blank");
+    },
+    onError: (err: any) => {
+      showToast(err.message, "error");
+    }
   });
 
   const handlePaste = useCallback(
@@ -205,6 +241,16 @@ function TopicWorkspace() {
               {running ? <Pause size={12} /> : <Play size={12} />}
             </button>
           </div>
+
+          {/* Commit */}
+          <button
+            onClick={() => setShowCommitModal(true)}
+            disabled={commitGitHubMutation.isPending}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-lg font-medium transition-all border border-[#2a2a2a] bg-[#111] text-[#eee] hover:border-[#3b5bdb]/40 hover:text-[#60a5fa] hover:bg-[#3b5bdb]/5`}
+          >
+            {commitGitHubMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <GitBranch size={12} />}
+            <span className="hidden sm:inline">Commit</span>
+          </button>
 
           {/* Mark done */}
           <button
@@ -394,6 +440,60 @@ function TopicWorkspace() {
           </div>
         </section>
       </div>
+
+      {showCommitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000]/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-[#1e1e1e] flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-[#f0f0f0] flex items-center gap-2">
+                <GitBranch size={18} className="text-[#60a5fa]" />
+                Commit Workspace
+              </h3>
+              <button onClick={() => setShowCommitModal(false)} className="text-[#555] hover:text-[#fff] transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm text-[#888] font-medium">Target Repository Name</label>
+                <input
+                  type="text"
+                  value={repoName}
+                  onChange={(e) => setRepoName(e.target.value)}
+                  placeholder="e.g. growthos-my-path"
+                  className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#333] focus:outline-none focus:border-[#3b5bdb]/50 font-mono text-sm transition-colors"
+                />
+                <p className="text-[11px] text-[#555] leading-relaxed">
+                  Files will be pushed to <strong className="text-[#aaa]">/{topic.slug}/</strong> inside this repository. Leave empty to auto-generate a name.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm text-[#888] font-medium">Assets to Commit</label>
+                <div className="bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 space-y-2.5 text-sm text-[#bbb]">
+                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Markdown Notes</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Screenshots & Images</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Flashcard JSON</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Quizzes JSON</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Uploaded Documents</div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => commitGitHubMutation.mutate(repoName)}
+                  disabled={commitGitHubMutation.isPending}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#111] border border-[#3b5bdb]/40 text-[#60a5fa] font-medium hover:bg-[#3b5bdb]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {commitGitHubMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <GitBranch size={16} />}
+                  Push to GitHub
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
@@ -1138,6 +1238,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           </ul>
         </div>
       )}
+
     </div>
   );
 }

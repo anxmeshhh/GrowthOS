@@ -185,55 +185,56 @@ function SettingsPage() {
 
           <div className="settings-card-body">
             <p className="settings-desc">
-              Link your GitHub username to import repositories for AI project assessments.
+              Securely connect your GitHub account to enable advanced features like One-Click Repo Creation, Gist Publishing, and Automated Project Verification.
             </p>
 
-            <div className="github-input-row">
-              <div className="github-input-wrap">
-                <span className="github-prefix">github.com/</span>
-                <input
-                  value={githubInput}
-                  onChange={(e) => setGithubInput(e.target.value)}
-                  placeholder="username"
-                  className="github-input"
-                  spellCheck={false}
-                  autoComplete="off"
-                />
-              </div>
-              <button
-                className="settings-btn"
-                onClick={() => saveGithub.mutate(githubInput)}
-                disabled={saveGithub.isPending || githubInput === profile?.github_username}
-              >
-                {saveGithub.isPending ? (
-                  <Loader2 size={11} className="animate-spin" />
-                ) : saved ? (
-                  <><CheckCircle2 size={11} style={{ color: "#22c55e" }} /> Saved</>
-                ) : (
-                  <><Save size={11} /> Save</>
-                )}
-              </button>
-            </div>
-
-            <div className="github-status">
+            <div className="github-input-row mt-4">
               {profile?.github_username ? (
-                <span className="github-status-connected">
-                  <CheckCircle2 size={10} />
-                  Connected as&nbsp;
-                  <a
-                    href={`https://github.com/${profile.github_username}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="github-link"
-                  >
-                    {profile.github_username}
-                  </a>
-                </span>
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#161616] rounded-md p-3">
+                    <span className="github-status-connected">
+                      <CheckCircle2 size={12} className="text-[#22c55e]" />
+                      Connected as&nbsp;
+                      <a
+                        href={`https://github.com/${profile.github_username}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="github-link font-bold text-[#f0f0f0]"
+                      >
+                        {profile.github_username}
+                      </a>
+                    </span>
+                    <button
+                      className="settings-btn"
+                      onClick={() => {
+                        const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+                        const redirectUri = `${window.location.origin}/auth/github/callback`;
+                        window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email,repo,gist&state=connect_workspace`;
+                      }}
+                    >
+                      Reconnect Workspace
+                    </button>
+                  </div>
+                  {profile?.has_github_workspace_access ? (
+                    <p className="text-[10px] text-[#4ade80] font-mono tracking-wide uppercase">✓ Workspace permissions granted & encrypted</p>
+                  ) : (
+                    <p className="text-[10px] text-[#ef4444] font-mono tracking-wide uppercase">⚠ Missing workspace permissions. Please reconnect.</p>
+                  )}
+                </div>
               ) : (
-                <span className="github-status-disconnected">
-                  <XCircle size={10} />
-                  Not connected
-                </span>
+                <div className="w-full">
+                  <button
+                    className="w-full group flex items-center justify-center gap-3 h-10 px-4 rounded-md border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-xs font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+                    onClick={() => {
+                      const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+                      const redirectUri = `${window.location.origin}/auth/github/callback`;
+                      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email,repo,gist&state=connect_workspace`;
+                    }}
+                  >
+                    <Github size={14} className="text-[#fff]" />
+                    Connect GitHub Workspace
+                  </button>
+                </div>
               )}
             </div>
           </div>
