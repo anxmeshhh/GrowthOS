@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import {
   ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud,
   Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2,
-  CheckCircle2, ChevronRight, RefreshCw, Github, Zap, BookOpen,
+  CheckCircle2, ChevronRight, ChevronDown, RefreshCw, Github, Zap, BookOpen,
   Layers, Hammer, Plus, RotateCcw, GitBranch
 } from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
@@ -63,6 +63,18 @@ function TopicWorkspace() {
   
   const [showCommitModal, setShowCommitModal] = useState(false);
   const [repoName, setRepoName] = useState("");
+  const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
+
+  const { data: githubRepos = [] } = useQuery({
+    queryKey: ["github-repos"],
+    queryFn: async () => {
+      const res = await apiFetch(`/github/repos/`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.repos || [];
+    },
+    enabled: showCommitModal, // Only fetch when modal is opened
+  });
 
   useEffect(() => {
     if (data?.topic?.path_github_repo_name) {
@@ -456,13 +468,46 @@ function TopicWorkspace() {
             <div className="p-6 space-y-6">
               <div className="space-y-2">
                 <label className="text-sm text-[#888] font-medium">Target Repository Name</label>
-                <input
-                  type="text"
-                  value={repoName}
-                  onChange={(e) => setRepoName(e.target.value)}
-                  placeholder="e.g. growthos-my-path"
-                  className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#333] focus:outline-none focus:border-[#3b5bdb]/50 font-mono text-sm transition-colors"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={repoName}
+                    onChange={(e) => {
+                      setRepoName(e.target.value);
+                      setRepoDropdownOpen(true);
+                    }}
+                    onFocus={() => setRepoDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setRepoDropdownOpen(false), 200)}
+                    placeholder="e.g. growthos-my-path"
+                    className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#333] focus:outline-none focus:border-[#22c55e]/50 font-mono text-sm transition-colors pr-10"
+                  />
+                  <div className="absolute right-3 top-3 pointer-events-none">
+                    <ChevronDown size={16} className="text-[#555]" />
+                  </div>
+                  
+                  {repoDropdownOpen && githubRepos.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg max-h-48 overflow-y-auto z-10 shadow-2xl">
+                      {githubRepos
+                        .filter((r: any) => r.name.toLowerCase().includes(repoName.toLowerCase()))
+                        .map((r: any) => (
+                          <div 
+                            key={r.id}
+                            onClick={() => {
+                              setRepoName(r.name);
+                              setRepoDropdownOpen(false);
+                            }} 
+                            className="px-3 py-2.5 hover:bg-[#141414] cursor-pointer text-[#d0d0d0] text-sm font-mono border-b border-[#111] last:border-0 transition-colors flex items-center justify-between"
+                          >
+                            <span>{r.name}</span>
+                            {r.private && <span className="text-[10px] bg-[#1a1a1a] text-[#888] px-1.5 py-0.5 rounded">Private</span>}
+                          </div>
+                      ))}
+                      {githubRepos.filter((r: any) => r.name.toLowerCase().includes(repoName.toLowerCase())).length === 0 && (
+                        <div className="px-3 py-3 text-sm text-[#555] italic text-center">No matching repositories found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <p className="text-[11px] text-[#555] leading-relaxed">
                   Files will be pushed to <strong className="text-[#aaa]">/{topic.slug}/</strong> inside this repository. Leave empty to auto-generate a name.
                 </p>
@@ -534,6 +579,23 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     });
     setSaving(false);
   };
+
+  // Debounced auto-save: saves 2 seconds after user stops typing
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadRef = useRef(true);
+
+  useEffect(() => {
+    // Skip auto-save on initial load
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      if (content.trim()) saveNote(content);
+    }, 2000);
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+  }, [content]);
 
   useEffect(() => {
     const handleScreenshot = (e: any) => {

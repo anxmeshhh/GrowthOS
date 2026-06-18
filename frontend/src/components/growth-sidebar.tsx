@@ -56,11 +56,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           <div className="px-3 mb-1 flex items-center gap-2">
             <span
               style={{
-                fontSize: "9px",
+                fontSize: "11px",
                 letterSpacing: "0.12em",
                 fontWeight: 600,
                 textTransform: "uppercase",
-                color: "#333",
+                color: "#777",
                 fontFamily: "ui-monospace, monospace",
               }}
             >
@@ -81,12 +81,12 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    padding: "7px 10px 7px 10px",
+                    gap: "12px",
+                    padding: "9px 12px",
                     borderRadius: "8px",
-                    fontSize: "13px",
-                    fontWeight: active ? 500 : 400,
-                    color: active ? "#e8e8e8" : "#4a4a4a",
+                    fontSize: "15px",
+                    fontWeight: active ? 600 : 500,
+                    color: active ? "#ffffff" : "#888888",
                     background: active ? "#141414" : "transparent",
                     boxShadow: active
                       ? "inset 0 0 0 1px rgba(255,255,255,0.05)"
@@ -116,10 +116,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   )}
 
                   <Icon
-                    size={14}
-                    strokeWidth={active ? 2 : 1.6}
+                    size={18}
+                    strokeWidth={active ? 2.5 : 2}
                     style={{
-                      color: active ? "#22c55e" : "#333",
+                      color: active ? "#22c55e" : "#666",
                       flexShrink: 0,
                       transition: "color 120ms ease",
                     }}
@@ -142,11 +142,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
       {/* Hover style via global injection */}
       <style>{`
         .nav-item:not([data-active]):hover {
-          color: #aaa !important;
-          background: #0e0e0e !important;
+          color: #e0e0e0 !important;
+          background: #111111 !important;
         }
         .nav-item:not([data-active]):hover svg {
-          color: #555 !important;
+          color: #888 !important;
         }
       `}</style>
     </nav>

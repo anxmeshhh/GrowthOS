@@ -102,4 +102,14 @@ def get_user_badges(user):
     
     if quizzes_passed >= 20: badges.append({"id": "quiz_veteran", "title": "Quiz Veteran", "icon": "🏆", "desc": "Passed 20 quizzes"})
     
+    # GitHub / Developer badges
+    github_commits = Contribution.objects.filter(user=user, action_type='github_commit').count()
+    gists_published = Contribution.objects.filter(user=user, action_type='gist_published').count()
+    repos_created = Contribution.objects.filter(user=user, action_type='github_repo_created').count()
+    
+    if github_commits >= 1: badges.append({"id": "first_commit", "title": "First Push", "icon": "🚀", "desc": "Committed workspace to GitHub"})
+    if github_commits >= 10: badges.append({"id": "serial_committer", "title": "Serial Committer", "icon": "⚡", "desc": "10+ GitHub commits"})
+    if gists_published >= 1: badges.append({"id": "gist_maker", "title": "Gist Maker", "icon": "📋", "desc": "Published a GitHub Gist"})
+    if repos_created >= 3: badges.append({"id": "repo_builder", "title": "Repo Builder", "icon": "🏗️", "desc": "Created 3+ GitHub repositories"})
+    
     return badges

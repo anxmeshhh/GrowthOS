@@ -184,10 +184,11 @@ class GitHubLoginView(views.APIView):
 
             from .encryption import encrypt_token
 
-            # Setup Profile and save GitHub username ONLY
+            # Setup Profile and save GitHub username + access token
             profile, _ = UserProfile.objects.get_or_create(user=user)
             
             profile.github_username = github_login
+            profile.github_access_token = encrypt_token(access_token)
             profile.save()
 
             if created:
@@ -381,6 +382,7 @@ class TopicMaterialUploadView(views.APIView):
             topic=topic,
             file=file_obj
         )
+        Contribution.objects.create(user=request.user, action_type='material_uploaded', points=1)
         return Response(TopicMaterialSerializer(material).data, status=status.HTTP_201_CREATED)
 
 import os
@@ -430,6 +432,7 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
             else:
                 data = json.loads(response_content)
                 
+            Contribution.objects.create(user=request.user, action_type='path_generated', points=2)
             return Response(data)
         except Exception as e:
             return Response({'error': f"AI generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -541,6 +544,19 @@ class RecentActivityView(views.APIView):
             'flashcards_reviewed': 'Reviewed flashcards',
             'path_bookmarked': 'Bookmarked a learning path',
             'streak_milestone': 'Streak milestone reached',
+            'material_uploaded': 'Uploaded build material',
+            'path_generated': 'Generated a learning path',
+            'flashcards_generated': 'Generated AI flashcards',
+            'document_uploaded': 'Uploaded a reference document',
+            'screenshot_uploaded': 'Uploaded a screenshot',
+            'github_repo_created': 'Created a GitHub repository',
+            'github_path_synced': 'Synced roadmap to GitHub',
+            'github_commit': 'Committed workspace to GitHub',
+            'gist_published': 'Published a GitHub Gist',
+            'custom_path_created': 'Created a custom learning path',
+            'path_cloned': 'Cloned a learning path',
+            'streak_revived': 'Revived a lost streak',
+            'quiz_chain': 'Quiz chain bonus',
         }
         for a in acts:
             label = label_map.get(a.action_type, a.action_type.replace('_', ' ').title())
@@ -757,6 +773,7 @@ class TopicFlashcardView(views.APIView):
             user=request.user, topic=topic,
             defaults={'cards': valid_cards}
         )
+        Contribution.objects.create(user=request.user, action_type='flashcards_generated', points=1)
         return Response({'flashcards': flashcard.cards})
 
 class ProjectIdeasView(views.APIView):
@@ -898,6 +915,7 @@ class NoteDocumentView(views.APIView):
             file=file_obj,
             filename=file_obj.name
         )
+        Contribution.objects.create(user=request.user, action_type='document_uploaded', points=1)
         serializer = NoteDocumentSerializer(doc, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -931,6 +949,7 @@ class TopicScreenshotView(views.APIView):
             image=image,
             caption=caption
         )
+        Contribution.objects.create(user=request.user, action_type='screenshot_uploaded', points=1)
         serializer = TopicScreenshotSerializer(screenshot, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -1150,17 +1169,29 @@ class GitHubReposView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from .encryption import decrypt_token
+        import requests as http_requests
+
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         username = profile.github_username
-        if not username:
-            return Response({"repos": [], "message": "No GitHub username set. Go to Settings to connect."})
         
-        import requests as http_requests
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        encrypted_token = profile.github_access_token
+        if encrypted_token:
+            access_token = decrypt_token(encrypted_token)
+            if access_token:
+                headers["Authorization"] = f"token {access_token}"
+
         try:
+            # If authenticated, fetch all repos for the user (including private). Otherwise fallback to public repos.
+            url = "https://api.github.com/user/repos" if encrypted_token else f"https://api.github.com/users/{username}/repos"
+            if not encrypted_token and not username:
+                return Response({"repos": [], "message": "No GitHub connection found. Go to Settings."})
+
             resp = http_requests.get(
-                f"https://api.github.com/users/{username}/repos",
-                params={"sort": "updated", "per_page": 30},
-                headers={"Accept": "application/vnd.github.v3+json"},
+                url,
+                params={"sort": "updated", "per_page": 100, "affiliation": "owner,collaborator"},
+                headers=headers,
                 timeout=10,
             )
             if resp.status_code != 200:
@@ -1227,6 +1258,7 @@ class PublishGistView(views.APIView):
             )
             
             if resp.status_code == 201:
+                Contribution.objects.create(user=request.user, action_type='gist_published', points=3)
                 return Response({"url": resp.json().get("html_url")}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"error": f"GitHub API error: {resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
@@ -1276,6 +1308,7 @@ class CreateGitHubRepoView(views.APIView):
             )
             
             if resp.status_code == 201:
+                Contribution.objects.create(user=request.user, action_type='github_repo_created', points=5)
                 return Response(resp.json(), status=status.HTTP_201_CREATED)
             elif resp.status_code == 404:
                 return Response({"error": "Your GitHub account lacks repository permissions. Please go to Settings -> Reconnect Workspace to grant full access."}, status=status.HTTP_403_FORBIDDEN)
@@ -1365,6 +1398,7 @@ class SyncPathToGitHubView(views.APIView):
                 if issue_resp.status_code == 201:
                     created_issues.append(issue_resp.json().get('html_url'))
 
+            Contribution.objects.create(user=request.user, action_type='github_path_synced', points=5)
             return Response({
                 "message": "Successfully synced to GitHub Issues",
                 "repo_url": f"https://github.com/{github_username}/{repo_name}",

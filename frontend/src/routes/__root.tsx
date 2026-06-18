@@ -132,7 +132,7 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
   const router = useRouter();
   const path = router.state.location.pathname;
-  const isAuthRoute = path === "/login" || path === "/signup" || path === "/";
+  const isAuthRoute = path === "/login" || path === "/signup" || path === "/" || path.startsWith("/auth/");
 
   useContributionTracking(!isAuthRoute);
 
