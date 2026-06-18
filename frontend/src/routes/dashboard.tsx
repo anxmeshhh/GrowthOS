@@ -312,7 +312,7 @@ function DashboardPage() {
                   {/* CTA */}
                   <Link
                     to="/topic/$topicId"
-                    params={{ topicId: String(cur.slug || cur.id) }}
+                    params={{ topicId: String(cur.id) }}
                     className="engage-btn"
                   >
                     Engage Mission <ArrowRight size={13} strokeWidth={2} />
@@ -466,7 +466,7 @@ function DashboardPage() {
                               <Link
                                 key={t.id}
                                 to="/topic/$topicId"
-                                params={{ topicId: String(t.slug || t.id) }}
+                                params={{ topicId: String(t.id) }}
                                 className="flex items-center gap-2 px-2 py-[5px] rounded-[3px] no-underline transition-all duration-150 group/item"
                                 style={{
                                   background: a ? '#0c1a0f' : 'transparent',

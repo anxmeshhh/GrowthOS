@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Copy, Share2, Settings } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,9 @@ export function CustomPathBuilder() {
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/\s+/g, '-')
-      .trim();
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 255);
   };
 
   const handleTitleChange = (title: string) => {
@@ -81,20 +83,29 @@ export function CustomPathBuilder() {
         return;
       }
 
+      const validTopics = topics
+        .map((topic, index) => ({
+          title: topic.title.trim(),
+          summary: topic.summary || '',
+          order: index,
+          dependencies: [],
+        }))
+        .filter((topic) => topic.title);
+
+      if (validTopics.length === 0) {
+        setError('At least one named topic is required');
+        return;
+      }
+
       const payload = {
-        title: pathTitle,
-        slug: pathSlug,
+        title: pathTitle.trim(),
+        slug: pathSlug || generateSlug(pathTitle),
         description: pathDescription,
         estimated_weeks: estimatedWeeks,
+        topics: validTopics,
       };
 
-      const response = await apiClient.post('/api/custom-paths/', payload);
-
-      // Create topics for the path
-      for (let i = 0; i < topics.length; i++) {
-        const topic = topics[i];
-        // Topic creation endpoint would be added here
-      }
+      await apiClient.post('/api/custom-paths/', payload);
 
       setSuccess('Custom path created successfully!');
       setTimeout(() => {

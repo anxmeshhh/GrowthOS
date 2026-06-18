@@ -6,7 +6,7 @@ from .views import (
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView,
+    AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
@@ -57,6 +57,7 @@ urlpatterns = [
     # Library Endpoints
     path('all-notes/', AllNotesView.as_view(), name='all_notes'),
     path('all-note-documents/', AllNoteDocumentsView.as_view(), name='all_note_documents'),
+    path('all-screenshots/', AllScreenshotsView.as_view(), name='all_screenshots'),
     
     # Custom Path Endpoints
     path('custom-paths/<str:path_slug>/progress/', PathProgressView.as_view(), name='path_progress'),

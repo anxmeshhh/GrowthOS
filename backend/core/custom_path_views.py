@@ -8,12 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
-from django.utils.text import slugify
 from .models import LearningPath, Topic, PathSharing, TopicProgress, Contribution
 from .serializers import (
     LearningPathSerializer, PathSharingSerializer, CustomPathCreateSerializer, 
     PathCloneSerializer, TopicSerializer
 )
+from .slug_utils import unique_slug, unique_slug_in_memory
 
 
 class CustomPathViewSet(viewsets.ModelViewSet):
@@ -57,6 +57,7 @@ class CustomPathViewSet(viewsets.ModelViewSet):
 
         # Process nested topics
         topics_data = request.data.get('topics', [])
+        existing_topic_slugs = set(path.topics.values_list('slug', flat=True))
         for idx, topic_data in enumerate(topics_data):
             if isinstance(topic_data, dict):
                 t_title = topic_data.get('title', f'Topic {idx + 1}').strip()
@@ -74,13 +75,16 @@ class CustomPathViewSet(viewsets.ModelViewSet):
             if not t_title:
                 continue
 
-            from django.utils.text import slugify as _slugify
-            t_slug = _slugify(t_title)
+            t_slug = unique_slug_in_memory(
+                t_title,
+                existing_topic_slugs,
+                fallback=f'topic-{idx + 1}',
+            )
 
             Topic.objects.create(
                 path=path,
                 title=t_title,
-                slug=t_slug or f'topic-{idx}',
+                slug=t_slug,
                 summary=t_summary,
                 node_kind=t_kind,
                 order=t_order,
@@ -139,14 +143,11 @@ class CustomPathViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         
         try:
-            # Ensure new slug is unique
-            new_slug = serializer.validated_data['new_slug']
-            base_slug = new_slug
-            counter = 1
-            
-            while LearningPath.objects.filter(slug=new_slug).exists():
-                new_slug = f"{base_slug}-{counter}"
-                counter += 1
+            new_slug = unique_slug(
+                LearningPath,
+                serializer.validated_data['new_slug'],
+                fallback='path-copy',
+            )
             
             # Create new path
             new_path = LearningPath.objects.create(

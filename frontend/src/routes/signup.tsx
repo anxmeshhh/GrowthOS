@@ -3,6 +3,7 @@ import { Github, User, Mail, ArrowRight, Lock, CheckCircle2 } from "lucide-react
 import { Logo } from "@/components/logo";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/toast-context";
+import { apiFetch, setAuthTokens } from "@/lib/api-client";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Sign up — GrowthOS" }] }),
@@ -174,15 +175,13 @@ function SignupPage() {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/auth/google/", {
+        const res = await apiFetch("/auth/google/", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ access_token: tokenResponse.access_token }),
         });
         if (res.ok) {
           const data = await res.json();
-          localStorage.setItem("access_token", data.access);
-          localStorage.setItem("refresh_token", data.refresh);
+          setAuthTokens(data.access, data.refresh);
           showToast("Google signup successful!", "success");
           window.location.href = "/dashboard";
         } else {
@@ -280,9 +279,8 @@ function SignupPage() {
                 if (step === 1) {
                   // Send OTP
                   const inputEmail = fd.get("email") as string;
-                  const res = await fetch("http://127.0.0.1:8000/api/auth/send-otp/", {
+                  const res = await apiFetch("/auth/send-otp/", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: inputEmail }),
                   });
                   if (res.ok) {
@@ -296,9 +294,8 @@ function SignupPage() {
                 } else if (step === 2) {
                   // Verify OTP
                   const otp = fd.get("otp") as string;
-                  const res = await fetch("http://127.0.0.1:8000/api/auth/verify-otp/", {
+                  const res = await apiFetch("/auth/verify-otp/", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, otp }),
                   });
                   if (res.ok) {
@@ -312,22 +309,19 @@ function SignupPage() {
                   // Final Registration
                   const name = fd.get("name") as string;
                   const pwd = fd.get("password") as string;
-                  const res = await fetch("http://127.0.0.1:8000/api/auth/register/", {
+                  const res = await apiFetch("/auth/register/", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username: email, email, password: pwd }),
                   });
                   if (res.ok || res.status === 201) {
                     // Auto-login
-                    const loginRes = await fetch("http://127.0.0.1:8000/api/auth/login/", {
+                    const loginRes = await apiFetch("/auth/login/", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ username: email, password: pwd }),
                     });
                     if (loginRes.ok) {
                       const data = await loginRes.json();
-                      localStorage.setItem("access_token", data.access);
-                      localStorage.setItem("refresh_token", data.refresh);
+                      setAuthTokens(data.access, data.refresh);
                       showToast("Account created! Welcome to GrowthOS.", "success");
                       window.location.href = "/dashboard";
                     }

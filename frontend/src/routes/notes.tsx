@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import {
-  Search, FileText, BookOpen, Loader2, ExternalLink,
-  Plus, Trash2, Edit2, Save, X, Layers, Award, Github
+  Search, BookOpen, Loader2, ExternalLink, FileText, Image as ImageIcon,
+  Plus, Trash2, Edit2, Save, X, Layers, Github
 } from "lucide-react";
 import { PageShell, Btn } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +28,100 @@ function timeAgo(iso: string) {
 function Skel({ className = "" }: { className?: string }) {
   return (
     <div className={`rounded-[3px] bg-[#0f0f0f] animate-pulse ${className}`} />
+  );
+}
+
+type LibraryItem = {
+  id: string;
+  rawId: number | string;
+  topicId: string;
+  type: "note";
+  pathTitle: string;
+  topicTitle: string;
+  topicSlug: string;
+  content: string;
+  date: string;
+  documents: NoteDocument[];
+  screenshots: TopicScreenshot[];
+};
+
+type NoteDocument = {
+  id: number | string;
+  topic: number | string;
+  file?: string;
+  filename?: string;
+  uploaded_at?: string;
+  file_url?: string;
+};
+
+type TopicScreenshot = {
+  id: number | string;
+  topic: number | string;
+  image?: string;
+  caption?: string;
+  uploaded_at?: string;
+  image_url?: string;
+};
+
+function isGeneratedAttachmentBlock(text: string) {
+  return (
+    /^!\[[^\]]*\]\(([^)]+)\)$/.test(text) ||
+    /^\[([^\]]+)\]\(([^)]+)\)$/.test(text)
+  );
+}
+
+function renderInlineNoteText(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index).replace(/\*\*/g, ""));
+    }
+
+    parts.push(
+      <a
+        key={`${match[2]}-${match.index}`}
+        href={match[2]}
+        target="_blank"
+        rel="noreferrer"
+        className="lib-note-link"
+      >
+        {match[1]}
+      </a>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex).replace(/\*\*/g, ""));
+  }
+
+  return parts;
+}
+
+function RenderedNote({ content }: { content: string }) {
+  const blocks = content
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter((block) => block && !isGeneratedAttachmentBlock(block));
+
+  if (blocks.length === 0) {
+    return <p className="lib-note-empty">No written note yet.</p>;
+  }
+
+  return (
+    <div className="lib-note-content">
+      {blocks.map((trimmed, index) => {
+        return (
+          <p key={index} className="lib-note-paragraph">
+            {renderInlineNoteText(trimmed)}
+          </p>
+        );
+      })}
+    </div>
   );
 }
 
@@ -87,6 +181,14 @@ function NotesPage() {
     },
   });
 
+  const { data: allScreenshots = [], isLoading: sl } = useQuery({
+    queryKey: ["all-screenshots"],
+    queryFn: async () => {
+      const res = await apiFetch("/all-screenshots/");
+      return res.ok ? res.json() : [];
+    },
+  });
+
   /* ── Mutations ────────────────────────────────────────────────────── */
   const saveNoteMutation = useMutation({
     mutationFn: async ({ topicId, content }: { topicId: string; content: string }) => {
@@ -97,16 +199,6 @@ function NotesPage() {
       if (!res.ok) throw new Error("Failed to save note");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["all-notes"] }),
-  });
-
-  const deleteDocMutation = useMutation({
-    mutationFn: async ({ topicId, docId }: { topicId: string; docId: number }) => {
-      const res = await apiFetch(`/topics/${topicId}/note-documents/?id=${docId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete document");
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["all-note-documents"] }),
   });
 
   const publishGistMutation = useMutation({
@@ -131,7 +223,7 @@ function NotesPage() {
   });
 
   /* ── Derived Data ─────────────────────────────────────────────────── */
-  const isLoading = pl || cl || nl || dl;
+  const isLoading = pl || cl || nl || dl || sl;
 
   const combinedPaths = [
     ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
@@ -143,52 +235,74 @@ function NotesPage() {
     for (const p of combinedPaths) {
       const t = p.topics?.find((t: any) => String(t.id) === key);
       if (t)
-        return { pathTitle: p.title, topicTitle: t.title, topicSlug: t.slug || key };
+        return { pathTitle: p.title, topicTitle: t.title, topicSlug: String(t.id) };
     }
     return { pathTitle: "Unknown Path", topicTitle: `Topic #${topicId}`, topicSlug: key };
   };
 
   const pathTitles = [...new Set(combinedPaths.map((p: any) => p.title))];
 
-  const flatItems = useMemo(() => {
-    const items: any[] = [];
-    for (const note of allNotes) {
-      if (!note.content) continue;
-      const info = resolveTopic(note.topic);
-      items.push({
-        id: `n-${note.id}`,
-        rawId: note.id,
-        topicId: note.topic,
+  const libraryItems = useMemo<LibraryItem[]>(() => {
+    const byTopic = new Map<string, LibraryItem>();
+
+    const ensureItem = (topicId: string | number, seed?: any) => {
+      const key = String(topicId);
+      const existing = byTopic.get(key);
+      if (existing) return existing;
+
+      const info = resolveTopic(key);
+      const item: LibraryItem = {
+        id: `topic-${key}`,
+        rawId: seed?.id ?? key,
+        topicId: key,
         type: "note",
         ...info,
-        content: note.content,
-        date: note.updated_at,
-      });
-    }
-    for (const doc of allDocs) {
-      const info = resolveTopic(doc.topic);
-      items.push({
-        id: `d-${doc.id}`,
-        rawId: doc.id,
-        topicId: doc.topic,
-        type: "doc",
-        ...info,
-        filename: doc.filename,
-        fileUrl: doc.file_url || doc.file,
-        date: doc.uploaded_at,
-      });
-    }
-    return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [allNotes, allDocs, combinedPaths]);
+        content: seed?.content || "",
+        date: seed?.updated_at || seed?.uploaded_at || new Date(0).toISOString(),
+        documents: [],
+        screenshots: [],
+      };
+      byTopic.set(key, item);
+      return item;
+    };
 
-  const filteredItems = flatItems.filter((item) => {
+    for (const note of allNotes) {
+      const item = ensureItem(note.topic, note);
+      item.id = `n-${note.id}`;
+      item.rawId = note.id;
+      item.content = note.content || "";
+      item.date = note.updated_at || item.date;
+    }
+
+    for (const doc of allDocs) {
+      const item = ensureItem(doc.topic, doc);
+      item.documents.push(doc);
+      if (doc.uploaded_at && new Date(doc.uploaded_at).getTime() > new Date(item.date || 0).getTime()) {
+        item.date = doc.uploaded_at;
+      }
+    }
+
+    for (const screenshot of allScreenshots) {
+      const item = ensureItem(screenshot.topic, screenshot);
+      item.screenshots.push(screenshot);
+      if (screenshot.uploaded_at && new Date(screenshot.uploaded_at).getTime() > new Date(item.date || 0).getTime()) {
+        item.date = screenshot.uploaded_at;
+      }
+    }
+
+    return Array.from(byTopic.values())
+      .filter((item) => item.content || item.documents.length > 0 || item.screenshots.length > 0)
+      .sort((a: LibraryItem, b: LibraryItem) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+  }, [allNotes, allDocs, allScreenshots, combinedPaths]);
+
+  const filteredItems = libraryItems.filter((item: LibraryItem) => {
     if (filterPath !== "all" && item.pathTitle !== filterPath) return false;
     if (q) {
       const lower = q.toLowerCase();
       return (
         item.topicTitle.toLowerCase().includes(lower) ||
         item.content?.toLowerCase().includes(lower) ||
-        item.filename?.toLowerCase().includes(lower)
+        item.documents.some((doc) => (doc.filename || doc.file || "").toLowerCase().includes(lower))
       );
     }
     return true;
@@ -217,11 +331,6 @@ function NotesPage() {
     saveNoteMutation.mutate({ topicId: item.topicId, content: "" });
   };
 
-  const handleDeleteDoc = (item: any) => {
-    if (!window.confirm(`Delete document "${item.filename}"?`)) return;
-    deleteDocMutation.mutate({ topicId: item.topicId, docId: item.rawId });
-  };
-
   /* ── Render ───────────────────────────────────────────────────────── */
   if (isLoading) {
     return (
@@ -242,8 +351,9 @@ function NotesPage() {
         t.user_progress === "in_progress" || t.user_progress === "completed"
     );
 
-  const noteCount = filteredItems.filter((i) => i.type === "note").length;
-  const docCount = filteredItems.filter((i) => i.type === "doc").length;
+  const noteCount = filteredItems.filter((item) => item.content).length;
+  const documentCount = filteredItems.reduce((total, item) => total + item.documents.length, 0);
+  const screenshotCount = filteredItems.reduce((total, item) => total + item.screenshots.length, 0);
 
   return (
     <PageShell>
@@ -262,8 +372,12 @@ function NotesPage() {
               {noteCount} notes
             </span>
             <span className="lib-stat-pill">
-              <FileText size={10} className="text-[#3b82f6]" />
-              {docCount} docs
+              <FileText size={10} className="text-[#60a5fa]" />
+              {documentCount} docs
+            </span>
+            <span className="lib-stat-pill">
+              <ImageIcon size={10} className="text-[#f59e0b]" />
+              {screenshotCount} screenshots
             </span>
             <Btn
               onClick={() => setShowNewModal(true)}
@@ -305,10 +419,10 @@ function NotesPage() {
                 onClick={() => setFilterPath("all")}
                 icon={Layers}
                 label="All Paths"
-                count={flatItems.length}
+                count={libraryItems.length}
               />
               {pathTitles.map((pt) => {
-                const c = flatItems.filter((i) => i.pathTitle === pt).length;
+                const c = libraryItems.filter((i: LibraryItem) => i.pathTitle === pt).length;
                 return (
                   <FilterPill
                     key={pt}
@@ -342,24 +456,20 @@ function NotesPage() {
             </div>
           ) : (
             <div className="lib-masonry">
-              {filteredItems.map((item) => {
+              {filteredItems.map((item: LibraryItem) => {
                 const isEditing = editDrafts[item.id] !== undefined;
-                const isNote = item.type === "note";
 
                 return (
-                  <div key={item.id} className={`lib-item-card ${isNote ? "lib-item-note" : "lib-item-doc"}`}>
+                  <div key={item.id} className="lib-item-card lib-item-note">
 
                     {/* Card header */}
                     <div className="lib-item-header">
                       <div className="lib-item-header-left">
-                        {isNote
-                          ? <BookOpen size={11} className="text-[#22c55e] shrink-0" />
-                          : <FileText size={11} className="text-[#3b82f6] shrink-0" />
-                        }
+                        <BookOpen size={11} className="text-[#22c55e] shrink-0" />
                         <span className="lib-item-topic">{item.topicTitle}</span>
                       </div>
                       <div className="lib-item-actions">
-                        {isNote && !isEditing && (
+                        {!isEditing && (
                           <>
                             <button
                               onClick={() => {
@@ -382,11 +492,9 @@ function NotesPage() {
                           </>
                         )}
                         <button
-                          onClick={() =>
-                            isNote ? handleDeleteNote(item) : handleDeleteDoc(item)
-                          }
+                          onClick={() => handleDeleteNote(item)}
                           className="lib-action-btn lib-action-danger"
-                          title="Delete"
+                          title="Clear note text"
                         >
                           <Trash2 size={11} />
                         </button>
@@ -403,59 +511,105 @@ function NotesPage() {
 
                     {/* Card body */}
                     <div className="lib-item-body">
-                      {isNote ? (
-                        isEditing ? (
-                          <div className="lib-edit-wrap">
-                            <textarea
-                              autoFocus
-                              value={editDrafts[item.id]}
-                              onChange={(e) =>
-                                setEditDrafts({ ...editDrafts, [item.id]: e.target.value })
-                              }
-                              className="lib-textarea"
-                            />
-                            <div className="lib-edit-actions">
-                              <Btn
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCancelEdit(item)}
-                              >
-                                Cancel
-                              </Btn>
-                              <Btn
-                                size="sm"
-                                variant="solid"
-                                tone="green"
-                                onClick={() => handleSaveNote(item)}
-                              >
-                                {saveNoteMutation.isPending ? (
-                                  <Loader2 size={13} className="animate-spin" />
-                                ) : (
-                                  <Save size={13} />
-                                )}{" "}
-                                Save
-                              </Btn>
-                            </div>
+                      {isEditing ? (
+                        <div className="lib-edit-wrap">
+                          <textarea
+                            autoFocus
+                            value={editDrafts[item.id]}
+                            onChange={(e) =>
+                              setEditDrafts({ ...editDrafts, [item.id]: e.target.value })
+                            }
+                            className="lib-textarea"
+                          />
+                          <div className="lib-edit-actions">
+                            <Btn
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCancelEdit(item)}
+                            >
+                              Cancel
+                            </Btn>
+                            <Btn
+                              size="sm"
+                              variant="solid"
+                              tone="green"
+                              onClick={() => handleSaveNote(item)}
+                            >
+                              {saveNoteMutation.isPending ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Save size={13} />
+                              )}{" "}
+                              Save
+                            </Btn>
                           </div>
-                        ) : (
-                          <p className="lib-note-content">{item.content}</p>
-                        )
+                        </div>
+                      ) : item.content ? (
+                        <RenderedNote content={item.content} />
                       ) : (
-                        <div className="lib-doc-body">
-                          <div className="lib-doc-icon-wrap">
-                            <FileText size={18} className="text-[#3b82f6]" />
-                          </div>
-                          <span className="lib-doc-filename">{item.filename}</span>
-                          <a
-                            href={item.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="lib-doc-link"
-                          >
-                            Download / View
-                          </a>
+                        <p className="lib-note-empty">No written note yet.</p>
+                      )}
+
+                      {!isEditing && (item.documents.length > 0 || item.screenshots.length > 0) && (
+                        <div className="lib-attachments">
+                          {item.screenshots.length > 0 && (
+                            <div className="lib-asset-section">
+                              <div className="lib-asset-heading">
+                                <ImageIcon size={11} />
+                                {item.screenshots.length} screenshot{item.screenshots.length !== 1 ? "s" : ""}
+                              </div>
+                              <div className="lib-screenshot-grid">
+                                {item.screenshots.map((screenshot) => {
+                                  const imageUrl = screenshot.image_url || screenshot.image || "";
+                                  return (
+                                    <a
+                                      key={screenshot.id}
+                                      href={imageUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="lib-screenshot-thumb"
+                                    >
+                                      <img
+                                        src={imageUrl}
+                                        alt={screenshot.caption || "Screenshot"}
+                                        loading="lazy"
+                                      />
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {item.documents.length > 0 && (
+                            <div className="lib-asset-section">
+                              <div className="lib-asset-heading">
+                                <FileText size={11} />
+                                {item.documents.length} document{item.documents.length !== 1 ? "s" : ""}
+                              </div>
+                              <div className="lib-doc-list">
+                                {item.documents.map((doc) => {
+                                  const fileUrl = doc.file_url || doc.file || "";
+                                  return (
+                                    <a
+                                      key={doc.id}
+                                      href={fileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="lib-doc-chip"
+                                    >
+                                      <FileText size={11} />
+                                      <span>{doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}</span>
+                                      <ExternalLink size={10} />
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
+
                     </div>
 
                     {/* Card footer */}
@@ -503,7 +657,7 @@ function NotesPage() {
                       setShowNewModal(false);
                       navigate({
                         to: "/topic/$topicId",
-                        params: { topicId: t.slug || t.id },
+                        params: { topicId: String(t.id) },
                       });
                     }}
                     className="lib-modal-topic-btn"
@@ -854,9 +1008,136 @@ function NotesPage() {
           font-size: 13px;
           line-height: 1.65;
           color: #c8c8c8;
+          font-family: ui-sans-serif, system-ui, sans-serif;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .lib-note-paragraph {
           white-space: pre-wrap;
           margin: 0;
-          font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+
+        .lib-note-link {
+          color: #60a5fa;
+          text-decoration: none;
+          border-bottom: 1px solid #1d4ed8;
+          word-break: break-word;
+        }
+
+        .lib-note-link:hover {
+          color: #93c5fd;
+          border-bottom-color: #60a5fa;
+        }
+
+        .lib-note-image-link {
+          display: block;
+        }
+
+        .lib-note-image {
+          display: block;
+          width: 100%;
+          max-height: 260px;
+          object-fit: contain;
+          border-radius: 6px;
+          border: 1px solid #181818;
+          background: #050505;
+        }
+
+        .lib-note-empty {
+          font-size: 12px;
+          line-height: 1.5;
+          color: #555;
+          margin: 0;
+          font-style: italic;
+        }
+
+        .lib-attachments {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #151515;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .lib-asset-section {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .lib-asset-heading {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #888;
+          font-size: 10px;
+          font-family: ui-monospace, monospace;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .lib-screenshot-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+          gap: 6px;
+        }
+
+        .lib-screenshot-thumb {
+          display: block;
+          overflow: hidden;
+          border-radius: 6px;
+          border: 1px solid #181818;
+          background: #050505;
+          aspect-ratio: 16 / 10;
+        }
+
+        .lib-screenshot-thumb img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0.86;
+          transition: opacity 0.15s;
+        }
+
+        .lib-screenshot-thumb:hover img {
+          opacity: 1;
+        }
+
+        .lib-doc-list {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .lib-doc-chip {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          min-width: 0;
+          padding: 7px 8px;
+          border-radius: 6px;
+          border: 1px solid #181818;
+          background: #080808;
+          color: #b8c7e6;
+          font-size: 12px;
+          text-decoration: none;
+        }
+
+        .lib-doc-chip span {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .lib-doc-chip:hover {
+          border-color: #26364f;
+          color: #d3e1ff;
         }
 
         /* Edit mode */
@@ -890,49 +1171,6 @@ function NotesPage() {
           display: flex;
           justify-content: flex-end;
           gap: 7px;
-        }
-
-        /* Doc body */
-        .lib-doc-body {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 16px 0;
-          gap: 10px;
-        }
-
-        .lib-doc-icon-wrap {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: #0d1520;
-          border: 1px solid #1a2535;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .lib-doc-filename {
-          font-size: 12px;
-          font-weight: 500;
-          color: #c8c8c8;
-          text-align: center;
-          line-height: 1.4;
-          padding: 0 8px;
-        }
-
-        .lib-doc-link {
-          font-size: 9px;
-          font-family: ui-monospace, monospace;
-          text-transform: uppercase;
-          letter-spacing: 0.16em;
-          color: #3b82f6;
-          transition: color 0.15s;
-        }
-
-        .lib-doc-link:hover {
-          color: #60a5fa;
         }
 
         /* Card footer */

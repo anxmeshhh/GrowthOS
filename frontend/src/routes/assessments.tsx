@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { PageShell, PageHeader, Card, StatCard, Btn, Badge, Progress } from "@/components/growth-ui";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/assessments")({
 type Section = {
   id: string;
   label: string;
-  children: { id: string; label: string; slug: string; status: string; topicId: string }[];
+  children: { id: string; label: string; status: string; topicId: string }[];
 };
 
 function buildSections(topics: any[]): Section[] {
@@ -41,7 +41,6 @@ function buildSections(topics: any[]): Section[] {
       currentSection.children.push({
         id: String(t.id),
         label: t.title,
-        slug: t.slug ?? String(t.id),
         status: t.user_progress || 'available',
         topicId: String(t.id),
       });
@@ -113,7 +112,7 @@ function AssessmentsPage() {
           const done = topics.filter((t: any) => t.user_progress === "completed").length;
           const pct = topics.length > 0 ? Math.round((done / topics.length) * 100) : 0;
           const isExpanded = expandedPaths.has(path.slug);
-          const sections = useMemo(() => buildSections(topics), [topics]);
+          const sections = buildSections(topics);
 
           return (
             <Card key={path.slug} className="p-0 overflow-hidden">
@@ -190,7 +189,7 @@ function AssessmentsPage() {
                                   <span className="absolute left-0 top-1/2 w-3 h-px" style={{ background: '#1e3a1e' }} />
                                   <Link
                                     to="/topic/$topicId"
-                                    params={{ topicId: child.slug }}
+                                    params={{ topicId: child.topicId }}
                                     className="flex-1 ml-5 flex items-center gap-2 px-3 py-[6px] rounded text-left no-underline transition-colors duration-100"
                                     style={{
                                       background: isCompleted ? '#0c1a07' : '#0f120a',
@@ -227,7 +226,7 @@ function AssessmentsPage() {
                           <Link
                             key={t.id}
                             to="/topic/$topicId"
-                            params={{ topicId: t.slug || String(t.id) }}
+                            params={{ topicId: String(t.id) }}
                             className="flex items-center gap-2 px-3 py-[6px] rounded text-left no-underline transition-colors"
                             style={{ background: '#0f120a', border: '1px solid #2a3a1e' }}
                           >

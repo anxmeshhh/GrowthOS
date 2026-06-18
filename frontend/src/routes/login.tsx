@@ -4,6 +4,7 @@ import { Btn, Card } from "@/components/growth-ui";
 import { Logo } from "@/components/logo";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/toast-context";
+import { apiFetch, setAuthTokens } from "@/lib/api-client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Login — GrowthOS" }] }),
@@ -100,15 +101,13 @@ function LoginPage() {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/auth/google/", {
+        const res = await apiFetch("/auth/google/", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ access_token: tokenResponse.access_token }),
         });
         if (res.ok) {
           const data = await res.json();
-          localStorage.setItem("access_token", data.access);
-          localStorage.setItem("refresh_token", data.refresh);
+          setAuthTokens(data.access, data.refresh);
           showToast("Google login successful!", "success");
           window.location.href = "/dashboard";
         } else {
@@ -227,15 +226,13 @@ function LoginPage() {
               const email = formData.get("email") as string;
               const password = formData.get("password") as string;
               try {
-                const res = await fetch("http://127.0.0.1:8000/api/auth/login/", {
+                const res = await apiFetch("/auth/login/", {
                   method: "POST",
-                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ username: email, password }),
                 });
                 if (res.ok) {
                   const data = await res.json();
-                  localStorage.setItem("access_token", data.access);
-                  localStorage.setItem("refresh_token", data.refresh);
+                  setAuthTokens(data.access, data.refresh);
                   showToast("Login successful!", "success");
                   window.location.href = "/dashboard";
                 } else {

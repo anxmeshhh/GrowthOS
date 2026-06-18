@@ -44,7 +44,7 @@ class LearningPath(models.Model):
     ]
     
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     is_custom = models.BooleanField(default=False)
@@ -101,7 +101,7 @@ class Topic(models.Model):
     ]
     path = models.ForeignKey(LearningPath, on_delete=models.CASCADE, related_name='topics')
     title = models.CharField(max_length=200)
-    slug = models.SlugField()
+    slug = models.SlugField(max_length=255)
     summary = models.TextField(blank=True)
     order = models.IntegerField(default=0)
     node_kind = models.CharField(

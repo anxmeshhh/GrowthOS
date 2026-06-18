@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject, PathSharing, TopicScreenshot
+from .slug_utils import MAX_SLUG_LENGTH, normalize_slug, unique_slug
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -179,33 +180,35 @@ class CustomPathCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = LearningPath
         fields = ['title', 'slug', 'description', 'estimated_weeks']
+        extra_kwargs = {
+            'slug': {
+                'required': False,
+                'allow_blank': True,
+                'validators': [],
+            },
+        }
     
     def validate_slug(self, value):
-        """Ensure slug is unique"""
-        if LearningPath.objects.filter(slug=value).exists():
+        """Keep user-provided slugs inside the database limit."""
+        if len(value) > MAX_SLUG_LENGTH:
             raise serializers.ValidationError(
-                "A path with this slug already exists. Please use a different slug."
+                f"Slug must be {MAX_SLUG_LENGTH} characters or fewer."
             )
-        return value
+        return normalize_slug(value, fallback='path')
     
     def create(self, validated_data):
         """Create custom path with unique slug"""
         validated_data['is_custom'] = True
         validated_data['created_by'] = self.context['request'].user
         
-        # Ensure slug is unique by appending counter if needed
-        slug = validated_data.get('slug')
-        base_slug = slug
-        counter = 1
-        
-        while LearningPath.objects.filter(slug=slug).exists():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-        
-        validated_data['slug'] = slug
+        validated_data['slug'] = unique_slug(
+            LearningPath,
+            validated_data.get('slug') or validated_data.get('title'),
+            fallback='path',
+        )
         return super().create(validated_data)
 
 class PathCloneSerializer(serializers.Serializer):
     new_title = serializers.CharField(max_length=200)
-    new_slug = serializers.SlugField()
+    new_slug = serializers.SlugField(max_length=MAX_SLUG_LENGTH)
     description = serializers.CharField(required=False, allow_blank=True)

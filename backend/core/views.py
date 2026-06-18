@@ -978,6 +978,14 @@ class AllNoteDocumentsView(views.APIView):
         serializer = NoteDocumentSerializer(docs, many=True, context={'request': request})
         return Response(serializer.data)
 
+class AllScreenshotsView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        screenshots = TopicScreenshot.objects.filter(user=request.user).select_related('topic')
+        serializer = TopicScreenshotSerializer(screenshots, many=True, context={'request': request})
+        return Response(serializer.data)
+
 class SubmitQuizView(views.APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1422,7 +1430,7 @@ class CommitWorkspaceToGitHubView(views.APIView):
         if not topic_slug:
             return Response({'error': 'Topic slug is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        topic = get_object_or_404(Topic, slug=topic_slug)
+        topic = _resolve_topic(topic_slug)
         path = topic.path
 
         # Get Note

@@ -10,6 +10,7 @@ django.setup()
 
 from django.contrib.auth.models import User
 from core.models import LearningPath, Topic
+from core.slug_utils import normalize_slug, unique_slug_in_memory
 
 ROADMAP_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'src', 'assets', 'roadmaps')
 
@@ -32,6 +33,7 @@ if not admin:
 print(f"Seeding as user: {admin.username}")
 
 for slug, meta in PATHS_META.items():
+    slug = normalize_slug(slug, fallback='roadmap')
     json_path = os.path.join(ROADMAP_DIR, f"{slug}.json")
     if not os.path.exists(json_path):
         print(f"  SKIP {slug}")
@@ -57,10 +59,15 @@ for slug, meta in PATHS_META.items():
 
     # Create a topic for EVERY node in the graph
     order = 0
+    existing_topic_slugs = set()
     for node in graph['nodes']:
         Topic.objects.create(
             path=path,
-            slug=node['id'],
+            slug=unique_slug_in_memory(
+                node.get('id') or node.get('label'),
+                existing_topic_slugs,
+                fallback=f"{slug}-topic-{order + 1}",
+            ),
             title=node['label'],
             summary=f"{node['label']}",
             order=order,

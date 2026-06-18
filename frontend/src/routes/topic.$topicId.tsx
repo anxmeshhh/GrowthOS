@@ -27,6 +27,18 @@ function formatTime(s: number) {
   return `${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
 }
 
+function stripGeneratedAttachmentMarkdown(value: string) {
+  return value
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter((block) => {
+      const match = block.match(/^!?\[[^\]]*\]\(([^)]+)\)$/);
+      if (!match) return true;
+      return !/\/media\/(note_documents|screenshots)\//.test(match[1]);
+    })
+    .join("\n\n");
+}
+
 /* ─────────────────────────────────────────────
    Main Workspace
 ───────────────────────────────────────────── */
@@ -550,6 +562,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [noteFile, setNoteFile] = useState<File | null>(null);
+  const contentRef = useRef("");
 
   const { isLoading } = useQuery({
     queryKey: ["notes", topicId],
@@ -557,7 +570,15 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       const res = await apiFetch(`/topics/${topicId}/notes/`);
       if (!res.ok) return { content: "", documents: [] };
       const json = await res.json();
-      setContent(json.content || "");
+      const rawContent = stripGeneratedAttachmentMarkdown(json.content || "");
+      contentRef.current = rawContent;
+      setContent(rawContent);
+      if (rawContent !== (json.content || "")) {
+        await apiFetch(`/topics/${topicId}/notes/`, {
+          method: "POST",
+          body: JSON.stringify({ content: rawContent }),
+        });
+      }
       return json;
     },
   });
@@ -571,14 +592,14 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     },
   });
 
-  const saveNote = async (val: string) => {
+  const saveNote = useCallback(async (val: string) => {
     setSaving(true);
     await apiFetch(`/topics/${topicId}/notes/`, {
       method: "POST",
       body: JSON.stringify({ content: val }),
     });
     setSaving(false);
-  };
+  }, [topicId]);
 
   // Debounced auto-save: saves 2 seconds after user stops typing
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -592,28 +613,11 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     }
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      if (content.trim()) saveNote(content);
+      contentRef.current = content;
+      saveNote(content);
     }, 2000);
     return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
-  }, [content]);
-
-  useEffect(() => {
-    const handleScreenshot = (e: any) => {
-      const ss = e.detail;
-      const url = ss.image_url || ss.image;
-      if (!url) return;
-      
-      const markdownImage = `\n![Screenshot](${url})\n`;
-      setContent((prev) => {
-        const newContent = prev + markdownImage;
-        // Auto-save the note now that the screenshot is added
-        saveNote(newContent);
-        return newContent;
-      });
-    };
-    window.addEventListener("screenshot_uploaded", handleScreenshot);
-    return () => window.removeEventListener("screenshot_uploaded", handleScreenshot);
-  }, [topicId]);
+  }, [content, saveNote]);
 
   const uploadDocMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -626,7 +630,10 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       if (!res.ok) throw new Error("Upload failed");
       return res.json();
     },
-    onSuccess: () => { setNoteFile(null); refetchDocs(); },
+    onSuccess: () => {
+      setNoteFile(null);
+      refetchDocs();
+    },
   });
 
   if (isLoading)
@@ -651,7 +658,10 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
                      focus:outline-none focus:border-[#2a2a2a] resize-y placeholder-[#2a2a2a] font-mono transition-colors"
           placeholder="Start typing your notes…"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => {
+            contentRef.current = e.target.value;
+            setContent(e.target.value);
+          }}
           onBlur={() => saveNote(content)}
         />
       </div>
