@@ -3,6 +3,7 @@ import { Github, Mail, ArrowRight } from "lucide-react";
 import { Btn, Card } from "@/components/growth-ui";
 import { Logo } from "@/components/logo";
 import { useState, useEffect } from "react";
+import { useToast } from "@/components/toast-context";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Login — GrowthOS" }] }),
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -107,13 +109,15 @@ function LoginPage() {
                 const data = await res.json();
                 localStorage.setItem("access_token", data.access);
                 localStorage.setItem("refresh_token", data.refresh);
+                showToast("Login successful!", "success");
                 window.location.href = '/dashboard';
               } else {
-                alert("Login failed. Check your email and password.");
+                const errData = await res.json().catch(() => ({}));
+                showToast(errData.detail || "Login failed. Check your email and password.", "error");
               }
             } catch (err) {
               console.error(err);
-              alert("Error connecting to server.");
+              showToast("Error connecting to server.", "error");
             }
           }}>
             <div>

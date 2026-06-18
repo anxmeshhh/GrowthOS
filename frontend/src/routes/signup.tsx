@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Github, Mail, ArrowRight, User } from "lucide-react";
 import { Btn, Card } from "@/components/growth-ui";
 import { Logo } from "@/components/logo";
+import { useToast } from "@/components/toast-context";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Sign Up — GrowthOS" }] }),
@@ -9,6 +10,8 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
+  const { showToast } = useToast();
+
   return (
     <div className="min-h-screen bg-[#000] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -88,14 +91,17 @@ function SignupPage() {
                   const data = await loginRes.json();
                   localStorage.setItem("access_token", data.access);
                   localStorage.setItem("refresh_token", data.refresh);
+                  showToast("Account created successfully!", "success");
                   window.location.href = '/dashboard';
                 }
               } else {
-                alert("Failed to register. Username/email may already exist.");
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.detail || errData.username?.[0] || errData.email?.[0] || "Failed to register. Username/email may already exist.";
+                showToast(errMsg, "error");
               }
             } catch (err) {
               console.error(err);
-              alert("Error connecting to server.");
+              showToast("Error connecting to server.", "error");
             }
           }}>
             <div>
