@@ -170,7 +170,7 @@ export function PathSharingDialog({
 
           {/* Visibility Section */}
           <div className="space-y-3">
-            <h3 className="font-medium text-sm">Path Visibility</h3>
+            <h3 className="font-medium text-lg">Path Visibility</h3>
 
             <div className="space-y-2">
               {(['private', 'public', 'shared'] as const).map((vis) => (
@@ -188,7 +188,7 @@ export function PathSharingDialog({
                     {getVisibilityIcon(vis)}
                     <div>
                       <div className="font-medium capitalize">{vis}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-lg text-gray-500">
                         {vis === 'private' && 'Only you can access'}
                         {vis === 'public' && 'Anyone can view'}
                         {vis === 'shared' && 'Share with specific users'}
@@ -203,7 +203,7 @@ export function PathSharingDialog({
           {/* Share with Users Section */}
           {visibility !== 'private' && (
             <div className="space-y-3 pt-4 border-t">
-              <h3 className="font-medium text-sm">Share with Users</h3>
+              <h3 className="font-medium text-lg">Share with Users</h3>
 
               <div className="space-y-2">
                 <div className="flex gap-2">
@@ -222,7 +222,7 @@ export function PathSharingDialog({
                     onChange={(e) =>
                       setSharePermission(e.target.value as 'view' | 'edit')
                     }
-                    className="px-3 py-2 border rounded-md text-sm"
+                    className="px-3 py-2 border rounded-md text-lg"
                   >
                     <option value="view">View</option>
                     <option value="edit">Edit</option>
@@ -241,17 +241,17 @@ export function PathSharingDialog({
               {/* Shared Users List */}
               {sharedUsers.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <h4 className="text-sm font-medium">Shared with:</h4>
+                  <h4 className="text-lg font-medium">Shared with:</h4>
                   {sharedUsers.map((user) => (
                     <div
                       key={user.id}
                       className="flex items-center justify-between p-2 bg-gray-50 rounded"
                     >
                       <div className="flex-1">
-                        <div className="text-sm font-medium">
+                        <div className="text-lg font-medium">
                           {user.shared_to_username}
                         </div>
-                        <div className="text-xs text-gray-500 capitalize">
+                        <div className="text-lg text-gray-500 capitalize">
                           {user.permission} permission
                         </div>
                       </div>

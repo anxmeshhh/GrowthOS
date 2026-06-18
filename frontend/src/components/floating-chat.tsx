@@ -14,13 +14,13 @@ function formatAIText(text: string) {
   return parts.map((part, i) => {
     if (part.startsWith("```") && part.endsWith("```")) {
       const code = part.slice(3, -3).replace(/^\w+\n/, "");
-      return <pre key={i} className="bg-[#0a0f1e] border border-[#1e3060] rounded-lg p-3 text-xs font-mono overflow-x-auto my-2 text-[#60a5fa]">{code}</pre>;
+      return <pre key={i} className="bg-[#0a0f1e] border border-[#1e3060] rounded-lg p-3 text-lg font-mono overflow-x-auto my-2 text-[#60a5fa]">{code}</pre>;
     }
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
     }
     if (part.startsWith("`") && part.endsWith("`")) {
-      return <code key={i} className="bg-[#1e3060] text-[#60a5fa] px-1.5 py-0.5 rounded text-xs font-mono">{part.slice(1, -1)}</code>;
+      return <code key={i} className="bg-[#1e3060] text-[#60a5fa] px-1.5 py-0.5 rounded text-lg font-mono">{part.slice(1, -1)}</code>;
     }
     // Handle newlines
     return part.split("\n").map((line, j) => (
@@ -127,8 +127,8 @@ export function FloatingChat() {
                 <Sparkles size={14} className="text-[#60a5fa]" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-[#f0f0f0]">GrowthOS Mentor</h3>
-                <div className="flex items-center gap-1.5 text-[10px] text-[#22c55e]">
+                <h3 className="text-lg font-semibold text-[#f0f0f0]">GrowthOS Mentor</h3>
+                <div className="flex items-center gap-1.5 text-[11px] text-[#22c55e]">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-75"></span>
                     <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#22c55e]"></span>
@@ -138,10 +138,10 @@ export function FloatingChat() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} className="p-1.5 rounded-lg text-[#bbb] hover:text-[#f59e0b] hover:bg-[#1e3060] transition-colors" title="Clear chat">
+              <button onClick={handleClear} className="p-1.5 rounded-lg text-[#fff] hover:text-[#f59e0b] hover:bg-[#1e3060] transition-colors" title="Clear chat">
                 <Trash2 size={14} />
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg text-[#bbb] hover:text-[#f0f0f0] hover:bg-[#1e3060] transition-colors">
+              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg text-[#fff] hover:text-[#f0f0f0] hover:bg-[#1e3060] transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -151,7 +151,7 @@ export function FloatingChat() {
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
+                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed ${
                   msg.role === "user"
                     ? "bg-[#3b5bdb] text-white rounded-br-md"
                     : "bg-[#131a2e] border border-[#1e3060] text-[#d0d0d0] rounded-bl-md"
@@ -164,7 +164,7 @@ export function FloatingChat() {
               <div className="flex justify-start">
                 <div className="bg-[#131a2e] border border-[#1e3060] text-[#60a5fa] rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" />
-                  <span className="text-xs text-[#bbb]">Thinking...</span>
+                  <span className="text-lg text-[#fff]">Thinking...</span>
                 </div>
               </div>
             )}
@@ -178,7 +178,7 @@ export function FloatingChat() {
                 <button
                   key={chip.label}
                   onClick={() => handleSend(chip.msg)}
-                  className="shrink-0 px-3 py-1.5 rounded-full border border-[#1e3060] bg-[#0d142b] text-[10px] font-mono uppercase tracking-wider text-[#60a5fa] hover:bg-[#1e3060] hover:text-white transition-colors"
+                  className="shrink-0 px-3 py-1.5 rounded-full border border-[#1e3060] bg-[#0d142b] text-[11px] font-mono uppercase tracking-wider text-[#60a5fa] hover:bg-[#1e3060] hover:text-white transition-colors"
                 >
                   {chip.label}
                 </button>
@@ -196,7 +196,7 @@ export function FloatingChat() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask me anything..."
-                className="w-full rounded-full border border-[#1e3060] bg-[#0a0f1e] py-2.5 pl-4 pr-12 text-sm text-[#f0f0f0] placeholder-[#555] focus:border-[#3b5bdb] focus:outline-none transition-colors"
+                className="w-full rounded-full border border-[#1e3060] bg-[#0a0f1e] py-2.5 pl-4 pr-12 text-lg text-[#f0f0f0] placeholder-[#fff] focus:border-[#3b5bdb] focus:outline-none transition-colors"
               />
               <button
                 onClick={() => handleSend()}

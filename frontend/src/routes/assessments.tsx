@@ -87,7 +87,7 @@ function AssessmentsPage() {
   if (pathsLoading) {
     return (
       <PageShell>
-        <div className="flex items-center justify-center p-12 text-[#666]">
+        <div className="flex items-center justify-center p-12 text-[#eee]">
           <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...
         </div>
       </PageShell>
@@ -126,17 +126,17 @@ function AssessmentsPage() {
                   <MapIcon size={16} className="text-[#22c55e]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-[#f0f0f0]">{path.title}</div>
-                  <div className="text-[10px] uppercase font-mono tracking-wider text-[#bbb] mt-0.5">
+                  <div className="text-lg font-semibold text-[#f0f0f0]">{path.title}</div>
+                  <div className="text-[11px] uppercase font-mono tracking-wider text-[#fff] mt-0.5">
                     {done}/{topics.length} completed
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-24 hidden sm:block"><Progress value={pct} /></div>
-                  <span className="text-xs font-mono text-[#666] w-10 text-right">{pct}%</span>
+                  <span className="text-lg font-mono text-[#eee] w-10 text-right">{pct}%</span>
                   {isExpanded
-                    ? <ChevronDown size={16} className="text-[#bbb]" />
-                    : <ChevronRight size={16} className="text-[#bbb]" />
+                    ? <ChevronDown size={16} className="text-[#fff]" />
+                    : <ChevronRight size={16} className="text-[#fff]" />
                   }
                 </div>
               </button>
@@ -167,7 +167,7 @@ function AssessmentsPage() {
                             {section.label}
                           </span>
                           <span className="ml-auto flex items-center gap-2 shrink-0">
-                            <span className="text-[10px] font-mono" style={{ color: '#3b5bdb' }}>
+                            <span className="text-[11px] font-mono" style={{ color: '#3b5bdb' }}>
                               {sectionDone}/{section.children.length}
                             </span>
                             <span style={{ color: '#3b5bdb' }}>

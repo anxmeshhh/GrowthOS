@@ -99,7 +99,7 @@ function ProfilePage() {
               </div>
             </div>
 
-            <h1 className="text-[15px] font-semibold tracking-tight text-[#f5f5f5] leading-none mb-1">
+            <h1 className="text-[16px] font-semibold tracking-tight text-[#f5f5f5] leading-none mb-1">
               {pLoading ? <Skel className="h-4 w-28 mx-auto" /> : profile?.username}
             </h1>
 
@@ -123,7 +123,7 @@ function ProfilePage() {
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="text-[9px] font-mono text-[#888] mt-1.5 text-right">{pct}% to next tier</p>
+            <p className="text-[10px] font-mono text-[#eee] mt-1.5 text-right">{pct}% to next tier</p>
           </div>
 
           {/* Quick stats 2×2 */}
@@ -235,14 +235,14 @@ function ProfilePage() {
                     <div className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1f1f1f]"
                       }`} />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#c8c8c8]" : "text-[#aaa]"
+                      <p className={`text-[12px] leading-snug truncate ${i === 0 ? "text-[#c8c8c8]" : "text-[#eee]"
                         }`}>
                         {a.label}
                       </p>
-                      <p className="text-[9px] font-mono text-[#888] mt-0.5">{timeAgo(a.date)}</p>
+                      <p className="text-[10px] font-mono text-[#eee] mt-0.5">{timeAgo(a.date)}</p>
                     </div>
                     {i === 0 && (
-                      <span className="shrink-0 text-[8px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">new</span>
+                      <span className="shrink-0 text-[9px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">new</span>
                     )}
                   </li>
                 ))}
@@ -275,7 +275,7 @@ function ProfilePage() {
                 ))}
               </div>
             ) : (
-              <div className="flex items-center h-full text-[11px] text-[#888] font-mono">
+              <div className="flex items-center h-full text-[12px] text-[#eee] font-mono">
                 No roadmaps completed yet — keep building
               </div>
             )}
@@ -576,7 +576,7 @@ function StatCell({
       <div className="stat-cell-icon">{icon}</div>
       <div>
         <p className="section-label mb-0.5">{label}</p>
-        <p className="text-[13px] font-semibold tabular-nums text-[#e0e0e0] leading-none">{value}</p>
+        <p className="text-[14px] font-semibold tabular-nums text-[#e0e0e0] leading-none">{value}</p>
       </div>
     </div>
   );
@@ -589,8 +589,8 @@ function BadgeCard({ title, desc }: { title: string; desc: string }) {
         <Award size={12} className="text-[#22c55e]" strokeWidth={1.5} />
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-medium text-[#ccc] truncate leading-tight">{title}</p>
-        <p className="text-[9px] text-[#383838] truncate mt-0.5">{desc}</p>
+        <p className="text-[12px] font-medium text-[#eee] truncate leading-tight">{title}</p>
+        <p className="text-[10px] text-[#383838] truncate mt-0.5">{desc}</p>
       </div>
     </div>
   );
@@ -610,8 +610,8 @@ function BreakdownRow({
   return (
     <div>
       <div className="flex justify-between items-baseline">
-        <span className="text-[11px] text-[#666] truncate leading-none">{label}</span>
-        <span className="font-mono text-[9px] text-[#888] shrink-0 ml-2">
+        <span className="text-[12px] text-[#eee] truncate leading-none">{label}</span>
+        <span className="font-mono text-[10px] text-[#eee] shrink-0 ml-2">
           {total} · {count}×
         </span>
       </div>
@@ -631,7 +631,7 @@ function BreakdownRow({
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="flex items-center justify-center h-full text-[11px] font-mono text-[#777]">
+    <div className="flex items-center justify-center h-full text-[12px] font-mono text-[#fff]">
       {label}
     </div>
   );

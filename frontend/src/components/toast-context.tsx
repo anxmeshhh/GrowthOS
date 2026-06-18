@@ -52,10 +52,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <Sparkles size={16} />
               </div>
             ) : null}
-            <div className="flex-1 text-sm font-medium">{toast.message}</div>
+            <div className="flex-1 text-lg font-medium">{toast.message}</div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-[#666] hover:text-[#f0f0f0] transition-colors"
+              className="text-[#eee] hover:text-[#f0f0f0] transition-colors"
             >
               <X size={14} />
             </button>

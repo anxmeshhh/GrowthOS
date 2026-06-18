@@ -77,7 +77,7 @@ function IconBtn({
       {children}
       {/* Tooltip */}
       <span
-        className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[9px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
+        className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ background: '#111', color: '#888', border: '1px solid #222' }}
       >
         {title}
@@ -120,14 +120,14 @@ function PathCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span
-              className="font-mono font-semibold text-sm truncate"
+              className="font-mono font-semibold text-lg truncate"
               style={{ color: '#d4d4d4' }}
             >
               {path.title}
             </span>
             {/* Visibility badge */}
             <span
-              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider"
+              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider"
               style={{ background: vis.bg, border: `1px solid ${vis.border}`, color: vis.text }}
             >
               <VisIcon size={9} />
@@ -136,7 +136,7 @@ function PathCard({
           </div>
           {path.description && (
             <p
-              className="text-xs truncate mb-2"
+              className="text-lg truncate mb-2"
               style={{ color: '#4a4a4a' }}
             >
               {path.description}
@@ -146,18 +146,18 @@ function PathCard({
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1" style={{ color: '#3a5a3a' }}>
               <BookOpen size={10} />
-              <span className="text-[10px] font-mono" style={{ color: '#4a6a4a' }}>
+              <span className="text-[11px] font-mono" style={{ color: '#4a6a4a' }}>
                 {path.topics.length} topics
               </span>
             </span>
             <span className="flex items-center gap-1" style={{ color: '#3a5a3a' }}>
               <Clock size={10} />
-              <span className="text-[10px] font-mono" style={{ color: '#4a6a4a' }}>
+              <span className="text-[11px] font-mono" style={{ color: '#4a6a4a' }}>
                 ~{path.estimated_weeks}w
               </span>
             </span>
             {path.created_by_username && (
-              <span className="text-[10px] font-mono" style={{ color: '#2a3a2a' }}>
+              <span className="text-[11px] font-mono" style={{ color: '#2a3a2a' }}>
                 by {path.created_by_username}
               </span>
             )}
@@ -277,10 +277,10 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
         style={{ background: '#1a0707', border: '1px solid #3f0f0f' }}
       >
         <AlertCircle size={14} style={{ color: '#ef4444' }} />
-        <span className="text-xs font-mono" style={{ color: '#f87171' }}>{error}</span>
+        <span className="text-lg font-mono" style={{ color: '#f87171' }}>{error}</span>
         <button
           onClick={loadCustomPaths}
-          className="ml-auto text-[10px] font-mono underline"
+          className="ml-auto text-[11px] font-mono underline"
           style={{ color: '#9a3030' }}
         >
           Retry
@@ -303,8 +303,8 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
           <Plus size={18} style={{ color: '#22c55e' }} />
         </div>
         <div className="text-center">
-          <p className="text-sm font-mono" style={{ color: '#3a5a3a' }}>No custom paths yet</p>
-          <p className="text-[11px] mt-1" style={{ color: '#2a3a2a' }}>
+          <p className="text-lg font-mono" style={{ color: '#3a5a3a' }}>No custom paths yet</p>
+          <p className="text-[12px] mt-1" style={{ color: '#2a3a2a' }}>
             Build a path tailored to your goals
           </p>
         </div>
@@ -322,7 +322,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
           style={{ background: '#1a0707', border: '1px solid #3f0f0f' }}
         >
           <AlertCircle size={12} style={{ color: '#ef4444' }} />
-          <span className="text-[11px] font-mono" style={{ color: '#f87171' }}>{error}</span>
+          <span className="text-[12px] font-mono" style={{ color: '#f87171' }}>{error}</span>
         </div>
       )}
 
@@ -351,10 +351,10 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
           style={{ background: '#0d0d0d', border: '1px solid #1e2e1e', borderRadius: '12px' }}
         >
           <DialogHeader>
-            <DialogTitle className="font-mono text-sm" style={{ color: '#d4d4d4' }}>
+            <DialogTitle className="font-mono text-lg" style={{ color: '#d4d4d4' }}>
               Fork path
             </DialogTitle>
-            <DialogDescription className="text-xs" style={{ color: '#3a5a3a' }}>
+            <DialogDescription className="text-lg" style={{ color: '#3a5a3a' }}>
               Creates your own copy of{' '}
               <span style={{ color: '#22c55e' }}>"{selectedPathForClone?.title}"</span>{' '}
               — topics and structure included.
@@ -368,12 +368,12 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
                 style={{ background: '#1a0707', border: '1px solid #3f0f0f' }}
               >
                 <AlertCircle size={12} style={{ color: '#ef4444' }} />
-                <span className="text-[11px] font-mono" style={{ color: '#f87171' }}>{error}</span>
+                <span className="text-[12px] font-mono" style={{ color: '#f87171' }}>{error}</span>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
+              <label className="block text-[11px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
                 Path title
               </label>
               <input
@@ -382,7 +382,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
                   setCloneTitle(e.target.value);
                   setCloneSlug(generateSlug(e.target.value));
                 }}
-                className="w-full px-3 py-2 rounded-md text-sm font-mono outline-none transition-colors"
+                className="w-full px-3 py-2 rounded-md text-lg font-mono outline-none transition-colors"
                 style={{
                   background: '#0a0a0a',
                   border: '1px solid #1e2e1e',
@@ -395,13 +395,13 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
+              <label className="block text-[11px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
                 Slug
               </label>
               <input
                 value={cloneSlug}
                 onChange={e => setCloneSlug(e.target.value)}
-                className="w-full px-3 py-2 rounded-md text-xs font-mono outline-none transition-colors"
+                className="w-full px-3 py-2 rounded-md text-lg font-mono outline-none transition-colors"
                 style={{
                   background: '#0a0a0a',
                   border: '1px solid #1e2e1e',
@@ -415,7 +415,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
             <div className="flex gap-2 justify-end pt-1">
               <button
                 onClick={() => setCloneDialogOpen(false)}
-                className="px-3 py-1.5 rounded-md text-xs font-mono transition-colors"
+                className="px-3 py-1.5 rounded-md text-lg font-mono transition-colors"
                 style={{ background: '#111', border: '1px solid #222', color: '#555' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#333'; (e.currentTarget as HTMLElement).style.color = '#888'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#222'; (e.currentTarget as HTMLElement).style.color = '#555'; }}
@@ -425,7 +425,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
               <button
                 onClick={handleClonePath}
                 disabled={cloning || !cloneTitle.trim()}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-lg font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: '#0f1a0f', border: '1px solid #22c55e', color: '#22c55e' }}
                 onMouseEnter={e => { if (!cloning && cloneTitle.trim()) (e.currentTarget as HTMLElement).style.background = '#162a16'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0f1a0f'; }}

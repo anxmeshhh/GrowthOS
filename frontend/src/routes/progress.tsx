@@ -68,7 +68,7 @@ const RARITY_CONFIG: Record<
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#999] flex items-center gap-1.5">
+    <p className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#fff] flex items-center gap-1.5">
       {children}
     </p>
   );
@@ -182,7 +182,7 @@ function ProgressPage() {
     return (
       <PageShell>
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-4 h-4 text-[#888] animate-spin" />
+          <Loader2 className="w-4 h-4 text-[#eee] animate-spin" />
         </div>
       </PageShell>
     );
@@ -196,14 +196,14 @@ function ProgressPage() {
         {/* ── Page header ── */}
         <div className="flex items-end justify-between pb-1 border-b border-[#0e0e0e]">
           <div>
-            <p className="text-[8px] uppercase tracking-[0.25em] font-mono text-[#888] mb-1.5">
+            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#eee] mb-1.5">
               GrowthOS
             </p>
-            <h1 className="text-[17px] font-semibold tracking-tight text-[#efefef] leading-none">
+            <h1 className="text-[18px] font-semibold tracking-tight text-[#efefef] leading-none">
               Your Progress
             </h1>
           </div>
-          <div className="flex items-center gap-1.5 text-[8px] font-mono text-[#999] uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-1.5 text-[9px] font-mono text-[#fff] uppercase tracking-[0.2em]">
             <Trophy size={10} className="text-[#a855f7]" />
             {lvlTitle}
           </div>
@@ -218,16 +218,16 @@ function ProgressPage() {
               <Zap size={9} className="text-[#a855f7]" /> Current Level
             </SectionLabel>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-[28px] font-semibold tracking-tight tabular-nums text-[#a855f7] leading-none">
+              <span className="text-[29px] font-semibold tracking-tight tabular-nums text-[#a855f7] leading-none">
                 {level}
               </span>
-              <span className="text-[11px] text-[#999] font-mono">— {lvlTitle}</span>
+              <span className="text-[12px] text-[#fff] font-mono">— {lvlTitle}</span>
             </div>
-            <div className="text-[9px] font-mono text-[#888] mt-1">{xp.toLocaleString()} XP total</div>
+            <div className="text-[10px] font-mono text-[#eee] mt-1">{xp.toLocaleString()} XP total</div>
             <div className="mt-4 space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-[8px] font-mono text-[#999] uppercase tracking-wider">{xpPct}% to Lv{level + 1}</span>
-                <span className="text-[8px] font-mono text-[#a855f7]/70">{xpRemaining} XP left</span>
+                <span className="text-[9px] font-mono text-[#fff] uppercase tracking-wider">{xpPct}% to Lv{level + 1}</span>
+                <span className="text-[9px] font-mono text-[#a855f7]/70">{xpRemaining} XP left</span>
               </div>
               <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
@@ -243,11 +243,11 @@ function ProgressPage() {
             <SectionLabel>
               <Flame size={9} className="text-[#f59e0b]" /> Day Streak
             </SectionLabel>
-            <div className={`text-[36px] font-mono font-semibold tabular-nums mt-3 leading-none ${streak > 0 ? "text-[#f59e0b]" : "text-[#888]"
+            <div className={`text-[37px] font-mono font-semibold tabular-nums mt-3 leading-none ${streak > 0 ? "text-[#f59e0b]" : "text-[#eee]"
               }`}>
               {streak}
             </div>
-            <div className="text-[8px] font-mono text-[#888] uppercase tracking-[0.2em] mt-1.5">
+            <div className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.2em] mt-1.5">
               {streak > 0 ? "Keep it alive" : "Start today"}
             </div>
           </StatCard>
@@ -258,12 +258,12 @@ function ProgressPage() {
               <Star size={9} className="text-[#22c55e]" /> Total XP Earned
             </SectionLabel>
             <div className="mt-3 flex items-baseline gap-1.5">
-              <span className="text-[28px] font-semibold tracking-tight tabular-nums text-[#efefef] leading-none">
+              <span className="text-[29px] font-semibold tracking-tight tabular-nums text-[#efefef] leading-none">
                 {xp.toLocaleString()}
               </span>
-              <span className="text-[11px] text-[#999] font-mono">XP</span>
+              <span className="text-[12px] text-[#fff] font-mono">XP</span>
             </div>
-            <div className="text-[9px] font-mono text-[#22c55e]/70 mt-1">+120 this week</div>
+            <div className="text-[10px] font-mono text-[#22c55e]/70 mt-1">+120 this week</div>
           </StatCard>
         </div>
 
@@ -275,14 +275,14 @@ function ProgressPage() {
             <CardHeader
               left={<SectionLabel><Map size={9} /> Active Missions</SectionLabel>}
               right={
-                <span className="text-[8px] font-mono text-[#22c55e] uppercase tracking-[0.15em]">
+                <span className="text-[9px] font-mono text-[#22c55e] uppercase tracking-[0.15em]">
                   {activePaths.length} active
                 </span>
               }
             />
             <div className="p-2.5 space-y-1.5 max-h-[280px] overflow-y-auto custom-scrollbar">
               {activePaths.length === 0 ? (
-                <div className="py-10 text-center text-[10px] text-[#777] font-mono uppercase tracking-widest">
+                <div className="py-10 text-center text-[11px] text-[#fff] font-mono uppercase tracking-widest">
                   No active paths — start a mission
                 </div>
               ) : (
@@ -295,16 +295,16 @@ function ProgressPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="min-w-0">
-                          <h3 className="text-[12px] font-medium text-[#aaa] group-hover:text-[#e0e0e0] transition-colors truncate leading-tight">
+                          <h3 className="text-[13px] font-medium text-[#eee] group-hover:text-[#e0e0e0] transition-colors truncate leading-tight">
                             {p.title}
                           </h3>
-                          <div className="text-[8px] font-mono text-[#999] uppercase tracking-[0.15em] mt-0.5">
+                          <div className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em] mt-0.5">
                             {p.done} / {p.total} topics
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[11px] font-mono tabular-nums text-[#22c55e]">{p.pct}%</span>
-                          <ChevronRight size={11} className="text-[#888] group-hover:text-[#bbb] transition-colors" />
+                          <span className="text-[12px] font-mono tabular-nums text-[#22c55e]">{p.pct}%</span>
+                          <ChevronRight size={11} className="text-[#eee] group-hover:text-[#fff] transition-colors" />
                         </div>
                       </div>
                       <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
@@ -338,10 +338,10 @@ function ProgressPage() {
                   return (
                     <div key={item.action_type}>
                       <div className="flex justify-between items-baseline mb-1.5">
-                        <span className="text-[10px] font-mono text-[#bbb] uppercase tracking-wider">
+                        <span className="text-[11px] font-mono text-[#fff] uppercase tracking-wider">
                           {label}
                         </span>
-                        <span className="text-[10px] font-mono tabular-nums text-[#999]">
+                        <span className="text-[11px] font-mono tabular-nums text-[#fff]">
                           {item.total.toLocaleString()} · {item.count}×
                         </span>
                       </div>
@@ -359,7 +359,7 @@ function ProgressPage() {
                   );
                 })
               ) : (
-                <div className="py-10 text-center text-[10px] text-[#777] font-mono uppercase tracking-widest">
+                <div className="py-10 text-center text-[11px] text-[#fff] font-mono uppercase tracking-widest">
                   No XP data yet
                 </div>
               )}
@@ -372,7 +372,7 @@ function ProgressPage() {
           <CardHeader
             left={<SectionLabel><Tag size={9} /> Title Collection</SectionLabel>}
             right={
-              <span className="text-[8px] font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
+              <span className="text-[9px] font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
                 {unlockedCount} / {TITLES.length} unlocked
               </span>
             }
@@ -416,18 +416,18 @@ function ProgressPage() {
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className="text-[12px] font-medium leading-none"
+                        className="text-[13px] font-medium leading-none"
                         style={{ color: unlocked ? cfg.color : "#2e2e2e" }}
                       >
                         {tag.name}
                       </span>
                       {isEquipped && (
-                        <span className="text-[7px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#22c55e]/15 text-[#22c55e] leading-none tracking-wider">
+                        <span className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#22c55e]/15 text-[#22c55e] leading-none tracking-wider">
                           Equipped
                         </span>
                       )}
                     </div>
-                    <div className="text-[9px] text-[#888] mt-1 leading-snug truncate font-mono">
+                    <div className="text-[10px] text-[#eee] mt-1 leading-snug truncate font-mono">
                       {tag.desc}
                     </div>
                   </div>
@@ -436,13 +436,13 @@ function ProgressPage() {
                   <div className="shrink-0">
                     {unlocked ? (
                       <span
-                        className="text-[7px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] leading-none tracking-wider"
+                        className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] leading-none tracking-wider"
                         style={{ background: cfg.bg, color: cfg.color }}
                       >
                         {cfg.label}
                       </span>
                     ) : (
-                      <span className="text-[7px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#0f0f0f] text-[#888] leading-none tracking-wider">
+                      <span className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#0f0f0f] text-[#eee] leading-none tracking-wider">
                         Lv {tag.levelReq}
                       </span>
                     )}
@@ -457,7 +457,7 @@ function ProgressPage() {
         <Card>
           <CardHeader
             left={<SectionLabel><CalendarDays size={9} /> Activity Heatmap</SectionLabel>}
-            right={<span className="text-[8px] font-mono text-[#777] uppercase tracking-[0.15em]">Last 12 months</span>}
+            right={<span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">Last 12 months</span>}
           />
           <div className="p-4 overflow-x-auto">
             <div className="min-w-[680px]">

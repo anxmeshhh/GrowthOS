@@ -146,7 +146,7 @@ export const RoadmapNode = memo(function RoadmapNode({
           {data.label}
         </span>
         {isCompleted && data.aiScore !== undefined && (
-          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm bg-[#162a16] border border-[#22c55e]/30 text-[#4ade80] ml-2 shrink-0 flex items-center shadow-sm">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#162a16] border border-[#22c55e]/30 text-[#4ade80] ml-2 shrink-0 flex items-center shadow-sm">
             ★ {data.aiScore}
           </span>
         )}
@@ -154,7 +154,7 @@ export const RoadmapNode = memo(function RoadmapNode({
 
       {data.hasChildren && (
         <button
-          className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-[#111] border border-[#333] hover:bg-[#222] hover:border-[#555] transition-colors shadow-md z-10"
+          className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-[#111] border border-[#333] hover:bg-[#222] hover:border-[#fff] transition-colors shadow-md z-10"
           onClick={(e) => {
             e.stopPropagation();
             data.onToggleExpand?.(data.topicId);

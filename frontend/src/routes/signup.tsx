@@ -19,7 +19,7 @@ function SignupPage() {
           <Logo size={28} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Create your account</h2>
-        <p className="mt-2 text-sm text-[#999]">
+        <p className="mt-2 text-lg text-[#fff]">
           Start building your developer portfolio today
         </p>
       </div>
@@ -61,8 +61,8 @@ function SignupPage() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#222]" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[#111] text-[#666]">Or register with email</span>
+              <div className="relative flex justify-center text-lg">
+                <span className="px-2 bg-[#111] text-[#eee]">Or register with email</span>
               </div>
             </div>
           </div>
@@ -105,31 +105,31 @@ function SignupPage() {
             }
           }}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-[#ccc]">
+              <label htmlFor="name" className="block text-lg font-medium text-[#eee]">
                 Full name
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-[#666]" />
+                  <User className="h-4 w-4 text-[#eee]" />
                 </div>
                 <input
                   id="name"
                   name="name"
                   type="text"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#eee] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-lg"
                   placeholder="John Doe"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#ccc]">
+              <label htmlFor="email" className="block text-lg font-medium text-[#eee]">
                 Email address
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-[#666]" />
+                  <Mail className="h-4 w-4 text-[#eee]" />
                 </div>
                 <input
                   id="email"
@@ -137,14 +137,14 @@ function SignupPage() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#eee] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-lg"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#ccc]">
+              <label htmlFor="password" className="block text-lg font-medium text-[#eee]">
                 Password
               </label>
               <div className="mt-1 relative">
@@ -154,7 +154,7 @@ function SignupPage() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  className="appearance-none block w-full px-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#eee] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-lg"
                   placeholder="••••••••"
                 />
               </div>
@@ -165,7 +165,7 @@ function SignupPage() {
             </Btn>
           </form>
           
-          <p className="mt-6 text-center text-sm text-[#666]">
+          <p className="mt-6 text-center text-lg text-[#eee]">
             Already have an account?{" "}
             <Link to="/login" className="font-medium text-[#22c55e] hover:text-[#16a34a] transition-colors">
               Log in

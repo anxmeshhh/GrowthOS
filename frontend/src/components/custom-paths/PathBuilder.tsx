@@ -153,7 +153,7 @@ export function CustomPathBuilder() {
           {/* Path Info Section */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Path Title</label>
+              <label className="block text-lg font-medium">Path Title</label>
               <Input
                 placeholder="e.g., Full Stack Development"
                 value={pathTitle}
@@ -162,7 +162,7 @@ export function CustomPathBuilder() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Path Slug</label>
+              <label className="block text-lg font-medium">Path Slug</label>
               <Input
                 placeholder="auto-generated"
                 value={pathSlug}
@@ -170,13 +170,13 @@ export function CustomPathBuilder() {
                 disabled
                 className="bg-gray-50"
               />
-              <p className="text-xs text-gray-500">Auto-generated from title</p>
+              <p className="text-lg text-gray-500">Auto-generated from title</p>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Description</label>
+              <label className="block text-lg font-medium">Description</label>
               <textarea
-                className="w-full px-3 py-2 border rounded-md text-sm"
+                className="w-full px-3 py-2 border rounded-md text-lg"
                 placeholder="Describe what learners will achieve"
                 value={pathDescription}
                 onChange={(e) => setPathDescription(e.target.value)}
@@ -185,7 +185,7 @@ export function CustomPathBuilder() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Estimated Duration (weeks)</label>
+              <label className="block text-lg font-medium">Estimated Duration (weeks)</label>
               <Input
                 type="number"
                 min="1"
@@ -214,7 +214,7 @@ export function CustomPathBuilder() {
 
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {topics.length === 0 ? (
-                <p className="text-sm text-gray-500 py-4 text-center">
+                <p className="text-lg text-gray-500 py-4 text-center">
                   No topics added yet. Click "Add Topic" to start.
                 </p>
               ) : (
@@ -231,7 +231,7 @@ export function CustomPathBuilder() {
                           onChange={(e) =>
                             updateTopic(index, { title: e.target.value })
                           }
-                          className="text-sm"
+                          className="text-lg"
                         />
                         <textarea
                           placeholder="Topic summary (optional)"
@@ -239,7 +239,7 @@ export function CustomPathBuilder() {
                           onChange={(e) =>
                             updateTopic(index, { summary: e.target.value })
                           }
-                          className="w-full px-2 py-1 text-xs border rounded"
+                          className="w-full px-2 py-1 text-lg border rounded"
                           rows={2}
                         />
                       </div>

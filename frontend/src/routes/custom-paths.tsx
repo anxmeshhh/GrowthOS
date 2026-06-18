@@ -57,7 +57,7 @@ function CustomPathsManagement() {
                   <h3 className="font-semibold text-blue-900 mb-2">
                     💡 Tips for Creating Great Paths
                   </h3>
-                  <ul className="text-sm text-blue-800 space-y-1">
+                  <ul className="text-lg text-blue-800 space-y-1">
                     <li>
                       • Start with foundations and progress to advanced topics
                     </li>

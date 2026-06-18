@@ -27,7 +27,7 @@ function LoginPage() {
     return (
       <div className={`min-h-screen bg-[#000] flex items-center justify-center transition-opacity duration-700 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
         <div className="text-center">
-          <div className="text-xs uppercase tracking-[0.3em] font-mono text-[#666] mb-4">We Present</div>
+          <div className="text-lg uppercase tracking-[0.3em] font-mono text-[#eee] mb-4">We Present</div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[#f0f0f0] flex items-center justify-center gap-4">
             <Logo size={36} className="shadow-[0_0_20px_rgba(34,197,94,0.5)] rounded-lg" />
             GrowthOS
@@ -44,7 +44,7 @@ function LoginPage() {
           <Logo size={28} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Welcome back</h2>
-        <p className="mt-2 text-sm text-[#999]">
+        <p className="mt-2 text-lg text-[#fff]">
           Log in to continue your learning journey
         </p>
       </div>
@@ -86,8 +86,8 @@ function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[#222]" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[#111] text-[#666]">Or continue with email</span>
+              <div className="relative flex justify-center text-lg">
+                <span className="px-2 bg-[#111] text-[#eee]">Or continue with email</span>
               </div>
             </div>
           </div>
@@ -121,12 +121,12 @@ function LoginPage() {
             }
           }}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#ccc]">
+              <label htmlFor="email" className="block text-lg font-medium text-[#eee]">
                 Email address
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-[#666]" />
+                  <Mail className="h-4 w-4 text-[#eee]" />
                 </div>
                 <input
                   id="email"
@@ -134,14 +134,14 @@ function LoginPage() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#eee] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-lg"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#ccc]">
+              <label htmlFor="password" className="block text-lg font-medium text-[#eee]">
                 Password
               </label>
               <div className="mt-1 relative">
@@ -151,7 +151,7 @@ function LoginPage() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="appearance-none block w-full px-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#666] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2.5 border border-[#222] rounded-md bg-[#000] text-[#f0f0f0] placeholder-[#eee] focus:outline-none focus:ring-1 focus:ring-[#22c55e] focus:border-[#22c55e] transition-colors sm:text-lg"
                   placeholder="••••••••"
                 />
               </div>
@@ -162,7 +162,7 @@ function LoginPage() {
             </Btn>
           </form>
           
-          <p className="mt-6 text-center text-sm text-[#666]">
+          <p className="mt-6 text-center text-lg text-[#eee]">
             Don't have an account?{" "}
             <Link to="/signup" className="font-medium text-[#22c55e] hover:text-[#16a34a] transition-colors">
               Sign up

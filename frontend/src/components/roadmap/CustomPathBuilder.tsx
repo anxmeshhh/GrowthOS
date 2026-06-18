@@ -86,7 +86,7 @@ function DarkInput({
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`w-full px-3 py-2 rounded-md text-sm font-mono outline-none transition-colors ${className}`}
+      className={`w-full px-3 py-2 rounded-md text-lg font-mono outline-none transition-colors ${className}`}
       style={{ background: '#0a0a0a', border: '1px solid #1e2e1e', color: '#c4c4c4' }}
       onFocus={e => { (e.target as HTMLElement).style.borderColor = '#22c55e'; }}
       onBlur={e => { (e.target as HTMLElement).style.borderColor = '#1e2e1e'; }}
@@ -111,7 +111,7 @@ function DarkTextarea({
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full px-3 py-2 rounded-md text-xs font-mono outline-none transition-colors resize-none"
+      className="w-full px-3 py-2 rounded-md text-lg font-mono outline-none transition-colors resize-none"
       style={{ background: '#0a0a0a', border: '1px solid #1a1a1a', color: '#6a6a6a' }}
       onFocus={e => { (e.target as HTMLElement).style.borderColor = '#2a3a2a'; }}
       onBlur={e => { (e.target as HTMLElement).style.borderColor = '#1a1a1a'; }}
@@ -134,7 +134,7 @@ function KindPicker({
     <div className="relative">
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono transition-colors"
+        className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono transition-colors"
         style={{ background: meta.bg, border: `1px solid ${meta.border}`, color: meta.text }}
       >
         <Icon size={10} />
@@ -160,8 +160,8 @@ function KindPicker({
               >
                 <KIcon size={11} />
                 <div>
-                  <div className="text-[10px] font-mono">{m.label}</div>
-                  <div className="text-[9px] opacity-50">{m.desc}</div>
+                  <div className="text-[11px] font-mono">{m.label}</div>
+                  <div className="text-[10px] opacity-50">{m.desc}</div>
                 </div>
               </button>
             );
@@ -203,13 +203,13 @@ function TopicRow({
           <button
             onClick={onMoveUp}
             disabled={index === 0}
-            className="disabled:opacity-20 text-[#999] hover:text-[#666] transition-colors"
+            className="disabled:opacity-20 text-[#fff] hover:text-[#eee] transition-colors"
           >
             <GripVertical size={12} />
           </button>
         </div>
 
-        <span className="text-[10px] font-mono w-5 text-center shrink-0" style={{ color: meta.dot }}>
+        <span className="text-[11px] font-mono w-5 text-center shrink-0" style={{ color: meta.dot }}>
           {index + 1}
         </span>
 
@@ -218,7 +218,7 @@ function TopicRow({
             value={topic.title}
             onChange={e => onChange({ title: e.target.value })}
             placeholder="Topic title…"
-            className="w-full bg-transparent text-sm font-mono outline-none"
+            className="w-full bg-transparent text-lg font-mono outline-none"
             style={{ color: meta.text }}
           />
         </div>
@@ -244,7 +244,7 @@ function TopicRow({
             onChange={e => onChange({ summary: e.target.value })}
             placeholder="Brief summary (used for quiz & flashcard generation)…"
             rows={1}
-            className="w-full bg-transparent text-[11px] font-mono outline-none resize-none"
+            className="w-full bg-transparent text-[12px] font-mono outline-none resize-none"
             style={{ color: '#3a5a3a' }}
             onFocus={e => { e.currentTarget.rows = 2; }}
             onBlur={e => { if (!e.currentTarget.value) e.currentTarget.rows = 1; }}
@@ -407,7 +407,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
     <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) reset(); }}>
       <DialogTrigger asChild>
         <button
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-mono transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-lg font-mono transition-colors"
           style={{ background: '#0f1a0f', border: '1px solid #22c55e', color: '#22c55e' }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#162a16'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0f1a0f'; }}
@@ -423,10 +423,10 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
       >
         {/* ── Header ── */}
         <DialogHeader className="px-5 pt-5 pb-4 shrink-0" style={{ borderBottom: '1px solid #111' }}>
-          <DialogTitle className="font-mono text-sm" style={{ color: '#d4d4d4' }}>
+          <DialogTitle className="font-mono text-lg" style={{ color: '#d4d4d4' }}>
             Build a learning path
           </DialogTitle>
-          <DialogDescription className="text-[11px] mt-0.5" style={{ color: '#3a5a3a' }}>
+          <DialogDescription className="text-[12px] mt-0.5" style={{ color: '#3a5a3a' }}>
             Structure it like a real roadmap — milestones group topics into sections.
           </DialogDescription>
         </DialogHeader>
@@ -438,13 +438,13 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           {error && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ background: '#1a0707', border: '1px solid #3f0f0f' }}>
               <AlertCircle size={12} style={{ color: '#ef4444' }} />
-              <span className="text-[11px] font-mono" style={{ color: '#f87171' }}>{error}</span>
+              <span className="text-[12px] font-mono" style={{ color: '#f87171' }}>{error}</span>
             </div>
           )}
           {success && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-md" style={{ background: '#071a0f', border: '1px solid #22c55e' }}>
               <CheckCircle2 size={12} style={{ color: '#22c55e' }} />
-              <span className="text-[11px] font-mono" style={{ color: '#22c55e' }}>Path created!</span>
+              <span className="text-[12px] font-mono" style={{ color: '#22c55e' }}>Path created!</span>
             </div>
           )}
 
@@ -452,7 +452,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           <div className="rounded-md p-3 space-y-2" style={{ background: '#0a0f1e', border: '1px solid #1e3a5f' }}>
             <div className="flex items-center gap-1.5 mb-1">
               <Sparkles size={11} style={{ color: '#60a5fa' }} />
-              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: '#3b5bdb' }}>
+              <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: '#3b5bdb' }}>
                 Generate with AI
               </span>
             </div>
@@ -462,7 +462,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                 onChange={e => setAiPrompt(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleAiGenerate(); }}
                 placeholder="e.g. Django REST API development for beginners…"
-                className="flex-1 px-3 py-2 rounded-md text-xs font-mono outline-none"
+                className="flex-1 px-3 py-2 rounded-md text-lg font-mono outline-none"
                 style={{ background: '#060912', border: '1px solid #1e3a5f', color: '#93c5fd' }}
                 onFocus={e => { (e.target as HTMLElement).style.borderColor = '#3b5bdb'; }}
                 onBlur={e => { (e.target as HTMLElement).style.borderColor = '#1e3a5f'; }}
@@ -470,7 +470,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               <button
                 onClick={handleAiGenerate}
                 disabled={aiLoading || !aiPrompt.trim()}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-mono transition-colors disabled:opacity-40"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-md text-lg font-mono transition-colors disabled:opacity-40"
                 style={{ background: '#0a0f1e', border: '1px solid #3b5bdb', color: '#60a5fa' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1428'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0a0f1e'; }}
@@ -480,7 +480,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               </button>
             </div>
             {topics.length > 0 && (
-              <p className="text-[9px] font-mono" style={{ color: '#1e3a5f' }}>
+              <p className="text-[10px] font-mono" style={{ color: '#1e3a5f' }}>
                 ↑ Re-generate will replace current topics
               </p>
             )}
@@ -488,18 +488,18 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
 
           {/* ── Path meta ── */}
           <div className="space-y-3">
-            <label className="block text-[10px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
+            <label className="block text-[11px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
               Path title <span style={{ color: '#22c55e' }}>*</span>
             </label>
             <DarkInput value={title} onChange={setTitle} placeholder="e.g. Backend Engineering" />
 
-            <label className="block text-[10px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
+            <label className="block text-[11px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
               Description
             </label>
             <DarkTextarea value={description} onChange={setDescription} placeholder="What will learners achieve?" rows={2} />
 
             <div className="flex items-center gap-3">
-              <label className="text-[10px] font-mono uppercase tracking-wider shrink-0" style={{ color: '#3a5a3a' }}>
+              <label className="text-[11px] font-mono uppercase tracking-wider shrink-0" style={{ color: '#3a5a3a' }}>
                 Duration
               </label>
               <div className="flex items-center gap-2">
@@ -509,10 +509,10 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                   max={52}
                   value={weeks}
                   onChange={e => setWeeks(parseInt(e.target.value) || 1)}
-                  className="w-16 px-2 py-1 rounded text-xs font-mono text-center outline-none"
+                  className="w-16 px-2 py-1 rounded text-lg font-mono text-center outline-none"
                   style={{ background: '#0a0a0a', border: '1px solid #1e2e1e', color: '#4a6a4a' }}
                 />
-                <span className="text-[10px] font-mono" style={{ color: '#2a3a2a' }}>weeks</span>
+                <span className="text-[11px] font-mono" style={{ color: '#2a3a2a' }}>weeks</span>
               </div>
             </div>
           </div>
@@ -520,7 +520,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           {/* ── Topics ── */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
+              <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: '#3a5a3a' }}>
                 Topics
                 {topics.length > 0 && (
                   <span className="ml-2 font-mono" style={{ color: '#2a3a2a' }}>({topics.filter(t => t.title.trim()).length} valid)</span>
@@ -535,7 +535,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                       key={k}
                       onClick={() => addTopic(k)}
                       title={`Add ${m.label}`}
-                      className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-mono transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono transition-colors"
                       style={{ background: m.bg, border: `1px solid ${m.border}`, color: m.text }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8'; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
@@ -553,8 +553,8 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                 className="flex flex-col items-center justify-center py-8 rounded-md"
                 style={{ border: '1px dashed #1e2e1e', background: '#0a0a0a' }}
               >
-                <p className="text-xs font-mono" style={{ color: '#2a3a2a' }}>No topics yet</p>
-                <p className="text-[10px] mt-1" style={{ color: '#1a2a1a' }}>
+                <p className="text-lg font-mono" style={{ color: '#2a3a2a' }}>No topics yet</p>
+                <p className="text-[11px] mt-1" style={{ color: '#1a2a1a' }}>
                   Generate with AI or add manually above
                 </p>
               </div>
@@ -586,7 +586,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                     <span className="w-3 h-3 rounded-sm flex items-center justify-center" style={{ background: m.bg, border: `1px solid ${m.border}` }}>
                       <Icon size={7} style={{ color: m.text }} />
                     </span>
-                    <span className="text-[9px] font-mono" style={{ color: '#2a3a2a' }}>{m.label}</span>
+                    <span className="text-[10px] font-mono" style={{ color: '#2a3a2a' }}>{m.label}</span>
                   </div>
                 );
               })}
@@ -599,13 +599,13 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           className="shrink-0 flex items-center justify-between px-5 py-3"
           style={{ borderTop: '1px solid #111' }}
         >
-          <span className="text-[10px] font-mono" style={{ color: '#2a3a2a' }}>
+          <span className="text-[11px] font-mono" style={{ color: '#2a3a2a' }}>
             {topics.filter(t => t.title.trim()).length} topics · {weeks}w
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => { setOpen(false); reset(); }}
-              className="px-3 py-1.5 rounded-md text-xs font-mono"
+              className="px-3 py-1.5 rounded-md text-lg font-mono"
               style={{ background: '#111', border: '1px solid #222', color: '#555' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#888'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#555'; }}
@@ -615,7 +615,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex items-center gap-1.5 px-5 py-1.5 rounded-md text-xs font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-5 py-1.5 rounded-md text-lg font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: '#0f1a0f', border: '1px solid #22c55e', color: '#22c55e' }}
               onMouseEnter={e => { if (canSubmit) (e.currentTarget as HTMLElement).style.background = '#162a16'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0f1a0f'; }}

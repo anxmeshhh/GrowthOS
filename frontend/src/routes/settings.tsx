@@ -1,15 +1,88 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { PageShell, PageHeader, Card, Btn } from "@/components/growth-ui";
+import { PageShell } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch, clearAuthTokens } from "@/lib/api-client";
-import { Github, LogOut, AlertTriangle, Save, Loader2, User, Clock } from "lucide-react";
+import {
+  Github,
+  LogOut,
+  AlertTriangle,
+  Save,
+  Loader2,
+  User,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+} from "lucide-react";
 import { useGrowth } from "@/lib/growth-store";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — GrowthOS" }, { name: "description", content: "Configure your account and integrations." }] }),
+  head: () => ({
+    meta: [
+      { title: "Settings — GrowthOS" },
+      { name: "description", content: "Configure your account and integrations." },
+    ],
+  }),
   component: SettingsPage,
 });
+
+/* ── helpers ──────────────────────────────────────────────────────────── */
+
+function minutesToDisplay(mins: number) {
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+function Skel({ className = "" }: { className?: string }) {
+  return <div className={`rounded-[3px] bg-[#0f0f0f] animate-pulse ${className}`} />;
+}
+
+/* ── sub-components ───────────────────────────────────────────────────── */
+
+function CardHeader({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="card-header">
+      <div className="card-header-left">
+        {icon}
+        <span className="section-label">{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SettingsRow({
+  label,
+  sub,
+  children,
+}: {
+  label: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="settings-row">
+      <div className="settings-row-text">
+        <p className="settings-row-label">{label}</p>
+        {sub && <p className="settings-row-sub">{sub}</p>}
+      </div>
+      <div className="settings-row-control">{children}</div>
+    </div>
+  );
+}
+
+/* ── page ─────────────────────────────────────────────────────────────── */
 
 function SettingsPage() {
   const navigate = useNavigate();
@@ -20,18 +93,16 @@ function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['user_profile'],
+    queryKey: ["user_profile"],
     queryFn: async () => {
       const res = await apiFetch("/profile/");
       if (!res.ok) throw new Error("Failed");
       return res.json();
-    }
+    },
   });
 
   useEffect(() => {
-    if (profile?.github_username) {
-      setGithubInput(profile.github_username);
-    }
+    if (profile?.github_username) setGithubInput(profile.github_username);
   }, [profile]);
 
   const saveGithub = useMutation({
@@ -44,11 +115,11 @@ function SettingsPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
-      queryClient.invalidateQueries({ queryKey: ['github_repos'] });
+      queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      queryClient.invalidateQueries({ queryKey: ["github_repos"] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    }
+    },
   });
 
   const handleLogout = () => {
@@ -57,120 +128,558 @@ function SettingsPage() {
   };
 
   if (isLoading) {
-    return <PageShell><div className="flex items-center justify-center p-12 text-[#666]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading settings...</div></PageShell>;
+    return (
+      <PageShell>
+        <div className="flex items-center justify-center p-16 text-[#fff]">
+          <Loader2 className="w-4 h-4 animate-spin mr-3" />
+          <span className="text-[12px] font-mono uppercase tracking-widest">Loading…</span>
+        </div>
+      </PageShell>
+    );
   }
+
+  const joined = profile?.date_joined
+    ? new Date(profile.date_joined).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    })
+    : "—";
 
   return (
     <PageShell>
-      <PageHeader kicker="Settings" title="Configuration" subtitle="Your account, integrations, and preferences." />
+      {/* Page title row — matches profile's implicit heading style */}
+      <div className="settings-page-header">
+        <span className="section-label">Settings</span>
+        <h1 className="settings-title">Configuration</h1>
+        <p className="settings-subtitle">Account, integrations, and preferences.</p>
+      </div>
 
-      {/* Account */}
-      <Card className="p-5 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <User size={16} className="text-[#22c55e]" />
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Account</div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-[#666]">Username</label>
-            <div className="mt-1 w-full bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm text-[#999]">
-              {profile?.username || "—"}
+      <div className="settings-stack">
+
+        {/* ── Account ──────────────────────────────────────────────────── */}
+        <div className="settings-card">
+          <CardHeader icon={<User size={10} className="text-[#22c55e]" />} title="Account" />
+
+          <div className="settings-card-body">
+            <div className="account-fields">
+              <div className="account-field">
+                <span className="section-label" style={{ marginBottom: 6, display: "block" }}>Username</span>
+                <div className="readonly-field">
+                  {isLoading ? <Skel className="h-4 w-28" /> : profile?.username ?? "—"}
+                </div>
+              </div>
+              <div className="account-field">
+                <span className="section-label" style={{ marginBottom: 6, display: "block" }}>Member Since</span>
+                <div className="readonly-field">
+                  <Calendar size={10} className="inline mr-1.5 opacity-40" />
+                  {joined}
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-[#666]">Member Since</label>
-            <div className="mt-1 w-full bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm text-[#999]">
-              {profile?.date_joined ? new Date(profile.date_joined).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "—"}
+        </div>
+
+        {/* ── GitHub Integration ───────────────────────────────────────── */}
+        <div className="settings-card">
+          <CardHeader icon={<Github size={10} className="text-[#f5f5f5]" />} title="GitHub Integration" />
+
+          <div className="settings-card-body">
+            <p className="settings-desc">
+              Link your GitHub username to import repositories for AI project assessments.
+            </p>
+
+            <div className="github-input-row">
+              <div className="github-input-wrap">
+                <span className="github-prefix">github.com/</span>
+                <input
+                  value={githubInput}
+                  onChange={(e) => setGithubInput(e.target.value)}
+                  placeholder="username"
+                  className="github-input"
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+              </div>
+              <button
+                className="settings-btn"
+                onClick={() => saveGithub.mutate(githubInput)}
+                disabled={saveGithub.isPending || githubInput === profile?.github_username}
+              >
+                {saveGithub.isPending ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : saved ? (
+                  <><CheckCircle2 size={11} style={{ color: "#22c55e" }} /> Saved</>
+                ) : (
+                  <><Save size={11} /> Save</>
+                )}
+              </button>
+            </div>
+
+            <div className="github-status">
+              {profile?.github_username ? (
+                <span className="github-status-connected">
+                  <CheckCircle2 size={10} />
+                  Connected as&nbsp;
+                  <a
+                    href={`https://github.com/${profile.github_username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="github-link"
+                  >
+                    {profile.github_username}
+                  </a>
+                </span>
+              ) : (
+                <span className="github-status-disconnected">
+                  <XCircle size={10} />
+                  Not connected
+                </span>
+              )}
             </div>
           </div>
         </div>
-      </Card>
 
-      {/* GitHub Integration */}
-      <Card className="p-5 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <Github size={16} className="text-[#f0f0f0]" />
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">GitHub Integration</div>
-        </div>
-        <p className="text-xs text-[#888] mb-3">
-          Connect your GitHub username to import your repositories for AI project assessments.
-        </p>
-        <div className="flex items-center gap-3">
-          <input
-            value={githubInput}
-            onChange={(e) => setGithubInput(e.target.value)}
-            placeholder="e.g. anxmeshhh"
-            className="flex-1 bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm outline-none focus:border-[#22c55e]/50 text-[#f0f0f0] placeholder:text-[#bbb]"
-          />
-          <Btn
-            size="sm"
-            onClick={() => saveGithub.mutate(githubInput)}
-            disabled={saveGithub.isPending || githubInput === profile?.github_username}
+        {/* ── Daily Time Budget ────────────────────────────────────────── */}
+        <div className="settings-card">
+          <CardHeader
+            icon={<Clock size={10} className="text-[#f59e0b]" />}
+            title="Daily Time Budget"
           >
-            {saveGithub.isPending ? <Loader2 size={14} className="animate-spin" /> : saved ? "Saved ✓" : <><Save size={14} /> Save</>}
-          </Btn>
-        </div>
-        {profile?.github_username && (
-          <div className="mt-2 text-xs text-[#22c55e]">
-            ✓ Connected as <span className="font-mono">{profile.github_username}</span>
-          </div>
-        )}
-      </Card>
+            <span className="section-label" style={{ color: "#22c55e" }}>
+              {minutesToDisplay(state.settings.dailyMinutes)}
+            </span>
+          </CardHeader>
 
-      {/* Daily Time Budget */}
-      <Card className="p-5 mb-4">
-        <div className="flex items-center gap-3 mb-4">
-          <Clock size={16} className="text-[#f59e0b]" />
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#666]">Daily Time Budget</div>
+          <div className="settings-card-body">
+            <p className="settings-desc">
+              Set how much time you want to spend learning each day.
+            </p>
+            <input
+              type="range"
+              min={20}
+              max={180}
+              step={5}
+              value={state.settings.dailyMinutes}
+              onChange={(e) =>
+                update((s) => ({
+                  ...s,
+                  settings: { ...s.settings, dailyMinutes: Number(e.target.value) },
+                }))
+              }
+              className="time-slider"
+            />
+            <div className="slider-ticks">
+              {[20, 60, 120, 180].map((v) => (
+                <span key={v} className="slider-tick">{minutesToDisplay(v)}</span>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <input
-            type="range"
-            min={20} max={180} step={5}
-            value={state.settings.dailyMinutes}
-            onChange={(e) => update((s) => ({ ...s, settings: { ...s.settings, dailyMinutes: Number(e.target.value) } }))}
-            className="flex-1 accent-[#22c55e]"
+
+        {/* ── Sign Out ─────────────────────────────────────────────────── */}
+        <div className="settings-card">
+          <CardHeader icon={<LogOut size={10} className="text-[#f5f5f5]" />} title="Session" />
+          <div className="settings-card-body">
+            <SettingsRow
+              label="Sign out"
+              sub="Ends your current session on this device."
+            >
+              <button className="settings-btn-outline" onClick={handleLogout}>
+                <LogOut size={11} /> Sign out
+              </button>
+            </SettingsRow>
+          </div>
+        </div>
+
+        {/* ── Danger Zone ──────────────────────────────────────────────── */}
+        <div className="settings-card settings-card-danger">
+          <CardHeader
+            icon={<AlertTriangle size={10} className="text-[#ef4444]" />}
+            title="Danger Zone"
           />
-          <div className="font-mono text-sm text-[#22c55e] w-16 text-right">{state.settings.dailyMinutes} min</div>
-        </div>
-      </Card>
-
-      {/* Sign Out */}
-      <Card className="p-5 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-[#f0f0f0]">Sign Out</div>
-            <div className="text-xs text-[#888]">Log out of your GrowthOS account on this device.</div>
+          <div className="settings-card-body">
+            <SettingsRow
+              label="Reset all progress"
+              sub="Permanently wipes all topics, XP, and flashcards. Cannot be undone."
+            >
+              {confirm ? (
+                <div className="confirm-row">
+                  <button
+                    className="settings-btn-red"
+                    onClick={async () => {
+                      await apiFetch("/profile/reset/", { method: "POST" });
+                      reset();
+                      setConfirm(false);
+                      window.location.reload();
+                    }}
+                  >
+                    Confirm reset
+                  </button>
+                  <button className="settings-btn-ghost" onClick={() => setConfirm(false)}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button className="settings-btn-red-outline" onClick={() => setConfirm(true)}>
+                  Reset
+                </button>
+              )}
+            </SettingsRow>
           </div>
-          <Btn variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut size={14} /> Sign Out
-          </Btn>
         </div>
-      </Card>
 
-      {/* Danger Zone */}
-      <Card className="p-5 border-red-500/20">
-        <div className="flex items-center gap-3 mb-4">
-          <AlertTriangle size={16} className="text-[#ef4444]" />
-          <div className="text-[10px] uppercase font-mono tracking-wider text-[#ef4444]">Danger Zone</div>
-        </div>
-        <p className="text-xs text-[#888] mb-3">Reset all progress data including topics, XP, and flashcards. This cannot be undone.</p>
-        <div className="flex flex-wrap gap-2">
-          {confirm ? (
-            <>
-              <Btn tone="red" size="sm" onClick={async () => {
-                await apiFetch("/profile/reset/", { method: "POST" });
-                reset();
-                setConfirm(false);
-                window.location.reload();
-              }}>Confirm Reset</Btn>
-              <Btn variant="ghost" size="sm" onClick={() => setConfirm(false)}>Cancel</Btn>
-            </>
-          ) : (
-            <Btn tone="red" variant="outline" size="sm" onClick={() => setConfirm(true)}>Reset All Progress</Btn>
-          )}
-        </div>
-      </Card>
+      </div>
+
+      {/* ── styles ────────────────────────────────────────────────────── */}
+      <style>{`
+
+        /* ── Page header ── */
+        .settings-page-header {
+          padding: 6px 2px 18px;
+        }
+        .settings-title {
+          font-size: 20px;
+          font-weight: 600;
+          color: #f5f5f5;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+          margin: 4px 0 3px;
+        }
+        .settings-subtitle {
+          font-size: 11px;
+          color: #555;
+          font-family: ui-monospace, monospace;
+        }
+
+        /* ── Stack ── */
+        .settings-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        /* ── Card shell — mirrors .profile-card exactly ── */
+        .settings-card {
+          border: 1px solid #131313;
+          border-radius: 6px;
+          background: #060606;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+        }
+        .settings-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+        }
+        .settings-card-danger {
+          border-color: rgba(239,68,68,0.12);
+        }
+        .settings-card-danger::before {
+          background: linear-gradient(90deg, transparent 0%, rgba(239,68,68,0.1) 30%, rgba(239,68,68,0.1) 70%, transparent 100%);
+        }
+
+        /* ── Card header — mirrors .card-header exactly ── */
+        .card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 7px 14px;
+          border-bottom: 1px solid #0f0f0f;
+          flex-shrink: 0;
+          background: #080808;
+        }
+        .card-header-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        /* ── Section label — mirrors .section-label exactly ── */
+        .section-label {
+          font-size: 8px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: #333;
+        }
+
+        /* ── Card body ── */
+        .settings-card-body {
+          padding: 14px 16px;
+        }
+
+        /* ── Desc text ── */
+        .settings-desc {
+          font-size: 11px;
+          color: #666;
+          font-family: ui-monospace, monospace;
+          line-height: 1.6;
+          margin-bottom: 12px;
+        }
+
+        /* ── Account fields ── */
+        .account-fields {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+        @media (max-width: 480px) {
+          .account-fields { grid-template-columns: 1fr; }
+        }
+        .account-field {}
+        .readonly-field {
+          font-size: 12px;
+          font-family: ui-monospace, monospace;
+          color: #e0e0e0;
+          background: #0a0a0a;
+          border: 1px solid #161616;
+          border-radius: 4px;
+          padding: 6px 10px;
+          letter-spacing: 0.03em;
+        }
+
+        /* ── GitHub ── */
+        .github-input-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .github-input-wrap {
+          flex: 1;
+          position: relative;
+          display: flex;
+          align-items: center;
+          background: #0a0a0a;
+          border: 1px solid #161616;
+          border-radius: 4px;
+          transition: border-color 0.15s ease;
+        }
+        .github-input-wrap:focus-within {
+          border-color: rgba(34,197,94,0.3);
+        }
+        .github-prefix {
+          font-size: 11px;
+          font-family: ui-monospace, monospace;
+          color: #333;
+          padding: 0 0 0 10px;
+          white-space: nowrap;
+          user-select: none;
+          pointer-events: none;
+        }
+        .github-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          font-size: 12px;
+          font-family: ui-monospace, monospace;
+          color: #e0e0e0;
+          padding: 7px 10px 7px 2px;
+          min-width: 0;
+        }
+        .github-input::placeholder { color: #252525; }
+
+        .github-status {
+          margin-top: 8px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+        }
+        .github-status-connected {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 9px;
+          font-family: ui-monospace, monospace;
+          color: #22c55e;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+        .github-status-disconnected {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 9px;
+          font-family: ui-monospace, monospace;
+          color: #2a2a2a;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+        .github-link {
+          color: #22c55e;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+          transition: color 0.15s;
+        }
+        .github-link:hover { color: #4ade80; }
+
+        /* ── Slider ── */
+        .time-slider {
+          width: 100%;
+          accent-color: #22c55e;
+          height: 2px;
+          cursor: pointer;
+        }
+        .slider-ticks {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 6px;
+        }
+        .slider-tick {
+          font-size: 8px;
+          font-family: ui-monospace, monospace;
+          color: #282828;
+          letter-spacing: 0.08em;
+        }
+
+        /* ── Settings row ── */
+        .settings-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+        .settings-row-text { flex: 1; min-width: 0; }
+        .settings-row-label {
+          font-size: 12px;
+          font-weight: 500;
+          color: #e0e0e0;
+          font-family: ui-monospace, monospace;
+          letter-spacing: 0.02em;
+        }
+        .settings-row-sub {
+          font-size: 10px;
+          color: #3a3a3a;
+          font-family: ui-monospace, monospace;
+          margin-top: 3px;
+          line-height: 1.4;
+        }
+        .settings-row-control { flex-shrink: 0; }
+
+        /* ── Confirm row ── */
+        .confirm-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        /* ── Buttons ── */
+        .settings-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border: 1px solid #1e1e1e;
+          background: #0e0e0e;
+          font-size: 10px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #d0d0d0;
+          cursor: pointer;
+          transition: border-color 0.15s ease, color 0.15s ease;
+          white-space: nowrap;
+        }
+        .settings-btn:hover:not(:disabled) {
+          border-color: #2a2a2a;
+          color: #f0f0f0;
+        }
+        .settings-btn:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+
+        .settings-btn-outline {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border: 1px solid #1e1e1e;
+          background: transparent;
+          font-size: 10px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #aaa;
+          cursor: pointer;
+          transition: border-color 0.15s ease, color 0.15s ease;
+          white-space: nowrap;
+        }
+        .settings-btn-outline:hover {
+          border-color: #2e2e2e;
+          color: #e0e0e0;
+        }
+
+        .settings-btn-red {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border: 1px solid rgba(239,68,68,0.3);
+          background: rgba(239,68,68,0.08);
+          font-size: 10px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #ef4444;
+          cursor: pointer;
+          transition: background 0.15s ease, border-color 0.15s ease;
+          white-space: nowrap;
+        }
+        .settings-btn-red:hover {
+          background: rgba(239,68,68,0.14);
+          border-color: rgba(239,68,68,0.5);
+        }
+
+        .settings-btn-red-outline {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border: 1px solid rgba(239,68,68,0.2);
+          background: transparent;
+          font-size: 10px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #7a2a2a;
+          cursor: pointer;
+          transition: border-color 0.15s ease, color 0.15s ease;
+          white-space: nowrap;
+        }
+        .settings-btn-red-outline:hover {
+          border-color: rgba(239,68,68,0.4);
+          color: #ef4444;
+        }
+
+        .settings-btn-ghost {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 10px;
+          border-radius: 4px;
+          border: none;
+          background: transparent;
+          font-size: 10px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #333;
+          cursor: pointer;
+          transition: color 0.15s ease;
+          white-space: nowrap;
+        }
+        .settings-btn-ghost:hover { color: #888; }
+      `}</style>
     </PageShell>
   );
 }

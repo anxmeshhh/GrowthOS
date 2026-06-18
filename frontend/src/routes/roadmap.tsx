@@ -104,7 +104,7 @@ function RoadmapPage() {
   if (pathsLoading || customPathLoading) {
     return (
       <PageShell>
-        <div className="flex items-center justify-center gap-2 py-24 text-sm text-[#666]">
+        <div className="flex items-center justify-center gap-2 py-24 text-lg text-[#eee]">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading roadmap…
         </div>
@@ -191,12 +191,12 @@ function RoadmapPageInner({
               >
                 <Bookmark
                   size={11}
-                  className={isActive ? "fill-[#22c55e] text-[#22c55e]" : "text-[#bbb]"}
+                  className={isActive ? "fill-[#22c55e] text-[#22c55e]" : "text-[#fff]"}
                 />
-                <span className={`whitespace-nowrap text-xs font-medium ${isActive ? "text-[#22c55e]" : "text-[#999]"}`}>
+                <span className={`whitespace-nowrap text-lg font-medium ${isActive ? "text-[#22c55e]" : "text-[#fff]"}`}>
                   {p.title}
                 </span>
-                <span className={`whitespace-nowrap text-[10px] font-mono ${isActive ? "text-[#22c55e]/60" : "text-[#aaa]"}`}>
+                <span className={`whitespace-nowrap text-[11px] font-mono ${isActive ? "text-[#22c55e]/60" : "text-[#eee]"}`}>
                   {pPct}%
                 </span>
               </button>
@@ -238,12 +238,12 @@ function RoadmapPageInner({
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#bbb]">Overall progress</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-[#fff]">Overall progress</div>
               <div className="mt-1.5 flex items-baseline gap-1.5">
                 <span className="font-mono text-2xl font-semibold text-[#f0f0f0]">{completedCount}</span>
-                <span className="text-sm text-[#bbb]">/ {topics.length} topics</span>
+                <span className="text-lg text-[#fff]">/ {topics.length} topics</span>
               </div>
-              <div className="mt-2 flex items-center gap-3 text-[11px] text-[#666]">
+              <div className="mt-2 flex items-center gap-3 text-[12px] text-[#eee]">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> {completedCount} done
                 </span>
@@ -263,7 +263,7 @@ function RoadmapPageInner({
           {/* Up next */}
           <div className="flex items-center justify-between gap-4 p-6">
             <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#bbb]">
+              <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-[#fff]">
                 {nextTopic ? "Continue where you left off" : "Path complete"}
               </div>
               <div className="mt-1.5 truncate text-lg font-semibold tracking-tight text-[#f0f0f0]">
@@ -291,12 +291,12 @@ function RoadmapPageInner({
       {/* ── Roadmap section ──────────────────────────────────────────── */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MapIcon size={13} className="text-[#aaa]" />
-          <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#bbb]">
+          <MapIcon size={13} className="text-[#eee]" />
+          <span className="text-[11px] uppercase tracking-[0.18em] font-mono text-[#fff]">
             Full roadmap
           </span>
         </div>
-        <div className="flex items-center gap-4 text-[11px] text-[#666]">
+        <div className="flex items-center gap-4 text-[12px] text-[#eee]">
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> Done
           </span>

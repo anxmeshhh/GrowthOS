@@ -16,9 +16,16 @@ export function useContributionTracking(isEnabled: boolean = true) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action_type: actionType, points }),
       })
-        .then((res) => {
+        .then(async (res) => {
           if (res.ok) {
-            showToast(`${points} contri added`, "xp");
+            const data = await res.json();
+            if (data.new_badges && data.new_badges.length > 0) {
+              data.new_badges.forEach((b: any) => {
+                showToast(`${b.icon} Achievement Unlocked: ${b.title}!`, "xp");
+              });
+            } else {
+              showToast(`${points} contri added`, "xp");
+            }
           }
         })
         .catch(() => {

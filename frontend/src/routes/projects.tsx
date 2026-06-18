@@ -33,7 +33,7 @@ function ProjectsPage() {
   const message = repoData?.message;
 
   if (reposLoading || portfolioLoading) {
-    return <PageShell><div className="flex items-center justify-center p-12 text-[#666]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading portfolio...</div></PageShell>;
+    return <PageShell><div className="flex items-center justify-center p-12 text-[#eee]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading portfolio...</div></PageShell>;
   }
 
   // No GitHub connected and no portfolio
@@ -42,9 +42,9 @@ function ProjectsPage() {
       <PageShell>
         <PageHeader kicker="Build Proof" title="Projects" subtitle="Connect your GitHub to showcase your work." />
         <Card className="p-8 text-center">
-          <Github size={48} className="mx-auto mb-4 text-[#bbb]" />
+          <Github size={48} className="mx-auto mb-4 text-[#fff]" />
           <h3 className="text-lg font-semibold text-[#f0f0f0] mb-2">Connect Your GitHub</h3>
-          <p className="text-sm text-[#888] mb-6 max-w-md mx-auto">{message}</p>
+          <p className="text-lg text-[#eee] mb-6 max-w-md mx-auto">{message}</p>
           <Link to="/settings">
             <Btn>Go to Settings →</Btn>
           </Link>
@@ -63,7 +63,7 @@ function ProjectsPage() {
 
       {portfolio.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-[#a8c078] mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-wide uppercase text-[#a8c078] mb-4 flex items-center gap-2">
             <ShieldCheck size={16} /> AI-Verified Projects
           </h2>
           <div className="grid grid-cols-1 gap-3">
@@ -79,9 +79,9 @@ function ProjectsPage() {
                     <Badge tone="green">Verified for: {proj.topic_title}</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-[#a8c078] mb-4 line-clamp-2 italic">"{proj.ai_evaluation}"</p>
+                <p className="text-lg text-[#a8c078] mb-4 line-clamp-2 italic">"{proj.ai_evaluation}"</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-[#4a6a2a]">
+                  <span className="text-[11px] font-mono text-[#4a6a2a]">
                     Verified on {new Date(proj.verified_at).toLocaleDateString()}
                   </span>
                   <a href={proj.repo_url} target="_blank" rel="noreferrer">
@@ -96,7 +96,7 @@ function ProjectsPage() {
 
       {repos.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-[#666] mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-wide uppercase text-[#eee] mb-4 flex items-center gap-2">
             <Github size={16} /> GitHub Repositories
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -104,12 +104,12 @@ function ProjectsPage() {
               <Card key={repo.id} className="p-5 hover:border-[#333] transition-colors">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <GitBranch size={14} className="text-[#888] shrink-0" />
+                    <GitBranch size={14} className="text-[#eee] shrink-0" />
                     <h3 className="font-semibold tracking-tight text-[#f0f0f0] truncate">{repo.name}</h3>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {repo.stargazers_count > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] font-mono text-[#f59e0b]">
+                      <span className="flex items-center gap-1 text-[11px] font-mono text-[#f59e0b]">
                         <Star size={10} fill="currentColor" /> {repo.stargazers_count}
                       </span>
                     )}
@@ -117,14 +117,14 @@ function ProjectsPage() {
                 </div>
                 
                 {repo.description && (
-                  <p className="text-xs text-[#888] mb-3 line-clamp-2">{repo.description}</p>
+                  <p className="text-lg text-[#eee] mb-3 line-clamp-2">{repo.description}</p>
                 )}
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {repo.language && <Badge tone="blue">{repo.language}</Badge>}
                     {repo.updated_at && (
-                      <span className="text-[10px] font-mono text-[#bbb]">
+                      <span className="text-[11px] font-mono text-[#fff]">
                         {new Date(repo.updated_at).toLocaleDateString()}
                       </span>
                     )}
