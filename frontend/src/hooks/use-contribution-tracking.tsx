@@ -4,8 +4,6 @@ import { apiFetch } from "../lib/api-client";
 
 export function useContributionTracking(isEnabled: boolean = true) {
   const { showToast } = useToast();
-  const lastAwardTime = useRef<number>(Date.now());
-  const actionCount = useRef<number>(0);
 
   useEffect(() => {
     if (!isEnabled) return;
@@ -19,12 +17,12 @@ export function useContributionTracking(isEnabled: boolean = true) {
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json();
+            // Only show a toast if a badge was actually unlocked! 
+            // We do not show "1 contri added" for every minor action anymore to avoid spam.
             if (data.new_badges && data.new_badges.length > 0) {
               data.new_badges.forEach((b: any) => {
                 showToast(`${b.icon} Achievement Unlocked: ${b.title}!`, "xp");
               });
-            } else {
-              showToast(`${points} contri added`, "xp");
             }
           }
         })
@@ -39,26 +37,8 @@ export function useContributionTracking(isEnabled: boolean = true) {
     };
     window.addEventListener("growthos_action_performed", handleMeaningfulAction);
 
-    // 2. Continuous Activity Listener (Typing, clicking, time spent)
-    const handleGeneralActivity = () => {
-      const now = Date.now();
-      actionCount.current += 1;
-
-      // Award XP for every 50 small interactions (typing, clicking) or after 60 seconds of activity.
-      if (actionCount.current >= 50 || now - lastAwardTime.current > 60000) {
-        actionCount.current = 0;
-        lastAwardTime.current = now;
-        awardContribution("general_activity", 1);
-      }
-    };
-
-    window.addEventListener("click", handleGeneralActivity, { passive: true });
-    window.addEventListener("keydown", handleGeneralActivity, { passive: true });
-
     return () => {
       window.removeEventListener("growthos_action_performed", handleMeaningfulAction);
-      window.removeEventListener("click", handleGeneralActivity);
-      window.removeEventListener("keydown", handleGeneralActivity);
     };
   }, [showToast, isEnabled]);
 }
