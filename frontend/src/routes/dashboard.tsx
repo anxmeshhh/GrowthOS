@@ -168,7 +168,35 @@ function DashboardPage() {
       || fallback[0] || null;
   }
 
-  const topics: any[] = ap?.topics || [];
+  const rawTopics: any[] = ap?.topics || [];
+
+  // Build structured groups: [ { milestone, topics[], allDone } ]
+  const { groups, studyTopics } = useMemo(() => {
+    const sorted = [...rawTopics].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const grps: { milestone: any | null; topics: any[]; allDone: boolean }[] = [];
+    let currentGroup: { milestone: any | null; topics: any[] } = { milestone: null, topics: [] };
+
+    sorted.forEach(t => {
+      if (t.node_kind === 'milestone') {
+        // Push the previous group if it has topics
+        if (currentGroup.topics.length > 0 || currentGroup.milestone) {
+          grps.push({ ...currentGroup, allDone: currentGroup.topics.length > 0 && currentGroup.topics.every(st => st.user_progress === 'completed') });
+        }
+        currentGroup = { milestone: t, topics: [] };
+      } else {
+        currentGroup.topics.push(t);
+      }
+    });
+    // Push the last group
+    if (currentGroup.topics.length > 0 || currentGroup.milestone) {
+      grps.push({ ...currentGroup, allDone: currentGroup.topics.length > 0 && currentGroup.topics.every(st => st.user_progress === 'completed') });
+    }
+
+    const allStudy = grps.flatMap(g => g.topics);
+    return { groups: grps, studyTopics: allStudy };
+  }, [rawTopics]);
+
+  const topics = studyTopics;
   const cur = topics.find((t: any) => t.user_progress === "in_progress")
     || topics.find((t: any) => t.user_progress !== "completed")
     || topics[0] || null;
@@ -268,8 +296,8 @@ function DashboardPage() {
                       <div
                         key={i}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-[10px] font-mono uppercase tracking-[0.15em] transition-colors ${s.d
-                            ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
-                            : "text-[#eee]"
+                          ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
+                          : "text-[#eee]"
                           }`}
                       >
                         {s.d
@@ -363,56 +391,157 @@ function DashboardPage() {
             </Panel>
           </div>
 
-          {/* ── 3. Subway Map / Path Trajectory ── 8 cols ── */}
-          <Panel className="col-span-12 lg:col-span-8 p-5 flex flex-col" style={{ height: 280 }}>
-            <div className="flex justify-between items-center mb-5 shrink-0">
+          {/* ── 3. Path Trajectory ── 8 cols ── */}
+          <Panel className="col-span-12 lg:col-span-8 p-5 flex flex-col" style={{ minHeight: 280 }}>
+            <div className="flex justify-between items-center mb-4 shrink-0">
               <SectionLabel><Award size={9} /> Path Trajectory</SectionLabel>
               <span className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.15em]">{cpct}% completed</span>
             </div>
 
+            {/* Overall progress bar */}
+            <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden mb-4 shrink-0">
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{ width: `${cpct}%`, background: '#22c55e', boxShadow: cpct > 0 ? '0 0 8px #22c55e40' : 'none' }}
+              />
+            </div>
+
             <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
-              <div className="flex items-center h-full min-w-max px-4 relative">
-                {/* Rail background */}
-                <div className="absolute left-8 right-8 h-px bg-[#141414] top-1/2 -translate-y-1/2" />
-                {/* Rail progress */}
-                <div
-                  className="absolute left-8 h-px bg-[#22c55e] top-1/2 -translate-y-1/2 transition-all duration-1000"
-                  style={{
-                    width: `calc((100% - 4rem) * ${railPct / 100})`,
-                    boxShadow: railPct > 0 ? "0 0 8px #22c55e50" : "none",
-                  }}
-                />
+              <div className="flex items-stretch gap-4 min-w-max h-full py-1">
+                {groups.map((g, gi) => {
+                  const milestoneLabel = g.milestone?.title || `Section ${gi + 1}`;
+                  const groupDone = g.topics.filter((t: any) => t.user_progress === 'completed').length;
+                  const groupTotal = g.topics.length;
+                  const groupPct = groupTotal > 0 ? Math.round((groupDone / groupTotal) * 100) : 0;
 
-                {/* Nodes */}
-                {topics.map((t: any, i: number) => {
-                  const d = t.user_progress === "completed";
-                  const a = t.id === cur?.id;
                   return (
-                    <div key={t.id} className="relative z-10 flex flex-col items-center justify-center w-28 group">
-                      {/* Top label — node index */}
-                      <div className={`absolute bottom-full mb-3 text-center transition-all duration-200 ${a ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                        }`}>
-                        <div className="text-[9px] font-mono text-[#eee] tracking-[0.15em] uppercase">
-                          {String(i + 1).padStart(2, "0")}
-                        </div>
-                      </div>
-
-                      {/* Node circle */}
-                      <Link
-                        to="/topic/$topicId"
-                        params={{ topicId: String(t.slug || t.id) }}
-                        className={`node-circle ${d ? "node-done" : a ? "node-active" : "node-idle"}`}
+                    <div key={g.milestone?.id || `grp-${gi}`} className="flex items-stretch gap-4">
+                      {/* Group box */}
+                      <div
+                        className="flex flex-col rounded-[6px] overflow-hidden shrink-0 transition-all duration-300"
+                        style={{
+                          border: `1px solid ${g.allDone ? '#22c55e90' : '#3a3a3a'}`,
+                          background: g.allDone ? '#051505' : '#0c0c0c',
+                          minWidth: Math.max(160, groupTotal * 44 + 32),
+                          maxWidth: 360,
+                          boxShadow: g.allDone ? '0 0 18px #22c55e25' : '0 0 10px #00000060',
+                        }}
                       >
-                        {a && <div className="w-1 h-1 bg-black rounded-full animate-pulse" />}
-                      </Link>
+                        {/* Milestone header */}
+                        <div
+                          className="flex items-center gap-2 px-3 py-2 shrink-0"
+                          style={{
+                            borderBottom: `1px solid ${g.allDone ? '#22c55e60' : '#2a2a2a'}`,
+                            background: g.allDone ? '#072007' : '#121212',
+                          }}
+                        >
+                          {g.allDone
+                            ? <CheckCircle2 size={12} strokeWidth={2.5} className="text-[#22c55e] shrink-0" />
+                            : <Circle size={12} strokeWidth={2} className="text-[#60a5fa] shrink-0" />
+                          }
+                          <span
+                            className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] truncate"
+                            style={{ color: g.allDone ? '#4ade80' : '#93c5fd' }}
+                          >
+                            {milestoneLabel}
+                          </span>
+                          <span
+                            className="ml-auto text-[8px] font-mono shrink-0 px-1.5 py-0.5 rounded-sm"
+                            style={{
+                              color: g.allDone ? '#22c55e' : '#888',
+                              background: g.allDone ? '#22c55e15' : '#1a1a1a',
+                            }}
+                          >
+                            {groupDone}/{groupTotal}
+                          </span>
+                        </div>
 
-                      {/* Bottom label — topic title */}
-                      <div className="absolute top-full mt-3 text-center w-28 px-2">
-                        <div className={`text-[11px] truncate transition-colors ${d ? "text-[#eee]" : a ? "text-[#fff] font-medium" : "text-[#fff]"
-                          }`}>
-                          {t.title}
+                        {/* Subtopics list */}
+                        <div className="flex-1 overflow-y-auto px-1.5 py-1.5 space-y-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#1a1a1a #060606' }}>
+                          {g.topics.map((t: any, ti: number) => {
+                            const d = t.user_progress === 'completed';
+                            const a = t.id === cur?.id;
+                            const ip = t.user_progress === 'in_progress';
+                            return (
+                              <Link
+                                key={t.id}
+                                to="/topic/$topicId"
+                                params={{ topicId: String(t.slug || t.id) }}
+                                className="flex items-center gap-2 px-2 py-[5px] rounded-[3px] no-underline transition-all duration-150 group/item"
+                                style={{
+                                  background: a ? '#0c1a0f' : 'transparent',
+                                  border: a ? '1px solid #22c55e35' : '1px solid transparent',
+                                }}
+                                onMouseEnter={e => { if (!a) (e.currentTarget as HTMLElement).style.background = '#0a0a0a'; }}
+                                onMouseLeave={e => { if (!a) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                              >
+                                <span className="shrink-0 w-3 flex items-center justify-center">
+                                  {d
+                                    ? <CheckCircle2 size={11} strokeWidth={2.5} className="text-[#22c55e]" />
+                                    : ip
+                                      ? <span className="w-[8px] h-[8px] rounded-full bg-[#f59e0b] animate-pulse" />
+                                      : <Circle size={10} strokeWidth={1.5} className="text-[#555]" />
+                                  }
+                                </span>
+                                <span
+                                  className="text-[11px] font-mono leading-tight truncate flex-1"
+                                  style={{
+                                    color: d ? '#4ade80' : a ? '#ffffff' : '#b5b5b5',
+                                  }}
+                                >
+                                  {t.title}
+                                </span>
+                                {a && (
+                                  <span className="text-[7px] font-mono uppercase tracking-wider text-[#22c55e] shrink-0 opacity-90">
+                                    active
+                                  </span>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+
+                        {/* Progress micro-bar at bottom */}
+                        <div className="h-[2px] w-full shrink-0" style={{ background: '#161616' }}>
+                          <div
+                            className="h-full transition-all duration-700"
+                            style={{
+                              width: `${groupPct}%`,
+                              background: g.allDone ? '#22c55e' : '#5b8def',
+                              boxShadow: groupPct > 0 ? `0 0 8px ${g.allDone ? '#22c55e70' : '#5b8def70'}` : 'none',
+                            }}
+                          />
                         </div>
                       </div>
+
+                      {/* Connector arrow between groups — brighter, glowing, animated when active */}
+                      {gi < groups.length - 1 && (
+                        <div className="flex items-center shrink-0 connector-wrap">
+                          <svg
+                            width="44"
+                            height="16"
+                            viewBox="0 0 44 16"
+                            className="connector-arrow"
+                            style={{
+                              filter: g.allDone
+                                ? 'drop-shadow(0 0 6px #22c55ecc) drop-shadow(0 0 12px #22c55e60)'
+                                : 'drop-shadow(0 0 3px #ffffff30)',
+                            }}
+                          >
+                            <line
+                              x1="2" y1="8" x2="34" y2="8"
+                              stroke={g.allDone ? '#4ade80' : '#9ca3af'}
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              className={g.allDone ? 'connector-line-active' : 'connector-line-idle'}
+                            />
+                            <polygon
+                              points="32,2.5 44,8 32,13.5"
+                              fill={g.allDone ? '#4ade80' : '#9ca3af'}
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -576,6 +705,29 @@ function DashboardPage() {
 
         .node-idle:hover {
           background: #1e1e1e;
+        }
+
+        /* ── Connector arrows between trajectory groups ── brighter + animated ── */
+        .connector-wrap {
+          position: relative;
+        }
+
+        .connector-arrow {
+          display: block;
+        }
+
+        @keyframes connector-flow {
+          0%   { stroke-dashoffset: 12; }
+          100% { stroke-dashoffset: 0; }
+        }
+
+        .connector-line-active {
+          stroke-dasharray: 5 3;
+          animation: connector-flow 0.9s linear infinite;
+        }
+
+        .connector-line-idle {
+          opacity: 0.85;
         }
 
         /* ── Live dot ── same as profile / progress ── */

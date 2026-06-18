@@ -425,6 +425,7 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
             )
             response_content = chat_completion.choices[0].message.content.strip()
             
+            import json, re
             # Extract JSON if markdown wrapped
             match = re.search(r'\{.*\}', response_content, re.DOTALL)
             if match:

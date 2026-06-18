@@ -37,7 +37,8 @@ const SectionHeader = memo(function SectionHeader({
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1428'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isOpen ? '#0d1428' : '#0a0f1e'; }}
     >
-      <span className="font-mono font-semibold tracking-wide" style={{ fontSize: '11px', color: '#60a5fa' }}>
+      <span className="font-mono font-semibold tracking-wide flex items-center gap-1.5" style={{ fontSize: '11px', color: node.data.status === 'completed' ? '#22c55e' : '#60a5fa' }}>
+        {node.data.status === 'completed' && <CheckCircle2 size={12} strokeWidth={2.5} />}
         {node.data.label}
       </span>
       <span className="ml-auto shrink-0" style={{ color: '#3b5bdb' }}>
@@ -71,15 +72,17 @@ const TreeBranch = memo(function TreeBranch({
 
   // Top-level milestone
   if (node.kind === 'milestone' && depth === 0) {
+    const isCompleted = node.data.status === 'completed';
     return (
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-px flex-1" style={{ background: '#1a2a40' }} />
           <Link to="/topic/$topicId" params={{ topicId: node.data.topicId }} className="no-underline">
             <span
-              className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full"
-              style={{ fontSize: '10px', color: '#60a5fa', background: '#0a0f1e', border: '1px solid #3b5bdb' }}
+              className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1.5"
+              style={{ fontSize: '10px', color: isCompleted ? '#4ade80' : '#60a5fa', background: isCompleted ? '#061a0f' : '#0a0f1e', border: `1px solid ${isCompleted ? '#22c55e' : '#3b5bdb'}` }}
             >
+              {isCompleted && <CheckCircle2 size={11} strokeWidth={3} />}
               {node.data.label}
             </span>
           </Link>
@@ -187,6 +190,16 @@ export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
           currentMilestone.children.push(node);
         } else {
           roots.push(node);
+        }
+      }
+    });
+    
+    // Auto-mark milestones as completed if all their child topics are completed
+    roots.forEach(root => {
+      if (root.kind === 'milestone' && root.children.length > 0) {
+        const allCompleted = root.children.every(c => c.data.status === 'completed');
+        if (allCompleted) {
+          root.data.status = 'completed';
         }
       }
     });
