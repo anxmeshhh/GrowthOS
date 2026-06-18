@@ -6,7 +6,7 @@ from .views import (
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView
+    AllNotesView, AllNoteDocumentsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path('auth/login/', TokenObtainPairView.as_view(), name='auth_login'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='auth_refresh'),
     path('auth/daily-login/', DailyLoginView.as_view(), name='daily_login'),
+    path('auth/add-contribution/', AddContributionView.as_view(), name='add_contribution'),
     
     # Path Endpoints
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),

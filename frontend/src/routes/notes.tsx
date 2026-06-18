@@ -149,7 +149,7 @@ function NotesPage() {
     return (
       <PageShell>
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-5 h-5 text-[#444] animate-spin" />
+          <Loader2 className="w-5 h-5 text-[#aaa] animate-spin" />
         </div>
       </PageShell>
     );
@@ -188,7 +188,7 @@ function NotesPage() {
         {/* ── [HDR] ──────────────────────────────────────────────────────── */}
         <div className="col-span-full flex flex-col md:flex-row md:items-end justify-between pb-1 gap-2 shrink-0" style={{ gridArea: "hdr" }}>
           <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1">GrowthOS</p>
+            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#aaa] mb-1">GrowthOS</p>
             <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">Library</h1>
           </div>
           <Btn onClick={() => setShowNewModal(true)} size="sm" variant="solid" tone="green" className="w-full md:w-auto">
@@ -200,19 +200,19 @@ function NotesPage() {
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] rounded-lg flex flex-col overflow-hidden" style={{ gridArea: "side" }}>
           <div className="p-4 border-b border-[#131313] shrink-0 space-y-4">
             <div className="flex items-center gap-2 bg-[#111] border border-[#222] rounded-lg px-3 py-2 focus-within:border-[#444] transition-colors">
-              <Search size={14} className="text-[#555]" />
+              <Search size={14} className="text-[#bbb]" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search materials..."
-                className="flex-1 bg-transparent outline-none text-xs text-[#e0e0e0] placeholder:text-[#555]"
+                className="flex-1 bg-transparent outline-none text-xs text-[#e0e0e0] placeholder:text-[#bbb]"
               />
               {q && <button onClick={() => setQ("")} className="text-[10px] text-[#666] hover:text-[#ccc]"><X size={12} /></button>}
             </div>
           </div>
           
           <div className="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar">
-            <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#555] mb-3">Filter By Path</div>
+            <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#bbb] mb-3">Filter By Path</div>
             <div className="flex flex-col gap-1.5">
               <FilterPill active={filterPath === "all"} onClick={() => setFilterPath("all")} icon={Layers} label="All Paths" />
               {pathTitles.map(pt => (
@@ -226,7 +226,7 @@ function NotesPage() {
         <div className="border border-[#1a1a1a] bg-[#0a0a0a] rounded-lg flex flex-col overflow-hidden relative" style={{ gridArea: "main" }}>
           <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#050505]">
             {filteredItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-[#555] space-y-3">
+              <div className="flex flex-col items-center justify-center h-full text-center text-[#bbb] space-y-3">
                 <BookOpen size={32} className="opacity-20" />
                 <div className="text-xs font-mono uppercase tracking-wider">No materials found.</div>
               </div>
@@ -246,10 +246,10 @@ function NotesPage() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                           {item.type === "note" && !isEditing && (
-                            <button onClick={() => handleEditNote(item)} className="text-[#555] hover:text-[#fff] transition-colors"><Edit2 size={12} /></button>
+                            <button onClick={() => handleEditNote(item)} className="text-[#bbb] hover:text-[#fff] transition-colors"><Edit2 size={12} /></button>
                           )}
-                          <button onClick={() => item.type === "note" ? handleDeleteNote(item) : handleDeleteDoc(item)} className="text-[#555] hover:text-[#ef4444] transition-colors"><Trash2 size={12} /></button>
-                          <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} className="text-[#555] hover:text-[#fff] transition-colors"><ExternalLink size={12} /></Link>
+                          <button onClick={() => item.type === "note" ? handleDeleteNote(item) : handleDeleteDoc(item)} className="text-[#bbb] hover:text-[#ef4444] transition-colors"><Trash2 size={12} /></button>
+                          <Link to="/topic/$topicId" params={{ topicId: item.topicSlug }} className="text-[#bbb] hover:text-[#fff] transition-colors"><ExternalLink size={12} /></Link>
                         </div>
                       </div>
                       
@@ -292,8 +292,8 @@ function NotesPage() {
                       {/* Card Footer */}
                       {!isEditing && (
                         <div className="px-4 py-2 bg-[#0a0a0a] border-t border-[#151515] flex justify-between items-center mt-auto">
-                          <span className="text-[9px] text-[#444] font-mono uppercase tracking-wider truncate mr-4">{item.pathTitle}</span>
-                          <span className="text-[9px] text-[#444] font-mono">{new Date(item.date).toLocaleDateString()}</span>
+                          <span className="text-[9px] text-[#aaa] font-mono uppercase tracking-wider truncate mr-4">{item.pathTitle}</span>
+                          <span className="text-[9px] text-[#aaa] font-mono">{new Date(item.date).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
@@ -317,7 +317,7 @@ function NotesPage() {
             
             <div className="max-h-[60vh] overflow-y-auto custom-scrollbar space-y-2 pr-2">
               {activeTopics.length === 0 ? (
-                <div className="text-center text-[#555] text-xs font-mono py-4">No active topics found. Start a roadmap first.</div>
+                <div className="text-center text-[#bbb] text-xs font-mono py-4">No active topics found. Start a roadmap first.</div>
               ) : (
                 activeTopics.map((t: any) => (
                   <button 
@@ -332,7 +332,7 @@ function NotesPage() {
                       <div className="text-[13px] font-medium text-[#ccc] group-hover:text-[#fff] truncate">{t.title}</div>
                       <div className="text-[10px] font-mono text-[#666] uppercase tracking-wider truncate mt-0.5">{t.pathTitle}</div>
                     </div>
-                    <ExternalLink size={14} className="text-[#555] group-hover:text-[#22c55e] shrink-0" />
+                    <ExternalLink size={14} className="text-[#bbb] group-hover:text-[#22c55e] shrink-0" />
                   </button>
                 ))
               )}
@@ -352,7 +352,7 @@ function FilterPill({ active, onClick, label, icon: Icon }: { active: boolean, o
         active ? "bg-[#1a1a1a] text-[#e0e0e0] font-medium" : "text-[#777] hover:bg-[#111] hover:text-[#bbb]"
       }`}
     >
-      {Icon && <Icon size={14} className={active ? "text-[#e0e0e0]" : "text-[#555]"} />}
+      {Icon && <Icon size={14} className={active ? "text-[#e0e0e0]" : "text-[#bbb]"} />}
       <span className="truncate">{label}</span>
     </button>
   );

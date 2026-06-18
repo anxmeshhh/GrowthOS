@@ -138,10 +138,10 @@ export function FloatingChat() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} className="p-1.5 rounded-lg text-[#555] hover:text-[#f59e0b] hover:bg-[#1e3060] transition-colors" title="Clear chat">
+              <button onClick={handleClear} className="p-1.5 rounded-lg text-[#bbb] hover:text-[#f59e0b] hover:bg-[#1e3060] transition-colors" title="Clear chat">
                 <Trash2 size={14} />
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg text-[#555] hover:text-[#f0f0f0] hover:bg-[#1e3060] transition-colors">
+              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg text-[#bbb] hover:text-[#f0f0f0] hover:bg-[#1e3060] transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -164,7 +164,7 @@ export function FloatingChat() {
               <div className="flex justify-start">
                 <div className="bg-[#131a2e] border border-[#1e3060] text-[#60a5fa] rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" />
-                  <span className="text-xs text-[#555]">Thinking...</span>
+                  <span className="text-xs text-[#bbb]">Thinking...</span>
                 </div>
               </div>
             )}

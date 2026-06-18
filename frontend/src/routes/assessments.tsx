@@ -127,7 +127,7 @@ function AssessmentsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-[#f0f0f0]">{path.title}</div>
-                  <div className="text-[10px] uppercase font-mono tracking-wider text-[#555] mt-0.5">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-[#bbb] mt-0.5">
                     {done}/{topics.length} completed
                   </div>
                 </div>
@@ -135,8 +135,8 @@ function AssessmentsPage() {
                   <div className="w-24 hidden sm:block"><Progress value={pct} /></div>
                   <span className="text-xs font-mono text-[#666] w-10 text-right">{pct}%</span>
                   {isExpanded
-                    ? <ChevronDown size={16} className="text-[#555]" />
-                    : <ChevronRight size={16} className="text-[#555]" />
+                    ? <ChevronDown size={16} className="text-[#bbb]" />
+                    : <ChevronRight size={16} className="text-[#bbb]" />
                   }
                 </div>
               </button>

@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight, Target, BookOpen, ClipboardCheck,
-  Zap, Award, CheckCircle2, Circle,
-  Activity, ChevronRight, Github,
-  RotateCcw, Flame, Star, Sparkles, Hexagon
+  Award, CheckCircle2, Circle,
+  Activity, Github,
+  RotateCcw, Sparkles, Hexagon
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
@@ -45,22 +45,30 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-/* ── premium primitives ─────────────────────────────────────────────────── */
+/* ── shared primitives ───────────────────────────────────────────────────── */
 
-function GlassPanel({ children, className = "", glowing = false }: { children: React.ReactNode; className?: string, glowing?: boolean }) {
+/** Consistent card shell — matches profile-card / progress-card */
+function Panel({
+  children,
+  className = "",
+  accent = false,
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  accent?: boolean;
+  style?: React.CSSProperties;
+}) {
   return (
-    <div className={`relative rounded-2xl border border-white/[0.04] bg-gradient-to-b from-white/[0.02] to-transparent backdrop-blur-3xl overflow-hidden ${className}`}>
-      {glowing && (
-        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent opacity-50" />
-      )}
+    <div className={`dash-panel ${accent ? "dash-panel--accent" : ""} ${className}`} style={style}>
       {children}
     </div>
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.25em] font-mono text-white/40 flex items-center gap-2">
+    <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#999] flex items-center gap-1.5">
       {children}
     </p>
   );
@@ -135,7 +143,7 @@ function DashboardPage() {
       return r.json();
     },
     onSuccess: () => {
-      flash("🔥 Streak revived");
+      flash("Streak revived");
       qc.invalidateQueries({ queryKey: ["user_profile"] });
       qc.invalidateQueries({ queryKey: ["heatmap"] });
     },
@@ -185,149 +193,194 @@ function DashboardPage() {
   /* ── render ── */
   return (
     <PageShell>
-      {/* Dynamic Background Noise */}
-      <div className="fixed inset-0 pointer-events-none z-[-1] opacity-50 mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZmlsdGVyIGlkPSJub2lzZUZpbHRlciI+CiAgICA8ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC42NSIgbnVtT2N0YXZlcz0iMyIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPgogIDwvZmlsdGVyPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNub2lzZUZpbHRlcikiLz4KPC9zdmc+')]"/>
-      
+
+      {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl border border-white/10 bg-black/80 backdrop-blur-xl text-white text-[13px] tracking-wide shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
-          <div className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_10px_#22c55e]" /> {toast}
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-[5px] border border-[#1e1e1e] bg-[#060606] text-[#e0e0e0] text-[11px] font-mono tracking-wide shadow-xl flex items-center gap-2.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_6px_#22c55e]" />
+          {toast}
         </div>
       )}
 
-      <div className="p-6 lg:p-8 max-w-[1400px] mx-auto min-h-screen">
+      <div className="p-5 lg:p-6 max-w-[1400px] mx-auto">
 
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white flex items-center gap-3">
-              <Hexagon className="w-6 h-6 text-[#22c55e]" strokeWidth={1.5} />
-              Command Center
-            </h1>
+        {/* ── Page header ── */}
+        <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#0e0e0e]">
+          <div className="flex items-center gap-2.5">
+            <Hexagon className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
+            <div>
+              <p className="text-[8px] uppercase tracking-[0.25em] font-mono text-[#888] leading-none mb-1">GrowthOS</p>
+              <h1 className="text-[17px] font-semibold tracking-tight text-[#efefef] leading-none">
+                Command Center
+              </h1>
+            </div>
           </div>
+
           {ap && (
-            <div className="relative group">
+            <div className="relative">
               <select
                 value={selectedPathId || "auto"}
                 onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
-                className="appearance-none bg-white/[0.03] border border-white/10 text-white/70 text-[11px] font-mono uppercase tracking-widest rounded-full pl-5 pr-10 py-2.5 outline-none hover:bg-white/[0.06] hover:text-white transition-all cursor-pointer backdrop-blur-md"
+                className="appearance-none bg-[#080808] border border-[#181818] text-[#666] text-[9px] font-mono uppercase tracking-[0.18em] rounded-[4px] pl-4 pr-8 py-2 outline-none hover:border-[#222] hover:text-[#999] transition-all cursor-pointer"
               >
-                <option value="auto" className="bg-black font-sans normal-case">✦ Auto-Track Active</option>
-                <optgroup label="Available Paths" className="bg-black text-white/50 font-sans">
+                <option value="auto" className="bg-black font-sans normal-case">Auto-track active</option>
+                <optgroup label="Available Paths" className="bg-black text-[#bbb] font-sans">
                   {allPaths.map((p: any) => (
-                    <option key={p.uniqueId} value={p.uniqueId} className="bg-black text-white font-sans normal-case text-xs">
+                    <option key={p.uniqueId} value={p.uniqueId} className="bg-black text-[#ccc] font-sans normal-case text-xs">
                       {p.title}
                     </option>
                   ))}
                 </optgroup>
               </select>
-              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#22c55e]/50 group-hover:bg-[#22c55e] transition-colors shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+              {/* Custom chevron */}
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#22c55e]/40" />
             </div>
           )}
         </div>
 
-        {/* ── BENTO GRID ── */}
-        <div className="grid grid-cols-12 gap-5 auto-rows-[minmax(140px,auto)]">
+        {/* ── Bento grid ── */}
+        <div className="grid grid-cols-12 gap-3 auto-rows-[minmax(130px,auto)]">
 
-          {/* 1. Hero Mission (Spans 8 cols) */}
-          <GlassPanel className="col-span-12 lg:col-span-8 p-8 flex flex-col justify-between group" glowing>
+          {/* ── 1. Hero Mission ── 8 cols ── */}
+          <Panel accent className="col-span-12 lg:col-span-8 p-7 flex flex-col justify-between min-h-[220px]">
             {cur ? (
               <>
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(34,197,94,0.15),transparent_60%)] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-                
+                {/* Green radial bloom — same technique as progress stat cards */}
+                <div
+                  className="pointer-events-none absolute rounded-full blur-3xl"
+                  style={{ width: 400, height: 400, background: "#22c55e", opacity: 0.05, top: -80, right: -80 }}
+                />
+
                 <div className="relative z-10">
-                  <Label><Sparkles size={12} className="text-[#22c55e]" /> Active Protocol</Label>
-                  <p className="mt-4 text-[13px] font-mono text-white/50 tracking-widest uppercase">{ap?.title}</p>
-                  <h2 className="mt-1 text-3xl md:text-4xl font-semibold text-white tracking-tight leading-tight max-w-2xl">
+                  <SectionLabel>
+                    <Sparkles size={9} className="text-[#22c55e]" /> Active Protocol
+                  </SectionLabel>
+                  <p className="mt-3 text-[9px] font-mono text-[#999] tracking-[0.2em] uppercase">{ap?.title}</p>
+                  <h2 className="mt-1 text-[22px] md:text-[26px] font-semibold text-[#efefef] tracking-tight leading-tight max-w-2xl">
                     {cur.title}
                   </h2>
                 </div>
 
-                <div className="mt-8 flex flex-wrap items-end justify-between gap-6 relative z-10">
-                  <div className="flex items-center gap-3 bg-black/40 rounded-full p-1.5 border border-white/5 backdrop-blur-md">
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-4 relative z-10">
+                  {/* Step pills */}
+                  <div className="flex items-center gap-1.5 p-1 border border-[#141414] rounded-[5px] bg-[#080808]">
                     {steps.map((s, i) => (
-                      <div key={i} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-mono uppercase tracking-widest transition-colors ${s.d ? "bg-[#22c55e]/10 text-[#22c55e]" : "text-white/30"}`}>
-                        {s.d ? <CheckCircle2 size={12} /> : <Circle size={12} />}
+                      <div
+                        key={i}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-[9px] font-mono uppercase tracking-[0.15em] transition-colors ${s.d
+                            ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
+                            : "text-[#888]"
+                          }`}
+                      >
+                        {s.d
+                          ? <CheckCircle2 size={10} strokeWidth={2} />
+                          : <Circle size={10} strokeWidth={1.5} />
+                        }
                         {s.l}
                       </div>
                     ))}
                   </div>
 
+                  {/* CTA */}
                   <Link
                     to="/topic/$topicId"
                     params={{ topicId: String(cur.slug || cur.id) }}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white text-black text-[13px] font-bold tracking-wide hover:scale-105 hover:bg-[#22c55e] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
+                    className="engage-btn"
                   >
-                    Engage Mission <ArrowRight size={15} />
+                    Engage Mission <ArrowRight size={13} strokeWidth={2} />
                   </Link>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full opacity-50">
-                <Target size={32} className="mb-4" />
-                <p className="font-mono text-xs uppercase tracking-widest">No active protocol detected</p>
+              <div className="flex flex-col items-center justify-center h-full">
+                <Target size={24} className="text-[#1e1e1e] mb-3" strokeWidth={1.5} />
+                <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#777]">
+                  No active protocol detected
+                </p>
               </div>
             )}
-          </GlassPanel>
+          </Panel>
 
-          {/* 2. Metrics Stack (Spans 4 cols, nested grid) */}
-          <div className="col-span-12 lg:col-span-4 grid grid-cols-2 gap-5 grid-rows-2">
-            
-            {/* Level Square */}
-            <GlassPanel className="col-span-1 flex flex-col justify-between p-5 relative overflow-hidden group">
-              <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[radial-gradient(circle,rgba(168,85,247,0.2),transparent_70%)] pointer-events-none group-hover:scale-150 transition-transform duration-700" />
-              <Label>Level</Label>
+          {/* ── 2. Metrics stack ── 4 cols ── */}
+          <div className="col-span-12 lg:col-span-4 grid grid-cols-2 gap-3 grid-rows-2">
+
+            {/* Level */}
+            <Panel className="col-span-1 flex flex-col justify-between p-4 relative overflow-hidden">
+              <div
+                className="pointer-events-none absolute rounded-full blur-2xl"
+                style={{ width: 100, height: 100, background: "#a855f7", opacity: 0.06, bottom: -28, right: -28 }}
+              />
+              <SectionLabel>Level</SectionLabel>
               <div>
-                <div className="text-4xl font-mono text-white mt-2">{level}</div>
-                <div className="text-[11px] font-mono text-[#a855f7] uppercase tracking-widest mt-1">{lvl}</div>
+                <div className="text-[32px] font-mono tabular-nums text-[#efefef] leading-none mt-2">{level}</div>
+                <div className="text-[8px] font-mono text-[#a855f7] uppercase tracking-[0.2em] mt-1.5">{lvl}</div>
               </div>
-            </GlassPanel>
+            </Panel>
 
-            {/* Streak Square */}
-            <GlassPanel className="col-span-1 flex flex-col justify-between p-5 relative overflow-hidden group">
-              <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[radial-gradient(circle,rgba(245,158,11,0.15),transparent_70%)] pointer-events-none group-hover:scale-150 transition-transform duration-700" />
+            {/* Streak */}
+            <Panel className="col-span-1 flex flex-col justify-between p-4 relative overflow-hidden">
+              <div
+                className="pointer-events-none absolute rounded-full blur-2xl"
+                style={{ width: 100, height: 100, background: "#f59e0b", opacity: 0.05, bottom: -28, right: -28 }}
+              />
               <div className="flex justify-between items-start">
-                <Label>Streak</Label>
+                <SectionLabel>Streak</SectionLabel>
                 {profile?.can_revive_streak && (
-                  <button onClick={() => revive.mutate()} disabled={revive.isPending} className="text-[#f59e0b] hover:bg-[#f59e0b]/20 p-1.5 rounded-md transition-colors" title="Revive Streak">
-                    <RotateCcw size={12} />
+                  <button
+                    onClick={() => revive.mutate()}
+                    disabled={revive.isPending}
+                    className="text-[#f59e0b]/60 hover:text-[#f59e0b] p-1 rounded-[3px] hover:bg-[#f59e0b]/10 transition-colors"
+                    title="Revive Streak"
+                  >
+                    <RotateCcw size={10} />
                   </button>
                 )}
               </div>
               <div>
-                <div className={`text-4xl font-mono mt-2 ${streak > 0 ? "text-white" : "text-white/20"}`}>{streak}</div>
-                <div className="text-[11px] font-mono text-[#f59e0b] uppercase tracking-widest mt-1">Days Active</div>
-              </div>
-            </GlassPanel>
-
-            {/* XP Bar Rectangle */}
-            <GlassPanel className="col-span-2 flex flex-col justify-center p-6 relative">
-              <div className="flex justify-between items-end mb-3">
-                <div>
-                  <Label>Experience</Label>
-                  <div className="text-xl font-mono text-white mt-1">{xp} <span className="text-xs text-white/30">/ {next}</span></div>
+                <div className={`text-[32px] font-mono tabular-nums leading-none mt-2 ${streak > 0 ? "text-[#efefef]" : "text-[#1e1e1e]"}`}>
+                  {streak}
                 </div>
-                <div className="text-[10px] font-mono text-[#a855f7]">{next - xp} to next</div>
+                <div className="text-[8px] font-mono text-[#f59e0b] uppercase tracking-[0.2em] mt-1.5">days active</div>
               </div>
-              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#a855f7] to-[#d8b4fe] rounded-full transition-all duration-1000 ease-out" style={{ width: `${xpPct}%` }} />
+            </Panel>
+
+            {/* XP bar — spans both cols */}
+            <Panel className="col-span-2 flex flex-col justify-center p-4 relative">
+              <div className="flex justify-between items-baseline mb-2">
+                <SectionLabel>Experience</SectionLabel>
+                <span className="text-[8px] font-mono text-[#a855f7]/70">{next - xp} XP to next</span>
               </div>
-            </GlassPanel>
+              <div className="flex items-baseline gap-1.5 mb-3">
+                <span className="text-[18px] font-mono tabular-nums text-[#efefef] leading-none">{xp}</span>
+                <span className="text-[9px] font-mono text-[#888]">/ {next}</span>
+              </div>
+              <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${xpPct}%`, background: "#a855f7", boxShadow: "0 0 8px #a855f740" }}
+                />
+              </div>
+            </Panel>
           </div>
 
-          {/* 3. Subway Map Timeline (Spans 8 cols) */}
-          <GlassPanel className="col-span-12 lg:col-span-8 p-6 flex flex-col h-[320px]">
-            <div className="flex justify-between items-center mb-6">
-              <Label><Award size={12} /> Path Trajectory</Label>
-              <div className="text-[11px] font-mono text-white/40 tracking-widest">{cpct}% Completed</div>
+          {/* ── 3. Subway Map / Path Trajectory ── 8 cols ── */}
+          <Panel className="col-span-12 lg:col-span-8 p-5 flex flex-col" style={{ height: 280 }}>
+            <div className="flex justify-between items-center mb-5 shrink-0">
+              <SectionLabel><Award size={9} /> Path Trajectory</SectionLabel>
+              <span className="text-[8px] font-mono text-[#888] uppercase tracking-[0.15em]">{cpct}% completed</span>
             </div>
-            
-            <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
+
+            <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
               <div className="flex items-center h-full min-w-max px-4 relative">
-                {/* The Rail */}
-                <div className="absolute left-8 right-8 h-0.5 bg-white/10 top-1/2 -translate-y-1/2" />
-                <div 
-                  className="absolute left-8 h-0.5 bg-[#22c55e] top-1/2 -translate-y-1/2 transition-all duration-1000 shadow-[0_0_10px_#22c55e]" 
-                  style={{ width: `calc((100% - 4rem) * ${railPct / 100})` }} 
+                {/* Rail background */}
+                <div className="absolute left-8 right-8 h-px bg-[#141414] top-1/2 -translate-y-1/2" />
+                {/* Rail progress */}
+                <div
+                  className="absolute left-8 h-px bg-[#22c55e] top-1/2 -translate-y-1/2 transition-all duration-1000"
+                  style={{
+                    width: `calc((100% - 4rem) * ${railPct / 100})`,
+                    boxShadow: railPct > 0 ? "0 0 8px #22c55e50" : "none",
+                  }}
                 />
 
                 {/* Nodes */}
@@ -336,27 +389,27 @@ function DashboardPage() {
                   const a = t.id === cur?.id;
                   return (
                     <div key={t.id} className="relative z-10 flex flex-col items-center justify-center w-28 group">
-                      {/* Top Label */}
-                      <div className={`absolute bottom-full mb-4 text-center transition-all ${a ? "opacity-100 -translate-y-1" : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"}`}>
-                        <div className="text-[10px] font-mono text-white/50 tracking-wider mb-1">NODE {i + 1}</div>
+                      {/* Top label — node index */}
+                      <div className={`absolute bottom-full mb-3 text-center transition-all duration-200 ${a ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}>
+                        <div className="text-[8px] font-mono text-[#888] tracking-[0.15em] uppercase">
+                          {String(i + 1).padStart(2, "0")}
+                        </div>
                       </div>
 
-                      {/* Node Circle */}
+                      {/* Node circle */}
                       <Link
                         to="/topic/$topicId"
                         params={{ topicId: String(t.slug || t.id) }}
-                        className={`w-5 h-5 rounded-full flex items-center justify-center transition-all outline outline-4 outline-[#0a0a0a] ${
-                          d ? "bg-[#22c55e] shadow-[0_0_15px_rgba(34,197,94,0.4)]" : 
-                          a ? "bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-125" : 
-                          "bg-[#222] hover:bg-[#333]"
-                        }`}
+                        className={`node-circle ${d ? "node-done" : a ? "node-active" : "node-idle"}`}
                       >
-                        {a && <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse" />}
+                        {a && <div className="w-1 h-1 bg-black rounded-full animate-pulse" />}
                       </Link>
 
-                      {/* Bottom Label */}
-                      <div className="absolute top-full mt-4 text-center w-32 px-2">
-                        <div className={`text-[11px] truncate transition-colors ${d ? "text-white/40" : a ? "text-white font-medium" : "text-white/30"}`}>
+                      {/* Bottom label — topic title */}
+                      <div className="absolute top-full mt-3 text-center w-28 px-2">
+                        <div className={`text-[10px] truncate transition-colors ${d ? "text-[#888]" : a ? "text-[#ddd] font-medium" : "text-[#777]"
+                          }`}>
                           {t.title}
                         </div>
                       </div>
@@ -365,59 +418,62 @@ function DashboardPage() {
                 })}
               </div>
             </div>
-          </GlassPanel>
+          </Panel>
 
-          {/* 4. Live Terminal / Activity (Spans 4 cols) */}
-          <GlassPanel className="col-span-12 lg:col-span-4 p-6 flex flex-col h-[320px]">
-            <div className="flex justify-between items-center mb-6">
-              <Label><Activity size={12} /> System Logs</Label>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
+          {/* ── 4. Activity Feed ── 4 cols ── */}
+          <Panel className="col-span-12 lg:col-span-4 p-5 flex flex-col" style={{ height: 280 }}>
+            <div className="flex justify-between items-center mb-4 shrink-0">
+              <SectionLabel><Activity size={9} /> Recent Activity</SectionLabel>
+              {activity.length > 0 && (
+                <span className="live-dot" />
+              )}
             </div>
-            
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
               {activity.length > 0 ? (
-                activity.map((a: any, i: number) => (
-                  <div key={a.id} className="flex gap-4 group">
-                    <div className="flex flex-col items-center mt-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-[#22c55e] shadow-[0_0_8px_#22c55e]" : "bg-white/20"}`} />
-                      {i !== activity.length - 1 && <div className="w-px h-full bg-white/5 mt-1" />}
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <div className={`text-[13px] leading-tight ${i === 0 ? "text-white" : "text-white/60 group-hover:text-white/80"} transition-colors`}>
-                        {a.label}
+                <ul className="divide-y divide-[#0d0d0d]">
+                  {activity.slice(0, 12).map((a: any, i: number) => (
+                    <li key={a.id} className="flex items-start gap-3 py-2.5">
+                      <div className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1a1a1a]"
+                        }`} />
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#c8c8c8]" : "text-[#aaa]"
+                          }`}>
+                          {a.label}
+                        </p>
+                        <p className="text-[9px] font-mono text-[#888] mt-0.5">{timeAgo(a.date)}</p>
                       </div>
-                      <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-1.5">
-                        {timeAgo(a.date)}
-                      </div>
-                    </div>
-                  </div>
-                ))
+                      {i === 0 && (
+                        <span className="shrink-0 text-[7px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">new</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center opacity-30">
-                  <span className="font-mono text-[10px] uppercase tracking-widest">Awaiting input...</span>
+                <div className="flex items-center justify-center h-full text-[9px] font-mono text-[#777] uppercase tracking-[0.2em]">
+                  Awaiting input
                 </div>
               )}
             </div>
-          </GlassPanel>
+          </Panel>
 
-          {/* 5. GitHub Heatmap Span (12 cols) */}
-          <GlassPanel className="col-span-12 p-6 flex flex-col gap-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <Label><Github size={12} /> Matrix</Label>
-                <p className="text-[11px] font-mono text-white/30 tracking-widest uppercase mt-2">Annual Trace</p>
-              </div>
+          {/* ── 5. Heatmap ── full width ── */}
+          <Panel className="col-span-12 p-5 flex flex-col gap-4">
+            <div className="flex justify-between items-center shrink-0">
+              <SectionLabel><Github size={9} /> Activity Matrix</SectionLabel>
+              <span className="text-[8px] font-mono text-[#777] uppercase tracking-[0.15em]">Annual trace</span>
             </div>
-            <div className="overflow-x-auto">
+
+            <div className="overflow-x-auto custom-scrollbar">
               <div className="min-w-[680px]">
                 {hl ? (
-                  <div className="h-[90px] bg-white/[0.02] rounded-lg animate-pulse" />
+                  <div className="h-[90px] bg-[#0a0a0a] rounded-[3px] animate-pulse" />
                 ) : (
                   <ActivityCalendar
                     data={hd}
                     theme={{
-                      light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                      dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
                     }}
                     colorScheme="dark"
                     blockSize={11}
@@ -426,23 +482,117 @@ function DashboardPage() {
                     labels={{ totalCount: "{{count}} contributions in the last year" }}
                     style={{
                       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                      color: "#555",
+                      color: "#333",
                     }}
                   />
                 )}
               </div>
             </div>
-          </GlassPanel>
+          </Panel>
 
         </div>
       </div>
-      
-      {/* Custom Scrollbar Styles for this page only */}
+
+      {/* ── styles ────────────────────────────────────────────────────────── */}
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+
+        /* ── Panel shell ── matches profile-card / progress-card ── */
+        .dash-panel {
+          position: relative;
+          border: 1px solid #131313;
+          border-radius: 6px;
+          background: #060606;
+          overflow: hidden;
+        }
+
+        /* Hairline top accent — same gradient as other pages */
+        .dash-panel::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        /* Hero panel gets a slightly brighter top line */
+        .dash-panel--accent::before {
+          background: linear-gradient(90deg, transparent 0%, #22c55e18 40%, #22c55e18 60%, transparent 100%);
+        }
+
+        /* ── CTA button ── */
+        .engage-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 9px 18px;
+          border-radius: 4px;
+          border: 1px solid #22c55e30;
+          background: #0c1a0f;
+          color: #22c55e;
+          font-size: 11px;
+          font-family: ui-monospace, monospace;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          text-decoration: none;
+          transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .engage-btn:hover {
+          border-color: #22c55e60;
+          background: #0f2016;
+          box-shadow: 0 0 16px #22c55e18;
+        }
+
+        /* ── Subway rail nodes ── */
+        .node-circle {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          outline: 3px solid #060606;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .node-done {
+          background: #22c55e;
+          box-shadow: 0 0 10px rgba(34,197,94,0.35);
+        }
+
+        .node-active {
+          background: #efefef;
+          box-shadow: 0 0 14px rgba(239,239,239,0.5);
+          transform: scale(1.25);
+        }
+
+        .node-idle {
+          background: #161616;
+          border: 1px solid #222;
+        }
+
+        .node-idle:hover {
+          background: #1e1e1e;
+        }
+
+        /* ── Live dot ── same as profile / progress ── */
+        .live-dot {
+          display: block;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #22c55e;
+          box-shadow: 0 0 6px #22c55e80;
+        }
+
+        /* ── Scrollbar ── 3px, matches progress page ── */
+        .custom-scrollbar::-webkit-scrollbar       { width: 3px; height: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #222; }
       `}</style>
     </PageShell>
   );

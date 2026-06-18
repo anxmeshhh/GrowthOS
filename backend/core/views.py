@@ -1036,3 +1036,14 @@ class ResetProgressView(views.APIView):
             profile.save()
             
         return Response({"status": "reset"})
+
+class AddContributionView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        action_type = request.data.get('action_type', 'general_activity')
+        points = int(request.data.get('points', 1))
+        
+        Contribution.objects.create(user=user, action_type=action_type, points=points)
+        return Response({"status": "added", "points": points, "action_type": action_type})

@@ -203,7 +203,7 @@ function TopicRow({
           <button
             onClick={onMoveUp}
             disabled={index === 0}
-            className="disabled:opacity-20 text-[#333] hover:text-[#666] transition-colors"
+            className="disabled:opacity-20 text-[#999] hover:text-[#666] transition-colors"
           >
             <GripVertical size={12} />
           </button>

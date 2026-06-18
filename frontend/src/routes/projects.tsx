@@ -42,7 +42,7 @@ function ProjectsPage() {
       <PageShell>
         <PageHeader kicker="Build Proof" title="Projects" subtitle="Connect your GitHub to showcase your work." />
         <Card className="p-8 text-center">
-          <Github size={48} className="mx-auto mb-4 text-[#555]" />
+          <Github size={48} className="mx-auto mb-4 text-[#bbb]" />
           <h3 className="text-lg font-semibold text-[#f0f0f0] mb-2">Connect Your GitHub</h3>
           <p className="text-sm text-[#888] mb-6 max-w-md mx-auto">{message}</p>
           <Link to="/settings">
@@ -124,7 +124,7 @@ function ProjectsPage() {
                   <div className="flex items-center gap-2">
                     {repo.language && <Badge tone="blue">{repo.language}</Badge>}
                     {repo.updated_at && (
-                      <span className="text-[10px] font-mono text-[#555]">
+                      <span className="text-[10px] font-mono text-[#bbb]">
                         {new Date(repo.updated_at).toLocaleDateString()}
                       </span>
                     )}

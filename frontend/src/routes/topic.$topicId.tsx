@@ -81,7 +81,10 @@ function TopicWorkspace() {
       if (!res.ok) throw new Error("Upload failed");
       return res.json();
     },
-    onSuccess: () => refetchScreenshots(),
+    onSuccess: (data) => {
+      refetchScreenshots();
+      window.dispatchEvent(new CustomEvent("screenshot_uploaded", { detail: data }));
+    },
   });
 
   const deleteScreenshotMutation = useMutation({
@@ -142,7 +145,7 @@ function TopicWorkspace() {
         <div className="flex items-center justify-center h-full">
           <div className="flex flex-col items-center gap-3">
             <Loader2 size={24} className="animate-spin text-[#22c55e]" />
-            <span className="text-xs font-mono text-[#555] tracking-widest uppercase">Loading workspace</span>
+            <span className="text-xs font-mono text-[#bbb] tracking-widest uppercase">Loading workspace</span>
           </div>
         </div>
       </PageShell>
@@ -178,7 +181,7 @@ function TopicWorkspace() {
 
       {/* ── Top bar ── */}
       <header className="shrink-0 border-b border-[#181818] px-4 sm:px-6 py-0 flex items-center gap-4 z-20 h-14" style={{ background: "linear-gradient(180deg,#0d0d0d 0%,#080808 100%)" }}>
-        <Link to="/roadmap" className="group flex items-center gap-1.5 text-[#444] hover:text-[#888] transition-colors">
+        <Link to="/roadmap" className="group flex items-center gap-1.5 text-[#aaa] hover:text-[#888] transition-colors">
           <ArrowLeft size={14} />
           <span className="text-[10px] font-mono tracking-widest uppercase hidden sm:block">Back</span>
         </Link>
@@ -186,7 +189,7 @@ function TopicWorkspace() {
         <div className="w-px h-5 bg-[#1e1e1e]" />
 
         <div className="min-w-0 flex-1">
-          <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#3a3a3a] mb-0.5">Workspace</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#999] mb-0.5">Workspace</div>
           <div className="text-sm font-semibold tracking-[-0.01em] truncate text-[#e8e8e8]">{topic.title}</div>
         </div>
 
@@ -197,7 +200,7 @@ function TopicWorkspace() {
             <span className="font-mono text-xs text-[#e8e8e8] tabular-nums">{formatTime(seconds)}</span>
             <button
               onClick={() => setRunning((r) => !r)}
-              className="text-[#444] hover:text-[#999] transition-colors ml-0.5"
+              className="text-[#aaa] hover:text-[#999] transition-colors ml-0.5"
             >
               {running ? <Pause size={12} /> : <Play size={12} />}
             </button>
@@ -244,7 +247,7 @@ function TopicWorkspace() {
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-[#d0d0d0] leading-none">Screenshots</div>
-                  <div className="text-[10px] text-[#3a3a3a] font-mono mt-0.5">{screenshots.length} saved</div>
+                  <div className="text-[10px] text-[#999] font-mono mt-0.5">{screenshots.length} saved</div>
                 </div>
               </div>
               {uploadScreenshotMutation.isPending && (
@@ -273,10 +276,10 @@ function TopicWorkspace() {
                   e.target.value = "";
                 }}
               />
-              <Clipboard size={13} className="text-[#333] shrink-0" />
-              <span className="text-[11px] text-[#444]">
-                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-[10px] font-mono text-[#555] border border-[#222]">Ctrl+V</kbd>
-                <span className="mx-1.5 text-[#2a2a2a]">·</span>
+              <Clipboard size={13} className="text-[#999] shrink-0" />
+              <span className="text-[11px] text-[#aaa]">
+                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-[10px] font-mono text-[#bbb] border border-[#222]">Ctrl+V</kbd>
+                <span className="mx-1.5 text-[#888]">·</span>
                 drag or click to upload
               </span>
             </div>
@@ -289,8 +292,8 @@ function TopicWorkspace() {
                 <div className="w-12 h-12 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a] flex items-center justify-center mb-3">
                   <ImageIcon size={18} className="text-[#222]" />
                 </div>
-                <div className="text-xs text-[#3a3a3a] font-mono">No screenshots yet</div>
-                <div className="text-[10px] text-[#2a2a2a] mt-1">Paste or drag an image above</div>
+                <div className="text-xs text-[#999] font-mono">No screenshots yet</div>
+                <div className="text-[10px] text-[#888] mt-1">Paste or drag an image above</div>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2.5">
@@ -331,7 +334,7 @@ function TopicWorkspace() {
 
             {topic.summary && (
               <div className="border border-[#141414] rounded-lg p-3 mt-4 bg-[#090909]">
-                <div className="text-[9px] uppercase font-mono tracking-widest text-[#333] mb-1.5">Summary</div>
+                <div className="text-[9px] uppercase font-mono tracking-widest text-[#999] mb-1.5">Summary</div>
                 <div className="text-xs text-[#666] leading-relaxed">{topic.summary}</div>
               </div>
             )}
@@ -370,7 +373,7 @@ function TopicWorkspace() {
                 onClick={() => setTab(t.id)}
                 className={`relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-all whitespace-nowrap ${tab === t.id
                   ? "text-[#e8e8e8]"
-                  : "text-[#444] hover:text-[#888]"
+                  : "text-[#aaa] hover:text-[#888]"
                   }`}
               >
                 {t.icon}
@@ -432,6 +435,24 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     setSaving(false);
   };
 
+  useEffect(() => {
+    const handleScreenshot = (e: any) => {
+      const ss = e.detail;
+      const url = ss.image_url || ss.image;
+      if (!url) return;
+      
+      const markdownImage = `\n![Screenshot](${url})\n`;
+      setContent((prev) => {
+        const newContent = prev + markdownImage;
+        // Auto-save the note now that the screenshot is added
+        saveNote(newContent);
+        return newContent;
+      });
+    };
+    window.addEventListener("screenshot_uploaded", handleScreenshot);
+    return () => window.removeEventListener("screenshot_uploaded", handleScreenshot);
+  }, [topicId]);
+
   const uploadDocMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
@@ -449,7 +470,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
   if (isLoading)
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 size={20} className="animate-spin text-[#333]" />
+        <Loader2 size={20} className="animate-spin text-[#999]" />
       </div>
     );
 
@@ -458,7 +479,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       {/* Text area */}
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-[9px] uppercase tracking-widest font-mono text-[#333]">Markdown</label>
+          <label className="text-[9px] uppercase tracking-widest font-mono text-[#999]">Markdown</label>
           <span className={`text-[9px] uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}>
             {saving ? "Saving…" : "Saved"}
           </span>
@@ -475,7 +496,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
 
       {/* Document upload */}
       <div>
-        <div className="text-[9px] uppercase tracking-widest font-mono text-[#333] mb-2 flex items-center gap-1.5">
+        <div className="text-[9px] uppercase tracking-widest font-mono text-[#999] mb-2 flex items-center gap-1.5">
           <FileText size={10} />
           Documents
         </div>
@@ -497,11 +518,11 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             onChange={(e) => { if (e.target.files?.length) setNoteFile(e.target.files[0]); }}
           />
           <div className="w-8 h-8 rounded-lg bg-[#0f0f0f] border border-[#1e1e1e] flex items-center justify-center shrink-0">
-            <UploadCloud size={14} className="text-[#333]" />
+            <UploadCloud size={14} className="text-[#999]" />
           </div>
           <div>
-            <div className="text-xs text-[#555]">{noteFile ? noteFile.name : "Drop a file or click to browse"}</div>
-            <div className="text-[10px] text-[#333] mt-0.5">PDF, DOCX, TXT, images</div>
+            <div className="text-xs text-[#bbb]">{noteFile ? noteFile.name : "Drop a file or click to browse"}</div>
+            <div className="text-[10px] text-[#999] mt-0.5">PDF, DOCX, TXT, images</div>
           </div>
           {noteFile && (
             <button
@@ -518,7 +539,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       {/* Saved docs */}
       {noteDocuments.length > 0 && (
         <div>
-          <div className="text-[9px] uppercase tracking-widest font-mono text-[#333] mb-2">
+          <div className="text-[9px] uppercase tracking-widest font-mono text-[#999] mb-2">
             Saved ({noteDocuments.length})
           </div>
           <ul className="space-y-1.5">
@@ -531,7 +552,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
                   </span>
                 </div>
                 <a href={doc.file_url || doc.file} target="_blank" rel="noreferrer"
-                  className="text-[#333] hover:text-[#666] ml-2 shrink-0 transition-colors">
+                  className="text-[#999] hover:text-[#666] ml-2 shrink-0 transition-colors">
                   <ExternalLink size={13} />
                 </a>
               </li>
@@ -608,8 +629,8 @@ function QuizTab({ topicId }: { topicId: number }) {
   if (isLoading)
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <Loader2 size={20} className="animate-spin text-[#333]" />
-        <span className="text-[10px] font-mono tracking-widest text-[#333] uppercase">Generating {difficulty} questions</span>
+        <Loader2 size={20} className="animate-spin text-[#999]" />
+        <span className="text-[10px] font-mono tracking-widest text-[#999] uppercase">Generating {difficulty} questions</span>
       </div>
     );
 
@@ -627,7 +648,7 @@ function QuizTab({ topicId }: { topicId: number }) {
     <div className="space-y-5">
       {/* Difficulty */}
       <div className="flex items-center gap-2">
-        <span className="text-[9px] uppercase tracking-widest font-mono text-[#333]">Level</span>
+        <span className="text-[9px] uppercase tracking-widest font-mono text-[#999]">Level</span>
         <div className="flex gap-1.5 ml-1">
           {(["easy", "medium", "hard"] as const).map((d) => {
             const s = DIFF_STYLES[d];
@@ -636,7 +657,7 @@ function QuizTab({ topicId }: { topicId: number }) {
               <button
                 key={d}
                 onClick={() => handleDifficultyChange(d)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider border transition-all ${active ? s.active : "border-[#181818] text-[#444] hover:border-[#2a2a2a] hover:text-[#666]"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider border transition-all ${active ? s.active : "border-[#181818] text-[#aaa] hover:border-[#2a2a2a] hover:text-[#666]"
                   }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : "bg-[#333]"}`} />
@@ -654,7 +675,7 @@ function QuizTab({ topicId }: { topicId: number }) {
           : "border-[#f59e0b]/20 bg-[#f59e0b]/5"
           }`}>
           <div>
-            <div className="text-2xl font-bold text-[#e8e8e8] tabular-nums">{score}<span className="text-base text-[#444] font-normal">/{questions.length}</span></div>
+            <div className="text-2xl font-bold text-[#e8e8e8] tabular-nums">{score}<span className="text-base text-[#aaa] font-normal">/{questions.length}</span></div>
             <div className={`text-xs mt-0.5 ${score === questions.length ? "text-[#22c55e]" : "text-[#f59e0b]"}`}>
               {score === questions.length ? "Perfect score!" : "Review your notes and try again"}
             </div>
@@ -673,7 +694,7 @@ function QuizTab({ topicId }: { topicId: number }) {
         {questions.map((q: any, i: number) => (
           <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
             <div className="px-4 py-3 border-b border-[#141414] flex items-start gap-3">
-              <span className="text-[10px] font-mono text-[#333] mt-0.5 shrink-0">Q{i + 1}</span>
+              <span className="text-[10px] font-mono text-[#999] mt-0.5 shrink-0">Q{i + 1}</span>
               <span className="text-sm text-[#d0d0d0] leading-snug">{q.question}</span>
             </div>
             <div className="p-3 grid grid-cols-1 gap-1.5">
@@ -754,7 +775,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   if (isLoading)
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 size={20} className="animate-spin text-[#333]" />
+        <Loader2 size={20} className="animate-spin text-[#999]" />
       </div>
     );
 
@@ -779,7 +800,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
           <div className="flex gap-2">
             <button
               onClick={() => setIsEditing(false)}
-              className="px-3 py-1.5 text-xs text-[#555] hover:text-[#999] transition-colors"
+              className="px-3 py-1.5 text-xs text-[#bbb] hover:text-[#999] transition-colors"
             >
               Cancel
             </button>
@@ -796,9 +817,9 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
         {draftCards.map((c, i) => (
           <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#141414]">
-              <span className="text-[9px] font-mono text-[#333] uppercase tracking-widest">Card {i + 1}</span>
+              <span className="text-[9px] font-mono text-[#999] uppercase tracking-widest">Card {i + 1}</span>
               <button
-                className="text-[#333] hover:text-[#ef4444] transition-colors"
+                className="text-[#999] hover:text-[#ef4444] transition-colors"
                 onClick={() => setDraftCards(draftCards.filter((_, idx) => idx !== i))}
               >
                 <Trash2 size={12} />
@@ -806,7 +827,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
             </div>
             <div className="p-4 space-y-3">
               <div>
-                <label className="text-[9px] text-[#333] block mb-1 font-mono uppercase tracking-widest">Front</label>
+                <label className="text-[9px] text-[#999] block mb-1 font-mono uppercase tracking-widest">Front</label>
                 <input
                   type="text"
                   value={c.front}
@@ -815,7 +836,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 />
               </div>
               <div>
-                <label className="text-[9px] text-[#333] block mb-1 font-mono uppercase tracking-widest">Back</label>
+                <label className="text-[9px] text-[#999] block mb-1 font-mono uppercase tracking-widest">Back</label>
                 <textarea
                   value={c.back}
                   onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, back: e.target.value } : card))}
@@ -827,7 +848,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
         ))}
 
         <button
-          className="w-full py-3 rounded-xl border border-dashed border-[#1e1e1e] text-xs text-[#444] hover:border-[#2a2a2a] hover:text-[#777] transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl border border-dashed border-[#1e1e1e] text-xs text-[#aaa] hover:border-[#2a2a2a] hover:text-[#777] transition-all flex items-center justify-center gap-2"
           onClick={() => setDraftCards([...draftCards, { front: "", back: "" }])}
         >
           <Plus size={13} /> Add card
@@ -840,12 +861,12 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-5">
-        <div className="text-[9px] uppercase tracking-widest font-mono text-[#333]">
+        <div className="text-[9px] uppercase tracking-widest font-mono text-[#999]">
           {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
         </div>
         <button
           onClick={() => { setDraftCards(data?.flashcards || []); setIsEditing(true); }}
-          className="px-3 py-1.5 rounded-md border border-[#1e1e1e] text-xs text-[#555] hover:border-[#2a2a2a] hover:text-[#999] transition-all"
+          className="px-3 py-1.5 rounded-md border border-[#1e1e1e] text-xs text-[#bbb] hover:border-[#2a2a2a] hover:text-[#999] transition-all"
         >
           Edit
         </button>
@@ -853,7 +874,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
 
       {flashcards.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 border border-dashed border-[#141414] rounded-xl">
-          <div className="text-xs text-[#3a3a3a] mb-4">No flashcards yet</div>
+          <div className="text-xs text-[#999] mb-4">No flashcards yet</div>
           <button
             onClick={() => { setDraftCards([]); setIsEditing(true); }}
             className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-xs font-medium hover:bg-[#22c55e]/15 transition-colors"
@@ -874,7 +895,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}>
                   {/* Front */}
                   <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
-                    <div className="text-[9px] uppercase font-mono tracking-widest text-[#2a2a2a] mb-3">Term</div>
+                    <div className="text-[9px] uppercase font-mono tracking-widest text-[#888] mb-3">Term</div>
                     <div className="text-sm font-semibold text-[#e8e8e8] text-center leading-snug">{f.front}</div>
                     <div className="absolute bottom-3 right-3">
                       <RotateCcw size={11} className="text-[#222]" />
@@ -979,7 +1000,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
             >
               <div className="text-[9px] font-mono uppercase tracking-widest mb-3" style={{ color: accent }}>{tag}</div>
               <div className="text-sm font-semibold text-[#d0d0d0] mb-1.5 group-hover:text-[#e8e8e8] transition-colors">{label}</div>
-              <div className="text-[11px] text-[#3a3a3a] leading-relaxed">{desc}</div>
+              <div className="text-[11px] text-[#999] leading-relaxed">{desc}</div>
               <div className="mt-4 flex items-center gap-1" style={{ color: accent + "80" }}>
                 <span className="text-[10px] font-mono">Select</span>
                 <ChevronRight size={11} />
@@ -993,18 +1014,18 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {buildMode === "ai" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <button onClick={() => setBuildMode("choose")} className="text-[10px] font-mono text-[#444] hover:text-[#888] transition-colors flex items-center gap-1">
+            <button onClick={() => setBuildMode("choose")} className="text-[10px] font-mono text-[#aaa] hover:text-[#888] transition-colors flex items-center gap-1">
               <ArrowLeft size={11} /> Back
             </button>
-            <button onClick={() => refetchIdeas()} className="text-[10px] font-mono text-[#444] hover:text-[#888] transition-colors flex items-center gap-1">
+            <button onClick={() => refetchIdeas()} className="text-[10px] font-mono text-[#aaa] hover:text-[#888] transition-colors flex items-center gap-1">
               <RefreshCw size={11} /> Regenerate
             </button>
           </div>
 
           {ideasLoading ? (
             <div className="flex flex-col items-center py-12 gap-3">
-              <Loader2 size={18} className="animate-spin text-[#333]" />
-              <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">Generating ideas</span>
+              <Loader2 size={18} className="animate-spin text-[#999]" />
+              <span className="text-[10px] font-mono text-[#999] uppercase tracking-widest">Generating ideas</span>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -1014,7 +1035,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                     <span className="text-[9px] font-mono text-[#22c55e]/40 mt-0.5 shrink-0 tabular-nums">0{i + 1}</span>
                     <div>
                       <div className="text-sm font-semibold text-[#d0d0d0] mb-1">{idea.title || `Project ${i + 1}`}</div>
-                      <div className="text-xs text-[#555] leading-relaxed">{idea.description || idea}</div>
+                      <div className="text-xs text-[#bbb] leading-relaxed">{idea.description || idea}</div>
                     </div>
                   </div>
                 </div>
@@ -1028,11 +1049,11 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {buildMode === "own" && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <button onClick={() => setBuildMode("choose")} className="text-[10px] font-mono text-[#444] hover:text-[#888] transition-colors flex items-center gap-1">
+            <button onClick={() => setBuildMode("choose")} className="text-[10px] font-mono text-[#aaa] hover:text-[#888] transition-colors flex items-center gap-1">
               <ArrowLeft size={11} /> Back
             </button>
           </div>
-          <div className="text-xs text-[#555] leading-relaxed pb-1">
+          <div className="text-xs text-[#bbb] leading-relaxed pb-1">
             Build any project that demonstrates your understanding, then submit the GitHub link below for AI evaluation.
           </div>
         </div>
@@ -1042,8 +1063,8 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {buildMode !== "choose" && (
         <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#141414] flex items-center gap-2">
-            <Github size={13} className="text-[#333]" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-[#333]">Submit Repository</span>
+            <Github size={13} className="text-[#999]" />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[#999]">Submit Repository</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="flex gap-2">
@@ -1089,12 +1110,12 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {/* Previous submissions */}
       {materials?.length > 0 && (
         <div>
-          <div className="text-[9px] uppercase tracking-widest font-mono text-[#2a2a2a] mb-3">Previous Submissions</div>
+          <div className="text-[9px] uppercase tracking-widest font-mono text-[#888] mb-3">Previous Submissions</div>
           <ul className="space-y-2">
             {materials.slice().reverse().map((m: any) => (
               <li key={m.id} className="border border-[#141414] rounded-xl bg-[#090909] overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[#101010]">
-                  <span className="text-[10px] font-mono text-[#444]">Submission #{m.id}</span>
+                  <span className="text-[10px] font-mono text-[#aaa]">Submission #{m.id}</span>
                   <div className="flex items-center gap-2">
                     {m.ai_score > 0 && (
                       <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}>
@@ -1110,7 +1131,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                   </div>
                 </div>
                 {m.ai_feedback && (
-                  <div className="px-4 py-3 text-[11px] text-[#555] leading-relaxed whitespace-pre-wrap">{m.ai_feedback}</div>
+                  <div className="px-4 py-3 text-[11px] text-[#bbb] leading-relaxed whitespace-pre-wrap">{m.ai_feedback}</div>
                 )}
               </li>
             ))}

@@ -100,7 +100,7 @@ function SettingsPage() {
             value={githubInput}
             onChange={(e) => setGithubInput(e.target.value)}
             placeholder="e.g. anxmeshhh"
-            className="flex-1 bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm outline-none focus:border-[#22c55e]/50 text-[#f0f0f0] placeholder:text-[#555]"
+            className="flex-1 bg-[#0f0f0f] border border-[#222] rounded px-3 py-2 text-sm outline-none focus:border-[#22c55e]/50 text-[#f0f0f0] placeholder:text-[#bbb]"
           />
           <Btn
             size="sm"

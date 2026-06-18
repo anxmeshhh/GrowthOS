@@ -54,43 +54,38 @@ const RARITY_CONFIG: Record<
   string,
   { color: string; bg: string; border: string; label: string; Icon: any }
 > = {
-  common: { color: "#888", bg: "#88888818", border: "#333", label: "Common", Icon: Star },
-  uncommon: { color: "#22c55e", bg: "#22c55e18", border: "#14532d", label: "Uncommon", Icon: Shield },
-  rare: { color: "#3b82f6", bg: "#3b82f618", border: "#1e3a8a", label: "Rare", Icon: Sword },
-  epic: { color: "#a855f7", bg: "#a855f718", border: "#581c87", label: "Epic", Icon: Crown },
-  legendary: { color: "#f59e0b", bg: "#f59e0b18", border: "#78350f", label: "Legendary", Icon: Flame },
-  mythic: { color: "#ef4444", bg: "#ef444418", border: "#7f1d1d", label: "Mythic", Icon: Hexagon },
+  common: { color: "#888", bg: "#88888812", border: "#222", label: "Common", Icon: Star },
+  uncommon: { color: "#22c55e", bg: "#22c55e10", border: "#14532d", label: "Uncommon", Icon: Shield },
+  rare: { color: "#3b82f6", bg: "#3b82f610", border: "#1e3a8a", label: "Rare", Icon: Sword },
+  epic: { color: "#a855f7", bg: "#a855f710", border: "#581c87", label: "Epic", Icon: Crown },
+  legendary: { color: "#f59e0b", bg: "#f59e0b10", border: "#78350f", label: "Legendary", Icon: Flame },
+  mythic: { color: "#ef4444", bg: "#ef444410", border: "#7f1d1d", label: "Mythic", Icon: Hexagon },
 };
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/*  Sub-components                                                             */
+/*  Shared primitives (mirrors profile.tsx vocabulary)                        */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#555] flex items-center gap-1.5">
+    <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#999] flex items-center gap-1.5">
       {children}
     </p>
   );
 }
 
+/** Shared card shell — hairline top accent via ::before handled in <style> */
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden ${className}`}>
+    <div className={`progress-card ${className}`}>
       {children}
     </div>
   );
 }
 
-function CardHeader({
-  left,
-  right,
-}: {
-  left: React.ReactNode;
-  right?: React.ReactNode;
-}) {
+function CardHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#131313]">
+    <div className="flex items-center justify-between px-4 py-2 border-b border-[#0f0f0f] bg-[#080808] shrink-0">
       <div>{left}</div>
       {right && <div>{right}</div>}
     </div>
@@ -142,7 +137,6 @@ function ProgressPage() {
       ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
       ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
     ];
-
     return all
       .filter((p) =>
         p.topics?.some(
@@ -188,7 +182,7 @@ function ProgressPage() {
     return (
       <PageShell>
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-4 h-4 text-[#444] animate-spin" />
+          <Loader2 className="w-4 h-4 text-[#888] animate-spin" />
         </div>
       </PageShell>
     );
@@ -197,129 +191,126 @@ function ProgressPage() {
   /* ── render ── */
   return (
     <PageShell>
-      <div className="p-5 lg:p-6 space-y-4 max-w-screen-xl mx-auto">
+      <div className="p-5 lg:p-6 space-y-3 max-w-screen-xl mx-auto">
 
-        {/* ── Page Header ── */}
-        <div className="flex items-end justify-between mb-1">
+        {/* ── Page header ── */}
+        <div className="flex items-end justify-between pb-1 border-b border-[#0e0e0e]">
           <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#444] mb-1.5">GrowthOS</p>
-            <h1 className="text-xl font-semibold tracking-tight text-[#f0f0f0] leading-none">
+            <p className="text-[8px] uppercase tracking-[0.25em] font-mono text-[#888] mb-1.5">
+              GrowthOS
+            </p>
+            <h1 className="text-[17px] font-semibold tracking-tight text-[#efefef] leading-none">
               Your Progress
             </h1>
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-mono text-[#555] uppercase tracking-wider">
-            <Trophy size={12} className="text-[#a855f7]" />
-            {lvlTitle} Status
+          <div className="flex items-center gap-1.5 text-[8px] font-mono text-[#999] uppercase tracking-[0.2em]">
+            <Trophy size={10} className="text-[#a855f7]" />
+            {lvlTitle}
           </div>
         </div>
 
-        {/* ── Top Stats Row ── */}
+        {/* ── Top stats row ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
           {/* Level + XP bar */}
-          <div className="bg-[#0d0914] border border-[#1f1938] rounded-xl p-5 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-[#a855f7] opacity-[0.06] rounded-full blur-3xl pointer-events-none" />
+          <StatCard accent="#a855f7" accentBg="#0d0914" accentBorder="#1e1638">
             <SectionLabel>
-              <Zap size={11} className="text-[#a855f7]" /> Current Level
+              <Zap size={9} className="text-[#a855f7]" /> Current Level
             </SectionLabel>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-[#a855f7]">{level}</span>
-              <span className="text-sm text-[#555] font-mono">— {lvlTitle}</span>
+              <span className="text-[28px] font-semibold tracking-tight tabular-nums text-[#a855f7] leading-none">
+                {level}
+              </span>
+              <span className="text-[11px] text-[#999] font-mono">— {lvlTitle}</span>
             </div>
-            <div className="text-[11px] font-mono text-[#666] mt-0.5">{xp} XP total</div>
-
+            <div className="text-[9px] font-mono text-[#888] mt-1">{xp.toLocaleString()} XP total</div>
             <div className="mt-4 space-y-1.5">
-              <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider">
-                <span className="text-[#666]">{xpPct}% to Level {level + 1}</span>
-                <span className="text-[#a855f7]">{xpRemaining} XP needed</span>
+              <div className="flex justify-between">
+                <span className="text-[8px] font-mono text-[#999] uppercase tracking-wider">{xpPct}% to Lv{level + 1}</span>
+                <span className="text-[8px] font-mono text-[#a855f7]/70">{xpRemaining} XP left</span>
               </div>
-              <div className="h-1 w-full bg-[#111] rounded-full overflow-hidden">
+              <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#a855f7] rounded-full transition-all duration-700"
-                  style={{ width: `${xpPct}%` }}
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${xpPct}%`, background: "#a855f7", boxShadow: "0 0 8px #a855f740" }}
                 />
               </div>
             </div>
-          </div>
+          </StatCard>
 
           {/* Streak */}
-          <div className="bg-[#0d0b04] border border-[#221a05] rounded-xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-[#f59e0b] opacity-[0.07] rounded-full blur-2xl pointer-events-none" />
+          <StatCard accent="#f59e0b" accentBg="#0d0b04" accentBorder="#201505" center>
             <SectionLabel>
-              <Flame size={11} className="text-[#f59e0b]" /> Day Streak
+              <Flame size={9} className="text-[#f59e0b]" /> Day Streak
             </SectionLabel>
-            <div className={`text-4xl font-mono font-semibold mt-3 ${streak > 0 ? "text-[#f59e0b]" : "text-[#333]"}`}>
+            <div className={`text-[36px] font-mono font-semibold tabular-nums mt-3 leading-none ${streak > 0 ? "text-[#f59e0b]" : "text-[#888]"
+              }`}>
               {streak}
             </div>
-            <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-1">
-              {streak > 0 ? "Keep it alive!" : "Start today"}
+            <div className="text-[8px] font-mono text-[#888] uppercase tracking-[0.2em] mt-1.5">
+              {streak > 0 ? "Keep it alive" : "Start today"}
             </div>
-          </div>
+          </StatCard>
 
           {/* Total XP */}
-          <div className="bg-[#040d07] border border-[#0d2214] rounded-xl p-5 flex flex-col justify-center relative overflow-hidden">
-            <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-[#22c55e] opacity-[0.06] rounded-full blur-2xl pointer-events-none" />
+          <StatCard accent="#22c55e" accentBg="#040d07" accentBorder="#0d1f0e">
             <SectionLabel>
-              <Star size={11} className="text-[#22c55e]" /> Total XP Earned
+              <Star size={9} className="text-[#22c55e]" /> Total XP Earned
             </SectionLabel>
-            <div className="text-3xl font-semibold tracking-tight text-[#f0f0f0] mt-3">
-              {xp.toLocaleString()}
-              <span className="text-base text-[#555] ml-1.5">XP</span>
+            <div className="mt-3 flex items-baseline gap-1.5">
+              <span className="text-[28px] font-semibold tracking-tight tabular-nums text-[#efefef] leading-none">
+                {xp.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-[#999] font-mono">XP</span>
             </div>
-            <div className="text-[11px] font-mono text-[#22c55e] mt-1">
-              +120 this week
-            </div>
-          </div>
+            <div className="text-[9px] font-mono text-[#22c55e]/70 mt-1">+120 this week</div>
+          </StatCard>
         </div>
 
-        {/* ── Middle Row: Missions + XP Sources ── */}
+        {/* ── Middle row: Missions + XP Sources ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
           {/* Active Missions */}
           <Card>
             <CardHeader
-              left={
-                <SectionLabel>
-                  <Map size={11} /> Active Missions
-                </SectionLabel>
-              }
+              left={<SectionLabel><Map size={9} /> Active Missions</SectionLabel>}
               right={
-                <span className="text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
+                <span className="text-[8px] font-mono text-[#22c55e] uppercase tracking-[0.15em]">
                   {activePaths.length} active
                 </span>
               }
             />
-            <div className="p-3 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+            <div className="p-2.5 space-y-1.5 max-h-[280px] overflow-y-auto custom-scrollbar">
               {activePaths.length === 0 ? (
-                <div className="py-10 text-center text-[11px] text-[#444] font-mono uppercase tracking-widest">
-                  No active paths — start a mission!
+                <div className="py-10 text-center text-[10px] text-[#777] font-mono uppercase tracking-widest">
+                  No active paths — start a mission
                 </div>
               ) : (
                 activePaths.map((p) => (
                   <Link
                     key={p.uniqueId}
                     to="/roadmap"
-                    className="flex items-start gap-4 p-4 border border-[#161616] hover:border-[#252525] bg-[#0d0d0d] hover:bg-[#0f0f0f] rounded-lg transition-all group"
+                    className="mission-row group"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-2.5">
+                      <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="min-w-0">
-                          <h3 className="text-[13px] font-medium text-[#ccc] group-hover:text-[#f0f0f0] transition-colors truncate">
+                          <h3 className="text-[12px] font-medium text-[#aaa] group-hover:text-[#e0e0e0] transition-colors truncate leading-tight">
                             {p.title}
                           </h3>
-                          <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider mt-0.5">
-                            {p.done} / {p.total} Topics
+                          <div className="text-[8px] font-mono text-[#999] uppercase tracking-[0.15em] mt-0.5">
+                            {p.done} / {p.total} topics
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[12px] font-mono text-[#22c55e]">{p.pct}%</span>
-                          <ChevronRight size={13} className="text-[#444] group-hover:text-[#888] transition-colors" />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[11px] font-mono tabular-nums text-[#22c55e]">{p.pct}%</span>
+                          <ChevronRight size={11} className="text-[#888] group-hover:text-[#bbb] transition-colors" />
                         </div>
                       </div>
-                      <div className="h-[3px] w-full bg-[#151515] rounded-full overflow-hidden">
+                      <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                         <div
                           className="h-full bg-[#22c55e] rounded-full transition-all duration-700"
-                          style={{ width: `${p.pct}%` }}
+                          style={{ width: `${p.pct}%`, boxShadow: p.pct > 0 ? "0 0 6px #22c55e30" : "none" }}
                         />
                       </div>
                     </div>
@@ -332,13 +323,9 @@ function ProgressPage() {
           {/* XP Sources */}
           <Card>
             <CardHeader
-              left={
-                <SectionLabel>
-                  <BarChart2 size={11} className="text-[#f59e0b]" /> XP Sources
-                </SectionLabel>
-              }
+              left={<SectionLabel><BarChart2 size={9} className="text-[#f59e0b]" /> XP Sources</SectionLabel>}
             />
-            <div className="p-5 space-y-5 max-h-[300px] overflow-y-auto custom-scrollbar">
+            <div className="p-4 space-y-4 max-h-[280px] overflow-y-auto custom-scrollbar">
               {profile?.xp_breakdown && profile.xp_breakdown.length > 0 ? (
                 profile.xp_breakdown.map((item: any, i: number) => {
                   const maxXp = profile.xp_breakdown[0].total;
@@ -346,27 +333,33 @@ function ProgressPage() {
                   const label = item.action_type
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c: string) => c.toUpperCase());
+                  // Dimming ranks the same way as profile breakdown
+                  const opacity = i === 0 ? 1 : i === 1 ? 0.65 : i === 2 ? 0.45 : 0.28;
                   return (
                     <div key={item.action_type}>
                       <div className="flex justify-between items-baseline mb-1.5">
-                        <span className="text-[11px] uppercase font-mono tracking-wider text-[#666]">
+                        <span className="text-[10px] font-mono text-[#bbb] uppercase tracking-wider">
                           {label}
                         </span>
-                        <span className="text-[12px] font-mono text-[#bbb] tabular-nums">
-                          {item.total.toLocaleString()}
+                        <span className="text-[10px] font-mono tabular-nums text-[#999]">
+                          {item.total.toLocaleString()} · {item.count}×
                         </span>
                       </div>
-                      <div className="h-[3px] w-full bg-[#111] rounded-full overflow-hidden">
+                      <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-700 ${i === 0 ? "bg-[#f59e0b]" : "bg-[#2a2a2a]"}`}
-                          style={{ width: `${pct}%` }}
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${pct}%`,
+                            background: `rgba(245,158,11,${opacity})`,
+                            boxShadow: i === 0 ? "0 0 6px #f59e0b30" : "none",
+                          }}
                         />
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div className="py-10 text-center text-[10px] text-[#444] font-mono uppercase tracking-widest">
+                <div className="py-10 text-center text-[10px] text-[#777] font-mono uppercase tracking-widest">
                   No XP data yet
                 </div>
               )}
@@ -377,18 +370,14 @@ function ProgressPage() {
         {/* ── Title Collection ── */}
         <Card>
           <CardHeader
-            left={
-              <SectionLabel>
-                <Tag size={11} /> Title Collection
-              </SectionLabel>
-            }
+            left={<SectionLabel><Tag size={9} /> Title Collection</SectionLabel>}
             right={
-              <span className="text-[10px] font-mono text-[#f59e0b] uppercase tracking-wider">
-                {unlockedCount} / {TITLES.length} Unlocked
+              <span className="text-[8px] font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
+                {unlockedCount} / {TITLES.length} unlocked
               </span>
             }
           />
-          <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+          <div className="p-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-[500px] overflow-y-auto custom-scrollbar">
             {TITLES.map((tag) => {
               const unlocked = level >= tag.levelReq;
               const isEquipped = profile?.selected_title === tag.name;
@@ -400,43 +389,45 @@ function ProgressPage() {
                   key={tag.id}
                   disabled={!unlocked || savingTitle || isEquipped}
                   onClick={() => equipTitle(tag.name)}
-                  className={`
-                    flex items-center gap-3 p-3.5 rounded-lg border text-left transition-all
-                    ${unlocked
-                      ? isEquipped
-                        ? "border-[#22c55e]/40 bg-[#22c55e]/[0.04]"
-                        : "border-[#1a1a1a] hover:border-[#272727] hover:bg-[#0d0d0d] cursor-pointer"
-                      : "border-[#111] bg-[#050505] opacity-40 cursor-not-allowed"
-                    }
-                  `}
+                  className="title-card"
+                  data-unlocked={unlocked ? "true" : "false"}
+                  data-equipped={isEquipped ? "true" : "false"}
+                  style={{
+                    borderColor: isEquipped
+                      ? `${cfg.color}30`
+                      : unlocked
+                        ? "#141414"
+                        : "#0e0e0e",
+                    opacity: unlocked ? 1 : 0.35,
+                  }}
                 >
                   {/* Icon badge */}
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                    style={{ background: unlocked ? cfg.bg : "#88888810" }}
+                    className="title-icon-ring"
+                    style={{
+                      background: unlocked ? cfg.bg : "#0a0a0a",
+                      borderColor: unlocked ? `${cfg.color}20` : "#161616",
+                    }}
                   >
-                    <Icon
-                      size={14}
-                      style={{ color: unlocked ? cfg.color : "#555" }}
-                    />
+                    <Icon size={13} style={{ color: unlocked ? cfg.color : "#2a2a2a" }} strokeWidth={1.5} />
                   </div>
 
                   {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className="text-[13px] font-medium leading-none"
-                        style={{ color: unlocked ? cfg.color : "#555" }}
+                        className="text-[12px] font-medium leading-none"
+                        style={{ color: unlocked ? cfg.color : "#2e2e2e" }}
                       >
                         {tag.name}
                       </span>
                       {isEquipped && (
-                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] leading-none">
+                        <span className="text-[7px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#22c55e]/15 text-[#22c55e] leading-none tracking-wider">
                           Equipped
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-[#555] mt-1 leading-snug truncate">
+                    <div className="text-[9px] text-[#888] mt-1 leading-snug truncate font-mono">
                       {tag.desc}
                     </div>
                   </div>
@@ -445,14 +436,14 @@ function ProgressPage() {
                   <div className="shrink-0">
                     {unlocked ? (
                       <span
-                        className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded leading-none"
+                        className="text-[7px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] leading-none tracking-wider"
                         style={{ background: cfg.bg, color: cfg.color }}
                       >
                         {cfg.label}
                       </span>
                     ) : (
-                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#111] text-[#444] leading-none">
-                        Lvl {tag.levelReq}
+                      <span className="text-[7px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#0f0f0f] text-[#888] leading-none tracking-wider">
+                        Lv {tag.levelReq}
                       </span>
                     )}
                   </div>
@@ -465,24 +456,16 @@ function ProgressPage() {
         {/* ── Activity Heatmap ── */}
         <Card>
           <CardHeader
-            left={
-              <SectionLabel>
-                <CalendarDays size={11} /> Activity Heatmap
-              </SectionLabel>
-            }
-            right={
-              <span className="text-[10px] font-mono text-[#444] uppercase tracking-wider">
-                Last 12 months
-              </span>
-            }
+            left={<SectionLabel><CalendarDays size={9} /> Activity Heatmap</SectionLabel>}
+            right={<span className="text-[8px] font-mono text-[#777] uppercase tracking-[0.15em]">Last 12 months</span>}
           />
-          <div className="p-5 overflow-x-auto">
+          <div className="p-4 overflow-x-auto">
             <div className="min-w-[680px]">
               <ActivityCalendar
                 data={hd}
                 theme={{
-                  light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                  dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
                 }}
                 colorScheme="dark"
                 blockSize={11}
@@ -490,9 +473,8 @@ function ProgressPage() {
                 fontSize={10}
                 labels={{ totalCount: "{{count}} contributions in the last year" }}
                 style={{
-                  fontFamily:
-                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                  color: "#555",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                  color: "#333",
                 }}
               />
             </div>
@@ -500,6 +482,155 @@ function ProgressPage() {
         </Card>
 
       </div>
+
+      {/* ── styles ────────────────────────────────────────────────────────── */}
+      <style>{`
+
+        /* ── Card shell ── */
+        .progress-card {
+          border: 1px solid #131313;
+          border-radius: 6px;
+          background: #060606;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+        }
+
+        /* Hairline top accent — same as profile cards */
+        .progress-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+        }
+
+        /* ── Stat card shell (top-row) ── */
+        .stat-card {
+          border-radius: 6px;
+          padding: 18px 20px;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          overflow: hidden;
+          border: 1px solid;
+        }
+
+        .stat-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+        }
+
+        .stat-card.center {
+          align-items: center;
+          text-align: center;
+        }
+
+        /* ── Mission row ── */
+        .mission-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 12px;
+          border: 1px solid #111;
+          border-radius: 5px;
+          background: #080808;
+          transition: border-color 0.15s ease, background 0.15s ease;
+          cursor: pointer;
+          text-decoration: none;
+        }
+
+        .mission-row:hover {
+          border-color: #1e1e1e;
+          background: #0a0a0a;
+        }
+
+        /* ── Title card ── */
+        .title-card {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 11px 12px;
+          border-radius: 5px;
+          border: 1px solid;
+          background: #080808;
+          transition: border-color 0.15s ease, background 0.15s ease;
+          cursor: pointer;
+        }
+
+        .title-card[data-unlocked="true"]:not([data-equipped="true"]):not(:disabled):hover {
+          background: #0a0a0a;
+          border-color: #1e1e1e !important;
+        }
+
+        .title-card:disabled {
+          cursor: not-allowed;
+        }
+
+        .title-icon-ring {
+          width: 30px;
+          height: 30px;
+          border-radius: 4px;
+          border: 1px solid;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        /* ── Custom scrollbar ── */
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #222; }
+      `}</style>
     </PageShell>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  StatCard — top-row colored stat panels                                    */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function StatCard({
+  children,
+  accent,
+  accentBg,
+  accentBorder,
+  center = false,
+}: {
+  children: React.ReactNode;
+  accent: string;
+  accentBg: string;
+  accentBorder: string;
+  center?: boolean;
+}) {
+  return (
+    <div
+      className={`stat-card ${center ? "center" : ""}`}
+      style={{ background: accentBg, borderColor: accentBorder }}
+    >
+      {/* Ambient glow blob */}
+      <div
+        className="pointer-events-none absolute rounded-full blur-3xl"
+        style={{
+          width: 120,
+          height: 120,
+          background: accent,
+          opacity: 0.05,
+          top: center ? "50%" : -32,
+          left: center ? "50%" : "auto",
+          right: center ? "auto" : -32,
+          transform: center ? "translate(-50%, -50%)" : "none",
+        }}
+      />
+      {children}
+    </div>
   );
 }

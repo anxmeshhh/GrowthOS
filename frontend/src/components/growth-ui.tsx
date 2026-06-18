@@ -12,7 +12,7 @@ export function PageHeader({ kicker, title, subtitle, actions }: { kicker?: stri
   return (
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
       <div>
-        {kicker ? <div className="text-[11px] uppercase tracking-[0.15em] text-[#555] mb-1">{kicker}</div> : null}
+        {kicker ? <div className="text-[11px] uppercase tracking-[0.15em] text-[#bbb] mb-1">{kicker}</div> : null}
         <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[#e8e8e8]">{title}</h1>
         {subtitle ? <p className="text-[13px] text-[#666] mt-1.5 leading-relaxed">{subtitle}</p> : null}
       </div>
@@ -30,7 +30,7 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 export function StatCard({ label, value, sub, accent = false }: { label: string; value: ReactNode; sub?: ReactNode; accent?: boolean }) {
   return (
     <Card className="p-4">
-      <div className="text-[10px] uppercase tracking-[0.15em] text-[#555]">{label}</div>
+      <div className="text-[10px] uppercase tracking-[0.15em] text-[#bbb]">{label}</div>
       <div className={`mt-2 text-2xl font-semibold tracking-tight ${accent ? "text-[#22c55e]" : "text-[#e0e0e0]"}`}>{value}</div>
       {sub ? <div className="mt-1 text-xs text-[#666]">{sub}</div> : null}
     </Card>

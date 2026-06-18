@@ -275,7 +275,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
           className="
             !bg-[#111] !border !border-[#222] !rounded-lg !shadow-xl
             [&>button]:!bg-transparent [&>button]:!border-0
-            [&>button]:!text-[#555] [&>button:hover]:!text-[#f0f0f0]
+            [&>button]:!text-[#bbb] [&>button:hover]:!text-[#f0f0f0]
             [&>button]:!transition-colors
           "
         />
@@ -297,7 +297,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
 
       {/* Inline legend — bottom left, always visible */}
       <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-1.5 bg-[#0d0d0d]/90 backdrop-blur border border-[#1f1f1f] rounded-lg px-3 py-2.5 pointer-events-none">
-        <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#444] mb-0.5">Legend</div>
+        <div className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#aaa] mb-0.5">Legend</div>
         <LegendRow color="border-[#ffe92b]" label="Topic" />
         <LegendRow color="border-[#22c55e]" label="Milestone" isGreen />
         <LegendRow color="border-[#555] border-dashed" label="Optional" />
@@ -330,7 +330,7 @@ function LegendRow({
           style={{ borderWidth: isGreen ? '1.5px' : '1px' }}
         />
       )}
-      <span className="text-[10px] font-mono text-[#444]">{label}</span>
+      <span className="text-[10px] font-mono text-[#aaa]">{label}</span>
     </div>
   );
 }

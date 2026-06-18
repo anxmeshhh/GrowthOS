@@ -68,7 +68,7 @@ function DiscoverPage() {
           <h1 className="text-[34px] font-semibold tracking-tight text-[#f0f0f0] leading-tight mb-2">
             Find Your Next Path.
           </h1>
-          <p className="text-[14px] text-[#555] leading-relaxed">
+          <p className="text-[14px] text-[#bbb] leading-relaxed">
             Select a guided roadmap or create your own custom journey.
           </p>
         </div>
@@ -78,7 +78,7 @@ function DiscoverPage() {
           <div className="relative flex-1">
             <Search
               size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#444]"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#aaa]"
             />
             <input
               type="text"
@@ -98,14 +98,14 @@ function DiscoverPage() {
 
         {/* Section label */}
         {!isLoading && (
-          <p className="text-[11px] font-medium tracking-[0.1em] uppercase text-[#333] mb-5">
+          <p className="text-[11px] font-medium tracking-[0.1em] uppercase text-[#999] mb-5">
             Available Paths · {filteredPaths.length} Total
           </p>
         )}
 
         {/* Loading */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-24 text-[#333]">
+          <div className="flex items-center justify-center py-24 text-[#999]">
             <Loader2 size={18} className="animate-spin mr-2.5" />
             <span className="text-[13px]">Loading paths…</span>
           </div>
@@ -125,7 +125,7 @@ function DiscoverPage() {
 
             {filteredPaths.length === 0 && (
               <div className="py-20 text-center">
-                <p className="text-[13px] text-[#333]">No paths match your search.</p>
+                <p className="text-[13px] text-[#999]">No paths match your search.</p>
               </div>
             )}
           </>
@@ -172,10 +172,10 @@ function PathCard({
             {path.title}
           </h3>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-[#3a3a3a]">
+            <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-[#999]">
               {topicCount} Topics
             </span>
-            <span className="text-[#252525]">·</span>
+            <span className="text-[#777]">·</span>
             <span
               className={`text-[10px] font-semibold tracking-[0.07em] uppercase px-2 py-0.5 rounded-[5px] ${isCustom
                   ? "bg-[rgba(139,92,246,0.1)] text-[#a78bfa]"
@@ -198,7 +198,7 @@ function PathCard({
         >
           <BookMarked
             size={13}
-            className={path.is_bookmarked ? "text-black" : "text-[#444]"}
+            className={path.is_bookmarked ? "text-black" : "text-[#aaa]"}
           />
         </button>
       </div>
@@ -212,7 +212,7 @@ function PathCard({
       {topicCount > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <span className="text-[11px] font-medium text-[#333] tracking-wide uppercase">
+            <span className="text-[11px] font-medium text-[#999] tracking-wide uppercase">
               Progress
             </span>
             <span

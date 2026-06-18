@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api-client";
 import { PageShell } from "@/components/growth-ui";
 import {
   User, Calendar, Shield, Award, Flame, BookOpen,
-  ClipboardCheck, Trophy, Star, TrendingUp,
+  ClipboardCheck, Trophy, Star, TrendingUp, Zap,
 } from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
 
@@ -37,7 +37,9 @@ function timeAgo(iso: string) {
 }
 
 function Skel({ className = "" }: { className?: string }) {
-  return <div className={`rounded-md bg-[#141414] animate-pulse ${className}`} />;
+  return (
+    <div className={`rounded-[3px] bg-[#0f0f0f] animate-pulse ${className}`} />
+  );
 }
 
 /* ── page ─────────────────────────────────────────────────────────────── */
@@ -45,7 +47,11 @@ function Skel({ className = "" }: { className?: string }) {
 function ProfilePage() {
   const { data: profile, isLoading: pLoading } = useQuery({
     queryKey: ["user_profile"],
-    queryFn: async () => { const r = await apiFetch("/profile/"); if (!r.ok) throw 0; return r.json(); },
+    queryFn: async () => {
+      const r = await apiFetch("/profile/");
+      if (!r.ok) throw 0;
+      return r.json();
+    },
   });
 
   const { data: heatmap = [], isLoading: hLoading } = useQuery({
@@ -54,7 +60,8 @@ function ProfilePage() {
       const r = await apiFetch("/heatmap/");
       if (!r.ok) return [];
       return (await r.json()).map((d: any) => ({
-        date: d.date, count: d.count,
+        date: d.date,
+        count: d.count,
         level: d.count === 0 ? 0 : d.count <= 2 ? 1 : d.count <= 4 ? 2 : d.count <= 6 ? 3 : 4,
       }));
     },
@@ -62,13 +69,18 @@ function ProfilePage() {
 
   const { data: activity = [] } = useQuery({
     queryKey: ["recent_activity"],
-    queryFn: async () => { const r = await apiFetch("/activity/"); return r.ok ? r.json() : []; },
+    queryFn: async () => {
+      const r = await apiFetch("/activity/");
+      return r.ok ? r.json() : [];
+    },
   });
 
   const xp = profile?.total_xp ?? 0;
   const { level, title: lvl, next } = getLevelInfo(xp);
   const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
-  const joined = profile ? new Date(profile.date_joined).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—";
+  const joined = profile
+    ? new Date(profile.date_joined).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    : "—";
   const today = new Date().toISOString().split("T")[0];
   const hd = heatmap.length > 0 ? heatmap : [{ date: today, count: 0, level: 0 }];
 
@@ -76,128 +88,129 @@ function ProfilePage() {
     <PageShell>
       <div className="profile-grid">
 
-        {/* ── [A] Identity card — left col, spans full height ──────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "id" }}>
-          <div className="px-5 pt-6 pb-4 flex flex-col items-center text-center border-b border-[#111]">
-            <div className="w-16 h-16 rounded-full bg-[#0c140f] border border-[#22c55e]/30 flex items-center justify-center mb-3">
-              <User size={30} className="text-[#22c55e]" />
+        {/* ── [A] Identity card ─────────────────────────────────────────── */}
+        <div className="profile-card" style={{ gridArea: "id" }}>
+
+          {/* Avatar + name */}
+          <div className="px-5 pt-6 pb-5 flex flex-col items-center text-center border-b border-[#111]">
+            <div className="avatar-ring mb-4">
+              <div className="avatar-inner">
+                <User size={26} className="text-[#22c55e]" strokeWidth={1.5} />
+              </div>
             </div>
-            <h1 className="text-lg font-semibold text-[#f0f0f0] tracking-tight leading-none mb-1">
-              {pLoading ? <Skel className="h-5 w-28 mx-auto" /> : profile?.username}
+
+            <h1 className="text-[15px] font-semibold tracking-tight text-[#f5f5f5] leading-none mb-1">
+              {pLoading ? <Skel className="h-4 w-28 mx-auto" /> : profile?.username}
             </h1>
-            <div className="flex items-center gap-3 text-[10px] font-mono text-[#444] uppercase tracking-wider">
-              <span className="flex items-center gap-1"><Calendar size={9} /> {joined}</span>
-              <span className="flex items-center gap-1"><Shield size={9} className="text-[#22c55e]" /> Lv{level}</span>
+
+            <div className="flex items-center gap-2 mt-2">
+              <PillBadge icon={<Calendar size={8} />} label={joined} />
+              <PillBadge icon={<Shield size={8} className="text-[#22c55e]" />} label={`Level ${level}`} accent />
             </div>
           </div>
 
-          {/* Level progress */}
-          <div className="px-5 py-4 border-b border-[#111] shrink-0">
-            <div className="flex items-center justify-between text-[9px] font-mono text-[#444] mb-1.5 uppercase tracking-wider">
-              <span>{lvl}</span>
-              <span>{pLoading ? "—" : `${xp}/${next}`}</span>
+          {/* XP progress */}
+          <div className="px-5 py-4 border-b border-[#111]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="section-label">{lvl}</span>
+              <span className="section-label">
+                {pLoading ? "—" : `${xp} / ${next} XP`}
+              </span>
             </div>
-            <div className="h-1 bg-[#141414] rounded-full overflow-hidden">
-              <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+            <div className="xp-track">
+              <div
+                className="xp-fill"
+                style={{ width: `${pct}%` }}
+              />
             </div>
+            <p className="text-[9px] font-mono text-[#888] mt-1.5 text-right">{pct}% to next tier</p>
           </div>
 
-          {/* Quick stats */}
+          {/* Quick stats 2×2 */}
           <div className="grid grid-cols-2 divide-x divide-y divide-[#111] flex-1">
-            <MiniStat icon={<Flame size={13} className="text-[#22c55e]" />} label="Streak" value={pLoading ? "—" : `${profile.streak}d`} />
-            <MiniStat icon={<Trophy size={13} className="text-[#22c55e]" />} label="Points" value={pLoading ? "—" : String(xp)} />
-            <MiniStat icon={<BookOpen size={13} className="text-[#22c55e]" />} label="Notes" value={pLoading ? "—" : String(profile.notes_written)} />
-            <MiniStat icon={<ClipboardCheck size={13} className="text-[#22c55e]" />} label="Quizzes" value={pLoading ? "—" : String(profile.quizzes_passed)} />
+            <StatCell icon={<Flame size={12} className="text-[#22c55e]" />} label="Streak" value={pLoading ? "—" : `${profile.streak}d`} />
+            <StatCell icon={<Trophy size={12} className="text-[#22c55e]" />} label="Points" value={pLoading ? "—" : String(xp)} />
+            <StatCell icon={<BookOpen size={12} className="text-[#22c55e]" />} label="Notes" value={pLoading ? "—" : String(profile.notes_written)} />
+            <StatCell icon={<ClipboardCheck size={12} className="text-[#22c55e]" />} label="Quizzes" value={pLoading ? "—" : String(profile.quizzes_passed)} />
           </div>
         </div>
 
-        {/* ── [B] Badges — top center ───────────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "badges" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Award size={10} className="text-[#22c55e]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Achievements</span>
-            </div>
+        {/* ── [B] Badges ────────────────────────────────────────────────── */}
+        <div className="profile-card" style={{ gridArea: "badges" }}>
+          <CardHeader icon={<Award size={10} className="text-[#22c55e]" />} title="Achievements">
             {!pLoading && profile?.badges && (
-              <span className="text-[8px] font-mono text-[#333]">{profile.badges.length} earned</span>
+              <span className="section-label">{profile.badges.length} earned</span>
             )}
-          </div>
+          </CardHeader>
+
           <div className="flex-1 overflow-y-auto min-h-0 p-3">
             {pLoading ? (
               <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-12 w-full" />)}
+                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-14 w-full" />)}
               </div>
             ) : profile?.badges?.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
                 {profile.badges.map((b: any) => (
-                  <div key={b.id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-md border border-[#181818] bg-[#0b0b0b] hover:border-[#22c55e]/25 transition-colors">
-                    <div className="shrink-0 w-7 h-7 rounded-md bg-[#0c140f] border border-[#22c55e]/20 flex items-center justify-center">
-                      <Award size={13} className="text-[#22c55e]" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-medium text-[#ddd] truncate">{b.title}</p>
-                      <p className="text-[9px] text-[#555] truncate">{b.desc}</p>
-                    </div>
-                  </div>
+                  <BadgeCard key={b.id} title={b.title} desc={b.desc} />
                 ))}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#444]">No badges yet</div>
+              <EmptyState label="No badges yet" />
             )}
           </div>
         </div>
 
-        {/* ── [C] Contribution breakdown — top right ────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "breakdown" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp size={10} className="text-[#22c55e]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Breakdown</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto min-h-0 p-3.5">
+        {/* ── [C] XP Breakdown ─────────────────────────────────────────── */}
+        <div className="profile-card" style={{ gridArea: "breakdown" }}>
+          <CardHeader icon={<TrendingUp size={10} className="text-[#22c55e]" />} title="XP Breakdown" />
+
+          <div className="flex-1 overflow-y-auto min-h-0 p-4">
             {pLoading ? (
-              <div className="flex flex-col gap-3">
-                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-6 w-full" />)}
+              <div className="flex flex-col gap-4">
+                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-7 w-full" />)}
               </div>
             ) : profile?.xp_breakdown?.length > 0 ? (
-              <div className="space-y-3">
-                {profile.xp_breakdown.map((item: any) => {
+              <div className="space-y-4">
+                {profile.xp_breakdown.map((item: any, idx: number) => {
                   const max = profile.xp_breakdown[0].total;
                   const w = Math.round((item.total / max) * 100);
-                  const label = item.action_type.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+                  const label = item.action_type
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c: string) => c.toUpperCase());
                   return (
-                    <div key={item.action_type}>
-                      <div className="flex justify-between text-[10px] mb-1">
-                        <span className="text-[#888] truncate">{label}</span>
-                        <span className="font-mono text-[#444] shrink-0 ml-2">{item.total} · {item.count}×</span>
-                      </div>
-                      <div className="h-[3px] bg-[#141414] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#22c55e] rounded-full transition-all duration-500" style={{ width: `${w}%` }} />
-                      </div>
-                    </div>
+                    <BreakdownRow
+                      key={item.action_type}
+                      label={label}
+                      total={item.total}
+                      count={item.count}
+                      width={w}
+                      rank={idx}
+                    />
                   );
                 })}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#444]">No data yet</div>
+              <EmptyState label="No data yet" />
             )}
           </div>
         </div>
 
-        {/* ── [D] Heatmap — bottom center ───────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "heat" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Contribution heatmap</span>
-            <span className="text-[8px] font-mono text-[#333]">{pLoading ? "—" : `${xp} total`}</span>
-          </div>
-          <div className="flex-1 flex items-center px-3.5 py-2 overflow-x-auto min-h-0">
+        {/* ── [D] Heatmap ───────────────────────────────────────────────── */}
+        <div className="profile-card" style={{ gridArea: "heat" }}>
+          <CardHeader icon={<Zap size={10} className="text-[#22c55e]" />} title="Contribution Heatmap">
+            <span className="section-label">{pLoading ? "—" : `${xp} total XP`}</span>
+          </CardHeader>
+
+          <div className="flex-1 flex items-center px-4 py-3 overflow-x-auto min-h-0">
             {hLoading ? (
               <Skel className="h-full w-full" />
             ) : (
               <ActivityCalendar
                 data={hd}
-                theme={{ light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"], dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"] }}
+                theme={{
+                  light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                }}
                 colorScheme="dark"
                 labels={{ totalCount: "{{count}} contributions this year" }}
                 style={{ fontSize: "10px" }}
@@ -206,40 +219,49 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* ── [E] Activity — bottom right ───────────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "activity" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Recent activity</span>
-            {activity.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />}
-          </div>
+        {/* ── [E] Recent Activity ───────────────────────────────────────── */}
+        <div className="profile-card" style={{ gridArea: "activity" }}>
+          <CardHeader icon={<Flame size={10} className="text-[#22c55e]" />} title="Recent Activity">
+            {activity.length > 0 && (
+              <span className="live-dot" />
+            )}
+          </CardHeader>
+
           <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2">
             {activity.length > 0 ? (
-              <ul className="space-y-px">
+              <ul className="divide-y divide-[#0d0d0d]">
                 {activity.slice(0, 10).map((a: any, i: number) => (
-                  <li key={a.id} className="flex items-start gap-2 py-1.5 border-b border-[#0d0d0d] last:border-0">
-                    <div className={`mt-1 w-1 h-1 rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e]" : "bg-[#1e1e1e]"}`} />
+                  <li key={a.id} className="flex items-start gap-3 py-2.5">
+                    <div className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1f1f1f]"
+                      }`} />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#bbb]" : "text-[#555]"}`}>{a.label}</p>
-                      <p className="text-[9px] font-mono text-[#333]">{timeAgo(a.date)}</p>
+                      <p className={`text-[11px] leading-snug truncate ${i === 0 ? "text-[#c8c8c8]" : "text-[#aaa]"
+                        }`}>
+                        {a.label}
+                      </p>
+                      <p className="text-[9px] font-mono text-[#888] mt-0.5">{timeAgo(a.date)}</p>
                     </div>
+                    {i === 0 && (
+                      <span className="shrink-0 text-[8px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">new</span>
+                    )}
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="flex items-center justify-center h-full text-[11px] text-[#444]">No activity yet</div>
+              <EmptyState label="No activity yet" />
             )}
           </div>
         </div>
 
-        {/* ── [F] Completed paths — very bottom ────────────────────────── */}
-        <div className="border border-[#1a1a1a] rounded-lg bg-[#080808] flex flex-col overflow-hidden" style={{ gridArea: "paths" }}>
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-[#131313] shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Star size={10} className="text-[#22c55e]" />
-              <span className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">Completed roadmaps</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto min-h-0 px-3.5 py-2">
+        {/* ── [F] Completed Roadmaps ────────────────────────────────────── */}
+        <div className="profile-card" style={{ gridArea: "paths" }}>
+          <CardHeader icon={<Star size={10} className="text-[#22c55e]" />} title="Completed Roadmaps">
+            {!pLoading && profile?.completed_paths?.length > 0 && (
+              <span className="section-label">{profile.completed_paths.length} done</span>
+            )}
+          </CardHeader>
+
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 py-3">
             {pLoading ? (
               <div className="flex gap-2">
                 {Array.from({ length: 3 }).map((_, i) => <Skel key={i} className="h-7 w-28" />)}
@@ -247,36 +269,238 @@ function ProfilePage() {
             ) : profile?.completed_paths?.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {profile.completed_paths.map((p: any) => (
-                  <span key={p.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[#1a3028] bg-[#0a1a12] text-[10px] font-mono text-[#22c55e] uppercase tracking-wider">
-                    <Award size={9} /> {p.title}
+                  <span key={p.id} className="roadmap-chip">
+                    <Award size={8} /> {p.title}
                   </span>
                 ))}
               </div>
             ) : (
-              <div className="flex items-center h-full text-[11px] text-[#444]">No roadmaps completed yet — keep building</div>
+              <div className="flex items-center h-full text-[11px] text-[#888] font-mono">
+                No roadmaps completed yet — keep building
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── grid definition ─────────────────────────────────────────────── */}
+      {/* ── styles ────────────────────────────────────────────────────── */}
       <style>{`
+
+        /* ── Layout ── */
         .profile-grid {
           display: grid;
-          gap: 8px;
+          gap: 6px;
           height: calc(100vh - 64px);
           overflow: hidden;
-          grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(220px, 260px);
+          grid-template-columns: minmax(200px, 230px) minmax(0, 1fr) minmax(210px, 250px);
           grid-template-rows: 1fr 1fr auto;
           grid-template-areas:
-            "id     badges    breakdown"
-            "id     heat      activity"
-            "paths  paths     paths";
+            "id  badges    breakdown"
+            "id  heat      activity"
+            "paths paths   paths";
         }
+
+        /* ── Card shell ── */
+        .profile-card {
+          border: 1px solid #131313;
+          border-radius: 6px;
+          background: #060606;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+        }
+
+        /* Hairline top accent */
+        .profile-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+        }
+
+        /* ── Card header ── */
+        .card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 7px 14px;
+          border-bottom: 1px solid #0f0f0f;
+          flex-shrink: 0;
+          background: #080808;
+        }
+
+        .card-header-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        /* ── Section label ── */
+        .section-label {
+          font-size: 8px;
+          font-family: ui-monospace, monospace;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: #333;
+        }
+
+        /* ── Avatar ── */
+        .avatar-ring {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          border: 1px solid #1a1a1a;
+          padding: 3px;
+          background: #080808;
+        }
+
+        .avatar-inner {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: #0c140f;
+          border: 1px solid #22c55e18;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* ── Pills ── */
+        .pill-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 7px;
+          border-radius: 3px;
+          border: 1px solid #161616;
+          background: #0a0a0a;
+          font-size: 8px;
+          font-family: ui-monospace, monospace;
+          letter-spacing: 0.1em;
+          color: #3a3a3a;
+          text-transform: uppercase;
+        }
+
+        .pill-badge.accent {
+          border-color: #22c55e18;
+          color: #22c55e;
+        }
+
+        /* ── XP track ── */
+        .xp-track {
+          height: 2px;
+          background: #111;
+          border-radius: 9999px;
+          overflow: hidden;
+        }
+
+        .xp-fill {
+          height: 100%;
+          background: #22c55e;
+          border-radius: 9999px;
+          transition: width 0.6s ease;
+          box-shadow: 0 0 8px #22c55e40;
+        }
+
+        /* ── Stat cells ── */
+        .stat-cell {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 10px 12px;
+        }
+
+        .stat-cell-icon {
+          width: 26px;
+          height: 26px;
+          border-radius: 5px;
+          background: #0b0b0b;
+          border: 1px solid #151515;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        /* ── Badge card ── */
+        .badge-card {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 9px 10px;
+          border-radius: 5px;
+          border: 1px solid #141414;
+          background: #080808;
+          transition: border-color 0.15s ease;
+        }
+
+        .badge-card:hover {
+          border-color: #22c55e20;
+        }
+
+        .badge-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: 4px;
+          background: #0b140e;
+          border: 1px solid #1a3020;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        /* ── Roadmap chip ── */
+        .roadmap-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 10px;
+          border-radius: 3px;
+          border: 1px solid #162213;
+          background: #0a120c;
+          font-size: 9px;
+          font-family: ui-monospace, monospace;
+          color: #22c55e;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+        }
+
+        /* ── Live dot ── */
+        .live-dot {
+          display: block;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #22c55e;
+          box-shadow: 0 0 6px #22c55e80;
+        }
+
+        /* ── Breakdown bar ── */
+        .breakdown-bar-track {
+          height: 2px;
+          background: #111;
+          border-radius: 9999px;
+          overflow: hidden;
+          margin-top: 5px;
+        }
+
+        .breakdown-bar-fill {
+          height: 100%;
+          border-radius: 9999px;
+          transition: width 0.5s ease;
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 1180px) {
           .profile-grid {
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             grid-template-rows: auto auto auto auto;
+            height: auto;
+            overflow: visible;
             grid-template-areas:
               "id        id"
               "badges    breakdown"
@@ -284,12 +508,13 @@ function ProfilePage() {
               "paths     paths";
           }
         }
+
         @media (max-width: 720px) {
           .profile-grid {
-            height: auto;
-            overflow: visible;
             grid-template-columns: 1fr;
             grid-template-rows: auto;
+            height: auto;
+            overflow: visible;
             grid-template-areas:
               "id"
               "badges"
@@ -304,15 +529,110 @@ function ProfilePage() {
   );
 }
 
-/* ── mini stat cell ───────────────────────────────────────────────────── */
-function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+/* ── sub-components ───────────────────────────────────────────────────── */
+
+function CardHeader({
+  icon, title, children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5">
-      {icon}
-      <div>
-        <p className="text-[8px] uppercase tracking-[0.2em] font-mono text-[#444]">{label}</p>
-        <p className="text-sm font-semibold tabular-nums text-[#e8e8e8] leading-tight">{value}</p>
+    <div className="card-header">
+      <div className="card-header-left">
+        {icon}
+        <span className="section-label">{title}</span>
       </div>
+      {children}
+    </div>
+  );
+}
+
+function PillBadge({
+  icon, label, accent = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  accent?: boolean;
+}) {
+  return (
+    <span className={`pill-badge ${accent ? "accent" : ""}`}>
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function StatCell({
+  icon, label, value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="stat-cell">
+      <div className="stat-cell-icon">{icon}</div>
+      <div>
+        <p className="section-label mb-0.5">{label}</p>
+        <p className="text-[13px] font-semibold tabular-nums text-[#e0e0e0] leading-none">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function BadgeCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="badge-card">
+      <div className="badge-icon">
+        <Award size={12} className="text-[#22c55e]" strokeWidth={1.5} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium text-[#ccc] truncate leading-tight">{title}</p>
+        <p className="text-[9px] text-[#383838] truncate mt-0.5">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function BreakdownRow({
+  label, total, count, width, rank,
+}: {
+  label: string;
+  total: number;
+  count: number;
+  width: number;
+  rank: number;
+}) {
+  // Dimmer fill for lower ranks
+  const opacity = rank === 0 ? 1 : rank === 1 ? 0.65 : rank === 2 ? 0.45 : 0.28;
+  return (
+    <div>
+      <div className="flex justify-between items-baseline">
+        <span className="text-[11px] text-[#666] truncate leading-none">{label}</span>
+        <span className="font-mono text-[9px] text-[#888] shrink-0 ml-2">
+          {total} · {count}×
+        </span>
+      </div>
+      <div className="breakdown-bar-track">
+        <div
+          className="breakdown-bar-fill"
+          style={{
+            width: `${width}%`,
+            background: `rgba(34,197,94,${opacity})`,
+            boxShadow: rank === 0 ? "0 0 6px #22c55e30" : "none",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-center h-full text-[11px] font-mono text-[#777]">
+      {label}
     </div>
   );
 }
