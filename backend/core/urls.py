@@ -6,7 +6,7 @@ from .views import (
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView, AddContributionView,
+    AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView
 )
 from .custom_path_views import CustomPathViewSet, PathProgressView
@@ -25,7 +25,6 @@ urlpatterns = [
     path('auth/github/connect/', GitHubConnectView.as_view(), name='auth_github_connect'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='auth_refresh'),
     path('auth/daily-login/', DailyLoginView.as_view(), name='daily_login'),
-    path('auth/add-contribution/', AddContributionView.as_view(), name='add_contribution'),
     path('auth/send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
     

@@ -147,6 +147,7 @@ function NotesPage() {
 
   const [editDrafts, setEditDrafts] = useState<Record<string, string>>({});
   const [showNewModal, setShowNewModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ title: string; subtitle: string; onConfirm: () => void } | null>(null);
 
   /* ── Queries ──────────────────────────────────────────────────────── */
   const { data: paths = [], isLoading: pl } = useQuery({
@@ -326,360 +327,395 @@ function NotesPage() {
     });
   };
 
-  const handleDeleteNote = (item: any) => {
-    if (!window.confirm("Delete this note entirely?")) return;
-    saveNoteMutation.mutate({ topicId: item.topicId, content: "" });
-  };
+    const handleDeleteNote = (item: any) => {
+      setConfirmAction({
+        title: "Delete Note",
+        subtitle: "Are you sure you want to delete this note entirely? This action cannot be undone.",
+        onConfirm: () => {
+          saveNoteMutation.mutate({ topicId: item.topicId, content: "" });
+          setConfirmAction(null);
+        }
+      });
+    };
 
-  /* ── Render ───────────────────────────────────────────────────────── */
-  if (isLoading) {
+    /* ── Render ───────────────────────────────────────────────────────── */
+    if (isLoading) {
+      return (
+        <PageShell>
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-5 h-5 text-[#eee] animate-spin" />
+          </div>
+        </PageShell>
+      );
+    }
+
+    const activeTopics = combinedPaths
+      .flatMap((p: any) =>
+        (p.topics || []).map((t: any) => ({ ...t, pathTitle: p.title }))
+      )
+      .filter(
+        (t: any) =>
+          t.user_progress === "in_progress" || t.user_progress === "completed"
+      );
+
+    const noteCount = filteredItems.filter((item) => item.content).length;
+    const documentCount = filteredItems.reduce((total, item) => total + item.documents.length, 0);
+    const screenshotCount = filteredItems.reduce((total, item) => total + item.screenshots.length, 0);
+
     return (
       <PageShell>
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-5 h-5 text-[#eee] animate-spin" />
-        </div>
-      </PageShell>
-    );
-  }
+        <div className="lib-grid">
 
-  const activeTopics = combinedPaths
-    .flatMap((p: any) =>
-      (p.topics || []).map((t: any) => ({ ...t, pathTitle: p.title }))
-    )
-    .filter(
-      (t: any) =>
-        t.user_progress === "in_progress" || t.user_progress === "completed"
-    );
-
-  const noteCount = filteredItems.filter((item) => item.content).length;
-  const documentCount = filteredItems.reduce((total, item) => total + item.documents.length, 0);
-  const screenshotCount = filteredItems.reduce((total, item) => total + item.screenshots.length, 0);
-
-  return (
-    <PageShell>
-      <div className="lib-grid">
-
-        {/* ── [HDR] ──────────────────────────────────────────────────── */}
-        <div className="lib-header" style={{ gridArea: "hdr" }}>
-          <div>
-            <p className="lib-eyebrow">GrowthOS</p>
-            <h1 className="lib-title">Library</h1>
-          </div>
-
-          <div className="lib-header-meta">
-            <span className="lib-stat-pill">
-              <BookOpen size={10} className="text-[#22c55e]" />
-              {noteCount} notes
-            </span>
-            <span className="lib-stat-pill">
-              <FileText size={10} className="text-[#60a5fa]" />
-              {documentCount} docs
-            </span>
-            <span className="lib-stat-pill">
-              <ImageIcon size={10} className="text-[#f59e0b]" />
-              {screenshotCount} screenshots
-            </span>
-            <Btn
-              onClick={() => setShowNewModal(true)}
-              size="sm"
-              variant="solid"
-              tone="green"
-              className="lib-new-btn"
-            >
-              <Plus size={13} /> New Material
-            </Btn>
-          </div>
-        </div>
-
-        {/* ── [SIDE] ─────────────────────────────────────────────────── */}
-        <div className="lib-card" style={{ gridArea: "side" }}>
-
-          {/* Search */}
-          <div className="lib-search-wrap">
-            <Search size={13} className="text-[#fff]" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search materials…"
-              className="lib-search-input"
-            />
-            {q && (
-              <button onClick={() => setQ("")} className="lib-search-clear">
-                <X size={11} />
-              </button>
-            )}
-          </div>
-
-          {/* Filter list */}
-          <div className="lib-side-section">
-            <p className="lib-section-label">Filter by path</p>
-            <div className="lib-filter-list">
-              <FilterPill
-                active={filterPath === "all"}
-                onClick={() => setFilterPath("all")}
-                icon={Layers}
-                label="All Paths"
-                count={libraryItems.length}
-              />
-              {pathTitles.map((pt) => {
-                const c = libraryItems.filter((i: LibraryItem) => i.pathTitle === pt).length;
-                return (
-                  <FilterPill
-                    key={pt}
-                    active={filterPath === pt}
-                    onClick={() => setFilterPath(pt)}
-                    label={pt}
-                    count={c}
-                  />
-                );
-              })}
+          {/* ── [HDR] ──────────────────────────────────────────────────── */}
+          <div className="lib-header" style={{ gridArea: "hdr" }}>
+            <div>
+              <p className="lib-eyebrow">GrowthOS</p>
+              <h1 className="lib-title">Library</h1>
             </div>
-          </div>
 
-          {/* Bottom hint */}
-          <div className="lib-side-footer">
-            <p className="lib-hint">
-              {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} shown
-            </p>
-          </div>
-        </div>
-
-        {/* ── [MAIN] ─────────────────────────────────────────────────── */}
-        <div className="lib-card lib-main" style={{ gridArea: "main" }}>
-          {filteredItems.length === 0 ? (
-            <div className="lib-empty">
-              <BookOpen size={28} className="text-[#eee] mb-3" />
-              <p className="lib-empty-label">No materials found</p>
-              <p className="lib-empty-sub">
-                {q ? "Try a different search term" : "Start a roadmap and take notes to see them here"}
-              </p>
-            </div>
-          ) : (
-            <div className="lib-masonry">
-              {filteredItems.map((item: LibraryItem) => {
-                const isEditing = editDrafts[item.id] !== undefined;
-
-                return (
-                  <div key={item.id} className="lib-item-card lib-item-note">
-
-                    {/* Card header */}
-                    <div className="lib-item-header">
-                      <div className="lib-item-header-left">
-                        <BookOpen size={11} className="text-[#22c55e] shrink-0" />
-                        <span className="lib-item-topic">{item.topicTitle}</span>
-                      </div>
-                      <div className="lib-item-actions">
-                        {!isEditing && (
-                          <>
-                            <button
-                              onClick={() => {
-                                if(window.confirm("Publish this note as a public GitHub Gist?")) {
-                                  publishGistMutation.mutate({ title: item.topicTitle, content: item.content });
-                                }
-                              }}
-                              className="lib-action-btn"
-                              title="Publish to GitHub Gist"
-                            >
-                              <Github size={11} />
-                            </button>
-                            <button
-                              onClick={() => handleEditNote(item)}
-                              className="lib-action-btn"
-                              title="Edit"
-                            >
-                              <Edit2 size={11} />
-                            </button>
-                          </>
-                        )}
-                        <button
-                          onClick={() => handleDeleteNote(item)}
-                          className="lib-action-btn lib-action-danger"
-                          title="Clear note text"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                        <Link
-                          to="/topic/$topicId"
-                          params={{ topicId: item.topicSlug }}
-                          className="lib-action-btn"
-                          title="Open topic"
-                        >
-                          <ExternalLink size={11} />
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Card body */}
-                    <div className="lib-item-body">
-                      {isEditing ? (
-                        <div className="lib-edit-wrap">
-                          <textarea
-                            autoFocus
-                            value={editDrafts[item.id]}
-                            onChange={(e) =>
-                              setEditDrafts({ ...editDrafts, [item.id]: e.target.value })
-                            }
-                            className="lib-textarea"
-                          />
-                          <div className="lib-edit-actions">
-                            <Btn
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleCancelEdit(item)}
-                            >
-                              Cancel
-                            </Btn>
-                            <Btn
-                              size="sm"
-                              variant="solid"
-                              tone="green"
-                              onClick={() => handleSaveNote(item)}
-                            >
-                              {saveNoteMutation.isPending ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Save size={13} />
-                              )}{" "}
-                              Save
-                            </Btn>
-                          </div>
-                        </div>
-                      ) : item.content ? (
-                        <RenderedNote content={item.content} />
-                      ) : (
-                        <p className="lib-note-empty">No written note yet.</p>
-                      )}
-
-                      {!isEditing && (item.documents.length > 0 || item.screenshots.length > 0) && (
-                        <div className="lib-attachments">
-                          {item.screenshots.length > 0 && (
-                            <div className="lib-asset-section">
-                              <div className="lib-asset-heading">
-                                <ImageIcon size={11} />
-                                {item.screenshots.length} screenshot{item.screenshots.length !== 1 ? "s" : ""}
-                              </div>
-                              <div className="lib-screenshot-grid">
-                                {item.screenshots.map((screenshot) => {
-                                  const imageUrl = screenshot.image_url || screenshot.image || "";
-                                  return (
-                                    <a
-                                      key={screenshot.id}
-                                      href={imageUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="lib-screenshot-thumb"
-                                    >
-                                      <img
-                                        src={imageUrl}
-                                        alt={screenshot.caption || "Screenshot"}
-                                        loading="lazy"
-                                      />
-                                    </a>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {item.documents.length > 0 && (
-                            <div className="lib-asset-section">
-                              <div className="lib-asset-heading">
-                                <FileText size={11} />
-                                {item.documents.length} document{item.documents.length !== 1 ? "s" : ""}
-                              </div>
-                              <div className="lib-doc-list">
-                                {item.documents.map((doc) => {
-                                  const fileUrl = doc.file_url || doc.file || "";
-                                  return (
-                                    <a
-                                      key={doc.id}
-                                      href={fileUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="lib-doc-chip"
-                                    >
-                                      <FileText size={11} />
-                                      <span>{doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}</span>
-                                      <ExternalLink size={10} />
-                                    </a>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                    </div>
-
-                    {/* Card footer */}
-                    {!isEditing && (
-                      <div className="lib-item-footer">
-                        <span className="lib-item-path">{item.pathTitle}</span>
-                        <span className="lib-item-date">{timeAgo(item.date)}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── New Material Modal ─────────────────────────────────────────── */}
-      {showNewModal && (
-        <Modal onClose={() => setShowNewModal(false)}>
-          <div className="lib-modal-inner">
-            <div className="lib-modal-header">
-              <h3 className="lib-modal-title">New Material</h3>
-              <button
-                onClick={() => setShowNewModal(false)}
-                className="lib-modal-close"
+            <div className="lib-header-meta">
+              <span className="lib-stat-pill">
+                <BookOpen size={10} className="text-[#22c55e]" />
+                {noteCount} notes
+              </span>
+              <span className="lib-stat-pill">
+                <FileText size={10} className="text-[#60a5fa]" />
+                {documentCount} docs
+              </span>
+              <span className="lib-stat-pill">
+                <ImageIcon size={10} className="text-[#f59e0b]" />
+                {screenshotCount} screenshots
+              </span>
+              <Btn
+                onClick={() => setShowNewModal(true)}
+                size="sm"
+                variant="solid"
+                tone="green"
+                className="lib-new-btn"
               >
-                <X size={16} />
-              </button>
+                <Plus size={13} /> New Material
+              </Btn>
             </div>
-            <p className="lib-modal-sub">
-              Select an active topic to upload documents or write notes in its workspace.
-            </p>
+          </div>
 
-            <div className="lib-modal-list">
-              {activeTopics.length === 0 ? (
-                <div className="lib-modal-empty">
-                  No active topics found. Start a roadmap first.
-                </div>
-              ) : (
-                activeTopics.map((t: any) => (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      setShowNewModal(false);
-                      navigate({
-                        to: "/topic/$topicId",
-                        params: { topicId: String(t.id) },
-                      });
-                    }}
-                    className="lib-modal-topic-btn"
-                  >
-                    <div className="lib-modal-topic-icon">
-                      <BookOpen size={12} className="text-[#22c55e]" />
-                    </div>
-                    <div className="lib-modal-topic-text">
-                      <span className="lib-modal-topic-title">{t.title}</span>
-                      <span className="lib-modal-topic-path">{t.pathTitle}</span>
-                    </div>
-                    <ExternalLink size={12} className="text-[#eee] group-hover:text-[#22c55e] transition-colors shrink-0" />
-                  </button>
-                ))
+          {/* ── [SIDE] ─────────────────────────────────────────────────── */}
+          <div className="lib-card" style={{ gridArea: "side" }}>
+
+            {/* Search */}
+            <div className="lib-search-wrap">
+              <Search size={13} className="text-[#fff]" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search materials…"
+                className="lib-search-input"
+              />
+              {q && (
+                <button onClick={() => setQ("")} className="lib-search-clear">
+                  <X size={11} />
+                </button>
               )}
             </div>
-          </div>
-        </Modal>
-      )}
 
-      {/* ── Styles ────────────────────────────────────────────────────── */}
-      <style>{`
+            {/* Filter list */}
+            <div className="lib-side-section">
+              <p className="lib-section-label">Filter by path</p>
+              <div className="lib-filter-list">
+                <FilterPill
+                  active={filterPath === "all"}
+                  onClick={() => setFilterPath("all")}
+                  icon={Layers}
+                  label="All Paths"
+                  count={libraryItems.length}
+                />
+                {pathTitles.map((pt) => {
+                  const c = libraryItems.filter((i: LibraryItem) => i.pathTitle === pt).length;
+                  return (
+                    <FilterPill
+                      key={pt}
+                      active={filterPath === pt}
+                      onClick={() => setFilterPath(pt)}
+                      label={pt}
+                      count={c}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom hint */}
+            <div className="lib-side-footer">
+              <p className="lib-hint">
+                {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""} shown
+              </p>
+            </div>
+          </div>
+
+          {/* ── [MAIN] ─────────────────────────────────────────────────── */}
+          <div className="lib-card lib-main" style={{ gridArea: "main" }}>
+            {filteredItems.length === 0 ? (
+              <div className="lib-empty">
+                <BookOpen size={28} className="text-[#eee] mb-3" />
+                <p className="lib-empty-label">No materials found</p>
+                <p className="lib-empty-sub">
+                  {q ? "Try a different search term" : "Start a roadmap and take notes to see them here"}
+                </p>
+              </div>
+            ) : (
+              <div className="lib-masonry">
+                {filteredItems.map((item: LibraryItem) => {
+                  const isEditing = editDrafts[item.id] !== undefined;
+
+                  return (
+                    <div key={item.id} className="lib-item-card lib-item-note">
+
+                      {/* Card header */}
+                      <div className="lib-item-header">
+                        <div className="lib-item-header-left">
+                          <BookOpen size={11} className="text-[#22c55e] shrink-0" />
+                          <span className="lib-item-topic">{item.topicTitle}</span>
+                        </div>
+                        <div className="lib-item-actions">
+                          {!isEditing && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setConfirmAction({
+                                    title: "Publish Gist",
+                                    subtitle: "Publish this note as a public GitHub Gist?",
+                                    onConfirm: () => {
+                                      publishGistMutation.mutate({ title: item.topicTitle, content: item.content });
+                                      setConfirmAction(null);
+                                    }
+                                  });
+                                }}
+                                className="lib-action-btn"
+                                title="Publish to GitHub Gist"
+                              >
+                                <Github size={11} />
+                              </button>
+                              <button
+                                onClick={() => handleEditNote(item)}
+                                className="lib-action-btn"
+                                title="Edit"
+                              >
+                                <Edit2 size={11} />
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => handleDeleteNote(item)}
+                            className="lib-action-btn lib-action-danger"
+                            title="Clear note text"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                          <Link
+                            to="/topic/$topicId"
+                            params={{ topicId: item.topicSlug }}
+                            className="lib-action-btn"
+                            title="Open topic"
+                          >
+                            <ExternalLink size={11} />
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Card body */}
+                      <div className="lib-item-body">
+                        {isEditing ? (
+                          <div className="lib-edit-wrap">
+                            <textarea
+                              autoFocus
+                              value={editDrafts[item.id]}
+                              onChange={(e) =>
+                                setEditDrafts({ ...editDrafts, [item.id]: e.target.value })
+                              }
+                              className="lib-textarea"
+                            />
+                            <div className="lib-edit-actions">
+                              <Btn
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCancelEdit(item)}
+                              >
+                                Cancel
+                              </Btn>
+                              <Btn
+                                size="sm"
+                                variant="solid"
+                                tone="green"
+                                onClick={() => handleSaveNote(item)}
+                              >
+                                {saveNoteMutation.isPending ? (
+                                  <Loader2 size={13} className="animate-spin" />
+                                ) : (
+                                  <Save size={13} />
+                                )}{" "}
+                                Save
+                              </Btn>
+                            </div>
+                          </div>
+                        ) : item.content ? (
+                          <RenderedNote content={item.content} />
+                        ) : (
+                          <p className="lib-note-empty">No written note yet.</p>
+                        )}
+
+                        {!isEditing && (item.documents.length > 0 || item.screenshots.length > 0) && (
+                          <div className="lib-attachments">
+                            {item.screenshots.length > 0 && (
+                              <div className="lib-asset-section">
+                                <div className="lib-asset-heading">
+                                  <ImageIcon size={11} />
+                                  {item.screenshots.length} screenshot{item.screenshots.length !== 1 ? "s" : ""}
+                                </div>
+                                <div className="lib-screenshot-grid">
+                                  {item.screenshots.map((screenshot) => {
+                                    const imageUrl = screenshot.image_url || screenshot.image || "";
+                                    return (
+                                      <a
+                                        key={screenshot.id}
+                                        href={imageUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="lib-screenshot-thumb"
+                                      >
+                                        <img
+                                          src={imageUrl}
+                                          alt={screenshot.caption || "Screenshot"}
+                                          loading="lazy"
+                                        />
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {item.documents.length > 0 && (
+                              <div className="lib-asset-section">
+                                <div className="lib-asset-heading">
+                                  <FileText size={11} />
+                                  {item.documents.length} document{item.documents.length !== 1 ? "s" : ""}
+                                </div>
+                                <div className="lib-doc-list">
+                                  {item.documents.map((doc) => {
+                                    const fileUrl = doc.file_url || doc.file || "";
+                                    return (
+                                      <a
+                                        key={doc.id}
+                                        href={fileUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="lib-doc-chip"
+                                      >
+                                        <FileText size={11} />
+                                        <span>{doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}</span>
+                                        <ExternalLink size={10} />
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      </div>
+
+                      {/* Card footer */}
+                      {!isEditing && (
+                        <div className="lib-item-footer">
+                          <span className="lib-item-path">{item.pathTitle}</span>
+                          <span className="lib-item-date">{timeAgo(item.date)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── New Material Modal ─────────────────────────────────────────── */}
+        {showNewModal && (
+          <Modal onClose={() => setShowNewModal(false)}>
+            <div className="lib-modal-inner">
+              <div className="lib-modal-header">
+                <h3 className="lib-modal-title">New Material</h3>
+                <button
+                  onClick={() => setShowNewModal(false)}
+                  className="lib-modal-close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="lib-modal-sub">
+                Select an active topic to upload documents or write notes in its workspace.
+              </p>
+
+              <div className="lib-modal-list">
+                {activeTopics.length === 0 ? (
+                  <div className="lib-modal-empty">
+                    No active topics found. Start a roadmap first.
+                  </div>
+                ) : (
+                  activeTopics.map((t: any) => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setShowNewModal(false);
+                        navigate({
+                          to: "/topic/$topicId",
+                          params: { topicId: String(t.id) },
+                        });
+                      }}
+                      className="lib-modal-topic-btn"
+                    >
+                      <div className="lib-modal-topic-icon">
+                        <BookOpen size={12} className="text-[#22c55e]" />
+                      </div>
+                      <div className="lib-modal-topic-text">
+                        <span className="lib-modal-topic-title">{t.title}</span>
+                        <span className="lib-modal-topic-path">{t.pathTitle}</span>
+                      </div>
+                      <ExternalLink size={12} className="text-[#eee] group-hover:text-[#22c55e] transition-colors shrink-0" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* ── Confirm Action Modal ─────────────────────────────────────────── */}
+        {confirmAction && (
+          <Modal onClose={() => setConfirmAction(null)}>
+            <div className="lib-modal-inner" style={{ maxWidth: '400px' }}>
+              <div className="lib-modal-header">
+                <h3 className="lib-modal-title">{confirmAction.title}</h3>
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  className="lib-modal-close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="lib-modal-sub">
+                {confirmAction.subtitle}
+              </p>
+              <div className="flex gap-2 justify-end mt-6">
+                <Btn size="sm" variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Btn>
+                <Btn size="sm" variant="solid" tone="green" onClick={confirmAction.onConfirm}>Confirm</Btn>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* ── Styles ────────────────────────────────────────────────────── */}
+        <style>{`
 
         /* ── Shared font base — matches profile page ── */
         .lib-grid,
@@ -1373,31 +1409,31 @@ function NotesPage() {
           }
         }
       `}</style>
-    </PageShell>
-  );
-}
+      </PageShell>
+    );
+  }
 
-/* ── Sub-components ───────────────────────────────────────────────────── */
+  /* ── Sub-components ───────────────────────────────────────────────────── */
 
-function FilterPill({
-  active,
-  onClick,
-  label,
-  icon: Icon,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  icon?: React.ElementType;
-  count?: number;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`lib-filter-pill ${active ? "lib-filter-pill-active" : ""}`}
-    >
-      <style>{`
+  function FilterPill({
+    active,
+    onClick,
+    label,
+    icon: Icon,
+    count,
+  }: {
+    active: boolean;
+    onClick: () => void;
+    label: string;
+    icon?: React.ElementType;
+    count?: number;
+  }) {
+    return (
+      <button
+        onClick={onClick}
+        className={`lib-filter-pill ${active ? "lib-filter-pill-active" : ""}`}
+      >
+        <style>{`
         .lib-filter-pill {
           width: 100%;
           display: flex;
@@ -1430,37 +1466,37 @@ function FilterPill({
           color: #555;
         }
       `}</style>
-      {Icon && (
-        <Icon size={13} style={{ flexShrink: 0, opacity: active ? 1 : 0.5 }} />
-      )}
-      <span
-        style={{
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-          flex: 1,
-        }}
-      >
-        {label}
-      </span>
-      {count !== undefined && (
-        <span className="lib-filter-pill-count">{count}</span>
-      )}
-    </button>
-  );
-}
+        {Icon && (
+          <Icon size={13} style={{ flexShrink: 0, opacity: active ? 1 : 0.5 }} />
+        )}
+        <span
+          style={{
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            flex: 1,
+          }}
+        >
+          {label}
+        </span>
+        {count !== undefined && (
+          <span className="lib-filter-pill-count">{count}</span>
+        )}
+      </button>
+    );
+  }
 
-function Modal({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  return (
-    <div className="lib-modal-overlay">
-      <div className="lib-modal-bg" onClick={onClose} />
-      <div className="lib-modal-box">{children}</div>
-    </div>
-  );
-}
+  function Modal({
+    children,
+    onClose,
+  }: {
+    children: React.ReactNode;
+    onClose: () => void;
+  }) {
+    return (
+      <div className="lib-modal-overlay">
+        <div className="lib-modal-bg" onClick={onClose} />
+        <div className="lib-modal-box">{children}</div>
+      </div>
+    );
+  }

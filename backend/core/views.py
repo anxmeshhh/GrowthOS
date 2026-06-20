@@ -1445,6 +1445,15 @@ class CommitWorkspaceToGitHubView(views.APIView):
                 repo_name = f"growthos-{path.slug}"[:100]
         else:
             if repo_name != path.github_repo_name:
+                from django.db.models import Q
+                has_access = LearningPath.objects.filter(
+                    Q(id=path.id) & (
+                        Q(created_by=request.user) |
+                        Q(shared_with_users__shared_to=request.user)
+                    )
+                ).exists()
+                if not has_access:
+                    return Response({'error': 'You do not have permission to modify the repository for this path.'}, status=403)
                 path.github_repo_name = repo_name
                 path.save()
 
@@ -1647,20 +1656,3 @@ class ResetProgressView(views.APIView):
             
         return Response({"status": "reset"})
 
-class AddContributionView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        action_type = request.data.get('action_type', 'general_activity')
-        points = int(request.data.get('points', 1))
-        
-        from .helpers import get_user_badges
-        badges_before = {b['id'] for b in get_user_badges(user)}
-        
-        Contribution.objects.create(user=user, action_type=action_type, points=points)
-        
-        badges_after = get_user_badges(user)
-        new_badges = [b for b in badges_after if b['id'] not in badges_before]
-
-        return Response({"status": "added", "points": points, "action_type": action_type, "new_badges": new_badges})
