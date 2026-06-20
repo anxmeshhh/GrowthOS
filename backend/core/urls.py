@@ -8,7 +8,7 @@ from .views import (
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
-    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, CustomPathViewSet, PathProgressView
+    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView
 )
 
 router = DefaultRouter()
@@ -77,7 +77,9 @@ urlpatterns = [
     path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
     path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
     path('admin/export-data/', AdminDataExportView.as_view(), name='admin_export_data'),
+    path('admin/roadmaps/', AdminRoadmapListView.as_view(), name='admin_roadmap_list'),
     path('admin/roadmaps/upload/', AdminRoadmapUploadView.as_view(), name='admin_roadmap_upload'),
+    path('admin/roadmaps/<str:slug>/', AdminRoadmapDetailView.as_view(), name='admin_roadmap_detail'),
     path('admin/requests/', AdminRequestListView.as_view(), name='admin_requests'),
     path('admin/requests/<int:pk>/', AdminRequestDetailView.as_view(), name='admin_request_detail'),
     

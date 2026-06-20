@@ -2400,54 +2400,153 @@ class PathProgressView(views.APIView):
             }
         })
 
+from django.db import transaction
+from rest_framework import views
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+
+
 class AdminRoadmapUploadView(views.APIView):
     permission_classes = [IsAdminUser]
 
     def post(self, request):
         data = request.data
-        if isinstance(data, list):
-            roadmaps = data
-        else:
-            roadmaps = [data]
+        roadmaps = data if isinstance(data, list) else [data]
 
-        for r_data in roadmaps:
-            slug = r_data.get('slug')
-            if not slug:
-                return Response({'error': 'slug is required for roadmap'}, status=400)
-            
-            path, created = LearningPath.objects.update_or_create(
-                slug=slug,
-                defaults={
-                    'title': r_data.get('title', 'Untitled Roadmap'),
-                    'description': r_data.get('description', ''),
-                    'estimated_weeks': r_data.get('estimated_weeks', 12),
-                    'is_custom': False,
-                    'is_active': True,
-                    'visibility': 'public'
-                }
-            )
+        if not roadmaps:
+            return Response({"error": "Request body must be a roadmap object or a list of roadmaps."}, status=400)
 
-            topics_data = r_data.get('topics', [])
-            valid_topic_ids = []
-            
-            for t_data in topics_data:
-                t_slug = t_data.get('slug')
-                if not t_slug:
-                    continue
-                
-                topic, t_created = Topic.objects.update_or_create(
-                    path=path,
-                    slug=t_slug,
-                    defaults={
-                        'title': t_data.get('title', 'Untitled Topic'),
-                        'summary': t_data.get('summary', ''),
-                        'order': t_data.get('order', 0),
-                        'node_kind': t_data.get('node_kind', 'topic')
-                    }
+        results = []
+        errors = []
+
+        for index, r_data in enumerate(roadmaps):
+            label = r_data.get("slug") or f"roadmap[{index}]"
+            try:
+                result = self._sync_roadmap(r_data)
+                results.append(result)
+            except ValueError as e:
+                errors.append({"roadmap": label, "error": str(e)})
+            except Exception as e:
+                errors.append({"roadmap": label, "error": f"Unexpected error: {str(e)}"})
+
+        if errors and not results:
+            return Response({"errors": errors}, status=400)
+
+        response_body = {
+            "message": f"{len(results)} roadmap(s) synchronized successfully.",
+            "roadmaps": results,
+        }
+        if errors:
+            response_body["warnings"] = errors
+
+        return Response(response_body, status=200)
+
+    @transaction.atomic
+    def _sync_roadmap(self, r_data):
+        """
+        Upsert a single roadmap and its topics inside a DB transaction.
+        Returns a summary dict describing what changed.
+        """
+        slug = r_data.get("slug", "").strip()
+        if not slug:
+            raise ValueError("'slug' is required.")
+
+        title = r_data.get("title", "").strip()
+        if not title:
+            raise ValueError("'title' is required.")
+
+        topics_data = r_data.get("topics", [])
+        if not isinstance(topics_data, list):
+            raise ValueError("'topics' must be an array.")
+
+        # ── Upsert the path ───────────────────────────────────────────────────
+        path, path_created = LearningPath.objects.update_or_create(
+            slug=slug,
+            defaults={
+                "title": title,
+                "description": r_data.get("description", ""),
+                "estimated_weeks": r_data.get("estimated_weeks", 12),
+                "is_custom": False,
+                "is_active": True,
+                "visibility": "public",
+            },
+        )
+
+        # ── Upsert topics ─────────────────────────────────────────────────────
+        valid_topic_ids = []
+        topics_created = 0
+        topics_updated = 0
+        topic_errors = []
+
+        for i, t_data in enumerate(topics_data):
+            t_slug = t_data.get("slug", "").strip()
+            t_title = t_data.get("title", "").strip()
+
+            if not t_slug:
+                topic_errors.append(f"Topic at index {i} is missing 'slug' — skipped.")
+                continue
+            if not t_title:
+                topic_errors.append(f"Topic '{t_slug}' is missing 'title' — skipped.")
+                continue
+
+            node_kind = t_data.get("node_kind", "topic")
+            if node_kind not in ("topic", "milestone", "optional"):
+                topic_errors.append(
+                    f"Topic '{t_slug}' has invalid node_kind '{node_kind}'. "
+                    f"Defaulting to 'topic'."
                 )
-                valid_topic_ids.append(topic.id)
-            
-            # Delete topics that are no longer in the JSON
-            Topic.objects.filter(path=path).exclude(id__in=valid_topic_ids).delete()
+                node_kind = "topic"
 
-        return Response({'message': 'Roadmap(s) successfully uploaded and synchronized.'}, status=200)
+            topic, t_created = Topic.objects.update_or_create(
+                path=path,
+                slug=t_slug,
+                defaults={
+                    "title": t_title,
+                    "summary": t_data.get("summary", ""),
+                    "order": t_data.get("order", i),
+                    "node_kind": node_kind,
+                },
+            )
+            valid_topic_ids.append(topic.id)
+            if t_created:
+                topics_created += 1
+            else:
+                topics_updated += 1
+
+        # ── Prune removed topics ──────────────────────────────────────────────
+        deleted_qs = Topic.objects.filter(path=path).exclude(id__in=valid_topic_ids)
+        deleted_titles = list(deleted_qs.values_list("title", flat=True))
+        deleted_count = deleted_qs.count()
+        deleted_qs.delete()
+
+        # ── Build summary ─────────────────────────────────────────────────────
+        summary = {
+            "slug": slug,
+            "title": title,
+            "path_status": "created" if path_created else "updated",
+            "topics": {
+                "created": topics_created,
+                "updated": topics_updated,
+                "deleted": deleted_count,
+                "deleted_titles": deleted_titles,
+            },
+        }
+        if topic_errors:
+            summary["topic_warnings"] = topic_errors
+
+        return summary
+
+class AdminRoadmapListView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        roadmaps = LearningPath.objects.filter(is_custom=False)
+        return Response(LearningPathSerializer(roadmaps, many=True).data)
+
+class AdminRoadmapDetailView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request, slug):
+        path = get_object_or_404(LearningPath, slug=slug, is_custom=False)
+        path.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
