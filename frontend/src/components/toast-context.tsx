@@ -41,10 +41,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               toast.type === "xp"
                 ? "bg-[#0d1a0d]/90 border-[#22c55e]/30 text-[#f0f0f0]"
                 : toast.type === "success"
-                ? "bg-[#0d1a0d]/90 border-[#22c55e]/30 text-[#f0f0f0]"
-                : toast.type === "error"
-                ? "bg-[#1a0a0a]/90 border-[#ef4444]/30 text-[#f0f0f0]"
-                : "bg-[#111]/90 border-[#333] text-[#f0f0f0]"
+                  ? "bg-[#0d1a0d]/90 border-[#22c55e]/30 text-[#f0f0f0]"
+                  : toast.type === "error"
+                    ? "bg-[#1a0a0a]/90 border-[#ef4444]/30 text-[#f0f0f0]"
+                    : "bg-[#111]/90 border-[#333] text-[#f0f0f0]"
             }`}
           >
             {toast.type === "xp" ? (

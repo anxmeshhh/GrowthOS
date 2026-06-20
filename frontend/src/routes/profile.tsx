@@ -3,8 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { PageShell } from "@/components/growth-ui";
 import {
-  User, Calendar, Shield, Award, Flame, BookOpen,
-  ClipboardCheck, Trophy, Star, TrendingUp, Zap,
+  User,
+  Calendar,
+  Shield,
+  Award,
+  Flame,
+  BookOpen,
+  ClipboardCheck,
+  Trophy,
+  Star,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
 import { useAppTutorial } from "@/components/tutorial-overlay";
@@ -39,9 +48,7 @@ function timeAgo(iso: string) {
 }
 
 function Skel({ className = "" }: { className?: string }) {
-  return (
-    <div className={`rounded-[3px] bg-[#0f0f0f] animate-pulse ${className}`} />
-  );
+  return <div className={`rounded-[3px] bg-[#0f0f0f] animate-pulse ${className}`} />;
 }
 
 /* ── page ─────────────────────────────────────────────────────────────── */
@@ -91,10 +98,8 @@ function ProfilePage() {
   return (
     <PageShell>
       <div className="profile-grid">
-
         {/* ── [A] Identity card ─────────────────────────────────────────── */}
         <div className="profile-card" style={{ gridArea: "id" }}>
-
           {/* Avatar + name */}
           <div className="px-5 pt-6 pb-5 flex flex-col items-center text-center border-b border-[#111]">
             <div className="avatar-ring mb-4">
@@ -109,8 +114,12 @@ function ProfilePage() {
 
             <div className="flex items-center gap-2 mt-2">
               <PillBadge icon={<Calendar size={8} />} label={joined} />
-              <PillBadge icon={<Shield size={8} className="text-[#22c55e]" />} label={`Level ${level}`} accent />
-              <button 
+              <PillBadge
+                icon={<Shield size={8} className="text-[#22c55e]" />}
+                label={`Level ${level}`}
+                accent
+              />
+              <button
                 onClick={startTutorial}
                 className="pill-badge hover:bg-[#1a1a1a] transition-colors cursor-pointer"
                 title="Replay Tutorial"
@@ -125,25 +134,38 @@ function ProfilePage() {
           <div className="px-5 py-4 border-b border-[#111]">
             <div className="flex items-center justify-between mb-2">
               <span className="section-label">{lvl}</span>
-              <span className="section-label">
-                {pLoading ? "—" : `${xp} / ${next} XP`}
-              </span>
+              <span className="section-label">{pLoading ? "—" : `${xp} / ${next} XP`}</span>
             </div>
             <div className="xp-track">
-              <div
-                className="xp-fill"
-                style={{ width: `${pct}%` }}
-              />
+              <div className="xp-fill" style={{ width: `${pct}%` }} />
             </div>
-            <p className="text-[10px] font-mono text-[#eee] mt-1.5 text-right">{pct}% to next tier</p>
+            <p className="text-[10px] font-mono text-[#eee] mt-1.5 text-right">
+              {pct}% to next tier
+            </p>
           </div>
 
           {/* Quick stats 2×2 */}
           <div className="grid grid-cols-2 divide-x divide-y divide-[#111] flex-1">
-            <StatCell icon={<Flame size={12} className="text-[#22c55e]" />} label="Streak" value={pLoading ? "—" : `${profile.streak}d`} />
-            <StatCell icon={<Trophy size={12} className="text-[#22c55e]" />} label="Points" value={pLoading ? "—" : String(xp)} />
-            <StatCell icon={<BookOpen size={12} className="text-[#22c55e]" />} label="Notes" value={pLoading ? "—" : String(profile.notes_written)} />
-            <StatCell icon={<ClipboardCheck size={12} className="text-[#22c55e]" />} label="Quizzes" value={pLoading ? "—" : String(profile.quizzes_passed)} />
+            <StatCell
+              icon={<Flame size={12} className="text-[#22c55e]" />}
+              label="Streak"
+              value={pLoading ? "—" : `${profile.streak}d`}
+            />
+            <StatCell
+              icon={<Trophy size={12} className="text-[#22c55e]" />}
+              label="Points"
+              value={pLoading ? "—" : String(xp)}
+            />
+            <StatCell
+              icon={<BookOpen size={12} className="text-[#22c55e]" />}
+              label="Notes"
+              value={pLoading ? "—" : String(profile.notes_written)}
+            />
+            <StatCell
+              icon={<ClipboardCheck size={12} className="text-[#22c55e]" />}
+              label="Quizzes"
+              value={pLoading ? "—" : String(profile.quizzes_passed)}
+            />
           </div>
         </div>
 
@@ -158,7 +180,9 @@ function ProfilePage() {
           <div className="flex-1 overflow-y-auto min-h-0 p-3">
             {pLoading ? (
               <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-14 w-full" />)}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skel key={i} className="h-14 w-full" />
+                ))}
               </div>
             ) : profile?.badges?.length > 0 ? (
               <div className="grid grid-cols-2 gap-2">
@@ -174,12 +198,17 @@ function ProfilePage() {
 
         {/* ── [C] XP Breakdown ─────────────────────────────────────────── */}
         <div className="profile-card" style={{ gridArea: "breakdown" }}>
-          <CardHeader icon={<TrendingUp size={10} className="text-[#22c55e]" />} title="XP Breakdown" />
+          <CardHeader
+            icon={<TrendingUp size={10} className="text-[#22c55e]" />}
+            title="XP Breakdown"
+          />
 
           <div className="flex-1 overflow-y-auto min-h-0 p-4">
             {pLoading ? (
               <div className="flex flex-col gap-4">
-                {Array.from({ length: 4 }).map((_, i) => <Skel key={i} className="h-7 w-full" />)}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skel key={i} className="h-7 w-full" />
+                ))}
               </div>
             ) : profile?.xp_breakdown?.length > 0 ? (
               <div className="space-y-4">
@@ -209,7 +238,10 @@ function ProfilePage() {
 
         {/* ── [D] Heatmap ───────────────────────────────────────────────── */}
         <div className="profile-card" style={{ gridArea: "heat" }}>
-          <CardHeader icon={<Zap size={10} className="text-[#22c55e]" />} title="Contribution Heatmap">
+          <CardHeader
+            icon={<Zap size={10} className="text-[#22c55e]" />}
+            title="Contribution Heatmap"
+          >
             <span className="section-label">{pLoading ? "—" : `${xp} total XP`}</span>
           </CardHeader>
 
@@ -234,9 +266,7 @@ function ProfilePage() {
         {/* ── [E] Recent Activity ───────────────────────────────────────── */}
         <div className="profile-card" style={{ gridArea: "activity" }}>
           <CardHeader icon={<Flame size={10} className="text-[#22c55e]" />} title="Recent Activity">
-            {activity.length > 0 && (
-              <span className="live-dot" />
-            )}
+            {activity.length > 0 && <span className="live-dot" />}
           </CardHeader>
 
           <div className="flex-1 overflow-y-auto min-h-0 px-3 py-2">
@@ -244,17 +274,25 @@ function ProfilePage() {
               <ul className="divide-y divide-[#0d0d0d]">
                 {activity.slice(0, 10).map((a: any, i: number) => (
                   <li key={a.id} className="flex items-start gap-3 py-2.5">
-                    <div className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1f1f1f]"
-                      }`} />
+                    <div
+                      className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${
+                        i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1f1f1f]"
+                      }`}
+                    />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[12px] leading-snug truncate ${i === 0 ? "text-[#c8c8c8]" : "text-[#eee]"
-                        }`}>
+                      <p
+                        className={`text-[12px] leading-snug truncate ${
+                          i === 0 ? "text-[#c8c8c8]" : "text-[#eee]"
+                        }`}
+                      >
                         {a.label}
                       </p>
                       <p className="text-[10px] font-mono text-[#eee] mt-0.5">{timeAgo(a.date)}</p>
                     </div>
                     {i === 0 && (
-                      <span className="shrink-0 text-[9px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">new</span>
+                      <span className="shrink-0 text-[9px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">
+                        new
+                      </span>
                     )}
                   </li>
                 ))}
@@ -267,7 +305,10 @@ function ProfilePage() {
 
         {/* ── [F] Completed Roadmaps ────────────────────────────────────── */}
         <div className="profile-card" style={{ gridArea: "paths" }}>
-          <CardHeader icon={<Star size={10} className="text-[#22c55e]" />} title="Completed Roadmaps">
+          <CardHeader
+            icon={<Star size={10} className="text-[#22c55e]" />}
+            title="Completed Roadmaps"
+          >
             {!pLoading && profile?.completed_paths?.length > 0 && (
               <span className="section-label">{profile.completed_paths.length} done</span>
             )}
@@ -276,7 +317,9 @@ function ProfilePage() {
           <div className="flex-1 overflow-y-auto min-h-0 px-4 py-3">
             {pLoading ? (
               <div className="flex gap-2">
-                {Array.from({ length: 3 }).map((_, i) => <Skel key={i} className="h-7 w-28" />)}
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skel key={i} className="h-7 w-28" />
+                ))}
               </div>
             ) : profile?.completed_paths?.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
@@ -544,7 +587,9 @@ function ProfilePage() {
 /* ── sub-components ───────────────────────────────────────────────────── */
 
 function CardHeader({
-  icon, title, children,
+  icon,
+  title,
+  children,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -562,7 +607,9 @@ function CardHeader({
 }
 
 function PillBadge({
-  icon, label, accent = false,
+  icon,
+  label,
+  accent = false,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -576,19 +623,15 @@ function PillBadge({
   );
 }
 
-function StatCell({
-  icon, label, value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="stat-cell">
       <div className="stat-cell-icon">{icon}</div>
       <div>
         <p className="section-label mb-0.5">{label}</p>
-        <p className="text-[14px] font-semibold tabular-nums text-[#e0e0e0] leading-none">{value}</p>
+        <p className="text-[14px] font-semibold tabular-nums text-[#e0e0e0] leading-none">
+          {value}
+        </p>
       </div>
     </div>
   );
@@ -609,7 +652,11 @@ function BadgeCard({ title, desc }: { title: string; desc: string }) {
 }
 
 function BreakdownRow({
-  label, total, count, width, rank,
+  label,
+  total,
+  count,
+  width,
+  rank,
 }: {
   label: string;
   total: number;

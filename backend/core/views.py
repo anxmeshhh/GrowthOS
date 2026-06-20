@@ -133,6 +133,7 @@ class GitHubLoginView(views.APIView):
 
     def post(self, request):
         code = request.data.get('code')
+        redirect_uri = request.data.get('redirect_uri')
         if not code:
             return Response({'error': 'Missing GitHub code'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -147,7 +148,8 @@ class GitHubLoginView(views.APIView):
                 data={
                     'client_id': client_id,
                     'client_secret': client_secret,
-                    'code': code
+                    'code': code,
+                    'redirect_uri': redirect_uri
                 }
             )
             token_data = token_response.json()
@@ -211,6 +213,7 @@ class GitHubConnectView(views.APIView):
 
     def post(self, request):
         code = request.data.get('code')
+        redirect_uri = request.data.get('redirect_uri')
         if not code:
             return Response({'error': 'Missing GitHub code'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -224,7 +227,8 @@ class GitHubConnectView(views.APIView):
                 data={
                     'client_id': client_id,
                     'client_secret': client_secret,
-                    'code': code
+                    'code': code,
+                    'redirect_uri': redirect_uri
                 }
             )
             token_data = token_response.json()

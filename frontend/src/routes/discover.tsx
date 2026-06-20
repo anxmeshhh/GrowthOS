@@ -34,7 +34,7 @@ function DiscoverPage() {
       queryClient.setQueryData(["paths"], (old: any) => {
         if (!old) return old;
         return old.map((p: any) =>
-          p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p
+          p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p,
         );
       });
       return { previousPaths };
@@ -53,13 +53,12 @@ function DiscoverPage() {
   const filteredPaths = paths.filter(
     (p: any) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.description?.toLowerCase().includes(search.toLowerCase())
+      p.description?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#f0f0f0]">
       <div className="max-w-5xl mx-auto px-6 py-14">
-
         {/* Header */}
         <div className="mb-12">
           <p className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#22c55e] mb-3">
@@ -76,10 +75,7 @@ function DiscoverPage() {
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-10">
           <div className="relative flex-1">
-            <Search
-              size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#eee]"
-            />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#eee]" />
             <input
               type="text"
               value={search}
@@ -151,14 +147,12 @@ function PathCard({
 
   return (
     <div className="group bg-[#0e0e0e] border border-[#1a1a1a] hover:border-[#252525] hover:bg-[#111] rounded-2xl p-6 flex flex-col gap-5 transition-all duration-200">
-
       {/* Card Header */}
       <div className="flex items-start gap-3">
         <div
-          className={`w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 ${isCustom
-              ? "bg-[rgba(139,92,246,0.08)]"
-              : "bg-[rgba(34,197,94,0.08)]"
-            }`}
+          className={`w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 ${
+            isCustom ? "bg-[rgba(139,92,246,0.08)]" : "bg-[rgba(34,197,94,0.08)]"
+          }`}
         >
           {isCustom ? (
             <Pencil size={16} className="text-[#a78bfa]" />
@@ -177,10 +171,11 @@ function PathCard({
             </span>
             <span className="text-[#fff]">·</span>
             <span
-              className={`text-[11px] font-semibold tracking-[0.07em] uppercase px-2 py-0.5 rounded-[5px] ${isCustom
+              className={`text-[11px] font-semibold tracking-[0.07em] uppercase px-2 py-0.5 rounded-[5px] ${
+                isCustom
                   ? "bg-[rgba(139,92,246,0.1)] text-[#a78bfa]"
                   : "bg-[rgba(34,197,94,0.08)] text-[#22c55e]"
-                }`}
+              }`}
             >
               {isCustom ? "Custom" : "System"}
             </span>
@@ -191,15 +186,13 @@ function PathCard({
           onClick={onBookmark}
           disabled={bookmarkPending}
           title={path.is_bookmarked ? "Remove bookmark" : "Bookmark path"}
-          className={`w-8 h-8 rounded-[8px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${path.is_bookmarked
+          className={`w-8 h-8 rounded-[8px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
+            path.is_bookmarked
               ? "bg-[#22c55e] border-[#22c55e]"
               : "bg-transparent border-[#1e1e1e] hover:border-[#2e2e2e] hover:bg-[#161616]"
-            }`}
+          }`}
         >
-          <BookMarked
-            size={13}
-            className={path.is_bookmarked ? "text-black" : "text-[#eee]"}
-          />
+          <BookMarked size={13} className={path.is_bookmarked ? "text-black" : "text-[#eee]"} />
         </button>
       </div>
 
@@ -216,8 +209,9 @@ function PathCard({
               Progress
             </span>
             <span
-              className={`text-[12px] font-semibold font-mono ${isCustom ? "text-[#a78bfa]" : "text-[#22c55e]"
-                }`}
+              className={`text-[12px] font-semibold font-mono ${
+                isCustom ? "text-[#a78bfa]" : "text-[#22c55e]"
+              }`}
             >
               {progress} / {topicCount}
             </span>

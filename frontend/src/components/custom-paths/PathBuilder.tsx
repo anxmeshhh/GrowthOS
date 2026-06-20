@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, X, Edit2, ArrowUp, ArrowDown, PlusCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Plus, X, Edit2, ArrowUp, ArrowDown, PlusCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Alert, AlertDescription } from '../ui/alert';
-import { apiClient } from '../../lib/api-client';
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Alert, AlertDescription } from "../ui/alert";
+import { apiClient } from "../../lib/api-client";
 
 interface Topic {
   id?: number | string;
@@ -30,10 +30,16 @@ interface PathBuilderProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOpenChange }: PathBuilderProps) {
+export function CustomPathBuilder({
+  existingPath,
+  onSuccess,
+  trigger,
+  open,
+  onOpenChange,
+}: PathBuilderProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open !== undefined ? open : internalOpen;
-  
+
   const handleOpenChange = (newOpen: boolean) => {
     if (onOpenChange) {
       onOpenChange(newOpen);
@@ -42,23 +48,23 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
     }
   };
 
-  const [pathTitle, setPathTitle] = useState('');
-  const [pathSlug, setPathSlug] = useState('');
-  const [pathDescription, setPathDescription] = useState('');
+  const [pathTitle, setPathTitle] = useState("");
+  const [pathSlug, setPathSlug] = useState("");
+  const [pathDescription, setPathDescription] = useState("");
   const [estimatedWeeks, setEstimatedWeeks] = useState(12);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const isEditing = !!existingPath;
 
   useEffect(() => {
     if (isOpen) {
       if (existingPath) {
-        setPathTitle(existingPath.title || '');
-        setPathSlug(existingPath.slug || '');
-        setPathDescription(existingPath.description || '');
+        setPathTitle(existingPath.title || "");
+        setPathSlug(existingPath.slug || "");
+        setPathDescription(existingPath.description || "");
         setEstimatedWeeks(existingPath.estimated_weeks || 12);
         setTopics(existingPath.topics || []);
       } else {
@@ -70,10 +76,10 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
       .slice(0, 255);
   };
 
@@ -87,10 +93,10 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
   const addTopic = () => {
     const newTopic: Topic = {
       title: `Topic ${topics.length + 1}`,
-      summary: '',
+      summary: "",
       order: topics.length,
       dependencies: [],
-      node_kind: 'topic'
+      node_kind: "topic",
     };
     setTopics([...topics, newTopic]);
   };
@@ -103,7 +109,7 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
 
   const removeTopic = (index: number) => {
     const updated = topics.filter((_, i) => i !== index);
-    updated.forEach((t, i) => t.order = i);
+    updated.forEach((t, i) => (t.order = i));
     setTopics(updated);
   };
 
@@ -113,7 +119,7 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
     const temp = updated[index];
     updated[index] = updated[index - 1];
     updated[index - 1] = temp;
-    updated.forEach((t, i) => t.order = i);
+    updated.forEach((t, i) => (t.order = i));
     setTopics(updated);
   };
 
@@ -123,37 +129,37 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
     const temp = updated[index];
     updated[index] = updated[index + 1];
     updated[index + 1] = temp;
-    updated.forEach((t, i) => t.order = i);
+    updated.forEach((t, i) => (t.order = i));
     setTopics(updated);
   };
 
   const insertTopicBelow = (index: number) => {
     const newTopic: Topic = {
       title: `Topic ${topics.length + 2}`,
-      summary: '',
+      summary: "",
       order: 0,
       dependencies: [],
-      node_kind: 'topic'
+      node_kind: "topic",
     };
     const updated = [...topics];
     updated.splice(index + 1, 0, newTopic);
-    updated.forEach((t, i) => t.order = i);
+    updated.forEach((t, i) => (t.order = i));
     setTopics(updated);
   };
 
   const handleSavePath = async () => {
     try {
       setLoading(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       if (!pathTitle.trim()) {
-        setError('Path title is required');
+        setError("Path title is required");
         return;
       }
 
       if (topics.length === 0) {
-        setError('At least one topic is required');
+        setError("At least one topic is required");
         return;
       }
 
@@ -161,13 +167,13 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
         .map((topic, index) => ({
           ...topic,
           title: topic.title.trim(),
-          summary: topic.summary || '',
+          summary: topic.summary || "",
           order: index,
         }))
         .filter((topic) => topic.title);
 
       if (validTopics.length === 0) {
-        setError('At least one named topic is required');
+        setError("At least one named topic is required");
         return;
       }
 
@@ -180,13 +186,13 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
 
       if (isEditing) {
         await apiClient.patch(`/api/custom-paths/${existingPath.slug}/`, payload);
-        setSuccess('Custom path updated successfully!');
+        setSuccess("Custom path updated successfully!");
       } else {
-        await apiClient.post('/api/custom-paths/', {
+        await apiClient.post("/api/custom-paths/", {
           ...payload,
           slug: pathSlug || generateSlug(pathTitle),
         });
-        setSuccess('Custom path created successfully!');
+        setSuccess("Custom path created successfully!");
       }
 
       if (onSuccess) onSuccess();
@@ -196,40 +202,45 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
         resetForm();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${isEditing ? 'update' : 'create'} path`);
+      setError(
+        err instanceof Error ? err.message : `Failed to ${isEditing ? "update" : "create"} path`,
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const resetForm = () => {
-    setPathTitle('');
-    setPathSlug('');
-    setPathDescription('');
+    setPathTitle("");
+    setPathSlug("");
+    setPathDescription("");
     setEstimatedWeeks(12);
     setTopics([]);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {trigger ? trigger : (
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-          >
+        {trigger ? (
+          trigger
+        ) : (
+          <Button variant="outline" className="flex items-center gap-2">
             {isEditing ? <Edit2 size={16} /> : <Plus size={16} />}
-            {isEditing ? 'Edit Path' : 'Create Custom Path'}
+            {isEditing ? "Edit Path" : "Create Custom Path"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border-[#222] text-[#f0f0f0]">
         <DialogHeader>
-          <DialogTitle className="text-xl">{isEditing ? 'Edit Custom Path' : 'Create a Custom Learning Path'}</DialogTitle>
+          <DialogTitle className="text-xl">
+            {isEditing ? "Edit Custom Path" : "Create a Custom Learning Path"}
+          </DialogTitle>
           <DialogDescription className="text-gray-400">
-            {isEditing ? 'Modify your learning roadmap and topics' : 'Build your own learning roadmap with custom topics and sequence'}
+            {isEditing
+              ? "Modify your learning roadmap and topics"
+              : "Build your own learning roadmap with custom topics and sequence"}
           </DialogDescription>
         </DialogHeader>
 
@@ -281,7 +292,9 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">Estimated Duration (weeks)</label>
+              <label className="block text-sm font-medium text-gray-300">
+                Estimated Duration (weeks)
+              </label>
               <Input
                 type="number"
                 min="1"
@@ -347,17 +360,13 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
                             <Input
                               placeholder="Topic title"
                               value={topic.title}
-                              onChange={(e) =>
-                                updateTopic(index, { title: e.target.value })
-                              }
+                              onChange={(e) => updateTopic(index, { title: e.target.value })}
                               className="text-sm bg-[#1a1a1a] border-[#333] text-[#eee]"
                             />
                             <textarea
                               placeholder="Topic summary (optional)"
-                              value={topic.summary || ''}
-                              onChange={(e) =>
-                                updateTopic(index, { summary: e.target.value })
-                              }
+                              value={topic.summary || ""}
+                              onChange={(e) => updateTopic(index, { summary: e.target.value })}
                               className="w-full px-2 py-1 text-sm border border-[#333] bg-[#1a1a1a] text-[#eee] rounded"
                               rows={2}
                             />
@@ -373,7 +382,7 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Insert Below Button */}
                     <div className="flex justify-center -my-1 relative z-10 opacity-0 hover:opacity-100 transition-opacity">
                       <button
@@ -408,7 +417,7 @@ export function CustomPathBuilder({ existingPath, onSuccess, trigger, open, onOp
               disabled={loading || !pathTitle.trim() || topics.length === 0}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
-              {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Path'}
+              {loading ? "Saving..." : isEditing ? "Save Changes" : "Create Path"}
             </Button>
           </div>
         </div>

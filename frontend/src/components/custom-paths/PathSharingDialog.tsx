@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Share2, Users, Lock, Globe, Copy, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Share2, Users, Lock, Globe, Copy, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,23 +7,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Alert, AlertDescription } from '../ui/alert';
-import { apiClient } from '../../lib/api-client';
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Alert, AlertDescription } from "../ui/alert";
+import { apiClient } from "../../lib/api-client";
 
 interface PathSharingProps {
   pathSlug: string;
   pathTitle: string;
   isCreator: boolean;
-  currentVisibility: 'private' | 'public' | 'shared';
+  currentVisibility: "private" | "public" | "shared";
 }
 
 interface SharedUser {
   id: number;
   shared_to_username: string;
-  permission: 'view' | 'edit' | 'admin';
+  permission: "view" | "edit" | "admin";
 }
 
 export function PathSharingDialog({
@@ -33,15 +33,13 @@ export function PathSharingDialog({
   currentVisibility,
 }: PathSharingProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [visibility, setVisibility] = useState<'private' | 'public' | 'shared'>(
-    currentVisibility
-  );
+  const [visibility, setVisibility] = useState<"private" | "public" | "shared">(currentVisibility);
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
-  const [shareUsername, setShareUsername] = useState('');
-  const [sharePermission, setSharePermission] = useState<'view' | 'edit'>('view');
+  const [shareUsername, setShareUsername] = useState("");
+  const [sharePermission, setSharePermission] = useState<"view" | "edit">("view");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (isOpen && isCreator) {
@@ -51,20 +49,18 @@ export function PathSharingDialog({
 
   const loadSharedUsers = async () => {
     try {
-      const response = await apiClient.get(
-        `/api/custom-paths/${pathSlug}/shared_with/`
-      );
+      const response = await apiClient.get(`/api/custom-paths/${pathSlug}/shared_with/`);
       setSharedUsers(response.data);
     } catch (err) {
-      console.error('Failed to load shared users:', err);
+      console.error("Failed to load shared users:", err);
     }
   };
 
   const handleVisibilityChange = async (newVisibility: typeof visibility) => {
     try {
       setLoading(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       await apiClient.patch(`/api/custom-paths/${pathSlug}/update_visibility/`, {
         visibility: newVisibility,
@@ -73,7 +69,7 @@ export function PathSharingDialog({
       setVisibility(newVisibility);
       setSuccess(`Path visibility changed to ${newVisibility}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update visibility');
+      setError(err instanceof Error ? err.message : "Failed to update visibility");
     } finally {
       setLoading(false);
     }
@@ -82,11 +78,11 @@ export function PathSharingDialog({
   const handleSharePath = async () => {
     try {
       setLoading(true);
-      setError('');
-      setSuccess('');
+      setError("");
+      setSuccess("");
 
       if (!shareUsername.trim()) {
-        setError('Please enter a username');
+        setError("Please enter a username");
         return;
       }
 
@@ -96,10 +92,10 @@ export function PathSharingDialog({
       });
 
       setSuccess(`Path shared with ${shareUsername}`);
-      setShareUsername('');
+      setShareUsername("");
       await loadSharedUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to share path');
+      setError(err instanceof Error ? err.message : "Failed to share path");
     } finally {
       setLoading(false);
     }
@@ -108,7 +104,7 @@ export function PathSharingDialog({
   const handleUnsharePath = async (username: string) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       await apiClient.post(`/api/custom-paths/${pathSlug}/unshare/`, {
         username,
@@ -117,7 +113,7 @@ export function PathSharingDialog({
       setSuccess(`Removed sharing with ${username}`);
       await loadSharedUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove sharing');
+      setError(err instanceof Error ? err.message : "Failed to remove sharing");
     } finally {
       setLoading(false);
     }
@@ -125,11 +121,11 @@ export function PathSharingDialog({
 
   const getVisibilityIcon = (vis: typeof visibility) => {
     switch (vis) {
-      case 'private':
+      case "private":
         return <Lock size={16} />;
-      case 'public':
+      case "public":
         return <Globe size={16} />;
-      case 'shared':
+      case "shared":
         return <Users size={16} />;
     }
   };
@@ -150,9 +146,7 @@ export function PathSharingDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Share "{pathTitle}"</DialogTitle>
-          <DialogDescription>
-            Control who can access and edit your learning path
-          </DialogDescription>
+          <DialogDescription>Control who can access and edit your learning path</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -173,15 +167,15 @@ export function PathSharingDialog({
             <h3 className="font-medium text-lg">Path Visibility</h3>
 
             <div className="space-y-2">
-              {(['private', 'public', 'shared'] as const).map((vis) => (
+              {(["private", "public", "shared"] as const).map((vis) => (
                 <button
                   key={vis}
                   onClick={() => handleVisibilityChange(vis)}
                   disabled={loading}
                   className={`w-full p-3 rounded-lg border-2 text-left transition ${
                     visibility === vis
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -189,9 +183,9 @@ export function PathSharingDialog({
                     <div>
                       <div className="font-medium capitalize">{vis}</div>
                       <div className="text-lg text-gray-500">
-                        {vis === 'private' && 'Only you can access'}
-                        {vis === 'public' && 'Anyone can view'}
-                        {vis === 'shared' && 'Share with specific users'}
+                        {vis === "private" && "Only you can access"}
+                        {vis === "public" && "Anyone can view"}
+                        {vis === "shared" && "Share with specific users"}
                       </div>
                     </div>
                   </div>
@@ -201,7 +195,7 @@ export function PathSharingDialog({
           </div>
 
           {/* Share with Users Section */}
-          {visibility !== 'private' && (
+          {visibility !== "private" && (
             <div className="space-y-3 pt-4 border-t">
               <h3 className="font-medium text-lg">Share with Users</h3>
 
@@ -212,16 +206,14 @@ export function PathSharingDialog({
                     value={shareUsername}
                     onChange={(e) => setShareUsername(e.target.value)}
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         handleSharePath();
                       }
                     }}
                   />
                   <select
                     value={sharePermission}
-                    onChange={(e) =>
-                      setSharePermission(e.target.value as 'view' | 'edit')
-                    }
+                    onChange={(e) => setSharePermission(e.target.value as "view" | "edit")}
                     className="px-3 py-2 border rounded-md text-lg"
                   >
                     <option value="view">View</option>
@@ -248,9 +240,7 @@ export function PathSharingDialog({
                       className="flex items-center justify-between p-2 bg-gray-50 rounded"
                     >
                       <div className="flex-1">
-                        <div className="text-lg font-medium">
-                          {user.shared_to_username}
-                        </div>
+                        <div className="text-lg font-medium">{user.shared_to_username}</div>
                         <div className="text-lg text-gray-500 capitalize">
                           {user.permission} permission
                         </div>
@@ -270,7 +260,7 @@ export function PathSharingDialog({
           )}
 
           {/* Copy Share Link */}
-          {visibility === 'public' && (
+          {visibility === "public" && (
             <div className="pt-4 border-t">
               <Button
                 variant="outline"
@@ -279,7 +269,7 @@ export function PathSharingDialog({
                 onClick={() => {
                   const url = `${window.location.origin}/paths/${pathSlug}`;
                   navigator.clipboard.writeText(url);
-                  setSuccess('Share link copied!');
+                  setSuccess("Share link copied!");
                 }}
               >
                 <Copy size={14} />

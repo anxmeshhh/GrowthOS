@@ -17,6 +17,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useGrowth } from "@/lib/growth-store";
+import { useAppTutorial } from "@/components/tutorial-overlay";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -89,6 +90,7 @@ function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { state, update, reset } = useGrowth();
+  const { startTutorial } = useAppTutorial();
   const [confirm, setConfirm] = useState(false);
   const [githubInput, setGithubInput] = useState("");
   const [saved, setSaved] = useState(false);
@@ -155,9 +157,9 @@ function SettingsPage() {
 
   const joined = profile?.date_joined
     ? new Date(profile.date_joined).toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    })
+        month: "long",
+        year: "numeric",
+      })
     : "—";
 
   return (
@@ -170,7 +172,6 @@ function SettingsPage() {
       </div>
 
       <div className="settings-stack">
-
         {/* ── Account ──────────────────────────────────────────────────── */}
         <div className="settings-card">
           <CardHeader icon={<User size={10} className="text-[#22c55e]" />} title="Account" />
@@ -178,13 +179,17 @@ function SettingsPage() {
           <div className="settings-card-body">
             <div className="account-fields">
               <div className="account-field">
-                <span className="section-label" style={{ marginBottom: 6, display: "block" }}>Username</span>
+                <span className="section-label" style={{ marginBottom: 6, display: "block" }}>
+                  Username
+                </span>
                 <div className="readonly-field">
-                  {isLoading ? <Skel className="h-4 w-28" /> : profile?.username ?? "—"}
+                  {isLoading ? <Skel className="h-4 w-28" /> : (profile?.username ?? "—")}
                 </div>
               </div>
               <div className="account-field">
-                <span className="section-label" style={{ marginBottom: 6, display: "block" }}>Member Since</span>
+                <span className="section-label" style={{ marginBottom: 6, display: "block" }}>
+                  Member Since
+                </span>
                 <div className="readonly-field">
                   <Calendar size={10} className="inline mr-1.5 opacity-40" />
                   {joined}
@@ -196,11 +201,15 @@ function SettingsPage() {
 
         {/* ── GitHub Integration ───────────────────────────────────────── */}
         <div className="settings-card">
-          <CardHeader icon={<Github size={10} className="text-[#f5f5f5]" />} title="GitHub Integration" />
+          <CardHeader
+            icon={<Github size={10} className="text-[#f5f5f5]" />}
+            title="GitHub Integration"
+          />
 
           <div className="settings-card-body">
             <p className="settings-desc">
-              Securely connect your GitHub account to enable advanced features like One-Click Repo Creation, Gist Publishing, and Automated Project Verification.
+              Securely connect your GitHub account to enable advanced features like One-Click Repo
+              Creation, Gist Publishing, and Automated Project Verification.
             </p>
 
             <div className="github-input-row mt-4">
@@ -231,9 +240,13 @@ function SettingsPage() {
                     </button>
                   </div>
                   {profile?.has_github_workspace_access ? (
-                    <p className="text-[10px] text-[#4ade80] font-mono tracking-wide uppercase">✓ Workspace permissions granted & encrypted</p>
+                    <p className="text-[10px] text-[#4ade80] font-mono tracking-wide uppercase">
+                      ✓ Workspace permissions granted & encrypted
+                    </p>
                   ) : (
-                    <p className="text-[10px] text-[#ef4444] font-mono tracking-wide uppercase">⚠ Missing workspace permissions. Please reconnect.</p>
+                    <p className="text-[10px] text-[#ef4444] font-mono tracking-wide uppercase">
+                      ⚠ Missing workspace permissions. Please reconnect.
+                    </p>
                   )}
                 </div>
               ) : (
@@ -255,6 +268,27 @@ function SettingsPage() {
           </div>
         </div>
 
+        {/* ── Preferences ─────────────────────────────────────────────── */}
+        <div className="settings-card">
+          <CardHeader
+            icon={<CheckCircle2 size={10} className="text-[#f5f5f5]" />}
+            title="Preferences"
+          />
+          <div className="settings-card-body">
+            <SettingsRow
+              label="Interactive Tutorial"
+              sub="Restart the onboarding tutorial to learn the system's core features."
+            >
+              <button
+                className="settings-btn-outline"
+                onClick={startTutorial}
+              >
+                Restart Tutorial
+              </button>
+            </SettingsRow>
+          </div>
+        </div>
+
         {/* ── Daily Time Budget ────────────────────────────────────────── */}
         <div className="settings-card">
           <CardHeader
@@ -267,9 +301,7 @@ function SettingsPage() {
           </CardHeader>
 
           <div className="settings-card-body">
-            <p className="settings-desc">
-              Set how much time you want to spend learning each day.
-            </p>
+            <p className="settings-desc">Set how much time you want to spend learning each day.</p>
             <input
               type="range"
               min={20}
@@ -286,7 +318,9 @@ function SettingsPage() {
             />
             <div className="slider-ticks">
               {[20, 60, 120, 180].map((v) => (
-                <span key={v} className="slider-tick">{minutesToDisplay(v)}</span>
+                <span key={v} className="slider-tick">
+                  {minutesToDisplay(v)}
+                </span>
               ))}
             </div>
           </div>
@@ -295,18 +329,21 @@ function SettingsPage() {
         {/* ── Admin Privileges ────────────────────────────────────────── */}
         {!profile?.user?.is_staff && (
           <div className="settings-card">
-            <CardHeader icon={<ShieldAlert size={10} className="text-[#f5f5f5]" />} title="Admin Privileges" />
+            <CardHeader
+              icon={<ShieldAlert size={10} className="text-[#f5f5f5]" />}
+              title="Admin Privileges"
+            />
             <div className="settings-card-body">
               <SettingsRow
                 label="Request Admin Access"
                 sub="Request superuser permissions to manage users and view the Command Override."
               >
-                <button 
-                  className="settings-btn-outline" 
+                <button
+                  className="settings-btn-outline"
                   onClick={() => requestAdmin.mutate()}
                   disabled={requestAdmin.isPending || adminRequested}
                 >
-                  <ShieldAlert size={11} /> 
+                  <ShieldAlert size={11} />
                   {adminRequested ? "Request Pending" : "Request Access"}
                 </button>
               </SettingsRow>
@@ -318,10 +355,7 @@ function SettingsPage() {
         <div className="settings-card">
           <CardHeader icon={<LogOut size={10} className="text-[#f5f5f5]" />} title="Session" />
           <div className="settings-card-body">
-            <SettingsRow
-              label="Sign out"
-              sub="Ends your current session on this device."
-            >
+            <SettingsRow label="Sign out" sub="Ends your current session on this device.">
               <button className="settings-btn-outline" onClick={handleLogout}>
                 <LogOut size={11} /> Sign out
               </button>
@@ -365,7 +399,6 @@ function SettingsPage() {
             </SettingsRow>
           </div>
         </div>
-
       </div>
 
       {/* ── styles ────────────────────────────────────────────────────── */}

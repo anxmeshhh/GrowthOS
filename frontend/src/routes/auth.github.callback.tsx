@@ -40,10 +40,11 @@ function GithubCallbackPage() {
     // Exchange the code via our backend
     const authenticate = async () => {
       try {
+        const redirectUri = window.location.origin + "/auth/github/callback";
         const res = await apiFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, redirect_uri: redirectUri }),
         });
 
         if (res.ok) {
@@ -52,11 +53,19 @@ function GithubCallbackPage() {
             localStorage.setItem("access_token", data.access);
             localStorage.setItem("refresh_token", data.refresh);
           }
-          showToast(isConnect ? "Successfully connected GitHub Workspace!" : "Successfully connected with GitHub!", "success");
+          showToast(
+            isConnect
+              ? "Successfully connected GitHub Workspace!"
+              : "Successfully connected with GitHub!",
+            "success",
+          );
           window.location.href = redirectUrl;
         } else {
           const errData = await res.json().catch(() => ({}));
-          setError(errData.error || `Failed to ${isConnect ? "connect workspace" : "authenticate"} with GitHub.`);
+          setError(
+            errData.error ||
+              `Failed to ${isConnect ? "connect workspace" : "authenticate"} with GitHub.`,
+          );
           setTimeout(() => navigate({ to: isConnect ? "/settings" : "/login" }), 3000);
         }
       } catch (err) {
@@ -75,20 +84,17 @@ function GithubCallbackPage() {
           <div className="absolute w-24 h-24 rounded-full bg-[#22c55e] opacity-20 blur-2xl animate-pulse" />
           <Logo size={48} className="relative z-10 animate-bounce" />
         </div>
-        
+
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">
             {error ? "Authentication Failed" : "Connecting to GitHub..."}
           </h2>
           <p className="text-sm text-[#888] max-w-[300px] mx-auto">
-            {error || "Securely verifying your account and pulling your profile. This will just take a second."}
+            {error ||
+              "Securely verifying your account and pulling your profile. This will just take a second."}
           </p>
-          
-          {error && (
-            <p className="text-xs text-[#555] mt-4">
-              Redirecting you back to login...
-            </p>
-          )}
+
+          {error && <p className="text-xs text-[#555] mt-4">Redirecting you back to login...</p>}
         </div>
       </div>
     </div>

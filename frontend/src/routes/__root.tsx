@@ -80,7 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "GrowthOS — Developer Learning Operating System" },
-      { name: "description", content: "A serious learning OS for self-taught developers. Roadmaps, notes, quizzes, and build proof in one workspace." },
+      {
+        name: "description",
+        content:
+          "A serious learning OS for self-taught developers. Roadmaps, notes, quizzes, and build proof in one workspace.",
+      },
       { name: "author", content: "GrowthOS" },
       { property: "og:title", content: "GrowthOS — Developer Learning OS" },
       { property: "og:description", content: "A serious learning OS for self-taught developers." },
@@ -133,10 +137,15 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
   const router = useRouter();
   const path = router.state.location.pathname;
-  const isAuthRoute = path === "/login" || path === "/signup" || path === "/" || path.startsWith("/auth/") || path.startsWith("/admin/");
+  const isAuthRoute =
+    path === "/login" ||
+    path === "/signup" ||
+    path === "/" ||
+    path.startsWith("/auth/") ||
+    path.startsWith("/admin/");
 
   useContributionTracking(!isAuthRoute);
-  
+
   // Initialize tutorial
   useAppTutorial();
 

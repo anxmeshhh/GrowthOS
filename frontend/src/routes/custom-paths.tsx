@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageShell, PageHeader } from '@/components/growth-ui';
-import { CustomPathBuilder, CustomPathList } from '@/components/custom-paths';
-import { Plus, BookOpen } from 'lucide-react';
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageShell, PageHeader } from "@/components/growth-ui";
+import { CustomPathBuilder, CustomPathList } from "@/components/custom-paths";
+import { Plus, BookOpen } from "lucide-react";
 
-export const Route = createFileRoute('/custom-paths')({
+export const Route = createFileRoute("/custom-paths")({
   component: CustomPathsManagement,
 });
 
@@ -46,8 +46,8 @@ function CustomPathsManagement() {
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Build Your Path</h2>
                   <p className="text-gray-600">
-                    Design a custom learning path tailored to your goals. Add topics,
-                    set their sequence, and track your progress through them.
+                    Design a custom learning path tailored to your goals. Add topics, set their
+                    sequence, and track your progress through them.
                   </p>
                 </div>
 
@@ -58,9 +58,7 @@ function CustomPathsManagement() {
                     💡 Tips for Creating Great Paths
                   </h3>
                   <ul className="text-lg text-blue-800 space-y-1">
-                    <li>
-                      • Start with foundations and progress to advanced topics
-                    </li>
+                    <li>• Start with foundations and progress to advanced topics</li>
                     <li>• Set realistic estimated duration (in weeks)</li>
                     <li>• Use clear, descriptive topic titles</li>
                     <li>• Add summaries to help reviewers understand each topic</li>

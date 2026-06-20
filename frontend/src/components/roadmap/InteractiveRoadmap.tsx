@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   ReactFlow,
   Controls,
@@ -10,10 +10,10 @@ import {
   BackgroundVariant,
   MarkerType,
   MiniMap,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { RoadmapNode, RoadmapNodeData } from './RoadmapNode';
-import dagre from 'dagre';
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { RoadmapNode, RoadmapNodeData } from "./RoadmapNode";
+import dagre from "dagre";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,12 +48,12 @@ type InteractiveRoadmapProps = {
 const nodeTypes = { roadmapNode: RoadmapNode };
 
 const EDGE_BASE = {
-  style: { stroke: '#2a2a2a', strokeWidth: 1.5 },
+  style: { stroke: "#2a2a2a", strokeWidth: 1.5 },
   markerEnd: {
     type: MarkerType.ArrowClosed,
     width: 10,
     height: 10,
-    color: '#2a2a2a',
+    color: "#2a2a2a",
   },
 };
 
@@ -66,19 +66,17 @@ function buildProgressMap(topics: any[]): Record<string, string> {
   const map: Record<string, string> = {};
   topics.forEach((t) => {
     const key = t.graph_node_id ?? t.slug ?? String(t.id);
-    map[key] = t.user_progress ?? 'available';
+    map[key] = t.user_progress ?? "available";
   });
   return map;
 }
 
 function resolveTopicId(graphNodeId: string, topics: any[]): string {
-  const match = topics.find(
-    (t) => (t.graph_node_id ?? t.slug ?? String(t.id)) === graphNodeId
-  );
+  const match = topics.find((t) => (t.graph_node_id ?? t.slug ?? String(t.id)) === graphNodeId);
   return match ? String(match.id) : graphNodeId;
 }
 
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
+const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "TB") => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({ rankdir: direction, nodesep: 40, ranksep: 80 });
@@ -135,10 +133,10 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
         label: t.title,
         bgColor: t.bgColor,
       }));
-      
+
       rawEdges = [];
       let hasDependencies = false;
-      
+
       topics.forEach((t) => {
         if (t.dependencies && t.dependencies.length > 0) {
           hasDependencies = true;
@@ -170,12 +168,12 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
     const incomingEdgeCount: Record<string, number> = {};
     const childrenMap: Record<string, string[]> = {};
 
-    rawNodes.forEach(n => {
+    rawNodes.forEach((n) => {
       incomingEdgeCount[n.id] = 0;
       childrenMap[n.id] = [];
     });
 
-    rawEdges.forEach(e => {
+    rawEdges.forEach((e) => {
       if (incomingEdgeCount[e.target] !== undefined) {
         incomingEdgeCount[e.target]++;
       }
@@ -184,7 +182,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
       }
     });
 
-    const rootNodes = rawNodes.filter(n => incomingEdgeCount[n.id] === 0).map(n => n.id);
+    const rootNodes = rawNodes.filter((n) => incomingEdgeCount[n.id] === 0).map((n) => n.id);
 
     // 3. Find visible nodes (BFS from roots, only traverse if expanded)
     const visibleNodeIds = new Set<string>();
@@ -200,13 +198,16 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
 
     // 4. Build React Flow Nodes and Edges for visible items
     const flowNodes: Node<RoadmapNodeData>[] = rawNodes
-      .filter(n => visibleNodeIds.has(n.id))
+      .filter((n) => visibleNodeIds.has(n.id))
       .map((n) => {
-        const progress = (progressMap[n.id] ?? 'available') as 'available' | 'in_progress' | 'completed';
+        const progress = (progressMap[n.id] ?? "available") as
+          | "available"
+          | "in_progress"
+          | "completed";
         const hasChildren = childrenMap[n.id].length > 0;
         return {
           id: n.id,
-          type: 'roadmapNode',
+          type: "roadmapNode",
           position: { x: 0, y: 0 },
           data: {
             label: n.label,
@@ -222,17 +223,17 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
       });
 
     const flowEdges: Edge[] = rawEdges
-      .filter(e => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target))
+      .filter((e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target))
       .map((e) => ({
         ...EDGE_BASE,
         id: e.id,
         source: e.source,
         target: e.target,
-        type: e.type ?? 'smoothstep',
+        type: e.type ?? "smoothstep",
       }));
 
     // 5. Layout with Dagre
-    return getLayoutedElements(flowNodes, flowEdges, 'TB');
+    return getLayoutedElements(flowNodes, flowEdges, "TB");
   }, [topics, graphData, expandedNodes, toggleNode]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -259,15 +260,10 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
         nodesDraggable
         nodesConnectable={false}
         // Neutral dark canvas to match your theme
-        style={{ background: '#0a0a0a' }}
+        style={{ background: "#0a0a0a" }}
       >
         {/* Subtle dot grid */}
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={24}
-          size={1}
-          color="#1f1f1f"
-        />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1f1f1f" />
 
         {/* Controls — styled dark */}
         <Controls
@@ -283,11 +279,11 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
         {/* Mini map — small overview thumbnail */}
         <MiniMap
           nodeColor={(n) => {
-            const bg = (n.data as RoadmapNodeData)?.bgColor ?? '';
-            if (bg === '#4147d3') return '#22c55e';
-            if (bg === '#e0e0e0') return '#374151';
-            if (bg === '#ffffff') return '#1f1f1f';
-            return '#2a2a2a';
+            const bg = (n.data as RoadmapNodeData)?.bgColor ?? "";
+            if (bg === "#4147d3") return "#22c55e";
+            if (bg === "#e0e0e0") return "#374151";
+            if (bg === "#ffffff") return "#1f1f1f";
+            return "#2a2a2a";
           }}
           maskColor="rgba(0,0,0,0.6)"
           className="!bg-[#0d0d0d] !border !border-[#222] !rounded-lg"
@@ -297,7 +293,9 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
 
       {/* Inline legend — bottom left, always visible */}
       <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-1.5 bg-[#0d0d0d]/90 backdrop-blur border border-[#1f1f1f] rounded-lg px-3 py-2.5 pointer-events-none">
-        <div className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#eee] mb-0.5">Legend</div>
+        <div className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#eee] mb-0.5">
+          Legend
+        </div>
         <LegendRow color="border-[#ffe92b]" label="Topic" />
         <LegendRow color="border-[#22c55e]" label="Milestone" isGreen />
         <LegendRow color="border-[#fff] border-dashed" label="Optional" />
@@ -327,7 +325,7 @@ function LegendRow({
       ) : (
         <span
           className={`w-5 h-3 rounded-sm bg-[#111] border ${color}`}
-          style={{ borderWidth: isGreen ? '1.5px' : '1px' }}
+          style={{ borderWidth: isGreen ? "1.5px" : "1px" }}
         />
       )}
       <span className="text-[11px] font-mono text-[#eee]">{label}</span>

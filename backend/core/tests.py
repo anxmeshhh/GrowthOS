@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 
 from .models import LearningPath
 from .serializers import CustomPathCreateSerializer
-from .slug_utils import (
+from .helpers import (
     MAX_SLUG_LENGTH,
     append_slug_suffix,
     normalize_slug,

@@ -1,8 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Flame, Trophy, Zap, Star, ChevronRight, Loader2,
-  Shield, Sword, Crown, Hexagon, Map, BarChart2, Tag, CalendarDays,
+  Flame,
+  Trophy,
+  Zap,
+  Star,
+  ChevronRight,
+  Loader2,
+  Shield,
+  Sword,
+  Crown,
+  Hexagon,
+  Map,
+  BarChart2,
+  Tag,
+  CalendarDays,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +35,11 @@ function getLevelInfo(xp: number) {
   let l = 1;
   let n = 100;
   let temp = xp;
-  while (temp >= n) { temp -= n; l++; n = Math.floor(n * 1.5); }
+  while (temp >= n) {
+    temp -= n;
+    l++;
+    n = Math.floor(n * 1.5);
+  }
   return { level: l, currentXP: temp, next: n };
 }
 
@@ -55,10 +71,22 @@ const RARITY_CONFIG: Record<
   { color: string; bg: string; border: string; label: string; Icon: any }
 > = {
   common: { color: "#888", bg: "#88888812", border: "#222", label: "Common", Icon: Star },
-  uncommon: { color: "#22c55e", bg: "#22c55e10", border: "#14532d", label: "Uncommon", Icon: Shield },
+  uncommon: {
+    color: "#22c55e",
+    bg: "#22c55e10",
+    border: "#14532d",
+    label: "Uncommon",
+    Icon: Shield,
+  },
   rare: { color: "#3b82f6", bg: "#3b82f610", border: "#1e3a8a", label: "Rare", Icon: Sword },
   epic: { color: "#a855f7", bg: "#a855f710", border: "#581c87", label: "Epic", Icon: Crown },
-  legendary: { color: "#f59e0b", bg: "#f59e0b10", border: "#78350f", label: "Legendary", Icon: Flame },
+  legendary: {
+    color: "#f59e0b",
+    bg: "#f59e0b10",
+    border: "#78350f",
+    label: "Legendary",
+    Icon: Flame,
+  },
   mythic: { color: "#ef4444", bg: "#ef444410", border: "#7f1d1d", label: "Mythic", Icon: Hexagon },
 };
 
@@ -76,11 +104,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 /** Shared card shell — hairline top accent via ::before handled in <style> */
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`progress-card ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`progress-card ${className}`}>{children}</div>;
 }
 
 function CardHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
@@ -103,12 +127,18 @@ function ProgressPage() {
   /* ── queries ── */
   const { data: paths = [], isLoading: pl } = useQuery({
     queryKey: ["paths"],
-    queryFn: async () => { const r = await apiFetch("/paths/"); return r.ok ? r.json() : []; },
+    queryFn: async () => {
+      const r = await apiFetch("/paths/");
+      return r.ok ? r.json() : [];
+    },
   });
 
   const { data: customPaths = [], isLoading: cl } = useQuery({
     queryKey: ["custom-paths"],
-    queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
+    queryFn: async () => {
+      const r = await apiFetch("/custom-paths/");
+      return r.ok ? r.json() : [];
+    },
   });
 
   const { data: heatmap = [], isLoading: hl } = useQuery({
@@ -126,7 +156,11 @@ function ProgressPage() {
 
   const { data: profile, isLoading: prl } = useQuery({
     queryKey: ["user_profile"],
-    queryFn: async () => { const r = await apiFetch("/profile/"); if (!r.ok) throw 0; return r.json(); },
+    queryFn: async () => {
+      const r = await apiFetch("/profile/");
+      if (!r.ok) throw 0;
+      return r.json();
+    },
   });
 
   const isLoading = pl || cl || hl || prl;
@@ -140,8 +174,8 @@ function ProgressPage() {
     return all
       .filter((p) =>
         p.topics?.some(
-          (t: any) => t.user_progress === "in_progress" || t.user_progress === "completed"
-        )
+          (t: any) => t.user_progress === "in_progress" || t.user_progress === "completed",
+        ),
       )
       .map((p) => {
         const total = p.topics?.length || 0;
@@ -192,7 +226,6 @@ function ProgressPage() {
   return (
     <PageShell>
       <div className="p-5 lg:p-6 space-y-3 max-w-screen-xl mx-auto">
-
         {/* ── Page header ── */}
         <div className="flex items-end justify-between pb-1 border-b border-[#0e0e0e]">
           <div>
@@ -211,7 +244,6 @@ function ProgressPage() {
 
         {/* ── Top stats row ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-
           {/* Level + XP bar */}
           <StatCard accent="#a855f7" accentBg="#0d0914" accentBorder="#1e1638">
             <SectionLabel>
@@ -223,16 +255,26 @@ function ProgressPage() {
               </span>
               <span className="text-[12px] text-[#fff] font-mono">— {lvlTitle}</span>
             </div>
-            <div className="text-[10px] font-mono text-[#eee] mt-1">{xp.toLocaleString()} XP total</div>
+            <div className="text-[10px] font-mono text-[#eee] mt-1">
+              {xp.toLocaleString()} XP total
+            </div>
             <div className="mt-4 space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-[9px] font-mono text-[#fff] uppercase tracking-wider">{xpPct}% to Lv{level + 1}</span>
-                <span className="text-[9px] font-mono text-[#a855f7]/70">{xpRemaining} XP left</span>
+                <span className="text-[9px] font-mono text-[#fff] uppercase tracking-wider">
+                  {xpPct}% to Lv{level + 1}
+                </span>
+                <span className="text-[9px] font-mono text-[#a855f7]/70">
+                  {xpRemaining} XP left
+                </span>
               </div>
               <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${xpPct}%`, background: "#a855f7", boxShadow: "0 0 8px #a855f740" }}
+                  style={{
+                    width: `${xpPct}%`,
+                    background: "#a855f7",
+                    boxShadow: "0 0 8px #a855f740",
+                  }}
                 />
               </div>
             </div>
@@ -243,8 +285,11 @@ function ProgressPage() {
             <SectionLabel>
               <Flame size={9} className="text-[#f59e0b]" /> Day Streak
             </SectionLabel>
-            <div className={`text-[37px] font-mono font-semibold tabular-nums mt-3 leading-none ${streak > 0 ? "text-[#f59e0b]" : "text-[#eee]"
-              }`}>
+            <div
+              className={`text-[37px] font-mono font-semibold tabular-nums mt-3 leading-none ${
+                streak > 0 ? "text-[#f59e0b]" : "text-[#eee]"
+              }`}
+            >
               {streak}
             </div>
             <div className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.2em] mt-1.5">
@@ -269,11 +314,14 @@ function ProgressPage() {
 
         {/* ── Middle row: Missions + XP Sources ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-
           {/* Active Missions */}
           <Card>
             <CardHeader
-              left={<SectionLabel><Map size={9} /> Active Missions</SectionLabel>}
+              left={
+                <SectionLabel>
+                  <Map size={9} /> Active Missions
+                </SectionLabel>
+              }
               right={
                 <span className="text-[9px] font-mono text-[#22c55e] uppercase tracking-[0.15em]">
                   {activePaths.length} active
@@ -287,11 +335,7 @@ function ProgressPage() {
                 </div>
               ) : (
                 activePaths.map((p) => (
-                  <Link
-                    key={p.uniqueId}
-                    to="/roadmap"
-                    className="mission-row group"
-                  >
+                  <Link key={p.uniqueId} to="/roadmap" className="mission-row group">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="min-w-0">
@@ -303,14 +347,22 @@ function ProgressPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[12px] font-mono tabular-nums text-[#22c55e]">{p.pct}%</span>
-                          <ChevronRight size={11} className="text-[#eee] group-hover:text-[#fff] transition-colors" />
+                          <span className="text-[12px] font-mono tabular-nums text-[#22c55e]">
+                            {p.pct}%
+                          </span>
+                          <ChevronRight
+                            size={11}
+                            className="text-[#eee] group-hover:text-[#fff] transition-colors"
+                          />
                         </div>
                       </div>
                       <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                         <div
                           className="h-full bg-[#22c55e] rounded-full transition-all duration-700"
-                          style={{ width: `${p.pct}%`, boxShadow: p.pct > 0 ? "0 0 6px #22c55e30" : "none" }}
+                          style={{
+                            width: `${p.pct}%`,
+                            boxShadow: p.pct > 0 ? "0 0 6px #22c55e30" : "none",
+                          }}
                         />
                       </div>
                     </div>
@@ -323,7 +375,11 @@ function ProgressPage() {
           {/* XP Sources */}
           <Card>
             <CardHeader
-              left={<SectionLabel><BarChart2 size={9} className="text-[#f59e0b]" /> XP Sources</SectionLabel>}
+              left={
+                <SectionLabel>
+                  <BarChart2 size={9} className="text-[#f59e0b]" /> XP Sources
+                </SectionLabel>
+              }
             />
             <div className="p-4 space-y-4 max-h-[280px] overflow-y-auto custom-scrollbar">
               {profile?.xp_breakdown && profile.xp_breakdown.length > 0 ? (
@@ -370,7 +426,11 @@ function ProgressPage() {
         {/* ── Title Collection ── */}
         <Card>
           <CardHeader
-            left={<SectionLabel><Tag size={9} /> Title Collection</SectionLabel>}
+            left={
+              <SectionLabel>
+                <Tag size={9} /> Title Collection
+              </SectionLabel>
+            }
             right={
               <span className="text-[9px] font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
                 {unlockedCount} / {TITLES.length} unlocked
@@ -393,11 +453,7 @@ function ProgressPage() {
                   data-unlocked={unlocked ? "true" : "false"}
                   data-equipped={isEquipped ? "true" : "false"}
                   style={{
-                    borderColor: isEquipped
-                      ? `${cfg.color}30`
-                      : unlocked
-                        ? "#141414"
-                        : "#0e0e0e",
+                    borderColor: isEquipped ? `${cfg.color}30` : unlocked ? "#141414" : "#0e0e0e",
                     opacity: unlocked ? 1 : 0.35,
                   }}
                 >
@@ -409,7 +465,11 @@ function ProgressPage() {
                       borderColor: unlocked ? `${cfg.color}20` : "#161616",
                     }}
                   >
-                    <Icon size={13} style={{ color: unlocked ? cfg.color : "#2a2a2a" }} strokeWidth={1.5} />
+                    <Icon
+                      size={13}
+                      style={{ color: unlocked ? cfg.color : "#2a2a2a" }}
+                      strokeWidth={1.5}
+                    />
                   </div>
 
                   {/* Text */}
@@ -456,8 +516,16 @@ function ProgressPage() {
         {/* ── Activity Heatmap ── */}
         <Card>
           <CardHeader
-            left={<SectionLabel><CalendarDays size={9} /> Activity Heatmap</SectionLabel>}
-            right={<span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">Last 12 months</span>}
+            left={
+              <SectionLabel>
+                <CalendarDays size={9} /> Activity Heatmap
+              </SectionLabel>
+            }
+            right={
+              <span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">
+                Last 12 months
+              </span>
+            }
           />
           <div className="p-4 overflow-x-auto">
             <div className="min-w-[680px]">
@@ -480,7 +548,6 @@ function ProgressPage() {
             </div>
           </div>
         </Card>
-
       </div>
 
       {/* ── styles ────────────────────────────────────────────────────────── */}

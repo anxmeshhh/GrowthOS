@@ -1,10 +1,30 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import {
-  ArrowLeft, Pause, Play, ExternalLink, FileText, UploadCloud,
-  Loader2, Image as ImageIcon, Clipboard, X, Trash2, Maximize2,
-  CheckCircle2, ChevronRight, ChevronDown, RefreshCw, Github, Zap, BookOpen,
-  Layers, Hammer, Plus, RotateCcw, GitBranch
+  ArrowLeft,
+  Pause,
+  Play,
+  ExternalLink,
+  FileText,
+  UploadCloud,
+  Loader2,
+  Image as ImageIcon,
+  Clipboard,
+  X,
+  Trash2,
+  Maximize2,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  RefreshCw,
+  Github,
+  Zap,
+  BookOpen,
+  Layers,
+  Hammer,
+  Plus,
+  RotateCcw,
+  GitBranch,
 } from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -72,7 +92,7 @@ function TopicWorkspace() {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const pasteZoneRef = useRef<HTMLDivElement>(null);
-  
+
   const [showCommitModal, setShowCommitModal] = useState(false);
   const [repoName, setRepoName] = useState("");
   const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
@@ -150,9 +170,9 @@ function TopicWorkspace() {
     mutationFn: async (customRepoName?: string) => {
       const res = await apiFetch(`/github/workspace/commit/`, {
         method: "POST",
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           topic_slug: topicId,
-          ...(customRepoName ? { repo_name: customRepoName } : {})
+          ...(customRepoName ? { repo_name: customRepoName } : {}),
         }),
       });
       if (!res.ok) {
@@ -169,7 +189,7 @@ function TopicWorkspace() {
     },
     onError: (err: any) => {
       showToast(err.message, "error");
-    }
+    },
   });
 
   const handlePaste = useCallback(
@@ -185,7 +205,7 @@ function TopicWorkspace() {
         }
       }
     },
-    [topicId]
+    [topicId],
   );
 
   useEffect(() => {
@@ -205,7 +225,9 @@ function TopicWorkspace() {
         <div className="flex items-center justify-center h-full">
           <div className="flex flex-col items-center gap-3">
             <Loader2 size={24} className="animate-spin text-[#22c55e]" />
-            <span className="text-lg font-mono text-[#fff] tracking-widest uppercase">Loading workspace</span>
+            <span className="text-lg font-mono text-[#fff] tracking-widest uppercase">
+              Loading workspace
+            </span>
           </div>
         </div>
       </PageShell>
@@ -238,26 +260,41 @@ function TopicWorkspace() {
 
   return (
     <main className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden bg-[#060606]">
-
       {/* ── Top bar ── */}
-      <header className="shrink-0 border-b border-[#181818] px-4 sm:px-6 py-0 flex items-center gap-4 z-20 h-14" style={{ background: "linear-gradient(180deg,#0d0d0d 0%,#080808 100%)" }}>
-        <Link to="/roadmap" className="group flex items-center gap-1.5 text-[#eee] hover:text-[#eee] transition-colors">
+      <header
+        className="shrink-0 border-b border-[#181818] px-4 sm:px-6 py-0 flex items-center gap-4 z-20 h-14"
+        style={{ background: "linear-gradient(180deg,#0d0d0d 0%,#080808 100%)" }}
+      >
+        <Link
+          to="/roadmap"
+          className="group flex items-center gap-1.5 text-[#eee] hover:text-[#eee] transition-colors"
+        >
           <ArrowLeft size={14} />
-          <span className="text-[11px] font-mono tracking-widest uppercase hidden sm:block">Back</span>
+          <span className="text-[11px] font-mono tracking-widest uppercase hidden sm:block">
+            Back
+          </span>
         </Link>
 
         <div className="w-px h-5 bg-[#1e1e1e]" />
 
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#fff] mb-0.5">Workspace</div>
-          <div className="text-lg font-semibold tracking-[-0.01em] truncate text-[#e8e8e8]">{topic.title}</div>
+          <div className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#fff] mb-0.5">
+            Workspace
+          </div>
+          <div className="text-lg font-semibold tracking-[-0.01em] truncate text-[#e8e8e8]">
+            {topic.title}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Timer */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0f0f0f] border border-[#1e1e1e]">
-            <div className={`w-1.5 h-1.5 rounded-full ${running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#333]"}`} />
-            <span className="font-mono text-lg text-[#e8e8e8] tabular-nums">{formatTime(seconds)}</span>
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#333]"}`}
+            />
+            <span className="font-mono text-lg text-[#e8e8e8] tabular-nums">
+              {formatTime(seconds)}
+            </span>
             <button
               onClick={() => setRunning((r) => !r)}
               className="text-[#eee] hover:text-[#fff] transition-colors ml-0.5"
@@ -272,7 +309,11 @@ function TopicWorkspace() {
             disabled={commitGitHubMutation.isPending}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-lg font-medium transition-all border border-[#2a2a2a] bg-[#111] text-[#eee] hover:border-[#3b5bdb]/40 hover:text-[#60a5fa] hover:bg-[#3b5bdb]/5`}
           >
-            {commitGitHubMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <GitBranch size={12} />}
+            {commitGitHubMutation.isPending ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <GitBranch size={12} />
+            )}
             <span className="hidden sm:inline">Commit</span>
           </button>
 
@@ -280,10 +321,11 @@ function TopicWorkspace() {
           <button
             onClick={() => markDoneMutation.mutate()}
             disabled={isCompleted || markDoneMutation.isPending}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-lg font-medium transition-all border ${isCompleted
-              ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
-              : "border-[#2a2a2a] bg-[#111] text-[#eee] hover:border-[#22c55e]/40 hover:text-[#22c55e] hover:bg-[#22c55e]/5"
-              }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-lg font-medium transition-all border ${
+              isCompleted
+                ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
+                : "border-[#2a2a2a] bg-[#111] text-[#eee] hover:border-[#22c55e]/40 hover:text-[#22c55e] hover:bg-[#22c55e]/5"
+            }`}
           >
             <CheckCircle2 size={12} />
             <span className="hidden sm:inline">{isCompleted ? "Completed" : "Mark Done"}</span>
@@ -293,14 +335,16 @@ function TopicWorkspace() {
 
       {/* ── Body ── */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-
         {/* ════ LEFT: Screenshots ════ */}
         <section
           ref={pasteZoneRef}
           className={`flex flex-col lg:w-[42%] xl:w-[38%] border-b lg:border-b-0 lg:border-r border-[#131313] bg-[#060606]
                       max-h-[38vh] lg:max-h-none lg:h-full overflow-hidden transition-colors
                       ${isDragging ? "border-[#22c55e]/30 bg-[#22c55e]/[0.03]" : ""}`}
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(e) => {
             e.preventDefault();
@@ -316,8 +360,12 @@ function TopicWorkspace() {
                   <ImageIcon size={12} className="text-[#22c55e]" />
                 </div>
                 <div>
-                  <div className="text-lg font-semibold text-[#d0d0d0] leading-none">Screenshots</div>
-                  <div className="text-[11px] text-[#fff] font-mono mt-0.5">{screenshots.length} saved</div>
+                  <div className="text-lg font-semibold text-[#d0d0d0] leading-none">
+                    Screenshots
+                  </div>
+                  <div className="text-[11px] text-[#fff] font-mono mt-0.5">
+                    {screenshots.length} saved
+                  </div>
                 </div>
               </div>
               {uploadScreenshotMutation.isPending && (
@@ -348,7 +396,9 @@ function TopicWorkspace() {
               />
               <Clipboard size={13} className="text-[#fff] shrink-0" />
               <span className="text-[12px] text-[#eee]">
-                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-[11px] font-mono text-[#fff] border border-[#222]">Ctrl+V</kbd>
+                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-[11px] font-mono text-[#fff] border border-[#222]">
+                  Ctrl+V
+                </kbd>
                 <span className="mx-1.5 text-[#eee]">·</span>
                 drag or click to upload
               </span>
@@ -386,14 +436,18 @@ function TopicWorkspace() {
                     </div>
                     <button
                       className="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/70 text-[#eee] hover:text-[#ef4444] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                      onClick={(e) => { e.stopPropagation(); deleteScreenshotMutation.mutate(ss.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteScreenshotMutation.mutate(ss.id);
+                      }}
                     >
                       <Trash2 size={10} />
                     </button>
                     <div className="absolute bottom-0 inset-x-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent">
                       <div className="text-[10px] font-mono text-[#eee]">
                         {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
-                          month: "short", day: "numeric",
+                          month: "short",
+                          day: "numeric",
                         })}
                       </div>
                     </div>
@@ -404,7 +458,9 @@ function TopicWorkspace() {
 
             {topic.summary && (
               <div className="border border-[#141414] rounded-lg p-3 mt-4 bg-[#090909]">
-                <div className="text-[10px] uppercase font-mono tracking-widest text-[#fff] mb-1.5">Summary</div>
+                <div className="text-[10px] uppercase font-mono tracking-widest text-[#fff] mb-1.5">
+                  Summary
+                </div>
                 <div className="text-lg text-[#eee] leading-relaxed">{topic.summary}</div>
               </div>
             )}
@@ -434,17 +490,15 @@ function TopicWorkspace() {
 
         {/* ════ RIGHT: Tabs ════ */}
         <section className="flex-1 flex flex-col bg-[#080808] min-h-0 overflow-hidden">
-
           {/* Tab bar */}
           <div className="shrink-0 flex border-b border-[#131313] px-2 pt-1">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex items-center gap-1.5 px-4 py-2.5 text-lg font-medium transition-all whitespace-nowrap ${tab === t.id
-                  ? "text-[#e8e8e8]"
-                  : "text-[#eee] hover:text-[#eee]"
-                  }`}
+                className={`relative flex items-center gap-1.5 px-4 py-2.5 text-lg font-medium transition-all whitespace-nowrap ${
+                  tab === t.id ? "text-[#e8e8e8]" : "text-[#eee] hover:text-[#eee]"
+                }`}
               >
                 {t.icon}
                 {t.label}
@@ -460,7 +514,9 @@ function TopicWorkspace() {
             {tab === "notes" && <StudyNotesTab topicId={topic.id} />}
             {tab === "flash" && <FlashcardsTab topicId={topic.id} />}
             {tab === "quiz" && <QuizTab topicId={topic.id} />}
-            {tab === "build" && <BuildTab topic={topic} materials={materials} progress={progress} />}
+            {tab === "build" && (
+              <BuildTab topic={topic} materials={materials} progress={progress} />
+            )}
           </div>
         </section>
       </div>
@@ -473,7 +529,10 @@ function TopicWorkspace() {
                 <GitBranch size={18} className="text-[#60a5fa]" />
                 Commit Workspace
               </h3>
-              <button onClick={() => setShowCommitModal(false)} className="text-[#555] hover:text-[#fff] transition-colors">
+              <button
+                onClick={() => setShowCommitModal(false)}
+                className="text-[#555] hover:text-[#fff] transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -496,43 +555,62 @@ function TopicWorkspace() {
                   <div className="absolute right-3 top-3 pointer-events-none">
                     <ChevronDown size={16} className="text-[#555]" />
                   </div>
-                  
+
                   {repoDropdownOpen && githubRepos.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg max-h-48 overflow-y-auto z-10 shadow-2xl">
                       {githubRepos
                         .filter((r: any) => r.name.toLowerCase().includes(repoName.toLowerCase()))
                         .map((r: any) => (
-                          <div 
+                          <div
                             key={r.id}
                             onClick={() => {
                               setRepoName(r.name);
                               setRepoDropdownOpen(false);
-                            }} 
+                            }}
                             className="px-3 py-2.5 hover:bg-[#141414] cursor-pointer text-[#d0d0d0] text-sm font-mono border-b border-[#111] last:border-0 transition-colors flex items-center justify-between"
                           >
                             <span>{r.name}</span>
-                            {r.private && <span className="text-[10px] bg-[#1a1a1a] text-[#888] px-1.5 py-0.5 rounded">Private</span>}
+                            {r.private && (
+                              <span className="text-[10px] bg-[#1a1a1a] text-[#888] px-1.5 py-0.5 rounded">
+                                Private
+                              </span>
+                            )}
                           </div>
-                      ))}
-                      {githubRepos.filter((r: any) => r.name.toLowerCase().includes(repoName.toLowerCase())).length === 0 && (
-                        <div className="px-3 py-3 text-sm text-[#555] italic text-center">No matching repositories found</div>
+                        ))}
+                      {githubRepos.filter((r: any) =>
+                        r.name.toLowerCase().includes(repoName.toLowerCase()),
+                      ).length === 0 && (
+                        <div className="px-3 py-3 text-sm text-[#555] italic text-center">
+                          No matching repositories found
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
                 <p className="text-[11px] text-[#555] leading-relaxed">
-                  Files will be pushed to <strong className="text-[#aaa]">/{topic.slug}/</strong> inside this repository. Leave empty to auto-generate a name.
+                  Files will be pushed to <strong className="text-[#aaa]">/{topic.slug}/</strong>{" "}
+                  inside this repository. Leave empty to auto-generate a name.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <label className="text-sm text-[#888] font-medium">Assets to Commit</label>
                 <div className="bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 space-y-2.5 text-sm text-[#bbb]">
-                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Markdown Notes</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Screenshots & Images</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Flashcard JSON</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Quizzes JSON</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#22c55e]" /> Uploaded Documents</div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Markdown Notes
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Screenshots & Images
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Flashcard JSON
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Quizzes JSON
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Uploaded Documents
+                  </div>
                 </div>
               </div>
 
@@ -542,7 +620,11 @@ function TopicWorkspace() {
                   disabled={commitGitHubMutation.isPending}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#111] border border-[#3b5bdb]/40 text-[#60a5fa] font-medium hover:bg-[#3b5bdb]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {commitGitHubMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <GitBranch size={16} />}
+                  {commitGitHubMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <GitBranch size={16} />
+                  )}
                   Push to GitHub
                 </button>
               </div>
@@ -550,7 +632,6 @@ function TopicWorkspace() {
           </div>
         </div>
       )}
-
     </main>
   );
 }
@@ -592,14 +673,17 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     },
   });
 
-  const saveNote = useCallback(async (val: string) => {
-    setSaving(true);
-    await apiFetch(`/topics/${topicId}/notes/`, {
-      method: "POST",
-      body: JSON.stringify({ content: val }),
-    });
-    setSaving(false);
-  }, [topicId]);
+  const saveNote = useCallback(
+    async (val: string) => {
+      setSaving(true);
+      await apiFetch(`/topics/${topicId}/notes/`, {
+        method: "POST",
+        body: JSON.stringify({ content: val }),
+      });
+      setSaving(false);
+    },
+    [topicId],
+  );
 
   // Debounced auto-save: saves 2 seconds after user stops typing
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -616,7 +700,9 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       contentRef.current = content;
       saveNote(content);
     }, 2000);
-    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [content, saveNote]);
 
   const uploadDocMutation = useMutation({
@@ -648,8 +734,12 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       {/* Text area */}
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-[10px] uppercase tracking-widest font-mono text-[#fff]">Markdown</label>
-          <span className={`text-[10px] uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}>
+          <label className="text-[10px] uppercase tracking-widest font-mono text-[#fff]">
+            Markdown
+          </label>
+          <span
+            className={`text-[10px] uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}
+          >
             {saving ? "Saving…" : "Saved"}
           </span>
         </div>
@@ -687,22 +777,33 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             id="noteFileUpload"
             className="hidden"
             accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg"
-            onChange={(e) => { if (e.target.files?.length) setNoteFile(e.target.files[0]); }}
+            onChange={(e) => {
+              if (e.target.files?.length) setNoteFile(e.target.files[0]);
+            }}
           />
           <div className="w-8 h-8 rounded-lg bg-[#0f0f0f] border border-[#1e1e1e] flex items-center justify-center shrink-0">
             <UploadCloud size={14} className="text-[#fff]" />
           </div>
           <div>
-            <div className="text-lg text-[#fff]">{noteFile ? noteFile.name : "Drop a file or click to browse"}</div>
+            <div className="text-lg text-[#fff]">
+              {noteFile ? noteFile.name : "Drop a file or click to browse"}
+            </div>
             <div className="text-[11px] text-[#fff] mt-0.5">PDF, DOCX, TXT, images</div>
           </div>
           {noteFile && (
             <button
               className="ml-auto px-3 py-1.5 rounded-md bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
-              onClick={(e) => { e.stopPropagation(); uploadDocMutation.mutate(noteFile); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                uploadDocMutation.mutate(noteFile);
+              }}
               disabled={uploadDocMutation.isPending}
             >
-              {uploadDocMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : "Upload"}
+              {uploadDocMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                "Upload"
+              )}
             </button>
           )}
         </div>
@@ -716,15 +817,22 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
           </div>
           <ul className="space-y-1.5">
             {noteDocuments.map((doc: any) => (
-              <li key={doc.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#141414] bg-[#0a0a0a] hover:border-[#1e1e1e] transition-colors">
+              <li
+                key={doc.id}
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#141414] bg-[#0a0a0a] hover:border-[#1e1e1e] transition-colors"
+              >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <FileText size={13} className="shrink-0 text-[#22c55e]/60" />
                   <span className="text-lg text-[#eee] truncate">
                     {doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}
                   </span>
                 </div>
-                <a href={doc.file_url || doc.file} target="_blank" rel="noreferrer"
-                  className="text-[#fff] hover:text-[#eee] ml-2 shrink-0 transition-colors">
+                <a
+                  href={doc.file_url || doc.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#fff] hover:text-[#eee] ml-2 shrink-0 transition-colors"
+                >
                   <ExternalLink size={13} />
                 </a>
               </li>
@@ -767,13 +875,17 @@ function QuizTab({ topicId }: { topicId: number }) {
 
   let score = 0;
   if (submitted) {
-    questions.forEach((q: any, i: number) => { if (answers[i] === q.answer) score++; });
+    questions.forEach((q: any, i: number) => {
+      if (answers[i] === q.answer) score++;
+    });
   }
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     let currentScore = 0;
-    questions.forEach((q: any, i: number) => { if (answers[i] === q.answer) currentScore++; });
+    questions.forEach((q: any, i: number) => {
+      if (answers[i] === q.answer) currentScore++;
+    });
     try {
       const res = await apiFetch(`/topics/${topicId}/submit-quiz/`, {
         method: "POST",
@@ -787,7 +899,9 @@ function QuizTab({ topicId }: { topicId: number }) {
           queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
         }
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
     setSubmitted(true);
     setIsSubmitting(false);
   };
@@ -802,7 +916,9 @@ function QuizTab({ topicId }: { topicId: number }) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <Loader2 size={20} className="animate-spin text-[#fff]" />
-        <span className="text-[11px] font-mono tracking-widest text-[#fff] uppercase">Generating {difficulty} questions</span>
+        <span className="text-[11px] font-mono tracking-widest text-[#fff] uppercase">
+          Generating {difficulty} questions
+        </span>
       </div>
     );
 
@@ -810,7 +926,10 @@ function QuizTab({ topicId }: { topicId: number }) {
     return (
       <div className="text-center py-12">
         <div className="text-lg text-[#ef4444] mb-4">Failed to generate quiz</div>
-        <button onClick={() => refetch()} className="flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] transition-colors">
+        <button
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] transition-colors"
+        >
           <RefreshCw size={12} /> Retry
         </button>
       </div>
@@ -829,8 +948,11 @@ function QuizTab({ topicId }: { topicId: number }) {
               <button
                 key={d}
                 onClick={() => handleDifficultyChange(d)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono uppercase tracking-wider border transition-all ${active ? s.active : "border-[#181818] text-[#eee] hover:border-[#2a2a2a] hover:text-[#eee]"
-                  }`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono uppercase tracking-wider border transition-all ${
+                  active
+                    ? s.active
+                    : "border-[#181818] text-[#eee] hover:border-[#2a2a2a] hover:text-[#eee]"
+                }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : "bg-[#333]"}`} />
                 {d}
@@ -842,18 +964,29 @@ function QuizTab({ topicId }: { topicId: number }) {
 
       {/* Score card */}
       {submitted && (
-        <div className={`rounded-xl border p-4 flex items-center justify-between ${score === questions.length
-          ? "border-[#22c55e]/20 bg-[#22c55e]/5"
-          : "border-[#f59e0b]/20 bg-[#f59e0b]/5"
-          }`}>
+        <div
+          className={`rounded-xl border p-4 flex items-center justify-between ${
+            score === questions.length
+              ? "border-[#22c55e]/20 bg-[#22c55e]/5"
+              : "border-[#f59e0b]/20 bg-[#f59e0b]/5"
+          }`}
+        >
           <div>
-            <div className="text-2xl font-bold text-[#e8e8e8] tabular-nums">{score}<span className="text-lg text-[#eee] font-normal">/{questions.length}</span></div>
-            <div className={`text-lg mt-0.5 ${score === questions.length ? "text-[#22c55e]" : "text-[#f59e0b]"}`}>
+            <div className="text-2xl font-bold text-[#e8e8e8] tabular-nums">
+              {score}
+              <span className="text-lg text-[#eee] font-normal">/{questions.length}</span>
+            </div>
+            <div
+              className={`text-lg mt-0.5 ${score === questions.length ? "text-[#22c55e]" : "text-[#f59e0b]"}`}
+            >
               {score === questions.length ? "Perfect score!" : "Review your notes and try again"}
             </div>
           </div>
           <button
-            onClick={() => { setSubmitted(false); setAnswers({}); }}
+            onClick={() => {
+              setSubmitted(false);
+              setAnswers({});
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] hover:border-[#333] transition-colors"
           >
             <RotateCcw size={11} /> Retake
@@ -877,15 +1010,21 @@ function QuizTab({ topicId }: { topicId: number }) {
                 return (
                   <button
                     key={j}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-lg transition-all border ${isCorrect ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]" :
-                      isWrong ? "border-[#ef4444]/40 bg-[#ef4444]/10 text-[#ef4444]" :
-                        isSelected ? "border-[#333] bg-[#141414] text-[#e8e8e8]" :
-                          "border-[#141414] hover:border-[#222] hover:bg-[#0f0f0f] text-[#eee] hover:text-[#eee]"
-                      }`}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-lg transition-all border ${
+                      isCorrect
+                        ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"
+                        : isWrong
+                          ? "border-[#ef4444]/40 bg-[#ef4444]/10 text-[#ef4444]"
+                          : isSelected
+                            ? "border-[#333] bg-[#141414] text-[#e8e8e8]"
+                            : "border-[#141414] hover:border-[#222] hover:bg-[#0f0f0f] text-[#eee] hover:text-[#eee]"
+                    }`}
                     onClick={() => !submitted && setAnswers({ ...answers, [i]: opt })}
                     disabled={submitted}
                   >
-                    <span className="font-mono text-[10px] mr-2 opacity-50">{String.fromCharCode(65 + j)}.</span>
+                    <span className="font-mono text-[10px] mr-2 opacity-50">
+                      {String.fromCharCode(65 + j)}.
+                    </span>
                     {opt}
                   </button>
                 );
@@ -902,7 +1041,9 @@ function QuizTab({ topicId }: { topicId: number }) {
           className="w-full py-2.5 rounded-xl bg-[#22c55e] text-[#030f05] text-lg font-semibold
                      hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
-          {isSubmitting ? "Submitting…" : `Submit — ${Object.keys(answers).length}/${questions.length} answered`}
+          {isSubmitting
+            ? "Submitting…"
+            : `Submit — ${Object.keys(answers).length}/${questions.length} answered`}
         </button>
       )}
     </div>
@@ -955,7 +1096,10 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
     return (
       <div className="text-center py-12">
         <div className="text-lg text-[#ef4444] mb-4">Failed to load flashcards</div>
-        <button onClick={() => refetch()} className="flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] transition-colors">
+        <button
+          onClick={() => refetch()}
+          className="flex items-center gap-1.5 mx-auto px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] transition-colors"
+        >
           <RefreshCw size={12} /> Retry
         </button>
       </div>
@@ -989,7 +1133,9 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
         {draftCards.map((c, i) => (
           <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#141414]">
-              <span className="text-[10px] font-mono text-[#fff] uppercase tracking-widest">Card {i + 1}</span>
+              <span className="text-[10px] font-mono text-[#fff] uppercase tracking-widest">
+                Card {i + 1}
+              </span>
               <button
                 className="text-[#fff] hover:text-[#ef4444] transition-colors"
                 onClick={() => setDraftCards(draftCards.filter((_, idx) => idx !== i))}
@@ -999,19 +1145,35 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
             </div>
             <div className="p-4 space-y-3">
               <div>
-                <label className="text-[10px] text-[#fff] block mb-1 font-mono uppercase tracking-widest">Front</label>
+                <label className="text-[10px] text-[#fff] block mb-1 font-mono uppercase tracking-widest">
+                  Front
+                </label>
                 <input
                   type="text"
                   value={c.front}
-                  onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, front: e.target.value } : card))}
+                  onChange={(e) =>
+                    setDraftCards(
+                      draftCards.map((card, idx) =>
+                        idx === i ? { ...card, front: e.target.value } : card,
+                      ),
+                    )
+                  }
                   className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-lg text-[#d0d0d0] outline-none focus:border-[#2a2a2a] transition-colors"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-[#fff] block mb-1 font-mono uppercase tracking-widest">Back</label>
+                <label className="text-[10px] text-[#fff] block mb-1 font-mono uppercase tracking-widest">
+                  Back
+                </label>
                 <textarea
                   value={c.back}
-                  onChange={(e) => setDraftCards(draftCards.map((card, idx) => idx === i ? { ...card, back: e.target.value } : card))}
+                  onChange={(e) =>
+                    setDraftCards(
+                      draftCards.map((card, idx) =>
+                        idx === i ? { ...card, back: e.target.value } : card,
+                      ),
+                    )
+                  }
                   className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-lg text-[#d0d0d0] outline-none focus:border-[#2a2a2a] resize-y min-h-[56px] transition-colors"
                 />
               </div>
@@ -1037,7 +1199,10 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
           {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
         </div>
         <button
-          onClick={() => { setDraftCards(data?.flashcards || []); setIsEditing(true); }}
+          onClick={() => {
+            setDraftCards(data?.flashcards || []);
+            setIsEditing(true);
+          }}
           className="px-3 py-1.5 rounded-md border border-[#1e1e1e] text-lg text-[#fff] hover:border-[#2a2a2a] hover:text-[#fff] transition-all"
         >
           Edit
@@ -1048,7 +1213,10 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
         <div className="flex flex-col items-center justify-center py-16 border border-dashed border-[#141414] rounded-xl">
           <div className="text-lg text-[#fff] mb-4">No flashcards yet</div>
           <button
-            onClick={() => { setDraftCards([]); setIsEditing(true); }}
+            onClick={() => {
+              setDraftCards([]);
+              setIsEditing(true);
+            }}
             className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
           >
             Create flashcards
@@ -1064,18 +1232,26 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 className="perspective-1000 h-44 cursor-pointer"
                 onClick={() => setFlipped({ ...flipped, [i]: !isFlipped })}
               >
-                <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}>
+                <div
+                  className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}
+                >
                   {/* Front */}
                   <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#eee] mb-3">Term</div>
-                    <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug">{f.front}</div>
+                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#eee] mb-3">
+                      Term
+                    </div>
+                    <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug">
+                      {f.front}
+                    </div>
                     <div className="absolute bottom-3 right-3">
                       <RotateCcw size={11} className="text-[#222]" />
                     </div>
                   </div>
                   {/* Back */}
                   <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border border-[#22c55e]/15 bg-[#0a0f0a] flex flex-col items-center justify-center p-5">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">Definition</div>
+                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">
+                      Definition
+                    </div>
                     <div className="text-lg text-[#eee] text-center leading-relaxed">{f.back}</div>
                   </div>
                 </div>
@@ -1098,7 +1274,11 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
   const [repoUrl, setRepoUrl] = useState("");
   const [scanResult, setScanResult] = useState<any>(null);
 
-  const { data: projectIdeas, isLoading: ideasLoading, refetch: refetchIdeas } = useQuery({
+  const {
+    data: projectIdeas,
+    isLoading: ideasLoading,
+    refetch: refetchIdeas,
+  } = useQuery({
     queryKey: ["project-ideas", topic.id],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topic.id}/project-ideas/`);
@@ -1145,7 +1325,6 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
 
   return (
     <div className="space-y-5">
-
       {/* Mode chooser */}
       {buildMode === "choose" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1170,8 +1349,15 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
               onClick={() => setBuildMode(mode)}
               className="group text-left p-5 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#222] transition-all"
             >
-              <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: accent }}>{tag}</div>
-              <div className="text-lg font-semibold text-[#d0d0d0] mb-1.5 group-hover:text-[#e8e8e8] transition-colors">{label}</div>
+              <div
+                className="text-[10px] font-mono uppercase tracking-widest mb-3"
+                style={{ color: accent }}
+              >
+                {tag}
+              </div>
+              <div className="text-lg font-semibold text-[#d0d0d0] mb-1.5 group-hover:text-[#e8e8e8] transition-colors">
+                {label}
+              </div>
               <div className="text-[12px] text-[#fff] leading-relaxed">{desc}</div>
               <div className="mt-4 flex items-center gap-1" style={{ color: accent + "80" }}>
                 <span className="text-[11px] font-mono">Select</span>
@@ -1186,10 +1372,16 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {buildMode === "ai" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <button onClick={() => setBuildMode("choose")} className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1">
+            <button
+              onClick={() => setBuildMode("choose")}
+              className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
+            >
               <ArrowLeft size={11} /> Back
             </button>
-            <button onClick={() => refetchIdeas()} className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1">
+            <button
+              onClick={() => refetchIdeas()}
+              className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
+            >
               <RefreshCw size={11} /> Regenerate
             </button>
           </div>
@@ -1197,17 +1389,28 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           {ideasLoading ? (
             <div className="flex flex-col items-center py-12 gap-3">
               <Loader2 size={18} className="animate-spin text-[#fff]" />
-              <span className="text-[11px] font-mono text-[#fff] uppercase tracking-widest">Generating ideas</span>
+              <span className="text-[11px] font-mono text-[#fff] uppercase tracking-widest">
+                Generating ideas
+              </span>
             </div>
           ) : (
             <div className="space-y-2.5">
               {(projectIdeas?.ideas || []).map((idea: any, i: number) => (
-                <div key={i} className="p-4 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#1e1e1e] transition-colors">
+                <div
+                  key={i}
+                  className="p-4 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#1e1e1e] transition-colors"
+                >
                   <div className="flex items-start gap-3">
-                    <span className="text-[10px] font-mono text-[#22c55e]/40 mt-0.5 shrink-0 tabular-nums">0{i + 1}</span>
+                    <span className="text-[10px] font-mono text-[#22c55e]/40 mt-0.5 shrink-0 tabular-nums">
+                      0{i + 1}
+                    </span>
                     <div>
-                      <div className="text-lg font-semibold text-[#d0d0d0] mb-1">{idea.title || `Project ${i + 1}`}</div>
-                      <div className="text-lg text-[#fff] leading-relaxed">{idea.description || idea}</div>
+                      <div className="text-lg font-semibold text-[#d0d0d0] mb-1">
+                        {idea.title || `Project ${i + 1}`}
+                      </div>
+                      <div className="text-lg text-[#fff] leading-relaxed">
+                        {idea.description || idea}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1221,12 +1424,16 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {buildMode === "own" && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <button onClick={() => setBuildMode("choose")} className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1">
+            <button
+              onClick={() => setBuildMode("choose")}
+              className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
+            >
               <ArrowLeft size={11} /> Back
             </button>
           </div>
           <div className="text-lg text-[#fff] leading-relaxed pb-1">
-            Build any project that demonstrates your understanding, then submit the GitHub link below for AI evaluation.
+            Build any project that demonstrates your understanding, then submit the GitHub link
+            below for AI evaluation.
           </div>
         </div>
       )}
@@ -1236,7 +1443,9 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
         <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#141414] flex items-center gap-2">
             <Github size={13} className="text-[#fff]" />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#fff]">Submit Repository</span>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#fff]">
+              Submit Repository
+            </span>
           </div>
           <div className="p-4 space-y-3">
             <div className="flex gap-2">
@@ -1255,24 +1464,36 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                            hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
                 {scanRepoMutation.isPending ? (
-                  <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Scanning</span>
-                ) : "Scan Repo"}
+                  <span className="flex items-center gap-1.5">
+                    <Loader2 size={11} className="animate-spin" /> Scanning
+                  </span>
+                ) : (
+                  "Scan Repo"
+                )}
               </button>
             </div>
 
             {scanResult && (
-              <div className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#22c55e]/20 bg-[#22c55e]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}>
+              <div
+                className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#22c55e]/20 bg-[#22c55e]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`text-lg font-semibold ${scanResult.passed ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
+                  <span
+                    className={`text-lg font-semibold ${scanResult.passed ? "text-[#22c55e]" : "text-[#ef4444]"}`}
+                  >
                     {scanResult.passed ? "✓ Approved" : "✗ Needs work"}
                   </span>
                   {scanResult.score !== undefined && (
-                    <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}>
+                    <span
+                      className={`text-[11px] font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                    >
                       {scanResult.score}/100
                     </span>
                   )}
                 </div>
-                <div className="text-[12px] text-[#eee] leading-relaxed whitespace-pre-wrap">{scanResult.feedback}</div>
+                <div className="text-[12px] text-[#eee] leading-relaxed whitespace-pre-wrap">
+                  {scanResult.feedback}
+                </div>
               </div>
             )}
           </div>
@@ -1282,35 +1503,51 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {/* Previous submissions */}
       {materials?.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest font-mono text-[#eee] mb-3">Previous Submissions</div>
+          <div className="text-[10px] uppercase tracking-widest font-mono text-[#eee] mb-3">
+            Previous Submissions
+          </div>
           <ul className="space-y-2">
-            {materials.slice().reverse().map((m: any) => (
-              <li key={m.id} className="border border-[#141414] rounded-xl bg-[#090909] overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#101010]">
-                  <span className="text-[11px] font-mono text-[#eee]">Submission #{m.id}</span>
-                  <div className="flex items-center gap-2">
-                    {m.ai_score > 0 && (
-                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}>
-                        {m.ai_score}/100
+            {materials
+              .slice()
+              .reverse()
+              .map((m: any) => (
+                <li
+                  key={m.id}
+                  className="border border-[#141414] rounded-xl bg-[#090909] overflow-hidden"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#101010]">
+                    <span className="text-[11px] font-mono text-[#eee]">Submission #{m.id}</span>
+                    <div className="flex items-center gap-2">
+                      {m.ai_score > 0 && (
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                        >
+                          {m.ai_score}/100
+                        </span>
+                      )}
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded capitalize ${
+                          m.ai_status === "verified"
+                            ? "text-[#22c55e] bg-[#22c55e]/10"
+                            : m.ai_status === "rejected"
+                              ? "text-[#ef4444] bg-[#ef4444]/10"
+                              : "text-[#f59e0b] bg-[#f59e0b]/10"
+                        }`}
+                      >
+                        {m.ai_status}
                       </span>
-                    )}
-                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded capitalize ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" :
-                      m.ai_status === "rejected" ? "text-[#ef4444] bg-[#ef4444]/10" :
-                        "text-[#f59e0b] bg-[#f59e0b]/10"
-                      }`}>
-                      {m.ai_status}
-                    </span>
+                    </div>
                   </div>
-                </div>
-                {m.ai_feedback && (
-                  <div className="px-4 py-3 text-[12px] text-[#fff] leading-relaxed whitespace-pre-wrap">{m.ai_feedback}</div>
-                )}
-              </li>
-            ))}
+                  {m.ai_feedback && (
+                    <div className="px-4 py-3 text-[12px] text-[#fff] leading-relaxed whitespace-pre-wrap">
+                      {m.ai_feedback}
+                    </div>
+                  )}
+                </li>
+              ))}
           </ul>
         </div>
       )}
-
     </div>
   );
 }

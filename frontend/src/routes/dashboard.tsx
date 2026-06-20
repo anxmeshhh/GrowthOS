@@ -1,9 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowRight, Target, BookOpen, ClipboardCheck,
-  Award, CheckCircle2, Circle,
-  Activity, Github,
-  RotateCcw, Sparkles, Hexagon
+  ArrowRight,
+  Target,
+  BookOpen,
+  ClipboardCheck,
+  Award,
+  CheckCircle2,
+  Circle,
+  Activity,
+  Github,
+  RotateCcw,
+  Sparkles,
+  Hexagon,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
@@ -89,18 +97,27 @@ function DashboardPage() {
   /* ── queries ── */
   const { data: paths = [] } = useQuery({
     queryKey: ["paths"],
-    queryFn: async () => { const r = await apiFetch("/paths/"); return r.ok ? r.json() : []; },
+    queryFn: async () => {
+      const r = await apiFetch("/paths/");
+      return r.ok ? r.json() : [];
+    },
   });
 
   const { data: customPaths = [] } = useQuery({
     queryKey: ["custom-paths"],
-    queryFn: async () => { const r = await apiFetch("/custom-paths/"); return r.ok ? r.json() : []; },
+    queryFn: async () => {
+      const r = await apiFetch("/custom-paths/");
+      return r.ok ? r.json() : [];
+    },
   });
 
-  const allPaths = useMemo(() => [
-    ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
-    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
-  ], [paths, customPaths]);
+  const allPaths = useMemo(
+    () => [
+      ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+      ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
+    ],
+    [paths, customPaths],
+  );
 
   const [selectedPathId, setSelectedPathId] = useState<string | null>(() => {
     if (typeof window !== "undefined") return localStorage.getItem("dashboard_selected_path");
@@ -120,7 +137,8 @@ function DashboardPage() {
       const r = await apiFetch("/heatmap/");
       if (!r.ok) return [];
       return (await r.json()).map((d: any) => ({
-        date: d.date, count: d.count,
+        date: d.date,
+        count: d.count,
         level: d.count === 0 ? 0 : d.count <= 2 ? 1 : d.count <= 4 ? 2 : d.count <= 6 ? 3 : 4,
       }));
     },
@@ -128,18 +146,28 @@ function DashboardPage() {
 
   const { data: activity = [] } = useQuery({
     queryKey: ["recent_activity"],
-    queryFn: async () => { const r = await apiFetch("/activity/"); return r.ok ? r.json() : []; },
+    queryFn: async () => {
+      const r = await apiFetch("/activity/");
+      return r.ok ? r.json() : [];
+    },
   });
 
   const { data: profile } = useQuery({
     queryKey: ["user_profile"],
-    queryFn: async () => { const r = await apiFetch("/profile/"); if (!r.ok) throw 0; return r.json(); },
+    queryFn: async () => {
+      const r = await apiFetch("/profile/");
+      if (!r.ok) throw 0;
+      return r.json();
+    },
   });
 
   const revive = useMutation({
     mutationFn: async () => {
       const r = await apiFetch("/activity/revive-streak/", { method: "POST" });
-      if (!r.ok) { const d = await r.json(); throw new Error(d.error || "Failed"); }
+      if (!r.ok) {
+        const d = await r.json();
+        throw new Error(d.error || "Failed");
+      }
       return r.json();
     },
     onSuccess: () => {
@@ -162,10 +190,12 @@ function DashboardPage() {
       ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
       ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
     ];
-    ap = fallback.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress"))
-      || fallback.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed"))
-      || fallback.find((p: any) => p.is_bookmarked)
-      || fallback[0] || null;
+    ap =
+      fallback.find((p: any) => p.topics?.some((t: any) => t.user_progress === "in_progress")) ||
+      fallback.find((p: any) => p.topics?.some((t: any) => t.user_progress === "completed")) ||
+      fallback.find((p: any) => p.is_bookmarked) ||
+      fallback[0] ||
+      null;
   }
 
   const rawTopics: any[] = ap?.topics || [];
@@ -176,11 +206,16 @@ function DashboardPage() {
     const grps: { milestone: any | null; topics: any[]; allDone: boolean }[] = [];
     let currentGroup: { milestone: any | null; topics: any[] } = { milestone: null, topics: [] };
 
-    sorted.forEach(t => {
-      if (t.node_kind === 'milestone') {
+    sorted.forEach((t) => {
+      if (t.node_kind === "milestone") {
         // Push the previous group if it has topics
         if (currentGroup.topics.length > 0 || currentGroup.milestone) {
-          grps.push({ ...currentGroup, allDone: currentGroup.topics.length > 0 && currentGroup.topics.every(st => st.user_progress === 'completed') });
+          grps.push({
+            ...currentGroup,
+            allDone:
+              currentGroup.topics.length > 0 &&
+              currentGroup.topics.every((st) => st.user_progress === "completed"),
+          });
         }
         currentGroup = { milestone: t, topics: [] };
       } else {
@@ -189,21 +224,28 @@ function DashboardPage() {
     });
     // Push the last group
     if (currentGroup.topics.length > 0 || currentGroup.milestone) {
-      grps.push({ ...currentGroup, allDone: currentGroup.topics.length > 0 && currentGroup.topics.every(st => st.user_progress === 'completed') });
+      grps.push({
+        ...currentGroup,
+        allDone:
+          currentGroup.topics.length > 0 &&
+          currentGroup.topics.every((st) => st.user_progress === "completed"),
+      });
     }
 
-    const allStudy = grps.flatMap(g => g.topics);
+    const allStudy = grps.flatMap((g) => g.topics);
     return { groups: grps, studyTopics: allStudy };
   }, [rawTopics]);
 
   const topics = studyTopics;
-  const cur = topics.find((t: any) => t.user_progress === "in_progress")
-    || topics.find((t: any) => t.user_progress !== "completed")
-    || topics[0] || null;
+  const cur =
+    topics.find((t: any) => t.user_progress === "in_progress") ||
+    topics.find((t: any) => t.user_progress !== "completed") ||
+    topics[0] ||
+    null;
   const done = topics.filter((t: any) => t.user_progress === "completed").length;
   const total = topics.length;
   const cpct = total > 0 ? Math.round((done / total) * 100) : 0;
-  const railPct = total > 1 ? Math.round((done / (total - 1)) * 100) : (done === 1 ? 100 : 0);
+  const railPct = total > 1 ? Math.round((done / (total - 1)) * 100) : done === 1 ? 100 : 0;
 
   const started = cur?.user_progress === "in_progress" || cur?.user_progress === "completed";
   const proof = cur?.has_submitted_work === true || cur?.user_progress === "completed";
@@ -221,7 +263,6 @@ function DashboardPage() {
   /* ── render ── */
   return (
     <PageShell>
-
       {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-[5px] border border-[#1e1e1e] bg-[#060606] text-[#e0e0e0] text-[12px] font-mono tracking-wide shadow-xl flex items-center gap-2.5">
@@ -231,13 +272,14 @@ function DashboardPage() {
       )}
 
       <div className="p-5 lg:p-6 max-w-[1400px] mx-auto">
-
         {/* ── Page header ── */}
         <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#0e0e0e]">
           <div className="flex items-center gap-2.5">
             <Hexagon className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
             <div>
-              <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#eee] leading-none mb-1">GrowthOS</p>
+              <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#eee] leading-none mb-1">
+                GrowthOS
+              </p>
               <h1 className="text-[18px] font-semibold tracking-tight text-[#efefef] leading-none">
                 Command Center
               </h1>
@@ -248,13 +290,21 @@ function DashboardPage() {
             <div className="relative">
               <select
                 value={selectedPathId || "auto"}
-                onChange={(e) => setSelectedPathId(e.target.value === "auto" ? null : e.target.value)}
+                onChange={(e) =>
+                  setSelectedPathId(e.target.value === "auto" ? null : e.target.value)
+                }
                 className="appearance-none bg-[#080808] border border-[#181818] text-[#eee] text-[10px] font-mono uppercase tracking-[0.18em] rounded-[4px] pl-4 pr-8 py-2 outline-none hover:border-[#222] hover:text-[#fff] transition-all cursor-pointer"
               >
-                <option value="auto" className="bg-black font-sans normal-case">Auto-track active</option>
+                <option value="auto" className="bg-black font-sans normal-case">
+                  Auto-track active
+                </option>
                 <optgroup label="Available Paths" className="bg-black text-[#fff] font-sans">
                   {allPaths.map((p: any) => (
-                    <option key={p.uniqueId} value={p.uniqueId} className="bg-black text-[#eee] font-sans normal-case text-lg">
+                    <option
+                      key={p.uniqueId}
+                      value={p.uniqueId}
+                      className="bg-black text-[#eee] font-sans normal-case text-lg"
+                    >
                       {p.title}
                     </option>
                   ))}
@@ -268,22 +318,33 @@ function DashboardPage() {
 
         {/* ── Bento grid ── */}
         <div className="grid grid-cols-12 gap-3 auto-rows-[minmax(130px,auto)]">
-
           {/* ── 1. Hero Mission ── 8 cols ── */}
-          <Panel accent className="col-span-12 lg:col-span-8 p-7 flex flex-col justify-between min-h-[220px]">
+          <Panel
+            accent
+            className="col-span-12 lg:col-span-8 p-7 flex flex-col justify-between min-h-[220px]"
+          >
             {cur ? (
               <>
                 {/* Green radial bloom — same technique as progress stat cards */}
                 <div
                   className="pointer-events-none absolute rounded-full blur-3xl"
-                  style={{ width: 400, height: 400, background: "#22c55e", opacity: 0.05, top: -80, right: -80 }}
+                  style={{
+                    width: 400,
+                    height: 400,
+                    background: "#22c55e",
+                    opacity: 0.05,
+                    top: -80,
+                    right: -80,
+                  }}
                 />
 
                 <div className="relative z-10">
                   <SectionLabel>
                     <Sparkles size={9} className="text-[#22c55e]" /> Active Protocol
                   </SectionLabel>
-                  <p className="mt-3 text-[10px] font-mono text-[#fff] tracking-[0.2em] uppercase">{ap?.title}</p>
+                  <p className="mt-3 text-[10px] font-mono text-[#fff] tracking-[0.2em] uppercase">
+                    {ap?.title}
+                  </p>
                   <h2 className="mt-1 text-[23px] md:text-[27px] font-semibold text-[#efefef] tracking-tight leading-tight max-w-2xl">
                     {cur.title}
                   </h2>
@@ -295,15 +356,17 @@ function DashboardPage() {
                     {steps.map((s, i) => (
                       <div
                         key={i}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-[10px] font-mono uppercase tracking-[0.15em] transition-colors ${s.d
-                          ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
-                          : "text-[#eee]"
-                          }`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-[10px] font-mono uppercase tracking-[0.15em] transition-colors ${
+                          s.d
+                            ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
+                            : "text-[#eee]"
+                        }`}
                       >
-                        {s.d
-                          ? <CheckCircle2 size={10} strokeWidth={2} />
-                          : <Circle size={10} strokeWidth={1.5} />
-                        }
+                        {s.d ? (
+                          <CheckCircle2 size={10} strokeWidth={2} />
+                        ) : (
+                          <Circle size={10} strokeWidth={1.5} />
+                        )}
                         {s.l}
                       </div>
                     ))}
@@ -331,17 +394,27 @@ function DashboardPage() {
 
           {/* ── 2. Metrics stack ── 4 cols ── */}
           <div className="col-span-12 lg:col-span-4 grid grid-cols-2 gap-3 grid-rows-2">
-
             {/* Level */}
             <Panel className="col-span-1 flex flex-col justify-between p-4 relative overflow-hidden">
               <div
                 className="pointer-events-none absolute rounded-full blur-2xl"
-                style={{ width: 100, height: 100, background: "#a855f7", opacity: 0.06, bottom: -28, right: -28 }}
+                style={{
+                  width: 100,
+                  height: 100,
+                  background: "#a855f7",
+                  opacity: 0.06,
+                  bottom: -28,
+                  right: -28,
+                }}
               />
               <SectionLabel>Level</SectionLabel>
               <div>
-                <div className="text-[33px] font-mono tabular-nums text-[#efefef] leading-none mt-2">{level}</div>
-                <div className="text-[9px] font-mono text-[#a855f7] uppercase tracking-[0.2em] mt-1.5">{lvl}</div>
+                <div className="text-[33px] font-mono tabular-nums text-[#efefef] leading-none mt-2">
+                  {level}
+                </div>
+                <div className="text-[9px] font-mono text-[#a855f7] uppercase tracking-[0.2em] mt-1.5">
+                  {lvl}
+                </div>
               </div>
             </Panel>
 
@@ -349,7 +422,14 @@ function DashboardPage() {
             <Panel className="col-span-1 flex flex-col justify-between p-4 relative overflow-hidden">
               <div
                 className="pointer-events-none absolute rounded-full blur-2xl"
-                style={{ width: 100, height: 100, background: "#f59e0b", opacity: 0.05, bottom: -28, right: -28 }}
+                style={{
+                  width: 100,
+                  height: 100,
+                  background: "#f59e0b",
+                  opacity: 0.05,
+                  bottom: -28,
+                  right: -28,
+                }}
               />
               <div className="flex justify-between items-start">
                 <SectionLabel>Streak</SectionLabel>
@@ -365,10 +445,14 @@ function DashboardPage() {
                 )}
               </div>
               <div>
-                <div className={`text-[33px] font-mono tabular-nums leading-none mt-2 ${streak > 0 ? "text-[#efefef]" : "text-[#1e1e1e]"}`}>
+                <div
+                  className={`text-[33px] font-mono tabular-nums leading-none mt-2 ${streak > 0 ? "text-[#efefef]" : "text-[#1e1e1e]"}`}
+                >
                   {streak}
                 </div>
-                <div className="text-[9px] font-mono text-[#f59e0b] uppercase tracking-[0.2em] mt-1.5">days active</div>
+                <div className="text-[9px] font-mono text-[#f59e0b] uppercase tracking-[0.2em] mt-1.5">
+                  days active
+                </div>
               </div>
             </Panel>
 
@@ -376,16 +460,24 @@ function DashboardPage() {
             <Panel className="col-span-2 flex flex-col justify-center p-4 relative">
               <div className="flex justify-between items-baseline mb-2">
                 <SectionLabel>Experience</SectionLabel>
-                <span className="text-[9px] font-mono text-[#a855f7]/70">{next - xp} XP to next</span>
+                <span className="text-[9px] font-mono text-[#a855f7]/70">
+                  {next - xp} XP to next
+                </span>
               </div>
               <div className="flex items-baseline gap-1.5 mb-3">
-                <span className="text-[19px] font-mono tabular-nums text-[#efefef] leading-none">{xp}</span>
+                <span className="text-[19px] font-mono tabular-nums text-[#efefef] leading-none">
+                  {xp}
+                </span>
                 <span className="text-[10px] font-mono text-[#eee]">/ {next}</span>
               </div>
               <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${xpPct}%`, background: "#a855f7", boxShadow: "0 0 8px #a855f740" }}
+                  style={{
+                    width: `${xpPct}%`,
+                    background: "#a855f7",
+                    boxShadow: "0 0 8px #a855f740",
+                  }}
                 />
               </div>
             </Panel>
@@ -394,15 +486,23 @@ function DashboardPage() {
           {/* ── 3. Path Trajectory ── 8 cols ── */}
           <Panel className="col-span-12 lg:col-span-8 p-5 flex flex-col" style={{ minHeight: 280 }}>
             <div className="flex justify-between items-center mb-4 shrink-0">
-              <SectionLabel><Award size={9} /> Path Trajectory</SectionLabel>
-              <span className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.15em]">{cpct}% completed</span>
+              <SectionLabel>
+                <Award size={9} /> Path Trajectory
+              </SectionLabel>
+              <span className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.15em]">
+                {cpct}% completed
+              </span>
             </div>
 
             {/* Overall progress bar */}
             <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden mb-4 shrink-0">
               <div
                 className="h-full rounded-full transition-all duration-1000"
-                style={{ width: `${cpct}%`, background: '#22c55e', boxShadow: cpct > 0 ? '0 0 8px #22c55e40' : 'none' }}
+                style={{
+                  width: `${cpct}%`,
+                  background: "#22c55e",
+                  boxShadow: cpct > 0 ? "0 0 8px #22c55e40" : "none",
+                }}
               />
             </div>
 
@@ -410,7 +510,9 @@ function DashboardPage() {
               <div className="flex items-stretch gap-4 min-w-max h-full py-1">
                 {groups.map((g, gi) => {
                   const milestoneLabel = g.milestone?.title || `Section ${gi + 1}`;
-                  const groupDone = g.topics.filter((t: any) => t.user_progress === 'completed').length;
+                  const groupDone = g.topics.filter(
+                    (t: any) => t.user_progress === "completed",
+                  ).length;
                   const groupTotal = g.topics.length;
                   const groupPct = groupTotal > 0 ? Math.round((groupDone / groupTotal) * 100) : 0;
 
@@ -420,36 +522,41 @@ function DashboardPage() {
                       <div
                         className="flex flex-col rounded-[6px] overflow-hidden shrink-0 transition-all duration-300"
                         style={{
-                          border: `1px solid ${g.allDone ? '#22c55e90' : '#3a3a3a'}`,
-                          background: g.allDone ? '#051505' : '#0c0c0c',
+                          border: `1px solid ${g.allDone ? "#22c55e90" : "#3a3a3a"}`,
+                          background: g.allDone ? "#051505" : "#0c0c0c",
                           minWidth: Math.max(160, groupTotal * 44 + 32),
                           maxWidth: 360,
-                          boxShadow: g.allDone ? '0 0 18px #22c55e25' : '0 0 10px #00000060',
+                          boxShadow: g.allDone ? "0 0 18px #22c55e25" : "0 0 10px #00000060",
                         }}
                       >
                         {/* Milestone header */}
                         <div
                           className="flex items-center gap-2 px-3 py-2 shrink-0"
                           style={{
-                            borderBottom: `1px solid ${g.allDone ? '#22c55e60' : '#2a2a2a'}`,
-                            background: g.allDone ? '#072007' : '#121212',
+                            borderBottom: `1px solid ${g.allDone ? "#22c55e60" : "#2a2a2a"}`,
+                            background: g.allDone ? "#072007" : "#121212",
                           }}
                         >
-                          {g.allDone
-                            ? <CheckCircle2 size={12} strokeWidth={2.5} className="text-[#22c55e] shrink-0" />
-                            : <Circle size={12} strokeWidth={2} className="text-[#60a5fa] shrink-0" />
-                          }
+                          {g.allDone ? (
+                            <CheckCircle2
+                              size={12}
+                              strokeWidth={2.5}
+                              className="text-[#22c55e] shrink-0"
+                            />
+                          ) : (
+                            <Circle size={12} strokeWidth={2} className="text-[#60a5fa] shrink-0" />
+                          )}
                           <span
                             className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] truncate"
-                            style={{ color: g.allDone ? '#4ade80' : '#93c5fd' }}
+                            style={{ color: g.allDone ? "#4ade80" : "#93c5fd" }}
                           >
                             {milestoneLabel}
                           </span>
                           <span
                             className="ml-auto text-[8px] font-mono shrink-0 px-1.5 py-0.5 rounded-sm"
                             style={{
-                              color: g.allDone ? '#22c55e' : '#888',
-                              background: g.allDone ? '#22c55e15' : '#1a1a1a',
+                              color: g.allDone ? "#22c55e" : "#888",
+                              background: g.allDone ? "#22c55e15" : "#1a1a1a",
                             }}
                           >
                             {groupDone}/{groupTotal}
@@ -457,11 +564,14 @@ function DashboardPage() {
                         </div>
 
                         {/* Subtopics list */}
-                        <div className="flex-1 overflow-y-auto px-1.5 py-1.5 space-y-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#1a1a1a #060606' }}>
+                        <div
+                          className="flex-1 overflow-y-auto px-1.5 py-1.5 space-y-0.5"
+                          style={{ scrollbarWidth: "thin", scrollbarColor: "#1a1a1a #060606" }}
+                        >
                           {g.topics.map((t: any, ti: number) => {
-                            const d = t.user_progress === 'completed';
+                            const d = t.user_progress === "completed";
                             const a = t.id === cur?.id;
-                            const ip = t.user_progress === 'in_progress';
+                            const ip = t.user_progress === "in_progress";
                             return (
                               <Link
                                 key={t.id}
@@ -469,24 +579,36 @@ function DashboardPage() {
                                 params={{ topicId: String(t.id) }}
                                 className="flex items-center gap-2 px-2 py-[5px] rounded-[3px] no-underline transition-all duration-150 group/item"
                                 style={{
-                                  background: a ? '#0c1a0f' : 'transparent',
-                                  border: a ? '1px solid #22c55e35' : '1px solid transparent',
+                                  background: a ? "#0c1a0f" : "transparent",
+                                  border: a ? "1px solid #22c55e35" : "1px solid transparent",
                                 }}
-                                onMouseEnter={e => { if (!a) (e.currentTarget as HTMLElement).style.background = '#0a0a0a'; }}
-                                onMouseLeave={e => { if (!a) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                                onMouseEnter={(e) => {
+                                  if (!a)
+                                    (e.currentTarget as HTMLElement).style.background = "#0a0a0a";
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!a)
+                                    (e.currentTarget as HTMLElement).style.background =
+                                      "transparent";
+                                }}
                               >
                                 <span className="shrink-0 w-3 flex items-center justify-center">
-                                  {d
-                                    ? <CheckCircle2 size={11} strokeWidth={2.5} className="text-[#22c55e]" />
-                                    : ip
-                                      ? <span className="w-[8px] h-[8px] rounded-full bg-[#f59e0b] animate-pulse" />
-                                      : <Circle size={10} strokeWidth={1.5} className="text-[#555]" />
-                                  }
+                                  {d ? (
+                                    <CheckCircle2
+                                      size={11}
+                                      strokeWidth={2.5}
+                                      className="text-[#22c55e]"
+                                    />
+                                  ) : ip ? (
+                                    <span className="w-[8px] h-[8px] rounded-full bg-[#f59e0b] animate-pulse" />
+                                  ) : (
+                                    <Circle size={10} strokeWidth={1.5} className="text-[#555]" />
+                                  )}
                                 </span>
                                 <span
                                   className="text-[11px] font-mono leading-tight truncate flex-1"
                                   style={{
-                                    color: d ? '#4ade80' : a ? '#ffffff' : '#b5b5b5',
+                                    color: d ? "#4ade80" : a ? "#ffffff" : "#b5b5b5",
                                   }}
                                 >
                                   {t.title}
@@ -502,13 +624,16 @@ function DashboardPage() {
                         </div>
 
                         {/* Progress micro-bar at bottom */}
-                        <div className="h-[2px] w-full shrink-0" style={{ background: '#161616' }}>
+                        <div className="h-[2px] w-full shrink-0" style={{ background: "#161616" }}>
                           <div
                             className="h-full transition-all duration-700"
                             style={{
                               width: `${groupPct}%`,
-                              background: g.allDone ? '#22c55e' : '#5b8def',
-                              boxShadow: groupPct > 0 ? `0 0 8px ${g.allDone ? '#22c55e70' : '#5b8def70'}` : 'none',
+                              background: g.allDone ? "#22c55e" : "#5b8def",
+                              boxShadow:
+                                groupPct > 0
+                                  ? `0 0 8px ${g.allDone ? "#22c55e70" : "#5b8def70"}`
+                                  : "none",
                             }}
                           />
                         </div>
@@ -524,20 +649,25 @@ function DashboardPage() {
                             className="connector-arrow"
                             style={{
                               filter: g.allDone
-                                ? 'drop-shadow(0 0 6px #22c55ecc) drop-shadow(0 0 12px #22c55e60)'
-                                : 'drop-shadow(0 0 3px #ffffff30)',
+                                ? "drop-shadow(0 0 6px #22c55ecc) drop-shadow(0 0 12px #22c55e60)"
+                                : "drop-shadow(0 0 3px #ffffff30)",
                             }}
                           >
                             <line
-                              x1="2" y1="8" x2="34" y2="8"
-                              stroke={g.allDone ? '#4ade80' : '#9ca3af'}
+                              x1="2"
+                              y1="8"
+                              x2="34"
+                              y2="8"
+                              stroke={g.allDone ? "#4ade80" : "#9ca3af"}
                               strokeWidth="2.5"
                               strokeLinecap="round"
-                              className={g.allDone ? 'connector-line-active' : 'connector-line-idle'}
+                              className={
+                                g.allDone ? "connector-line-active" : "connector-line-idle"
+                              }
                             />
                             <polygon
                               points="32,2.5 44,8 32,13.5"
-                              fill={g.allDone ? '#4ade80' : '#9ca3af'}
+                              fill={g.allDone ? "#4ade80" : "#9ca3af"}
                             />
                           </svg>
                         </div>
@@ -552,10 +682,10 @@ function DashboardPage() {
           {/* ── 4. Activity Feed ── 4 cols ── */}
           <Panel className="col-span-12 lg:col-span-4 p-5 flex flex-col" style={{ height: 280 }}>
             <div className="flex justify-between items-center mb-4 shrink-0">
-              <SectionLabel><Activity size={9} /> Recent Activity</SectionLabel>
-              {activity.length > 0 && (
-                <span className="live-dot" />
-              )}
+              <SectionLabel>
+                <Activity size={9} /> Recent Activity
+              </SectionLabel>
+              {activity.length > 0 && <span className="live-dot" />}
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -563,17 +693,27 @@ function DashboardPage() {
                 <ul className="divide-y divide-[#0d0d0d]">
                   {activity.slice(0, 12).map((a: any, i: number) => (
                     <li key={a.id} className="flex items-start gap-3 py-2.5">
-                      <div className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1a1a1a]"
-                        }`} />
+                      <div
+                        className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${
+                          i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1a1a1a]"
+                        }`}
+                      />
                       <div className="min-w-0 flex-1">
-                        <p className={`text-[12px] leading-snug truncate ${i === 0 ? "text-[#c8c8c8]" : "text-[#eee]"
-                          }`}>
+                        <p
+                          className={`text-[12px] leading-snug truncate ${
+                            i === 0 ? "text-[#c8c8c8]" : "text-[#eee]"
+                          }`}
+                        >
                           {a.label}
                         </p>
-                        <p className="text-[10px] font-mono text-[#eee] mt-0.5">{timeAgo(a.date)}</p>
+                        <p className="text-[10px] font-mono text-[#eee] mt-0.5">
+                          {timeAgo(a.date)}
+                        </p>
                       </div>
                       {i === 0 && (
-                        <span className="shrink-0 text-[8px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">new</span>
+                        <span className="shrink-0 text-[8px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">
+                          new
+                        </span>
                       )}
                     </li>
                   ))}
@@ -589,8 +729,12 @@ function DashboardPage() {
           {/* ── 5. Heatmap ── full width ── */}
           <Panel className="col-span-12 p-5 flex flex-col gap-4">
             <div className="flex justify-between items-center shrink-0">
-              <SectionLabel><Github size={9} /> Activity Matrix</SectionLabel>
-              <span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">Annual trace</span>
+              <SectionLabel>
+                <Github size={9} /> Activity Matrix
+              </SectionLabel>
+              <span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">
+                Annual trace
+              </span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
@@ -610,7 +754,8 @@ function DashboardPage() {
                     fontSize={10}
                     labels={{ totalCount: "{{count}} contributions in the last year" }}
                     style={{
-                      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                      fontFamily:
+                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                       color: "#333",
                     }}
                   />
@@ -618,7 +763,6 @@ function DashboardPage() {
               </div>
             </div>
           </Panel>
-
         </div>
       </div>
 

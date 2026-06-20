@@ -29,7 +29,7 @@ function AdminLogin() {
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.detail || "Invalid credentials");
       }
@@ -39,7 +39,7 @@ function AdminLogin() {
       // Now verify if user is admin
       const profileRes = await apiFetch("/profile/");
       const profileData = await profileRes.json();
-      
+
       if (!profileData.user.is_staff) {
         throw new Error("Unauthorized. Admin access required.");
       }
@@ -55,7 +55,7 @@ function AdminLogin() {
   return (
     <div className="min-h-screen bg-[#030303] text-white font-sans selection:bg-red-500/30">
       <div className="flex items-center gap-3 p-6 max-w-7xl mx-auto absolute top-0 left-0 w-full z-10">
-        <button 
+        <button
           onClick={() => navigate({ to: "/login" })}
           className="text-gray-500 hover:text-white transition-colors text-sm font-mono flex items-center gap-1"
         >
@@ -66,13 +66,15 @@ function AdminLogin() {
         <div className="w-full max-w-md rounded-xl border border-[#222] bg-[#0a0a0a] p-8 shadow-2xl relative overflow-hidden">
           {/* Top accent strip */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-red-900" />
-          
+
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 rounded-full bg-[#111] border border-[#333] flex items-center justify-center mb-4">
               <Shield size={32} className="text-red-500" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-white mb-2">System Override</h1>
-            <p className="text-sm font-mono text-red-500/80 uppercase tracking-widest">Admin Access Only</p>
+            <p className="text-sm font-mono text-red-500/80 uppercase tracking-widest">
+              Admin Access Only
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -81,11 +83,13 @@ function AdminLogin() {
                 {error}
               </div>
             )}
-            
+
             <div className="space-y-2">
-              <label className="text-xs font-mono uppercase tracking-wider text-gray-400">Username</label>
-              <input 
-                type="text" 
+              <label className="text-xs font-mono uppercase tracking-wider text-gray-400">
+                Username
+              </label>
+              <input
+                type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-[#111] border border-[#333] rounded px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
@@ -95,10 +99,12 @@ function AdminLogin() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-mono uppercase tracking-wider text-gray-400">Master Password</label>
+              <label className="text-xs font-mono uppercase tracking-wider text-gray-400">
+                Master Password
+              </label>
               <div className="relative">
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-[#111] border border-[#333] rounded px-4 py-3 pl-10 text-white focus:outline-none focus:border-red-500 transition-colors"
@@ -109,13 +115,17 @@ function AdminLogin() {
               </div>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={loading}
               className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
-              {loading ? "Authenticating..." : (
-                <>Initialize Session <ArrowRight size={16} /></>
+              {loading ? (
+                "Authenticating..."
+              ) : (
+                <>
+                  Initialize Session <ArrowRight size={16} />
+                </>
               )}
             </button>
           </form>

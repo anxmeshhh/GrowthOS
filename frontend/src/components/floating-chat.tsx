@@ -14,17 +14,38 @@ function formatAIText(text: string) {
   return parts.map((part, i) => {
     if (part.startsWith("```") && part.endsWith("```")) {
       const code = part.slice(3, -3).replace(/^\w+\n/, "");
-      return <pre key={i} className="bg-[#0a0f1e] border border-[#1e3060] rounded-lg p-3 text-lg font-mono overflow-x-auto my-2 text-[#60a5fa]">{code}</pre>;
+      return (
+        <pre
+          key={i}
+          className="bg-[#0a0f1e] border border-[#1e3060] rounded-lg p-3 text-lg font-mono overflow-x-auto my-2 text-[#60a5fa]"
+        >
+          {code}
+        </pre>
+      );
     }
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
+      return (
+        <strong key={i} className="text-white font-semibold">
+          {part.slice(2, -2)}
+        </strong>
+      );
     }
     if (part.startsWith("`") && part.endsWith("`")) {
-      return <code key={i} className="bg-[#1e3060] text-[#60a5fa] px-1.5 py-0.5 rounded text-lg font-mono">{part.slice(1, -1)}</code>;
+      return (
+        <code
+          key={i}
+          className="bg-[#1e3060] text-[#60a5fa] px-1.5 py-0.5 rounded text-lg font-mono"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
     }
     // Handle newlines
     return part.split("\n").map((line, j) => (
-      <React.Fragment key={`${i}-${j}`}>{j > 0 && <br />}{line}</React.Fragment>
+      <React.Fragment key={`${i}-${j}`}>
+        {j > 0 && <br />}
+        {line}
+      </React.Fragment>
     ));
   });
 }
@@ -50,7 +71,14 @@ export function FloatingChat() {
         if (Array.isArray(data) && data.length > 0) {
           setMessages(data);
         } else {
-          setMessages([{ id: "init", role: "ai", content: "Hey! I'm your GrowthOS Mentor. Ask me anything about your learning path, or tap a quick action below." }]);
+          setMessages([
+            {
+              id: "init",
+              role: "ai",
+              content:
+                "Hey! I'm your GrowthOS Mentor. Ask me anything about your learning path, or tap a quick action below.",
+            },
+          ]);
         }
       })
       .catch(() => {});
@@ -83,12 +111,25 @@ export function FloatingChat() {
       });
       if (res.ok) {
         const data = await res.json();
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "ai", content: data.reply }]);
+        setMessages((prev) => [
+          ...prev,
+          { id: (Date.now() + 1).toString(), role: "ai", content: data.reply },
+        ]);
       } else {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "ai", content: "Connection lost. Try again in a moment." }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "ai",
+            content: "Connection lost. Try again in a moment.",
+          },
+        ]);
       }
     } catch {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "ai", content: "System error. Let's try again." }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), role: "ai", content: "System error. Let's try again." },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +137,9 @@ export function FloatingChat() {
 
   const handleClear = async () => {
     await apiFetch("/chat/", { method: "DELETE" });
-    setMessages([{ id: "init", role: "ai", content: "Chat cleared. What would you like to work on?" }]);
+    setMessages([
+      { id: "init", role: "ai", content: "Chat cleared. What would you like to work on?" },
+    ]);
   };
 
   return (
@@ -119,7 +162,7 @@ export function FloatingChat() {
           style={{ animation: "slideUp 0.25s ease-out" }}
         >
           <style>{`@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-          
+
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[#1e3060] bg-[#0d142b] px-4 py-3">
             <div className="flex items-center gap-3">
@@ -138,10 +181,17 @@ export function FloatingChat() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} className="p-1.5 rounded-lg text-[#fff] hover:text-[#f59e0b] hover:bg-[#1e3060] transition-colors" title="Clear chat">
+              <button
+                onClick={handleClear}
+                className="p-1.5 rounded-lg text-[#fff] hover:text-[#f59e0b] hover:bg-[#1e3060] transition-colors"
+                title="Clear chat"
+              >
                 <Trash2 size={14} />
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg text-[#fff] hover:text-[#f0f0f0] hover:bg-[#1e3060] transition-colors">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg text-[#fff] hover:text-[#f0f0f0] hover:bg-[#1e3060] transition-colors"
+              >
                 <X size={16} />
               </button>
             </div>
@@ -150,12 +200,17 @@ export function FloatingChat() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-[#3b5bdb] text-white rounded-br-md"
-                    : "bg-[#131a2e] border border-[#1e3060] text-[#d0d0d0] rounded-bl-md"
-                }`}>
+              <div
+                key={msg.id}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-[#3b5bdb] text-white rounded-br-md"
+                      : "bg-[#131a2e] border border-[#1e3060] text-[#d0d0d0] rounded-bl-md"
+                  }`}
+                >
                   {msg.role === "ai" ? formatAIText(msg.content) : msg.content}
                 </div>
               </div>

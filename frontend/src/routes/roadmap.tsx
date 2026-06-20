@@ -1,12 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2, ArrowRight, Map as MapIcon, Bookmark } from "lucide-react";
-import {
-  PageShell,
-  PageHeader,
-  Card,
-  Btn,
-  Badge,
-} from "@/components/growth-ui";
+import { PageShell, PageHeader, Card, Btn, Badge } from "@/components/growth-ui";
 import { RoadmapTree } from "@/components/roadmap/RoadmapTree";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
@@ -73,7 +67,9 @@ function RoadmapPage() {
       const previousPaths = queryClient.getQueryData(["paths"]);
       queryClient.setQueryData(["paths"], (old: any) => {
         if (!old) return old;
-        return old.map((p: any) => (p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p));
+        return old.map((p: any) =>
+          p.slug === slug ? { ...p, is_bookmarked: !p.is_bookmarked } : p,
+        );
       });
       return { previousPaths };
     },
@@ -128,11 +124,7 @@ function RoadmapPage() {
   }
 
   return (
-    <RoadmapPageInner
-      activePath={activePath}
-      paths={paths}
-      onSelectPath={setSelectedPathId}
-    />
+    <RoadmapPageInner activePath={activePath} paths={paths} onSelectPath={setSelectedPathId} />
   );
 }
 
@@ -183,9 +175,10 @@ function RoadmapPageInner({
                 className={`
                   group flex shrink-0 items-center gap-2.5 rounded-full border px-3.5 py-2
                   transition-colors duration-150
-                  ${isActive
-                    ? "border-[#22c55e]/35 bg-[#0a1a10]"
-                    : "border-[#1c1c1c] bg-transparent hover:border-[#2a2a2a] hover:bg-[#0d0d0d]"
+                  ${
+                    isActive
+                      ? "border-[#22c55e]/35 bg-[#0a1a10]"
+                      : "border-[#1c1c1c] bg-transparent hover:border-[#2a2a2a] hover:bg-[#0d0d0d]"
                   }
                 `}
               >
@@ -193,10 +186,14 @@ function RoadmapPageInner({
                   size={11}
                   className={isActive ? "fill-[#22c55e] text-[#22c55e]" : "text-[#fff]"}
                 />
-                <span className={`whitespace-nowrap text-lg font-medium ${isActive ? "text-[#22c55e]" : "text-[#fff]"}`}>
+                <span
+                  className={`whitespace-nowrap text-lg font-medium ${isActive ? "text-[#22c55e]" : "text-[#fff]"}`}
+                >
                   {p.title}
                 </span>
-                <span className={`whitespace-nowrap text-[11px] font-mono ${isActive ? "text-[#22c55e]/60" : "text-[#eee]"}`}>
+                <span
+                  className={`whitespace-nowrap text-[11px] font-mono ${isActive ? "text-[#22c55e]/60" : "text-[#eee]"}`}
+                >
                   {pPct}%
                 </span>
               </button>
@@ -212,14 +209,7 @@ function RoadmapPageInner({
           <div className="flex items-center gap-5 p-6">
             <div className="relative flex h-24 w-24 shrink-0 items-center justify-center">
               <svg viewBox="0 0 96 96" className="h-24 w-24 -rotate-90">
-                <circle
-                  cx="48"
-                  cy="48"
-                  r="42"
-                  fill="none"
-                  stroke="#1a1a1a"
-                  strokeWidth="6"
-                />
+                <circle cx="48" cy="48" r="42" fill="none" stroke="#1a1a1a" strokeWidth="6" />
                 <circle
                   cx="48"
                   cy="48"
@@ -234,13 +224,19 @@ function RoadmapPageInner({
                 />
               </svg>
               <div className="absolute flex flex-col items-center">
-                <span className="font-mono text-xl font-semibold text-[#f0f0f0]">{completionPct}%</span>
+                <span className="font-mono text-xl font-semibold text-[#f0f0f0]">
+                  {completionPct}%
+                </span>
               </div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-[#fff]">Overall progress</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] font-mono text-[#fff]">
+                Overall progress
+              </div>
               <div className="mt-1.5 flex items-baseline gap-1.5">
-                <span className="font-mono text-2xl font-semibold text-[#f0f0f0]">{completedCount}</span>
+                <span className="font-mono text-2xl font-semibold text-[#f0f0f0]">
+                  {completedCount}
+                </span>
                 <span className="text-lg text-[#fff]">/ {topics.length} topics</span>
               </div>
               <div className="mt-2 flex items-center gap-3 text-[12px] text-[#eee]">
@@ -248,7 +244,8 @@ function RoadmapPageInner({
                   <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> {completedCount} done
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#d4a72c]" /> {inProgressCount} active
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#d4a72c]" /> {inProgressCount}{" "}
+                  active
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#3a3a3a]" /> {lockedCount} queued
@@ -278,7 +275,11 @@ function RoadmapPageInner({
               </div>
             </div>
             {nextTopic && (
-              <Link to="/topic/$topicId" params={{ topicId: String(nextTopic.id) }} className="shrink-0">
+              <Link
+                to="/topic/$topicId"
+                params={{ topicId: String(nextTopic.id) }}
+                className="shrink-0"
+              >
                 <Btn>
                   Continue <ArrowRight size={13} />
                 </Btn>

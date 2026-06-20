@@ -1,7 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Compass, Map, BookOpen, ClipboardCheck,
-  Github, TrendingUp, Settings, Flame, Menu, X, User, ChevronRight,
+  LayoutDashboard,
+  Compass,
+  Map,
+  BookOpen,
+  ClipboardCheck,
+  Github,
+  TrendingUp,
+  Settings,
+  Flame,
+  Menu,
+  X,
+  User,
+  ChevronRight,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -31,15 +42,11 @@ const NAV_GROUPS = [
   },
   {
     label: "Build",
-    items: [
-      { to: "/projects", label: "Projects", icon: Github },
-    ],
+    items: [{ to: "/projects", label: "Projects", icon: Github }],
   },
   {
     label: "System",
-    items: [
-      { to: "/settings", label: "Settings", icon: Settings },
-    ],
+    items: [{ to: "/settings", label: "Settings", icon: Settings }],
   },
 ] as const;
 
@@ -77,7 +84,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                 <Link
                   key={to}
                   to={to}
-                  id={`nav-${to.replace('/', '')}`}
+                  id={`nav-${to.replace("/", "")}`}
                   onClick={onNavigate}
                   style={{
                     display: "flex",
@@ -89,9 +96,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                     fontWeight: active ? 600 : 500,
                     color: active ? "#ffffff" : "#888888",
                     background: active ? "#141414" : "transparent",
-                    boxShadow: active
-                      ? "inset 0 0 0 1px rgba(255,255,255,0.05)"
-                      : "none",
+                    boxShadow: active ? "inset 0 0 0 1px rgba(255,255,255,0.05)" : "none",
                     transition: "color 120ms ease, background 120ms ease",
                     textDecoration: "none",
                     position: "relative",
@@ -127,12 +132,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   />
                   <span style={{ flex: 1 }}>{label}</span>
 
-                  {active && (
-                    <ChevronRight
-                      size={11}
-                      style={{ color: "#2a2a2a", flexShrink: 0 }}
-                    />
-                  )}
+                  {active && <ChevronRight size={11} style={{ color: "#2a2a2a", flexShrink: 0 }} />}
                 </Link>
               );
             })}
@@ -205,7 +205,15 @@ function SidebarFooter() {
             {streak} day streak
           </span>
           {/* Mini heat bar */}
-          <div style={{ flex: 1, height: "2px", borderRadius: "1px", background: "#1a1a1a", overflow: "hidden" }}>
+          <div
+            style={{
+              flex: 1,
+              height: "2px",
+              borderRadius: "1px",
+              background: "#1a1a1a",
+              overflow: "hidden",
+            }}
+          >
             <div
               style={{
                 height: "100%",
