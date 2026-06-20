@@ -77,6 +77,7 @@ urlpatterns = [
     path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
     path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
     path('admin/export-data/', AdminDataExportView.as_view(), name='admin_export_data'),
+    path('admin/roadmaps/upload/', AdminRoadmapUploadView.as_view(), name='admin_roadmap_upload'),
     path('admin/requests/', AdminRequestListView.as_view(), name='admin_requests'),
     path('admin/requests/<int:pk>/', AdminRequestDetailView.as_view(), name='admin_request_detail'),
     

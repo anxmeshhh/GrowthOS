@@ -381,6 +381,15 @@ function AdminDashboard() {
                     </span>
                     <ArrowUpRight size={14} className="text-gray-500 group-hover:text-red-400" />
                   </button>
+                  <button
+                    onClick={() => navigate({ to: "/admin/roadmap" })}
+                    className="w-full flex items-center justify-between p-3 rounded-lg border border-purple-900/50 bg-purple-950/20 hover:border-purple-500/50 hover:bg-purple-950/40 transition-all group cursor-pointer mt-2"
+                  >
+                    <span className="text-sm text-purple-300 group-hover:text-purple-400 font-medium flex items-center gap-2">
+                      <Map size={14} /> Roadmap Manager
+                    </span>
+                    <ArrowUpRight size={14} className="text-purple-500 group-hover:text-purple-400" />
+                  </button>
                 </div>
               </div>
             </div>

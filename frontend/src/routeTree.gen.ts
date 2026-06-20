@@ -24,6 +24,7 @@ import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
 import { Route as PathsCreateRouteImport } from './routes/paths.create'
+import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AuthGithubCallbackRouteImport } from './routes/auth.github.callback'
@@ -103,6 +104,11 @@ const PathsCreateRoute = PathsCreateRouteImport.update({
   path: '/paths/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoadmapRoute = AdminRoadmapRouteImport.update({
+  id: '/admin/roadmap',
+  path: '/admin/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/roadmap': typeof AdminRoadmapRoute
   '/paths/create': typeof PathsCreateRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/roadmap': typeof AdminRoadmapRoute
   '/paths/create': typeof PathsCreateRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/roadmap': typeof AdminRoadmapRoute
   '/paths/create': typeof PathsCreateRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin/dashboard'
     | '/admin/login'
+    | '/admin/roadmap'
     | '/paths/create'
     | '/topic/$topicId'
     | '/auth/github/callback'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin/dashboard'
     | '/admin/login'
+    | '/admin/roadmap'
     | '/paths/create'
     | '/topic/$topicId'
     | '/auth/github/callback'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin/dashboard'
     | '/admin/login'
+    | '/admin/roadmap'
     | '/paths/create'
     | '/topic/$topicId'
     | '/auth/github/callback'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminRoadmapRoute: typeof AdminRoadmapRoute
   PathsCreateRoute: typeof PathsCreateRoute
   TopicTopicIdRoute: typeof TopicTopicIdRoute
   AuthGithubCallbackRoute: typeof AuthGithubCallbackRoute
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PathsCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/roadmap': {
+      id: '/admin/roadmap'
+      path: '/admin/roadmap'
+      fullPath: '/admin/roadmap'
+      preLoaderRoute: typeof AdminRoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
@@ -411,6 +431,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminRoadmapRoute: AdminRoadmapRoute,
   PathsCreateRoute: PathsCreateRoute,
   TopicTopicIdRoute: TopicTopicIdRoute,
   AuthGithubCallbackRoute: AuthGithubCallbackRoute,

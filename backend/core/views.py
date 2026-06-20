@@ -2399,3 +2399,55 @@ class PathProgressView(views.APIView):
                 'completion_percentage': (completed_topics / total_topics * 100) if total_topics > 0 else 0
             }
         })
+
+class AdminRoadmapUploadView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        data = request.data
+        if isinstance(data, list):
+            roadmaps = data
+        else:
+            roadmaps = [data]
+
+        for r_data in roadmaps:
+            slug = r_data.get('slug')
+            if not slug:
+                return Response({'error': 'slug is required for roadmap'}, status=400)
+            
+            path, created = LearningPath.objects.update_or_create(
+                slug=slug,
+                defaults={
+                    'title': r_data.get('title', 'Untitled Roadmap'),
+                    'description': r_data.get('description', ''),
+                    'estimated_weeks': r_data.get('estimated_weeks', 12),
+                    'is_custom': False,
+                    'is_active': True,
+                    'visibility': 'public'
+                }
+            )
+
+            topics_data = r_data.get('topics', [])
+            valid_topic_ids = []
+            
+            for t_data in topics_data:
+                t_slug = t_data.get('slug')
+                if not t_slug:
+                    continue
+                
+                topic, t_created = Topic.objects.update_or_create(
+                    path=path,
+                    slug=t_slug,
+                    defaults={
+                        'title': t_data.get('title', 'Untitled Topic'),
+                        'summary': t_data.get('summary', ''),
+                        'order': t_data.get('order', 0),
+                        'node_kind': t_data.get('node_kind', 'topic')
+                    }
+                )
+                valid_topic_ids.append(topic.id)
+            
+            # Delete topics that are no longer in the JSON
+            Topic.objects.filter(path=path).exclude(id__in=valid_topic_ids).delete()
+
+        return Response({'message': 'Roadmap(s) successfully uploaded and synchronized.'}, status=200)
