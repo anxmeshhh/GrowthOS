@@ -127,14 +127,18 @@ import { ToastProvider, useToast } from "../components/toast-context";
 import { apiFetch } from "../lib/api-client";
 import { FloatingChat } from "../components/floating-chat";
 import { useContributionTracking } from "../hooks/use-contribution-tracking";
+import { useAppTutorial } from "../components/tutorial-overlay";
 
 function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
   const router = useRouter();
   const path = router.state.location.pathname;
-  const isAuthRoute = path === "/login" || path === "/signup" || path === "/" || path.startsWith("/auth/");
+  const isAuthRoute = path === "/login" || path === "/signup" || path === "/" || path.startsWith("/auth/") || path.startsWith("/admin/");
 
   useContributionTracking(!isAuthRoute);
+  
+  // Initialize tutorial
+  useAppTutorial();
 
   useEffect(() => {
     if (!isAuthRoute) {

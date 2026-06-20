@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
+  ShieldAlert,
 } from "lucide-react";
 import { useGrowth } from "@/lib/growth-store";
 
@@ -91,6 +92,7 @@ function SettingsPage() {
   const [confirm, setConfirm] = useState(false);
   const [githubInput, setGithubInput] = useState("");
   const [saved, setSaved] = useState(false);
+  const [adminRequested, setAdminRequested] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["user_profile"],
@@ -126,6 +128,19 @@ function SettingsPage() {
     clearAuthTokens();
     navigate({ to: "/login" });
   };
+
+  const requestAdmin = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch("/auth/request-admin/", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to request admin access");
+      return res.json();
+    },
+    onSuccess: () => {
+      setAdminRequested(true);
+    },
+  });
 
   if (isLoading) {
     return (
@@ -276,6 +291,28 @@ function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* ── Admin Privileges ────────────────────────────────────────── */}
+        {!profile?.user?.is_staff && (
+          <div className="settings-card">
+            <CardHeader icon={<ShieldAlert size={10} className="text-[#f5f5f5]" />} title="Admin Privileges" />
+            <div className="settings-card-body">
+              <SettingsRow
+                label="Request Admin Access"
+                sub="Request superuser permissions to manage users and view the Command Override."
+              >
+                <button 
+                  className="settings-btn-outline" 
+                  onClick={() => requestAdmin.mutate()}
+                  disabled={requestAdmin.isPending || adminRequested}
+                >
+                  <ShieldAlert size={11} /> 
+                  {adminRequested ? "Request Pending" : "Request Access"}
+                </button>
+              </SettingsRow>
+            </div>
+          </div>
+        )}
 
         {/* ── Sign Out ─────────────────────────────────────────────────── */}
         <div className="settings-card">

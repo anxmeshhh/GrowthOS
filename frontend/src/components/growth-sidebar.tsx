@@ -77,6 +77,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                 <Link
                   key={to}
                   to={to}
+                  id={`nav-${to.replace('/', '')}`}
                   onClick={onNavigate}
                   style={{
                     display: "flex",

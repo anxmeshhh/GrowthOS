@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from .models import LearningPath, Topic, TopicProgress, Contribution, UserProfile, Bookmark, TopicMaterial, TopicNote, NoteDocument, VerifiedProject, PathSharing, TopicScreenshot
-from .slug_utils import MAX_SLUG_LENGTH, normalize_slug, unique_slug
+from .helpers import MAX_SLUG_LENGTH, normalize_slug, unique_slug
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email')
+        fields = ('id', 'username', 'email', 'is_staff')
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:

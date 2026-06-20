@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Trash2, Eye, Globe, Lock, Users, GitFork, Clock, BookOpen, AlertCircle, Plus } from 'lucide-react';
+import { Copy, Trash2, Eye, Globe, Lock, Users, GitFork, Clock, BookOpen, AlertCircle, Plus, Edit2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { apiClient } from '../../lib/api-client';
 import { PathSharingDialog } from './PathSharingDialog';
+import { CustomPathBuilder } from './PathBuilder';
 import { useNavigate } from '@tanstack/react-router';
 
 interface LearningPath {
@@ -92,11 +93,13 @@ function PathCard({
   onView,
   onDelete,
   onCloneOpen,
+  onEditOpen,
 }: {
   path: LearningPath;
   onView: () => void;
   onDelete: () => void;
   onCloneOpen: () => void;
+  onEditOpen?: () => void;
 }) {
   const vis = VISIBILITY[path.visibility];
   const VisIcon = vis.icon;
@@ -182,9 +185,16 @@ function PathCard({
           />
 
           {path.can_edit && (
-            <IconBtn onClick={onDelete} title="Delete" danger>
-              <Trash2 size={13} />
-            </IconBtn>
+            <>
+              {onEditOpen && (
+                <IconBtn onClick={onEditOpen} title="Edit path">
+                  <Edit2 size={13} />
+                </IconBtn>
+              )}
+              <IconBtn onClick={onDelete} title="Delete" danger>
+                <Trash2 size={13} />
+              </IconBtn>
+            </>
           )}
         </div>
       </div>
@@ -200,6 +210,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
   const [error, setError] = useState('');
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [selectedPathForClone, setSelectedPathForClone] = useState<LearningPath | null>(null);
+  const [selectedPathForEdit, setSelectedPathForEdit] = useState<LearningPath | null>(null);
   const [cloneTitle, setCloneTitle] = useState('');
   const [cloneSlug, setCloneSlug] = useState('');
   const [cloning, setCloning] = useState(false);
@@ -332,6 +343,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
             path={path}
             onView={() => navigate({ to: `/roadmap?pathSlug=${path.slug}` })}
             onDelete={() => handleDeletePath(path.slug)}
+            onEditOpen={() => setSelectedPathForEdit(path)}
             onCloneOpen={() => {
               setSelectedPathForClone(path);
               setCloneTitle(`${path.title} (Fork)`);
@@ -339,6 +351,20 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
               setCloneDialogOpen(true);
             }}
           />
+          {selectedPathForEdit?.id === path.id && (
+            <CustomPathBuilder
+              existingPath={path}
+              open={true}
+              onOpenChange={(open) => {
+                if (!open) setSelectedPathForEdit(null);
+              }}
+              onSuccess={() => {
+                setSelectedPathForEdit(null);
+                loadCustomPaths();
+              }}
+              trigger={<span className="hidden"></span>}
+            />
+          )}
         </React.Fragment>
       ))}
 

@@ -7,6 +7,8 @@ import {
   ClipboardCheck, Trophy, Star, TrendingUp, Zap,
 } from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
+import { useAppTutorial } from "@/components/tutorial-overlay";
+import { Play } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — GrowthOS" }] }),
@@ -53,6 +55,8 @@ function ProfilePage() {
       return r.json();
     },
   });
+
+  const { startTutorial } = useAppTutorial();
 
   const { data: heatmap = [], isLoading: hLoading } = useQuery({
     queryKey: ["heatmap"],
@@ -106,6 +110,14 @@ function ProfilePage() {
             <div className="flex items-center gap-2 mt-2">
               <PillBadge icon={<Calendar size={8} />} label={joined} />
               <PillBadge icon={<Shield size={8} className="text-[#22c55e]" />} label={`Level ${level}`} accent />
+              <button 
+                onClick={startTutorial}
+                className="pill-badge hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+                title="Replay Tutorial"
+              >
+                <Play size={8} className="text-[#22c55e]" />
+                Tutorial
+              </button>
             </div>
           </div>
 

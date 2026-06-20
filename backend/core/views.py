@@ -1151,6 +1151,7 @@ class UserProfileView(views.APIView):
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
+                "is_staff": user.is_staff,
             },
             "selected_title": profile.selected_title,
         })
@@ -1656,3 +1657,625 @@ class ResetProgressView(views.APIView):
             
         return Response({"status": "reset"})
 
+
+class RequestAdminAccessView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import AdminRequest
+        user = request.user
+        if user.is_staff:
+            return Response({'detail': 'Already an admin.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        request_obj, created = AdminRequest.objects.get_or_create(user=user, status='pending')
+        return Response({'detail': 'Request submitted successfully.', 'status': 'pending'})
+
+
+
+# --- ADMIN VIEWS MERGED ---
+import psutil
+import json
+from rest_framework.permissions import IsAdminUser
+from django.core import serializers
+from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.db.models import Sum
+from .models import AdminRequest
+
+class AdminStatsView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        total_users = User.objects.count()
+        total_paths = LearningPath.objects.count()
+        total_notes = TopicNote.objects.count()
+        
+        # Calculate active users by counting those who have earned XP
+        active_users = Contribution.objects.values('user').distinct().count()
+
+        # Dynamic System Health Metrics using psutil
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+
+        return Response({
+            'total_users': total_users,
+            'active_users': active_users,
+            'total_paths': total_paths,
+            'total_notes': total_notes,
+            'system_health': {
+                'database_load': cpu_percent, # using CPU as proxy for load
+                'memory_usage': memory.percent,
+                'storage': disk.percent
+            }
+        })
+
+class AdminUserListView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        users = User.objects.select_related('profile').all().order_by('-date_joined')
+        data = []
+        for user in users:
+            # Dynamically calculate total XP from contributions
+            total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+            data.append({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_active': user.is_active,
+                'is_staff': user.is_staff,
+                'date_joined': user.date_joined,
+                'total_xp': total_xp,
+            })
+        return Response(data)
+
+class AdminUserDetailView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return None
+
+    def patch(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if 'is_active' in request.data:
+            user.is_active = request.data['is_active']
+        
+        if 'is_staff' in request.data:
+            user.is_staff = request.data['is_staff']
+            
+        user.save()
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'is_active': user.is_active,
+            'is_staff': user.is_staff,
+        })
+
+from .models import AdminRequest
+from django.core import serializers
+import json
+from django.http import HttpResponse
+
+class AdminDataExportView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        if request.user.email != 'guptaanimesh020@gmail.com' and request.user.username != 'theanimesh2005':
+            return Response({'detail': 'Super admin clearance required for data export.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        data = {
+            'users': json.loads(serializers.serialize('json', User.objects.all())),
+            'profiles': json.loads(serializers.serialize('json', UserProfile.objects.all())),
+            'paths': json.loads(serializers.serialize('json', LearningPath.objects.all())),
+            'topics': json.loads(serializers.serialize('json', Topic.objects.all())),
+            'notes': json.loads(serializers.serialize('json', TopicNote.objects.all())),
+        }
+        
+        response = HttpResponse(json.dumps(data), content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="growthos_backup.json"'
+        return response
+
+class AdminRequestListView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        requests = AdminRequest.objects.select_related('user').all().order_by('-created_at')
+        data = []
+        for req in requests:
+            data.append({
+                'id': req.id,
+                'user_id': req.user.id,
+                'username': req.user.username,
+                'email': req.user.email,
+                'status': req.status,
+                'created_at': req.created_at,
+            })
+        return Response(data)
+
+class AdminRequestDetailView(views.APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        if request.user.email != 'guptaanimesh020@gmail.com' and request.user.username != 'theanimesh2005':
+            return Response({'detail': 'Only the main admin can approve requests.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            req = AdminRequest.objects.get(pk=pk)
+        except AdminRequest.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        new_status = request.data.get('status')
+        if new_status in ['approved', 'rejected']:
+            req.status = new_status
+            req.save()
+            
+            if new_status == 'approved':
+                user = req.user
+                user.is_staff = True
+                user.save()
+                
+        return Response({'status': req.status})
+
+
+# --- CUSTOM PATH VIEWS MERGED ---
+from .helpers import unique_slug, unique_slug_in_memory
+from .serializers import PathSharingSerializer, CustomPathCreateSerializer, PathCloneSerializer
+
+class CustomPathViewSet(viewsets.ModelViewSet):
+    """
+    API endpoints for managing custom learning paths.
+    Users can create, update, delete, clone, and share their custom paths.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = LearningPathSerializer
+    lookup_field = 'slug'
+
+    def get_queryset(self):
+        """Return custom paths created by user or shared with user"""
+        from django.db.models import Prefetch
+        user = self.request.user
+        from .models import TopicProgress, VerifiedProject, TopicMaterial
+        
+        return LearningPath.objects.prefetch_related(
+            'topics',
+            Prefetch('topics__progress', queryset=TopicProgress.objects.filter(user=user), to_attr='user_progress_cache'),
+            Prefetch('topics__verified_projects', queryset=VerifiedProject.objects.filter(user=user), to_attr='verified_project_cache'),
+            Prefetch('topics__materials', queryset=TopicMaterial.objects.filter(user=user), to_attr='materials_cache'),
+        ).filter(
+            Q(created_by=user, is_custom=True) |
+            Q(shared_with_users__shared_to=user)
+        ).distinct()
+
+    def get_serializer_class(self):
+        """Use different serializers for different actions"""
+        if self.action == 'create':
+            return CustomPathCreateSerializer
+        elif self.action == 'clone':
+            return PathCloneSerializer
+        return LearningPathSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Create a new custom path"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        path = serializer.save(created_by=request.user, is_custom=True)
+
+        # Process nested topics
+        topics_data = request.data.get('topics', [])
+        existing_topic_slugs = set(path.topics.values_list('slug', flat=True))
+        for idx, topic_data in enumerate(topics_data):
+            if isinstance(topic_data, dict):
+                t_title = topic_data.get('title', f'Topic {idx + 1}').strip()
+                t_summary = topic_data.get('summary', '')
+                t_kind = topic_data.get('node_kind', 'topic')
+                if t_kind not in ('milestone', 'topic', 'optional'):
+                    t_kind = 'topic'
+                t_order = topic_data.get('order', idx)
+            else:
+                t_title = str(topic_data)
+                t_summary = ''
+                t_kind = 'topic'
+                t_order = idx
+
+            if not t_title:
+                continue
+
+            t_slug = unique_slug_in_memory(
+                t_title,
+                existing_topic_slugs,
+                fallback=f'topic-{idx + 1}',
+            )
+
+            Topic.objects.create(
+                path=path,
+                title=t_title,
+                slug=t_slug,
+                summary=t_summary,
+                node_kind=t_kind,
+                order=t_order,
+                created_by=request.user
+            )
+
+        # Award points for creating a custom path
+        Contribution.objects.create(
+            user=request.user,
+            action_type='custom_path_created',
+            points=1
+        )
+        
+        output_serializer = LearningPathSerializer(path, context={'request': request})
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        """Update a custom path (only by creator or admin)"""
+        path = self.get_object()
+        
+        # Check permissions
+        if path.created_by != request.user:
+            sharing = PathSharing.objects.filter(
+                path=path,
+                shared_to=request.user,
+                permission__in=['edit', 'admin']
+            ).exists()
+            if not sharing:
+                return Response(
+                    {'detail': 'You do not have permission to edit this path.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        response = super().update(request, *args, **kwargs)
+
+        # Handle topics if provided
+        if 'topics' in request.data:
+            topics_data = request.data.get('topics', [])
+            existing_topics = {str(t.id): t for t in path.topics.all()}
+            existing_topic_slugs = set(path.topics.values_list('slug', flat=True))
+            
+            seen_ids = set()
+            
+            for idx, topic_data in enumerate(topics_data):
+                if isinstance(topic_data, dict):
+                    t_id = str(topic_data.get('id', ''))
+                    t_title = topic_data.get('title', f'Topic {idx + 1}').strip()
+                    t_summary = topic_data.get('summary', '')
+                    t_kind = topic_data.get('node_kind', 'topic')
+                    if t_kind not in ('milestone', 'topic', 'optional'):
+                        t_kind = 'topic'
+                    t_order = topic_data.get('order', idx)
+                    
+                    if not t_title:
+                        continue
+
+                    if t_id and t_id in existing_topics:
+                        # Update existing topic
+                        topic = existing_topics[t_id]
+                        topic.title = t_title
+                        topic.summary = t_summary
+                        topic.node_kind = t_kind
+                        topic.order = t_order
+                        topic.save()
+                        seen_ids.add(t_id)
+                    else:
+                        # Create new topic
+                        t_slug = unique_slug_in_memory(
+                            t_title,
+                            existing_topic_slugs,
+                            fallback=f'topic-{idx + 1}',
+                        )
+                        new_topic = Topic.objects.create(
+                            path=path,
+                            title=t_title,
+                            slug=t_slug,
+                            summary=t_summary,
+                            node_kind=t_kind,
+                            order=t_order,
+                            created_by=request.user
+                        )
+                        existing_topic_slugs.add(t_slug)
+                        seen_ids.add(str(new_topic.id))
+            
+            # Delete topics that were removed
+            for t_id, topic in existing_topics.items():
+                if t_id not in seen_ids:
+                    topic.delete()
+
+            # Refresh path to return updated topics
+            path.refresh_from_db()
+            output_serializer = LearningPathSerializer(path, context={'request': request})
+            return Response(output_serializer.data)
+            
+        return response
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a custom path (only by creator)"""
+        path = self.get_object()
+        
+        if path.created_by != request.user:
+            return Response(
+                {'detail': 'Only the creator can delete this path.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def clone(self, request, slug=None):
+        """
+        Clone an existing path (both custom and predefined).
+        Creates a new custom path with all topics and their dependencies.
+        """
+        original_path = self.get_object()
+        serializer = PathCloneSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            new_slug = unique_slug(
+                LearningPath,
+                serializer.validated_data['new_slug'],
+                fallback='path-copy',
+            )
+            
+            # Create new path
+            new_path = LearningPath.objects.create(
+                title=serializer.validated_data['new_title'],
+                slug=new_slug,
+                description=serializer.validated_data.get('description', original_path.description),
+                is_custom=True,
+                created_by=request.user,
+                original_path=original_path,
+                visibility='private'
+            )
+            
+            # Clone all topics
+            topic_mapping = {}  # Map old topic IDs to new topic IDs
+            for topic in original_path.topics.all().order_by('order'):
+                new_topic = Topic.objects.create(
+                    path=new_path,
+                    title=topic.title,
+                    slug=topic.slug,
+                    summary=topic.summary,
+                    order=topic.order,
+                    created_by=request.user
+                )
+                topic_mapping[topic.id] = new_topic
+            
+            # Clone topic dependencies
+            for old_topic_id, new_topic in topic_mapping.items():
+                old_topic = original_path.topics.get(id=old_topic_id)
+                for dependency in old_topic.dependencies.all():
+                    if dependency.id in topic_mapping:
+                        new_topic.dependencies.add(topic_mapping[dependency.id])
+            
+            # Award points for cloning
+            Contribution.objects.create(
+                user=request.user,
+                action_type='path_cloned',
+                points=1
+            )
+            
+            output_serializer = LearningPathSerializer(new_path, context={'request': request})
+            return Response(output_serializer.data, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            return Response(
+                {'detail': f'Error cloning path: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def shared_with(self, request, slug=None):
+        """
+        Get list of users this path is shared with and their permissions.
+        Only accessible by path creator.
+        """
+        path = self.get_object()
+        
+        if path.created_by != request.user:
+            return Response(
+                {'detail': 'Only the path creator can view sharing permissions.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        sharing = PathSharing.objects.filter(path=path)
+        serializer = PathSharingSerializer(sharing, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def share(self, request, slug=None):
+        """
+        Share the path with another user.
+        Only the path creator can share it.
+        """
+        path = self.get_object()
+        
+        if path.created_by != request.user:
+            return Response(
+                {'detail': 'Only the path creator can share it.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from django.contrib.auth.models import User
+        username = request.data.get('username')
+        permission = request.data.get('permission', 'view')
+        
+        if not username:
+            return Response(
+                {'detail': 'Username is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user_to_share = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'User not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if user_to_share == request.user:
+            return Response(
+                {'detail': 'Cannot share path with yourself.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        sharing, created = PathSharing.objects.get_or_create(
+            path=path,
+            shared_to=user_to_share,
+            defaults={'shared_by': request.user, 'permission': permission}
+        )
+        
+        if not created:
+            sharing.permission = permission
+            sharing.save()
+        
+        serializer = PathSharingSerializer(sharing)
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(serializer.data, status=status_code)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def unshare(self, request, slug=None):
+        """
+        Remove sharing permission for a user.
+        Only the path creator can unshare.
+        """
+        path = self.get_object()
+        
+        if path.created_by != request.user:
+            return Response(
+                {'detail': 'Only the path creator can unshare it.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from django.contrib.auth.models import User
+        username = request.data.get('username')
+        
+        if not username:
+            return Response(
+                {'detail': 'Username is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user_to_unshare = User.objects.get(username=username)
+            sharing = PathSharing.objects.get(path=path, shared_to=user_to_unshare)
+            sharing.delete()
+            return Response({'status': 'Sharing removed'})
+        except (User.DoesNotExist, PathSharing.DoesNotExist):
+            return Response(
+                {'detail': 'Sharing relationship not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_paths(self, request):
+        """Get all custom paths created by the current user"""
+        paths = LearningPath.objects.filter(created_by=request.user, is_custom=True)
+        serializer = LearningPathSerializer(paths, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def shared_paths(self, request):
+        """Get all paths shared with the current user"""
+        paths = LearningPath.objects.filter(
+            shared_with_users__shared_to=request.user
+        ).distinct()
+        serializer = LearningPathSerializer(paths, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def public_paths(self, request):
+        """Get all public custom paths (not created by user)"""
+        paths = LearningPath.objects.filter(
+            is_custom=True,
+            visibility='public'
+        ).exclude(created_by=request.user)
+        serializer = LearningPathSerializer(paths, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
+    def update_visibility(self, request, slug=None):
+        """Update path visibility (private, public, shared)"""
+        path = self.get_object()
+        
+        if path.created_by != request.user:
+            return Response(
+                {'detail': 'Only the path creator can change visibility.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        visibility = request.data.get('visibility')
+        if visibility not in ['private', 'public', 'shared']:
+            return Response(
+                {'detail': 'Invalid visibility option. Choose: private, public, shared'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        path.visibility = visibility
+        path.save()
+        
+        serializer = LearningPathSerializer(path, context={'request': request})
+        return Response(serializer.data)
+
+
+class PathProgressView(views.APIView):
+    """
+    Get progress for a specific path.
+    Shows completion status of all topics in the path for the current user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, path_slug):
+        path = get_object_or_404(LearningPath, slug=path_slug)
+        
+        # Check if user has access to this path
+        has_access = (
+            path.created_by == request.user or
+            PathSharing.objects.filter(path=path, shared_to=request.user).exists() or
+            (path.visibility == 'public' and path.is_custom)
+        )
+        
+        if not has_access:
+            return Response(
+                {'detail': 'Access denied.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        topics_data = []
+        total_topics = path.topics.count()
+        completed_topics = 0
+        
+        for topic in path.topics.all().order_by('order'):
+            progress, _ = TopicProgress.objects.get_or_create(
+                user=request.user,
+                topic=topic
+            )
+            
+            if progress.status == 'completed':
+                completed_topics += 1
+            
+            topics_data.append({
+                'id': topic.id,
+                'title': topic.title,
+                'slug': topic.slug,
+                'order': topic.order,
+                'status': progress.status,
+                'started_at': progress.started_at,
+                'completed_at': progress.completed_at
+            })
+        
+        return Response({
+            'path': LearningPathSerializer(path, context={'request': request}).data,
+            'topics': topics_data,
+            'progress': {
+                'total_topics': total_topics,
+                'completed_topics': completed_topics,
+                'completion_percentage': (completed_topics / total_topics * 100) if total_topics > 0 else 0
+            }
+        })

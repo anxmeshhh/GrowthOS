@@ -7,9 +7,9 @@ from .views import (
     VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView,
-    SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView
+    SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
+    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, CustomPathViewSet, PathProgressView
 )
-from .custom_path_views import CustomPathViewSet, PathProgressView
 
 router = DefaultRouter()
 router.register(r'paths', LearningPathViewSet, basename='path')
@@ -27,6 +27,7 @@ urlpatterns = [
     path('auth/daily-login/', DailyLoginView.as_view(), name='daily_login'),
     path('auth/send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    path('auth/request-admin/', RequestAdminAccessView.as_view(), name='request_admin'),
     
     # Path Endpoints
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),
@@ -70,6 +71,14 @@ urlpatterns = [
     path('github/workspace/commit/', CommitWorkspaceToGitHubView.as_view(), name='commit_github_workspace'),
     path('portfolio/', PortfolioView.as_view(), name='portfolio'),
     path('profile/reset/', ResetProgressView.as_view(), name='profile_reset'),
+    
+    # Admin Dashboard
+    path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
+    path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
+    path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
+    path('admin/export-data/', AdminDataExportView.as_view(), name='admin_export_data'),
+    path('admin/requests/', AdminRequestListView.as_view(), name='admin_requests'),
+    path('admin/requests/<int:pk>/', AdminRequestDetailView.as_view(), name='admin_request_detail'),
     
     # Router covers /paths/ and /bookmarks/
     path('', include(router.urls)),

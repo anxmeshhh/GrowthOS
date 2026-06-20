@@ -4,6 +4,19 @@ from django.utils import timezone
 import random
 import string
 
+class AdminRequest(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_requests')
+    status = models.CharField(
+        max_length=20, 
+        choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')],
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.status}"
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     selected_path = models.ForeignKey('LearningPath', on_delete=models.SET_NULL, null=True, blank=True)
