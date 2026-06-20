@@ -851,7 +851,7 @@ function UserInspectorSidebar({
                           </div>
                           <p className="text-sm text-gray-300 italic">"{n.content}..."</p>
                           <p className="text-xs text-gray-500 mt-3 font-mono">
-                            {new Date(n.created_at).toLocaleString()}
+                            {new Date(n.updated_at).toLocaleString()}
                           </p>
                         </div>
                       ))

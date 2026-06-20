@@ -4,6 +4,8 @@ import { useToast } from "@/components/toast-context";
 import { Logo } from "@/components/logo";
 import { apiFetch } from "@/lib/api-client";
 
+let isAuthenticating = false;
+
 export const Route = createFileRoute("/auth/github/callback")({
   component: GithubCallbackPage,
 });
@@ -14,6 +16,8 @@ function GithubCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isAuthenticating) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     const errorParam = urlParams.get("error");
@@ -39,6 +43,7 @@ function GithubCallbackPage() {
 
     // Exchange the code via our backend
     const authenticate = async () => {
+      isAuthenticating = true;
       try {
         const redirectUri = window.location.origin + "/auth/github/callback";
         const res = await apiFetch(endpoint, {

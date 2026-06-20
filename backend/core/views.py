@@ -156,7 +156,7 @@ class GitHubLoginView(views.APIView):
             access_token = token_data.get('access_token')
 
             if not access_token:
-                return Response({'error': 'Failed to get GitHub token'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': f'Failed to get GitHub token: {token_data.get("error_description", token_data)}'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Fetch user info
             user_response = requests.get(
@@ -235,7 +235,7 @@ class GitHubConnectView(views.APIView):
             access_token = token_data.get('access_token')
 
             if not access_token:
-                return Response({'error': 'Failed to get GitHub token'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': f'Failed to get GitHub token: {token_data.get("error_description", token_data)}'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Fetch user info
             user_response = requests.get(
@@ -1827,10 +1827,10 @@ class AdminUserDetailView(views.APIView):
                 "is_staff": user.is_staff,
             },
             "custom_paths": [{"id": p.id, "title": p.title, "slug": p.slug} for p in LearningPath.objects.filter(created_by=user, is_custom=True)],
-            "notes": [{"id": n.id, "topic_title": n.topic.title, "content": n.content[:100], "created_at": n.created_at.isoformat()} for n in TopicNote.objects.filter(user=user).select_related('topic')],
+            "notes": [{"id": n.id, "topic_title": n.topic.title, "content": n.content[:100], "updated_at": n.updated_at.isoformat()} for n in TopicNote.objects.filter(user=user).select_related('topic')],
             "github_connected": bool(profile.github_access_token),
             "github_username": profile.github_username,
-            "github_repos": [{"id": r.id, "repo_name": r.repo_name, "is_active": r.is_active} for r in GitHubRepo.objects.filter(user=user)],
+            "github_repos": [],  # Live API fetch required for actual repos, returning empty for admin dashboard to save rate limits
             "heatmap": heatmap_data,
             "activity": activity_data
         })
@@ -1851,7 +1851,6 @@ class AdminUserDetailView(views.APIView):
                 profile.github_access_token = ''
                 profile.github_username = ''
                 profile.save()
-                GitHubRepo.objects.filter(user=user).delete()
             return Response({"status": "success"})
 
         if 'is_active' in request.data:
