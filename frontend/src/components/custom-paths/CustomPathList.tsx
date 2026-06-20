@@ -112,7 +112,7 @@ function IconBtn({
       {children}
       {/* Tooltip */}
       <span
-        className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
+        className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-xs font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ background: "#111", color: "#888", border: "1px solid #222" }}
       >
         {title}
@@ -162,7 +162,7 @@ function PathCard({
             </span>
             {/* Visibility badge */}
             <span
-              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider"
+              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-mono uppercase tracking-wider"
               style={{ background: vis.bg, border: `1px solid ${vis.border}`, color: vis.text }}
             >
               <VisIcon size={9} />
@@ -178,18 +178,18 @@ function PathCard({
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1" style={{ color: "#3a5a3a" }}>
               <BookOpen size={10} />
-              <span className="text-[11px] font-mono" style={{ color: "#4a6a4a" }}>
+              <span className="text-sm font-mono" style={{ color: "#4a6a4a" }}>
                 {path.topics.length} topics
               </span>
             </span>
             <span className="flex items-center gap-1" style={{ color: "#3a5a3a" }}>
               <Clock size={10} />
-              <span className="text-[11px] font-mono" style={{ color: "#4a6a4a" }}>
+              <span className="text-sm font-mono" style={{ color: "#4a6a4a" }}>
                 ~{path.estimated_weeks}w
               </span>
             </span>
             {path.created_by_username && (
-              <span className="text-[11px] font-mono" style={{ color: "#2a3a2a" }}>
+              <span className="text-sm font-mono" style={{ color: "#2a3a2a" }}>
                 by {path.created_by_username}
               </span>
             )}
@@ -328,7 +328,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
         </span>
         <button
           onClick={loadCustomPaths}
-          className="ml-auto text-[11px] font-mono underline"
+          className="ml-auto text-sm font-mono underline"
           style={{ color: "#9a3030" }}
         >
           Retry
@@ -354,7 +354,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
           <p className="text-lg font-mono" style={{ color: "#3a5a3a" }}>
             No custom paths yet
           </p>
-          <p className="text-[12px] mt-1" style={{ color: "#2a3a2a" }}>
+          <p className="text-sm mt-1" style={{ color: "#2a3a2a" }}>
             Build a path tailored to your goals
           </p>
         </div>
@@ -372,7 +372,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
           style={{ background: "#1a0707", border: "1px solid #3f0f0f" }}
         >
           <AlertCircle size={12} style={{ color: "#ef4444" }} />
-          <span className="text-[12px] font-mono" style={{ color: "#f87171" }}>
+          <span className="text-sm font-mono" style={{ color: "#f87171" }}>
             {error}
           </span>
         </div>
@@ -441,7 +441,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
                 style={{ background: "#1a0707", border: "1px solid #3f0f0f" }}
               >
                 <AlertCircle size={12} style={{ color: "#ef4444" }} />
-                <span className="text-[12px] font-mono" style={{ color: "#f87171" }}>
+                <span className="text-sm font-mono" style={{ color: "#f87171" }}>
                   {error}
                 </span>
               </div>
@@ -449,7 +449,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
 
             <div className="space-y-1.5">
               <label
-                className="block text-[11px] font-mono uppercase tracking-wider"
+                className="block text-sm font-mono uppercase tracking-wider"
                 style={{ color: "#3a5a3a" }}
               >
                 Path title
@@ -478,7 +478,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
 
             <div className="space-y-1.5">
               <label
-                className="block text-[11px] font-mono uppercase tracking-wider"
+                className="block text-sm font-mono uppercase tracking-wider"
                 style={{ color: "#3a5a3a" }}
               >
                 Slug

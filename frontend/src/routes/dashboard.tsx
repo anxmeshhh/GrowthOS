@@ -76,7 +76,7 @@ function Panel({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#fff] flex items-center gap-1.5">
+    <p className="text-xs uppercase tracking-[0.2em] font-mono text-[#fff] flex items-center gap-1.5">
       {children}
     </p>
   );
@@ -265,7 +265,7 @@ function DashboardPage() {
     <PageShell>
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-[5px] border border-[#1e1e1e] bg-[#060606] text-[#e0e0e0] text-[12px] font-mono tracking-wide shadow-xl flex items-center gap-2.5">
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-[5px] border border-[#1e1e1e] bg-[#060606] text-[#e0e0e0] text-sm font-mono tracking-wide shadow-xl flex items-center gap-2.5">
           <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_6px_#22c55e]" />
           {toast}
         </div>
@@ -277,7 +277,7 @@ function DashboardPage() {
           <div className="flex items-center gap-2.5">
             <Hexagon className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
             <div>
-              <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#eee] leading-none mb-1">
+              <p className="text-xs uppercase tracking-[0.25em] font-mono text-[#eee] leading-none mb-1">
                 GrowthOS
               </p>
               <h1 className="text-[18px] font-semibold tracking-tight text-[#efefef] leading-none">
@@ -293,7 +293,7 @@ function DashboardPage() {
                 onChange={(e) =>
                   setSelectedPathId(e.target.value === "auto" ? null : e.target.value)
                 }
-                className="appearance-none bg-[#080808] border border-[#181818] text-[#eee] text-[10px] font-mono uppercase tracking-[0.18em] rounded-[4px] pl-4 pr-8 py-2 outline-none hover:border-[#222] hover:text-[#fff] transition-all cursor-pointer"
+                className="appearance-none bg-[#080808] border border-[#181818] text-[#eee] text-xs font-mono uppercase tracking-[0.18em] rounded-[4px] pl-4 pr-8 py-2 outline-none hover:border-[#222] hover:text-[#fff] transition-all cursor-pointer"
               >
                 <option value="auto" className="bg-black font-sans normal-case">
                   Auto-track active
@@ -342,7 +342,7 @@ function DashboardPage() {
                   <SectionLabel>
                     <Sparkles size={9} className="text-[#22c55e]" /> Active Protocol
                   </SectionLabel>
-                  <p className="mt-3 text-[10px] font-mono text-[#fff] tracking-[0.2em] uppercase">
+                  <p className="mt-3 text-xs font-mono text-[#fff] tracking-[0.2em] uppercase">
                     {ap?.title}
                   </p>
                   <h2 className="mt-1 text-[23px] md:text-[27px] font-semibold text-[#efefef] tracking-tight leading-tight max-w-2xl">
@@ -356,7 +356,7 @@ function DashboardPage() {
                     {steps.map((s, i) => (
                       <div
                         key={i}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-[10px] font-mono uppercase tracking-[0.15em] transition-colors ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-mono uppercase tracking-[0.15em] transition-colors ${
                           s.d
                             ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
                             : "text-[#eee]"
@@ -385,7 +385,7 @@ function DashboardPage() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
                 <Target size={24} className="text-[#1e1e1e] mb-3" strokeWidth={1.5} />
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#fff]">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#fff]">
                   No active protocol detected
                 </p>
               </div>
@@ -412,7 +412,7 @@ function DashboardPage() {
                 <div className="text-[33px] font-mono tabular-nums text-[#efefef] leading-none mt-2">
                   {level}
                 </div>
-                <div className="text-[9px] font-mono text-[#a855f7] uppercase tracking-[0.2em] mt-1.5">
+                <div className="text-xs font-mono text-[#a855f7] uppercase tracking-[0.2em] mt-1.5">
                   {lvl}
                 </div>
               </div>
@@ -450,7 +450,7 @@ function DashboardPage() {
                 >
                   {streak}
                 </div>
-                <div className="text-[9px] font-mono text-[#f59e0b] uppercase tracking-[0.2em] mt-1.5">
+                <div className="text-xs font-mono text-[#f59e0b] uppercase tracking-[0.2em] mt-1.5">
                   days active
                 </div>
               </div>
@@ -460,15 +460,13 @@ function DashboardPage() {
             <Panel className="col-span-2 flex flex-col justify-center p-4 relative">
               <div className="flex justify-between items-baseline mb-2">
                 <SectionLabel>Experience</SectionLabel>
-                <span className="text-[9px] font-mono text-[#a855f7]/70">
-                  {next - xp} XP to next
-                </span>
+                <span className="text-xs font-mono text-[#a855f7]/70">{next - xp} XP to next</span>
               </div>
               <div className="flex items-baseline gap-1.5 mb-3">
                 <span className="text-[19px] font-mono tabular-nums text-[#efefef] leading-none">
                   {xp}
                 </span>
-                <span className="text-[10px] font-mono text-[#eee]">/ {next}</span>
+                <span className="text-xs font-mono text-[#eee]">/ {next}</span>
               </div>
               <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
@@ -489,7 +487,7 @@ function DashboardPage() {
               <SectionLabel>
                 <Award size={9} /> Path Trajectory
               </SectionLabel>
-              <span className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.15em]">
+              <span className="text-xs font-mono text-[#eee] uppercase tracking-[0.15em]">
                 {cpct}% completed
               </span>
             </div>
@@ -547,13 +545,13 @@ function DashboardPage() {
                             <Circle size={12} strokeWidth={2} className="text-[#60a5fa] shrink-0" />
                           )}
                           <span
-                            className="text-[10px] font-mono font-semibold uppercase tracking-[0.15em] truncate"
+                            className="text-xs font-mono font-semibold uppercase tracking-[0.15em] truncate"
                             style={{ color: g.allDone ? "#4ade80" : "#93c5fd" }}
                           >
                             {milestoneLabel}
                           </span>
                           <span
-                            className="ml-auto text-[8px] font-mono shrink-0 px-1.5 py-0.5 rounded-sm"
+                            className="ml-auto text-xs font-mono shrink-0 px-1.5 py-0.5 rounded-sm"
                             style={{
                               color: g.allDone ? "#22c55e" : "#888",
                               background: g.allDone ? "#22c55e15" : "#1a1a1a",
@@ -606,7 +604,7 @@ function DashboardPage() {
                                   )}
                                 </span>
                                 <span
-                                  className="text-[11px] font-mono leading-tight truncate flex-1"
+                                  className="text-sm font-mono leading-tight truncate flex-1"
                                   style={{
                                     color: d ? "#4ade80" : a ? "#ffffff" : "#b5b5b5",
                                   }}
@@ -700,18 +698,16 @@ function DashboardPage() {
                       />
                       <div className="min-w-0 flex-1">
                         <p
-                          className={`text-[12px] leading-snug truncate ${
+                          className={`text-sm leading-snug truncate ${
                             i === 0 ? "text-[#c8c8c8]" : "text-[#eee]"
                           }`}
                         >
                           {a.label}
                         </p>
-                        <p className="text-[10px] font-mono text-[#eee] mt-0.5">
-                          {timeAgo(a.date)}
-                        </p>
+                        <p className="text-xs font-mono text-[#eee] mt-0.5">{timeAgo(a.date)}</p>
                       </div>
                       {i === 0 && (
-                        <span className="shrink-0 text-[8px] font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">
+                        <span className="shrink-0 text-xs font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">
                           new
                         </span>
                       )}
@@ -719,7 +715,7 @@ function DashboardPage() {
                   ))}
                 </ul>
               ) : (
-                <div className="flex items-center justify-center h-full text-[10px] font-mono text-[#fff] uppercase tracking-[0.2em]">
+                <div className="flex items-center justify-center h-full text-xs font-mono text-[#fff] uppercase tracking-[0.2em]">
                   Awaiting input
                 </div>
               )}
@@ -732,7 +728,7 @@ function DashboardPage() {
               <SectionLabel>
                 <Github size={9} /> Activity Matrix
               </SectionLabel>
-              <span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">
+              <span className="text-xs font-mono text-[#fff] uppercase tracking-[0.15em]">
                 Annual trace
               </span>
             </div>

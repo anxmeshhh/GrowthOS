@@ -163,7 +163,7 @@ function AssessmentsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-lg font-semibold text-[#f0f0f0]">{path.title}</div>
-                  <div className="text-[11px] uppercase font-mono tracking-wider text-[#fff] mt-0.5">
+                  <div className="text-sm uppercase font-mono tracking-wider text-[#fff] mt-0.5">
                     {done}/{topics.length} completed
                   </div>
                 </div>
@@ -224,7 +224,7 @@ function AssessmentsPage() {
                               {section.label}
                             </span>
                             <span className="ml-auto flex items-center gap-2 shrink-0">
-                              <span className="text-[11px] font-mono" style={{ color: "#3b5bdb" }}>
+                              <span className="text-sm font-mono" style={{ color: "#3b5bdb" }}>
                                 {sectionDone}/{section.children.length}
                               </span>
                               <span style={{ color: "#3b5bdb" }}>

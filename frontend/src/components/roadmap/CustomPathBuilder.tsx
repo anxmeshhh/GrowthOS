@@ -149,7 +149,7 @@ function KindPicker({ value, onChange }: { value: NodeKind; onChange: (k: NodeKi
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono transition-colors"
+        className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-mono transition-colors"
         style={{ background: meta.bg, border: `1px solid ${meta.border}`, color: meta.text }}
       >
         <Icon size={10} />
@@ -184,8 +184,8 @@ function KindPicker({ value, onChange }: { value: NodeKind; onChange: (k: NodeKi
                 >
                   <KIcon size={11} />
                   <div>
-                    <div className="text-[11px] font-mono">{m.label}</div>
-                    <div className="text-[10px] opacity-50">{m.desc}</div>
+                    <div className="text-sm font-mono">{m.label}</div>
+                    <div className="text-xs opacity-50">{m.desc}</div>
                   </div>
                 </button>
               );
@@ -234,10 +234,7 @@ function TopicRow({
           </button>
         </div>
 
-        <span
-          className="text-[11px] font-mono w-5 text-center shrink-0"
-          style={{ color: meta.dot }}
-        >
+        <span className="text-sm font-mono w-5 text-center shrink-0" style={{ color: meta.dot }}>
           {index + 1}
         </span>
 
@@ -276,7 +273,7 @@ function TopicRow({
             onChange={(e) => onChange({ summary: e.target.value })}
             placeholder="Brief summary (used for quiz & flashcard generation)…"
             rows={1}
-            className="w-full bg-transparent text-[12px] font-mono outline-none resize-none"
+            className="w-full bg-transparent text-sm font-mono outline-none resize-none"
             style={{ color: "#3a5a3a" }}
             onFocus={(e) => {
               e.currentTarget.rows = 2;
@@ -502,7 +499,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           <DialogTitle className="font-mono text-lg" style={{ color: "#d4d4d4" }}>
             Build a learning path
           </DialogTitle>
-          <DialogDescription className="text-[12px] mt-0.5" style={{ color: "#3a5a3a" }}>
+          <DialogDescription className="text-sm mt-0.5" style={{ color: "#3a5a3a" }}>
             Structure it like a real roadmap — milestones group topics into sections.
           </DialogDescription>
         </DialogHeader>
@@ -519,7 +516,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               style={{ background: "#1a0707", border: "1px solid #3f0f0f" }}
             >
               <AlertCircle size={12} style={{ color: "#ef4444" }} />
-              <span className="text-[12px] font-mono" style={{ color: "#f87171" }}>
+              <span className="text-sm font-mono" style={{ color: "#f87171" }}>
                 {error}
               </span>
             </div>
@@ -530,7 +527,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               style={{ background: "#071a0f", border: "1px solid #22c55e" }}
             >
               <CheckCircle2 size={12} style={{ color: "#22c55e" }} />
-              <span className="text-[12px] font-mono" style={{ color: "#22c55e" }}>
+              <span className="text-sm font-mono" style={{ color: "#22c55e" }}>
                 Path created!
               </span>
             </div>
@@ -544,7 +541,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
             <div className="flex items-center gap-1.5 mb-1">
               <Sparkles size={11} style={{ color: "#60a5fa" }} />
               <span
-                className="text-[11px] font-mono uppercase tracking-wider"
+                className="text-sm font-mono uppercase tracking-wider"
                 style={{ color: "#3b5bdb" }}
               >
                 Generate with AI
@@ -588,7 +585,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               </button>
             </div>
             {topics.length > 0 && (
-              <p className="text-[10px] font-mono" style={{ color: "#1e3a5f" }}>
+              <p className="text-xs font-mono" style={{ color: "#1e3a5f" }}>
                 ↑ Re-generate will replace current topics
               </p>
             )}
@@ -597,7 +594,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           {/* ── Path meta ── */}
           <div className="space-y-3">
             <label
-              className="block text-[11px] font-mono uppercase tracking-wider"
+              className="block text-sm font-mono uppercase tracking-wider"
               style={{ color: "#3a5a3a" }}
             >
               Path title <span style={{ color: "#22c55e" }}>*</span>
@@ -605,7 +602,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
             <DarkInput value={title} onChange={setTitle} placeholder="e.g. Backend Engineering" />
 
             <label
-              className="block text-[11px] font-mono uppercase tracking-wider"
+              className="block text-sm font-mono uppercase tracking-wider"
               style={{ color: "#3a5a3a" }}
             >
               Description
@@ -619,7 +616,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
 
             <div className="flex items-center gap-3">
               <label
-                className="text-[11px] font-mono uppercase tracking-wider shrink-0"
+                className="text-sm font-mono uppercase tracking-wider shrink-0"
                 style={{ color: "#3a5a3a" }}
               >
                 Duration
@@ -634,7 +631,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                   className="w-16 px-2 py-1 rounded text-lg font-mono text-center outline-none"
                   style={{ background: "#0a0a0a", border: "1px solid #1e2e1e", color: "#4a6a4a" }}
                 />
-                <span className="text-[11px] font-mono" style={{ color: "#2a3a2a" }}>
+                <span className="text-sm font-mono" style={{ color: "#2a3a2a" }}>
                   weeks
                 </span>
               </div>
@@ -663,7 +660,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span
-                className="text-[11px] font-mono uppercase tracking-wider"
+                className="text-sm font-mono uppercase tracking-wider"
                 style={{ color: "#3a5a3a" }}
               >
                 Topics
@@ -682,7 +679,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                       key={k}
                       onClick={() => addTopic(k)}
                       title={`Add ${m.label}`}
-                      className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition-colors"
                       style={{ background: m.bg, border: `1px solid ${m.border}`, color: m.text }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLElement).style.opacity = "0.8";
@@ -706,7 +703,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                 <p className="text-lg font-mono" style={{ color: "#2a3a2a" }}>
                   No topics yet
                 </p>
-                <p className="text-[11px] mt-1" style={{ color: "#1a2a1a" }}>
+                <p className="text-sm mt-1" style={{ color: "#1a2a1a" }}>
                   Generate with AI or add manually above
                 </p>
               </div>
@@ -742,7 +739,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                       >
                         <Icon size={7} style={{ color: m.text }} />
                       </span>
-                      <span className="text-[10px] font-mono" style={{ color: "#2a3a2a" }}>
+                      <span className="text-xs font-mono" style={{ color: "#2a3a2a" }}>
                         {m.label}
                       </span>
                     </div>
@@ -758,7 +755,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           className="shrink-0 flex items-center justify-between px-5 py-3"
           style={{ borderTop: "1px solid #111" }}
         >
-          <span className="text-[11px] font-mono" style={{ color: "#2a3a2a" }}>
+          <span className="text-sm font-mono" style={{ color: "#2a3a2a" }}>
             {topics.filter((t) => t.title.trim()).length} topics · {weeks}w
           </span>
           <div className="flex gap-2">

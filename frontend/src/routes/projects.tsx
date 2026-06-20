@@ -259,7 +259,7 @@ function ProjectsPage() {
                   "{proj.ai_evaluation}"
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-[#4a6a2a]">
+                  <span className="text-sm font-mono text-[#4a6a2a]">
                     Verified on {new Date(proj.verified_at).toLocaleDateString()}
                   </span>
                   <a href={proj.repo_url} target="_blank" rel="noreferrer">
@@ -285,7 +285,7 @@ function ProjectsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {repos.map((repo: any) => (
-              <Card key={repo.id} className="p-5 hover:border-[#333] transition-colors">
+              <Card key={repo.id} className="p-5 hover:border-[#666] transition-colors">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <GitBranch size={14} className="text-[#eee] shrink-0" />
@@ -295,7 +295,7 @@ function ProjectsPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {repo.stargazers_count > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] font-mono text-[#f59e0b]">
+                      <span className="flex items-center gap-1 text-sm font-mono text-[#f59e0b]">
                         <Star size={10} fill="currentColor" /> {repo.stargazers_count}
                       </span>
                     )}
@@ -310,7 +310,7 @@ function ProjectsPage() {
                   <div className="flex items-center gap-2">
                     {repo.language && <Badge tone="blue">{repo.language}</Badge>}
                     {repo.updated_at && (
-                      <span className="text-[11px] font-mono text-[#fff]">
+                      <span className="text-sm font-mono text-[#fff]">
                         {new Date(repo.updated_at).toLocaleDateString()}
                       </span>
                     )}

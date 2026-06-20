@@ -68,7 +68,7 @@ function AdminLogin() {
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-red-900" />
 
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-[#111] border border-[#333] flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-[#111] border border-[#666] flex items-center justify-center mb-4">
               <Shield size={32} className="text-red-500" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-white mb-2">System Override</h1>
@@ -92,7 +92,7 @@ function AdminLogin() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-[#111] border border-[#333] rounded px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full bg-[#111] border border-[#666] rounded px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
                 placeholder="root_user"
                 required
               />
@@ -107,7 +107,7 @@ function AdminLogin() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#111] border border-[#333] rounded px-4 py-3 pl-10 text-white focus:outline-none focus:border-red-500 transition-colors"
+                  className="w-full bg-[#111] border border-[#666] rounded px-4 py-3 pl-10 text-white focus:outline-none focus:border-red-500 transition-colors"
                   placeholder="••••••••"
                   required
                 />

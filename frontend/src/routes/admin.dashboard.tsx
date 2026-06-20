@@ -227,7 +227,7 @@ function AdminDashboard() {
                       <tr key={user.id} className="hover:bg-[#111] transition-colors group">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-xs font-bold text-gray-300">
+                            <div className="w-8 h-8 rounded-full bg-[#1a1a1a] border border-[#666] flex items-center justify-center text-xs font-bold text-gray-300">
                               {user.username.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
@@ -266,7 +266,7 @@ function AdminDashboard() {
                           {!user.is_staff && (
                             <button
                               onClick={() => toggleUserStatus(user.id, user.is_active)}
-                              className="text-xs px-3 py-1.5 rounded border border-[#333] hover:bg-[#222] text-gray-300 transition-colors"
+                              className="text-xs px-3 py-1.5 rounded border border-[#666] hover:bg-[#222] text-gray-300 transition-colors"
                             >
                               {user.is_active ? "Suspend" : "Activate"}
                             </button>
@@ -367,7 +367,7 @@ function AdminDashboard() {
               <div className="pt-6 mt-6 border-t border-[#111]">
                 <h3 className="text-sm font-medium text-gray-300 mb-4 uppercase tracking-wider flex justify-between items-center">
                   Admin Requests
-                  <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
+                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                     {adminRequests.filter((r: any) => r.status === "pending").length}
                   </span>
                 </h3>
@@ -380,12 +380,12 @@ function AdminDashboard() {
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <p className="text-xs font-medium text-white">{req.username}</p>
-                            <p className="text-[10px] text-gray-500">
+                            <p className="text-xs text-gray-500">
                               {new Date(req.created_at).toLocaleDateString()}
                             </p>
                           </div>
                           <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                            className={`text-xs px-1.5 py-0.5 rounded uppercase tracking-wider ${
                               req.status === "pending"
                                 ? "bg-yellow-950 text-yellow-500 border border-yellow-900"
                                 : req.status === "approved"
@@ -400,13 +400,13 @@ function AdminDashboard() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleAdminRequest(req.id, "approved")}
-                              className="flex-1 text-[10px] py-1 bg-green-950 hover:bg-green-900 text-green-400 rounded transition-colors"
+                              className="flex-1 text-xs py-1 bg-green-950 hover:bg-green-900 text-green-400 rounded transition-colors"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleAdminRequest(req.id, "rejected")}
-                              className="flex-1 text-[10px] py-1 bg-red-950 hover:bg-red-900 text-red-400 rounded transition-colors"
+                              className="flex-1 text-xs py-1 bg-red-950 hover:bg-red-900 text-red-400 rounded transition-colors"
                             >
                               Deny
                             </button>

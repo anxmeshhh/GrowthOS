@@ -96,7 +96,7 @@ const RARITY_CONFIG: Record<
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] uppercase tracking-[0.2em] font-mono text-[#fff] flex items-center gap-1.5">
+    <p className="text-xs uppercase tracking-[0.2em] font-mono text-[#fff] flex items-center gap-1.5">
       {children}
     </p>
   );
@@ -229,14 +229,14 @@ function ProgressPage() {
         {/* ── Page header ── */}
         <div className="flex items-end justify-between pb-1 border-b border-[#0e0e0e]">
           <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] font-mono text-[#eee] mb-1.5">
+            <p className="text-xs uppercase tracking-[0.25em] font-mono text-[#eee] mb-1.5">
               GrowthOS
             </p>
             <h1 className="text-[18px] font-semibold tracking-tight text-[#efefef] leading-none">
               Your Progress
             </h1>
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] font-mono text-[#fff] uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-1.5 text-xs font-mono text-[#fff] uppercase tracking-[0.2em]">
             <Trophy size={10} className="text-[#a855f7]" />
             {lvlTitle}
           </div>
@@ -253,19 +253,15 @@ function ProgressPage() {
               <span className="text-[29px] font-semibold tracking-tight tabular-nums text-[#a855f7] leading-none">
                 {level}
               </span>
-              <span className="text-[12px] text-[#fff] font-mono">— {lvlTitle}</span>
+              <span className="text-sm text-[#fff] font-mono">— {lvlTitle}</span>
             </div>
-            <div className="text-[10px] font-mono text-[#eee] mt-1">
-              {xp.toLocaleString()} XP total
-            </div>
+            <div className="text-xs font-mono text-[#eee] mt-1">{xp.toLocaleString()} XP total</div>
             <div className="mt-4 space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-[9px] font-mono text-[#fff] uppercase tracking-wider">
+                <span className="text-xs font-mono text-[#fff] uppercase tracking-wider">
                   {xpPct}% to Lv{level + 1}
                 </span>
-                <span className="text-[9px] font-mono text-[#a855f7]/70">
-                  {xpRemaining} XP left
-                </span>
+                <span className="text-xs font-mono text-[#a855f7]/70">{xpRemaining} XP left</span>
               </div>
               <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
@@ -292,7 +288,7 @@ function ProgressPage() {
             >
               {streak}
             </div>
-            <div className="text-[9px] font-mono text-[#eee] uppercase tracking-[0.2em] mt-1.5">
+            <div className="text-xs font-mono text-[#eee] uppercase tracking-[0.2em] mt-1.5">
               {streak > 0 ? "Keep it alive" : "Start today"}
             </div>
           </StatCard>
@@ -306,9 +302,9 @@ function ProgressPage() {
               <span className="text-[29px] font-semibold tracking-tight tabular-nums text-[#efefef] leading-none">
                 {xp.toLocaleString()}
               </span>
-              <span className="text-[12px] text-[#fff] font-mono">XP</span>
+              <span className="text-sm text-[#fff] font-mono">XP</span>
             </div>
-            <div className="text-[10px] font-mono text-[#22c55e]/70 mt-1">+120 this week</div>
+            <div className="text-xs font-mono text-[#22c55e]/70 mt-1">+120 this week</div>
           </StatCard>
         </div>
 
@@ -323,14 +319,14 @@ function ProgressPage() {
                 </SectionLabel>
               }
               right={
-                <span className="text-[9px] font-mono text-[#22c55e] uppercase tracking-[0.15em]">
+                <span className="text-xs font-mono text-[#22c55e] uppercase tracking-[0.15em]">
                   {activePaths.length} active
                 </span>
               }
             />
             <div className="p-2.5 space-y-1.5 max-h-[280px] overflow-y-auto custom-scrollbar">
               {activePaths.length === 0 ? (
-                <div className="py-10 text-center text-[11px] text-[#fff] font-mono uppercase tracking-widest">
+                <div className="py-10 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
                   No active paths — start a mission
                 </div>
               ) : (
@@ -342,12 +338,12 @@ function ProgressPage() {
                           <h3 className="text-[13px] font-medium text-[#eee] group-hover:text-[#e0e0e0] transition-colors truncate leading-tight">
                             {p.title}
                           </h3>
-                          <div className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em] mt-0.5">
+                          <div className="text-xs font-mono text-[#fff] uppercase tracking-[0.15em] mt-0.5">
                             {p.done} / {p.total} topics
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[12px] font-mono tabular-nums text-[#22c55e]">
+                          <span className="text-sm font-mono tabular-nums text-[#22c55e]">
                             {p.pct}%
                           </span>
                           <ChevronRight
@@ -394,10 +390,10 @@ function ProgressPage() {
                   return (
                     <div key={item.action_type}>
                       <div className="flex justify-between items-baseline mb-1.5">
-                        <span className="text-[11px] font-mono text-[#fff] uppercase tracking-wider">
+                        <span className="text-sm font-mono text-[#fff] uppercase tracking-wider">
                           {label}
                         </span>
-                        <span className="text-[11px] font-mono tabular-nums text-[#fff]">
+                        <span className="text-sm font-mono tabular-nums text-[#fff]">
                           {item.total.toLocaleString()} · {item.count}×
                         </span>
                       </div>
@@ -415,7 +411,7 @@ function ProgressPage() {
                   );
                 })
               ) : (
-                <div className="py-10 text-center text-[11px] text-[#fff] font-mono uppercase tracking-widest">
+                <div className="py-10 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
                   No XP data yet
                 </div>
               )}
@@ -432,7 +428,7 @@ function ProgressPage() {
               </SectionLabel>
             }
             right={
-              <span className="text-[9px] font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
+              <span className="text-xs font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
                 {unlockedCount} / {TITLES.length} unlocked
               </span>
             }
@@ -482,12 +478,12 @@ function ProgressPage() {
                         {tag.name}
                       </span>
                       {isEquipped && (
-                        <span className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#22c55e]/15 text-[#22c55e] leading-none tracking-wider">
+                        <span className="text-xs font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#22c55e]/15 text-[#22c55e] leading-none tracking-wider">
                           Equipped
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-[#eee] mt-1 leading-snug truncate font-mono">
+                    <div className="text-xs text-[#eee] mt-1 leading-snug truncate font-mono">
                       {tag.desc}
                     </div>
                   </div>
@@ -496,13 +492,13 @@ function ProgressPage() {
                   <div className="shrink-0">
                     {unlocked ? (
                       <span
-                        className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] leading-none tracking-wider"
+                        className="text-xs font-mono uppercase px-1.5 py-0.5 rounded-[2px] leading-none tracking-wider"
                         style={{ background: cfg.bg, color: cfg.color }}
                       >
                         {cfg.label}
                       </span>
                     ) : (
-                      <span className="text-[8px] font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#0f0f0f] text-[#eee] leading-none tracking-wider">
+                      <span className="text-xs font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#0f0f0f] text-[#eee] leading-none tracking-wider">
                         Lv {tag.levelReq}
                       </span>
                     )}
@@ -522,7 +518,7 @@ function ProgressPage() {
               </SectionLabel>
             }
             right={
-              <span className="text-[9px] font-mono text-[#fff] uppercase tracking-[0.15em]">
+              <span className="text-xs font-mono text-[#fff] uppercase tracking-[0.15em]">
                 Last 12 months
               </span>
             }

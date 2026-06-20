@@ -293,7 +293,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
 
       {/* Inline legend — bottom left, always visible */}
       <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-1.5 bg-[#0d0d0d]/90 backdrop-blur border border-[#1f1f1f] rounded-lg px-3 py-2.5 pointer-events-none">
-        <div className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#eee] mb-0.5">
+        <div className="text-xs uppercase tracking-[0.2em] font-mono text-[#eee] mb-0.5">
           Legend
         </div>
         <LegendRow color="border-[#ffe92b]" label="Topic" />
@@ -328,7 +328,7 @@ function LegendRow({
           style={{ borderWidth: isGreen ? "1.5px" : "1px" }}
         />
       )}
-      <span className="text-[11px] font-mono text-[#eee]">{label}</span>
+      <span className="text-sm font-mono text-[#eee]">{label}</span>
     </div>
   );
 }

@@ -149,7 +149,7 @@ function SettingsPage() {
       <PageShell>
         <div className="flex items-center justify-center p-16 text-[#fff]">
           <Loader2 className="w-4 h-4 animate-spin mr-3" />
-          <span className="text-[12px] font-mono uppercase tracking-widest">Loading…</span>
+          <span className="text-sm font-mono uppercase tracking-widest">Loading…</span>
         </div>
       </PageShell>
     );
@@ -240,11 +240,11 @@ function SettingsPage() {
                     </button>
                   </div>
                   {profile?.has_github_workspace_access ? (
-                    <p className="text-[10px] text-[#4ade80] font-mono tracking-wide uppercase">
+                    <p className="text-xs text-[#4ade80] font-mono tracking-wide uppercase">
                       ✓ Workspace permissions granted & encrypted
                     </p>
                   ) : (
-                    <p className="text-[10px] text-[#ef4444] font-mono tracking-wide uppercase">
+                    <p className="text-xs text-[#ef4444] font-mono tracking-wide uppercase">
                       ⚠ Missing workspace permissions. Please reconnect.
                     </p>
                   )}
@@ -279,10 +279,7 @@ function SettingsPage() {
               label="Interactive Tutorial"
               sub="Restart the onboarding tutorial to learn the system's core features."
             >
-              <button
-                className="settings-btn-outline"
-                onClick={startTutorial}
-              >
+              <button className="settings-btn-outline" onClick={startTutorial}>
                 Restart Tutorial
               </button>
             </SettingsRow>

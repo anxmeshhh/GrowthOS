@@ -55,8 +55,8 @@ function PasswordStrength({ password }: { password: string }) {
         {checks.map((c) => (
           <span
             key={c.label}
-            className={`text-[10px] font-mono transition-colors duration-200 ${
-              c.ok ? "text-[#22c55e]" : "text-[#444]"
+            className={`text-xs font-mono transition-colors duration-200 ${
+              c.ok ? "text-[#22c55e]" : "text-[#777]"
             }`}
           >
             {c.ok ? "✓" : "·"} {c.label}
@@ -116,9 +116,7 @@ function LeftPanel() {
       {/* Center: how it works */}
       <div className="relative z-10 space-y-6">
         <div className="space-y-1">
-          <p className="text-[10px] uppercase tracking-[0.4em] font-mono text-[#555]">
-            How it works
-          </p>
+          <p className="text-xs uppercase tracking-[0.4em] font-mono text-[#555]">How it works</p>
           <h3 className="text-xl font-bold text-[#f0f0f0] leading-snug">
             Three steps to compound skills
           </h3>
@@ -128,7 +126,7 @@ function LeftPanel() {
           {steps.map((s, i) => (
             <div key={s.icon} className="flex gap-4 items-start">
               <div className="shrink-0 w-8 h-8 rounded-lg border border-[#1e1e1e] bg-[#0a0a0a] flex items-center justify-center">
-                <span className="text-[10px] font-mono text-[#22c55e]">{s.icon}</span>
+                <span className="text-xs font-mono text-[#22c55e]">{s.icon}</span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-[#ddd]">{s.title}</p>
@@ -144,7 +142,7 @@ function LeftPanel() {
             {["#22c55e", "#16a34a", "#15803d", "#14532d"].map((c, i) => (
               <div
                 key={i}
-                className="w-7 h-7 rounded-full border-2 border-[#050505] flex items-center justify-center text-[9px] font-bold text-[#000]"
+                className="w-7 h-7 rounded-full border-2 border-[#050505] flex items-center justify-center text-xs font-bold text-[#000]"
                 style={{ backgroundColor: c }}
               >
                 {String.fromCharCode(65 + i)}
@@ -165,7 +163,7 @@ function LeftPanel() {
       </div>
 
       {/* Bottom tag */}
-      <div className="relative z-10 flex items-center gap-2 text-[#333] text-xs font-mono">
+      <div className="relative z-10 flex items-center gap-2 text-[#666] text-xs font-mono">
         <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
         Free to start, no credit card
       </div>
@@ -248,7 +246,7 @@ function SignupPage() {
             <button
               type="button"
               onClick={() => googleLogin()}
-              className="group w-full flex items-center justify-center gap-3 h-12 px-4 rounded-xl border border-[#252525] bg-[#0d0d0d] text-[#ccc] text-sm font-medium transition-all duration-200 hover:border-[#333] hover:bg-[#141414] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+              className="group w-full flex items-center justify-center gap-3 h-12 px-4 rounded-xl border border-[#252525] bg-[#0d0d0d] text-[#ccc] text-sm font-medium transition-all duration-200 hover:border-[#666] hover:bg-[#141414] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -275,7 +273,7 @@ function SignupPage() {
             <button
               type="button"
               onClick={handleGithubLogin}
-              className="group w-full flex items-center justify-center gap-3 h-12 px-4 rounded-xl border border-[#252525] bg-[#0d0d0d] text-[#ccc] text-sm font-medium transition-all duration-200 hover:border-[#333] hover:bg-[#141414] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+              className="group w-full flex items-center justify-center gap-3 h-12 px-4 rounded-xl border border-[#252525] bg-[#0d0d0d] text-[#ccc] text-sm font-medium transition-all duration-200 hover:border-[#666] hover:bg-[#141414] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
             >
               <Github className="w-4 h-4 shrink-0" />
               Sign up with GitHub
@@ -285,7 +283,7 @@ function SignupPage() {
           {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-[#1e1e1e]" />
-            <span className="text-[11px] uppercase tracking-widest font-mono text-[#444]">
+            <span className="text-sm uppercase tracking-widest font-mono text-[#777]">
               or register with email
             </span>
             <div className="flex-1 h-px bg-[#1e1e1e]" />
@@ -472,7 +470,7 @@ function SignupPage() {
           </form>
 
           {/* Terms */}
-          <p className="text-center text-xs text-[#444] leading-relaxed">
+          <p className="text-center text-xs text-[#777] leading-relaxed">
             By creating an account you agree to our{" "}
             <a
               href="#"

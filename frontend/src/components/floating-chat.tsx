@@ -171,7 +171,7 @@ export function FloatingChat() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-[#f0f0f0]">GrowthOS Mentor</h3>
-                <div className="flex items-center gap-1.5 text-[11px] text-[#22c55e]">
+                <div className="flex items-center gap-1.5 text-sm text-[#22c55e]">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-75"></span>
                     <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#22c55e]"></span>
@@ -233,7 +233,7 @@ export function FloatingChat() {
                 <button
                   key={chip.label}
                   onClick={() => handleSend(chip.msg)}
-                  className="shrink-0 px-3 py-1.5 rounded-full border border-[#1e3060] bg-[#0d142b] text-[11px] font-mono uppercase tracking-wider text-[#60a5fa] hover:bg-[#1e3060] hover:text-white transition-colors"
+                  className="shrink-0 px-3 py-1.5 rounded-full border border-[#1e3060] bg-[#0d142b] text-sm font-mono uppercase tracking-wider text-[#60a5fa] hover:bg-[#1e3060] hover:text-white transition-colors"
                 >
                   {chip.label}
                 </button>

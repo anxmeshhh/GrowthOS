@@ -23,7 +23,7 @@ export function PageHeader({
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
       <div>
         {kicker ? (
-          <div className="text-[12px] uppercase tracking-[0.15em] text-[#fff] mb-1">{kicker}</div>
+          <div className="text-sm uppercase tracking-[0.15em] text-[#fff] mb-1">{kicker}</div>
         ) : null}
         <h1 className="text-2xl sm:text-[29px] font-semibold tracking-tight text-[#e8e8e8]">
           {title}
@@ -56,7 +56,7 @@ export function StatCard({
 }) {
   return (
     <Card className="p-4">
-      <div className="text-[11px] uppercase tracking-[0.15em] text-[#fff]">{label}</div>
+      <div className="text-sm uppercase tracking-[0.15em] text-[#fff]">{label}</div>
       <div
         className={`mt-2 text-2xl font-semibold tracking-tight ${accent ? "text-[#22c55e]" : "text-[#e0e0e0]"}`}
       >
@@ -94,7 +94,7 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[11px] tracking-wide ${map[tone]}`}
+      className={`inline-flex items-center px-1.5 py-0.5 rounded border text-sm tracking-wide ${map[tone]}`}
     >
       {children}
     </span>

@@ -265,7 +265,7 @@ export function CustomPathBuilder({
                 placeholder="e.g., Full Stack Development"
                 value={pathTitle}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="bg-[#111] border-[#333] text-[#eee]"
+                className="bg-[#111] border-[#666] text-[#eee]"
               />
             </div>
 
@@ -283,7 +283,7 @@ export function CustomPathBuilder({
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-300">Description</label>
               <textarea
-                className="w-full px-3 py-2 border border-[#333] bg-[#111] text-[#eee] rounded-md text-sm"
+                className="w-full px-3 py-2 border border-[#666] bg-[#111] text-[#eee] rounded-md text-sm"
                 placeholder="Describe what learners will achieve"
                 value={pathDescription}
                 onChange={(e) => setPathDescription(e.target.value)}
@@ -301,7 +301,7 @@ export function CustomPathBuilder({
                 max="52"
                 value={estimatedWeeks}
                 onChange={(e) => setEstimatedWeeks(parseInt(e.target.value))}
-                className="bg-[#111] border-[#333] text-[#eee]"
+                className="bg-[#111] border-[#666] text-[#eee]"
               />
             </div>
           </div>
@@ -315,7 +315,7 @@ export function CustomPathBuilder({
                 variant="outline"
                 size="sm"
                 onClick={addTopic}
-                className="flex items-center gap-1 border-[#333] hover:bg-[#222]"
+                className="flex items-center gap-1 border-[#666] hover:bg-[#222]"
               >
                 <Plus size={14} />
                 Add Topic
@@ -361,13 +361,13 @@ export function CustomPathBuilder({
                               placeholder="Topic title"
                               value={topic.title}
                               onChange={(e) => updateTopic(index, { title: e.target.value })}
-                              className="text-sm bg-[#1a1a1a] border-[#333] text-[#eee]"
+                              className="text-sm bg-[#1a1a1a] border-[#666] text-[#eee]"
                             />
                             <textarea
                               placeholder="Topic summary (optional)"
                               value={topic.summary || ""}
                               onChange={(e) => updateTopic(index, { summary: e.target.value })}
-                              className="w-full px-2 py-1 text-sm border border-[#333] bg-[#1a1a1a] text-[#eee] rounded"
+                              className="w-full px-2 py-1 text-sm border border-[#666] bg-[#1a1a1a] text-[#eee] rounded"
                               rows={2}
                             />
                           </div>
@@ -388,7 +388,7 @@ export function CustomPathBuilder({
                       <button
                         type="button"
                         onClick={() => insertTopicBelow(index)}
-                        className="bg-[#1a1a1a] border border-[#333] rounded-full p-1 text-green-500 hover:bg-[#222] hover:scale-110 transition-all shadow-lg"
+                        className="bg-[#1a1a1a] border border-[#666] rounded-full p-1 text-green-500 hover:bg-[#222] hover:scale-110 transition-all shadow-lg"
                         title="Insert Topic Here"
                       >
                         <PlusCircle size={16} />
@@ -408,7 +408,7 @@ export function CustomPathBuilder({
                 handleOpenChange(false);
                 resetForm();
               }}
-              className="border-[#333] hover:bg-[#222]"
+              className="border-[#666] hover:bg-[#222]"
             >
               Cancel
             </Button>

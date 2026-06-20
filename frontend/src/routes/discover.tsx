@@ -61,7 +61,7 @@ function DiscoverPage() {
       <div className="max-w-5xl mx-auto px-6 py-14">
         {/* Header */}
         <div className="mb-12">
-          <p className="text-[12px] font-semibold tracking-[0.14em] uppercase text-[#22c55e] mb-3">
+          <p className="text-sm font-semibold tracking-[0.14em] uppercase text-[#22c55e] mb-3">
             Discover
           </p>
           <h1 className="text-[35px] font-semibold tracking-tight text-[#f0f0f0] leading-tight mb-2">
@@ -81,11 +81,11 @@ function DiscoverPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search paths, skills, or topics…"
-              className="w-full bg-[#0e0e0e] border border-[#1e1e1e] rounded-[10px] py-2.5 pl-9 pr-4 text-[14px] text-[#f0f0f0] placeholder-[#444] focus:outline-none focus:border-[#2e2e2e] transition-colors"
+              className="w-full bg-[#0e0e0e] border border-[#1e1e1e] rounded-[10px] py-2.5 pl-9 pr-4 text-[14px] text-[#f0f0f0] placeholder-[#777] focus:outline-none focus:border-[#2e2e2e] transition-colors"
             />
           </div>
           <Link to="/paths/create">
-            <button className="flex items-center gap-2 bg-transparent border border-[#222] hover:border-[#333] hover:bg-[#111] rounded-[10px] px-4 py-2.5 text-[14px] font-medium text-[#eee] hover:text-[#f0f0f0] transition-all whitespace-nowrap">
+            <button className="flex items-center gap-2 bg-transparent border border-[#222] hover:border-[#666] hover:bg-[#111] rounded-[10px] px-4 py-2.5 text-[14px] font-medium text-[#eee] hover:text-[#f0f0f0] transition-all whitespace-nowrap">
               <Plus size={14} />
               Create Path
             </button>
@@ -94,7 +94,7 @@ function DiscoverPage() {
 
         {/* Section label */}
         {!isLoading && (
-          <p className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#fff] mb-5">
+          <p className="text-sm font-medium tracking-[0.1em] uppercase text-[#fff] mb-5">
             Available Paths · {filteredPaths.length} Total
           </p>
         )}
@@ -166,12 +166,12 @@ function PathCard({
             {path.title}
           </h3>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[11px] font-medium tracking-[0.08em] uppercase text-[#fff]">
+            <span className="text-sm font-medium tracking-[0.08em] uppercase text-[#fff]">
               {topicCount} Topics
             </span>
             <span className="text-[#fff]">·</span>
             <span
-              className={`text-[11px] font-semibold tracking-[0.07em] uppercase px-2 py-0.5 rounded-[5px] ${
+              className={`text-sm font-semibold tracking-[0.07em] uppercase px-2 py-0.5 rounded-[5px] ${
                 isCustom
                   ? "bg-[rgba(139,92,246,0.1)] text-[#a78bfa]"
                   : "bg-[rgba(34,197,94,0.08)] text-[#22c55e]"
@@ -205,11 +205,11 @@ function PathCard({
       {topicCount > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <span className="text-[12px] font-medium text-[#fff] tracking-wide uppercase">
+            <span className="text-sm font-medium text-[#fff] tracking-wide uppercase">
               Progress
             </span>
             <span
-              className={`text-[12px] font-semibold font-mono ${
+              className={`text-sm font-semibold font-mono ${
                 isCustom ? "text-[#a78bfa]" : "text-[#22c55e]"
               }`}
             >

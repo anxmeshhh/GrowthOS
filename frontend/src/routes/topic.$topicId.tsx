@@ -270,15 +270,13 @@ function TopicWorkspace() {
           className="group flex items-center gap-1.5 text-[#eee] hover:text-[#eee] transition-colors"
         >
           <ArrowLeft size={14} />
-          <span className="text-[11px] font-mono tracking-widest uppercase hidden sm:block">
-            Back
-          </span>
+          <span className="text-sm font-mono tracking-widest uppercase hidden sm:block">Back</span>
         </Link>
 
         <div className="w-px h-5 bg-[#1e1e1e]" />
 
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#fff] mb-0.5">
+          <div className="text-xs uppercase tracking-[0.2em] font-mono text-[#fff] mb-0.5">
             Workspace
           </div>
           <div className="text-lg font-semibold tracking-[-0.01em] truncate text-[#e8e8e8]">
@@ -290,7 +288,7 @@ function TopicWorkspace() {
           {/* Timer */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0f0f0f] border border-[#1e1e1e]">
             <div
-              className={`w-1.5 h-1.5 rounded-full ${running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#333]"}`}
+              className={`w-1.5 h-1.5 rounded-full ${running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#666]"}`}
             />
             <span className="font-mono text-lg text-[#e8e8e8] tabular-nums">
               {formatTime(seconds)}
@@ -363,13 +361,13 @@ function TopicWorkspace() {
                   <div className="text-lg font-semibold text-[#d0d0d0] leading-none">
                     Screenshots
                   </div>
-                  <div className="text-[11px] text-[#fff] font-mono mt-0.5">
+                  <div className="text-sm text-[#fff] font-mono mt-0.5">
                     {screenshots.length} saved
                   </div>
                 </div>
               </div>
               {uploadScreenshotMutation.isPending && (
-                <div className="flex items-center gap-1.5 text-[11px] text-[#22c55e] font-mono">
+                <div className="flex items-center gap-1.5 text-sm text-[#22c55e] font-mono">
                   <Loader2 size={10} className="animate-spin" />
                   Uploading
                 </div>
@@ -395,8 +393,8 @@ function TopicWorkspace() {
                 }}
               />
               <Clipboard size={13} className="text-[#fff] shrink-0" />
-              <span className="text-[12px] text-[#eee]">
-                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-[11px] font-mono text-[#fff] border border-[#222]">
+              <span className="text-sm text-[#eee]">
+                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-sm font-mono text-[#fff] border border-[#222]">
                   Ctrl+V
                 </kbd>
                 <span className="mx-1.5 text-[#eee]">·</span>
@@ -413,7 +411,7 @@ function TopicWorkspace() {
                   <ImageIcon size={18} className="text-[#222]" />
                 </div>
                 <div className="text-lg text-[#fff] font-mono">No screenshots yet</div>
-                <div className="text-[11px] text-[#eee] mt-1">Paste or drag an image above</div>
+                <div className="text-sm text-[#eee] mt-1">Paste or drag an image above</div>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2.5">
@@ -444,7 +442,7 @@ function TopicWorkspace() {
                       <Trash2 size={10} />
                     </button>
                     <div className="absolute bottom-0 inset-x-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent">
-                      <div className="text-[10px] font-mono text-[#eee]">
+                      <div className="text-xs font-mono text-[#eee]">
                         {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
@@ -458,7 +456,7 @@ function TopicWorkspace() {
 
             {topic.summary && (
               <div className="border border-[#141414] rounded-lg p-3 mt-4 bg-[#090909]">
-                <div className="text-[10px] uppercase font-mono tracking-widest text-[#fff] mb-1.5">
+                <div className="text-xs uppercase font-mono tracking-widest text-[#fff] mb-1.5">
                   Summary
                 </div>
                 <div className="text-lg text-[#eee] leading-relaxed">{topic.summary}</div>
@@ -550,7 +548,7 @@ function TopicWorkspace() {
                     onFocus={() => setRepoDropdownOpen(true)}
                     onBlur={() => setTimeout(() => setRepoDropdownOpen(false), 200)}
                     placeholder="e.g. growthos-my-path"
-                    className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#333] focus:outline-none focus:border-[#22c55e]/50 font-mono text-sm transition-colors pr-10"
+                    className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#666] focus:outline-none focus:border-[#22c55e]/50 font-mono text-sm transition-colors pr-10"
                   />
                   <div className="absolute right-3 top-3 pointer-events-none">
                     <ChevronDown size={16} className="text-[#555]" />
@@ -571,7 +569,7 @@ function TopicWorkspace() {
                           >
                             <span>{r.name}</span>
                             {r.private && (
-                              <span className="text-[10px] bg-[#1a1a1a] text-[#888] px-1.5 py-0.5 rounded">
+                              <span className="text-xs bg-[#1a1a1a] text-[#888] px-1.5 py-0.5 rounded">
                                 Private
                               </span>
                             )}
@@ -587,7 +585,7 @@ function TopicWorkspace() {
                     </div>
                   )}
                 </div>
-                <p className="text-[11px] text-[#555] leading-relaxed">
+                <p className="text-sm text-[#555] leading-relaxed">
                   Files will be pushed to <strong className="text-[#aaa]">/{topic.slug}/</strong>{" "}
                   inside this repository. Leave empty to auto-generate a name.
                 </p>
@@ -734,11 +732,11 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       {/* Text area */}
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-[10px] uppercase tracking-widest font-mono text-[#fff]">
+          <label className="text-xs uppercase tracking-widest font-mono text-[#fff]">
             Markdown
           </label>
           <span
-            className={`text-[10px] uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}
+            className={`text-xs uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}
           >
             {saving ? "Saving…" : "Saved"}
           </span>
@@ -758,7 +756,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
 
       {/* Document upload */}
       <div>
-        <div className="text-[10px] uppercase tracking-widest font-mono text-[#fff] mb-2 flex items-center gap-1.5">
+        <div className="text-xs uppercase tracking-widest font-mono text-[#fff] mb-2 flex items-center gap-1.5">
           <FileText size={10} />
           Documents
         </div>
@@ -788,7 +786,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             <div className="text-lg text-[#fff]">
               {noteFile ? noteFile.name : "Drop a file or click to browse"}
             </div>
-            <div className="text-[11px] text-[#fff] mt-0.5">PDF, DOCX, TXT, images</div>
+            <div className="text-sm text-[#fff] mt-0.5">PDF, DOCX, TXT, images</div>
           </div>
           {noteFile && (
             <button
@@ -812,7 +810,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       {/* Saved docs */}
       {noteDocuments.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest font-mono text-[#fff] mb-2">
+          <div className="text-xs uppercase tracking-widest font-mono text-[#fff] mb-2">
             Saved ({noteDocuments.length})
           </div>
           <ul className="space-y-1.5">
@@ -916,7 +914,7 @@ function QuizTab({ topicId }: { topicId: number }) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <Loader2 size={20} className="animate-spin text-[#fff]" />
-        <span className="text-[11px] font-mono tracking-widest text-[#fff] uppercase">
+        <span className="text-sm font-mono tracking-widest text-[#fff] uppercase">
           Generating {difficulty} questions
         </span>
       </div>
@@ -939,7 +937,7 @@ function QuizTab({ topicId }: { topicId: number }) {
     <div className="space-y-5">
       {/* Difficulty */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px] uppercase tracking-widest font-mono text-[#fff]">Level</span>
+        <span className="text-xs uppercase tracking-widest font-mono text-[#fff]">Level</span>
         <div className="flex gap-1.5 ml-1">
           {(["easy", "medium", "hard"] as const).map((d) => {
             const s = DIFF_STYLES[d];
@@ -948,13 +946,13 @@ function QuizTab({ topicId }: { topicId: number }) {
               <button
                 key={d}
                 onClick={() => handleDifficultyChange(d)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono uppercase tracking-wider border transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-mono uppercase tracking-wider border transition-all ${
                   active
                     ? s.active
                     : "border-[#181818] text-[#eee] hover:border-[#2a2a2a] hover:text-[#eee]"
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : "bg-[#333]"}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : "bg-[#666]"}`} />
                 {d}
               </button>
             );
@@ -987,7 +985,7 @@ function QuizTab({ topicId }: { topicId: number }) {
               setSubmitted(false);
               setAnswers({});
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] hover:border-[#333] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#222] text-lg text-[#eee] hover:text-[#f0f0f0] hover:border-[#666] transition-colors"
           >
             <RotateCcw size={11} /> Retake
           </button>
@@ -999,7 +997,7 @@ function QuizTab({ topicId }: { topicId: number }) {
         {questions.map((q: any, i: number) => (
           <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
             <div className="px-4 py-3 border-b border-[#141414] flex items-start gap-3">
-              <span className="text-[11px] font-mono text-[#fff] mt-0.5 shrink-0">Q{i + 1}</span>
+              <span className="text-sm font-mono text-[#fff] mt-0.5 shrink-0">Q{i + 1}</span>
               <span className="text-lg text-[#d0d0d0] leading-snug">{q.question}</span>
             </div>
             <div className="p-3 grid grid-cols-1 gap-1.5">
@@ -1016,13 +1014,13 @@ function QuizTab({ topicId }: { topicId: number }) {
                         : isWrong
                           ? "border-[#ef4444]/40 bg-[#ef4444]/10 text-[#ef4444]"
                           : isSelected
-                            ? "border-[#333] bg-[#141414] text-[#e8e8e8]"
+                            ? "border-[#666] bg-[#141414] text-[#e8e8e8]"
                             : "border-[#141414] hover:border-[#222] hover:bg-[#0f0f0f] text-[#eee] hover:text-[#eee]"
                     }`}
                     onClick={() => !submitted && setAnswers({ ...answers, [i]: opt })}
                     disabled={submitted}
                   >
-                    <span className="font-mono text-[10px] mr-2 opacity-50">
+                    <span className="font-mono text-xs mr-2 opacity-50">
                       {String.fromCharCode(65 + j)}.
                     </span>
                     {opt}
@@ -1133,7 +1131,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
         {draftCards.map((c, i) => (
           <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#141414]">
-              <span className="text-[10px] font-mono text-[#fff] uppercase tracking-widest">
+              <span className="text-xs font-mono text-[#fff] uppercase tracking-widest">
                 Card {i + 1}
               </span>
               <button
@@ -1145,7 +1143,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
             </div>
             <div className="p-4 space-y-3">
               <div>
-                <label className="text-[10px] text-[#fff] block mb-1 font-mono uppercase tracking-widest">
+                <label className="text-xs text-[#fff] block mb-1 font-mono uppercase tracking-widest">
                   Front
                 </label>
                 <input
@@ -1162,7 +1160,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-[#fff] block mb-1 font-mono uppercase tracking-widest">
+                <label className="text-xs text-[#fff] block mb-1 font-mono uppercase tracking-widest">
                   Back
                 </label>
                 <textarea
@@ -1195,7 +1193,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-5">
-        <div className="text-[10px] uppercase tracking-widest font-mono text-[#fff]">
+        <div className="text-xs uppercase tracking-widest font-mono text-[#fff]">
           {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
         </div>
         <button
@@ -1237,7 +1235,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 >
                   {/* Front */}
                   <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#eee] mb-3">
+                    <div className="text-xs uppercase font-mono tracking-widest text-[#eee] mb-3">
                       Term
                     </div>
                     <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug">
@@ -1249,7 +1247,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   </div>
                   {/* Back */}
                   <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border border-[#22c55e]/15 bg-[#0a0f0a] flex flex-col items-center justify-center p-5">
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">
+                    <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">
                       Definition
                     </div>
                     <div className="text-lg text-[#eee] text-center leading-relaxed">{f.back}</div>
@@ -1350,7 +1348,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
               className="group text-left p-5 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#222] transition-all"
             >
               <div
-                className="text-[10px] font-mono uppercase tracking-widest mb-3"
+                className="text-xs font-mono uppercase tracking-widest mb-3"
                 style={{ color: accent }}
               >
                 {tag}
@@ -1358,9 +1356,9 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
               <div className="text-lg font-semibold text-[#d0d0d0] mb-1.5 group-hover:text-[#e8e8e8] transition-colors">
                 {label}
               </div>
-              <div className="text-[12px] text-[#fff] leading-relaxed">{desc}</div>
+              <div className="text-sm text-[#fff] leading-relaxed">{desc}</div>
               <div className="mt-4 flex items-center gap-1" style={{ color: accent + "80" }}>
-                <span className="text-[11px] font-mono">Select</span>
+                <span className="text-sm font-mono">Select</span>
                 <ChevronRight size={11} />
               </div>
             </button>
@@ -1374,13 +1372,13 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           <div className="flex items-center justify-between">
             <button
               onClick={() => setBuildMode("choose")}
-              className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
+              className="text-sm font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
             >
               <ArrowLeft size={11} /> Back
             </button>
             <button
               onClick={() => refetchIdeas()}
-              className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
+              className="text-sm font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
             >
               <RefreshCw size={11} /> Regenerate
             </button>
@@ -1389,7 +1387,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           {ideasLoading ? (
             <div className="flex flex-col items-center py-12 gap-3">
               <Loader2 size={18} className="animate-spin text-[#fff]" />
-              <span className="text-[11px] font-mono text-[#fff] uppercase tracking-widest">
+              <span className="text-sm font-mono text-[#fff] uppercase tracking-widest">
                 Generating ideas
               </span>
             </div>
@@ -1401,7 +1399,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                   className="p-4 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#1e1e1e] transition-colors"
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-[10px] font-mono text-[#22c55e]/40 mt-0.5 shrink-0 tabular-nums">
+                    <span className="text-xs font-mono text-[#22c55e]/40 mt-0.5 shrink-0 tabular-nums">
                       0{i + 1}
                     </span>
                     <div>
@@ -1426,7 +1424,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           <div className="flex items-center justify-between">
             <button
               onClick={() => setBuildMode("choose")}
-              className="text-[11px] font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
+              className="text-sm font-mono text-[#eee] hover:text-[#eee] transition-colors flex items-center gap-1"
             >
               <ArrowLeft size={11} /> Back
             </button>
@@ -1443,7 +1441,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
         <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#141414] flex items-center gap-2">
             <Github size={13} className="text-[#fff]" />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#fff]">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#fff]">
               Submit Repository
             </span>
           </div>
@@ -1485,13 +1483,13 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                   </span>
                   {scanResult.score !== undefined && (
                     <span
-                      className={`text-[11px] font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                      className={`text-sm font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
                     >
                       {scanResult.score}/100
                     </span>
                   )}
                 </div>
-                <div className="text-[12px] text-[#eee] leading-relaxed whitespace-pre-wrap">
+                <div className="text-sm text-[#eee] leading-relaxed whitespace-pre-wrap">
                   {scanResult.feedback}
                 </div>
               </div>
@@ -1503,7 +1501,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
       {/* Previous submissions */}
       {materials?.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest font-mono text-[#eee] mb-3">
+          <div className="text-xs uppercase tracking-widest font-mono text-[#eee] mb-3">
             Previous Submissions
           </div>
           <ul className="space-y-2">
@@ -1516,17 +1514,17 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                   className="border border-[#141414] rounded-xl bg-[#090909] overflow-hidden"
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-[#101010]">
-                    <span className="text-[11px] font-mono text-[#eee]">Submission #{m.id}</span>
+                    <span className="text-sm font-mono text-[#eee]">Submission #{m.id}</span>
                     <div className="flex items-center gap-2">
                       {m.ai_score > 0 && (
                         <span
-                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                          className={`text-xs font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
                         >
                           {m.ai_score}/100
                         </span>
                       )}
                       <span
-                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded capitalize ${
+                        className={`text-xs font-mono px-1.5 py-0.5 rounded capitalize ${
                           m.ai_status === "verified"
                             ? "text-[#22c55e] bg-[#22c55e]/10"
                             : m.ai_status === "rejected"
@@ -1539,7 +1537,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                     </div>
                   </div>
                   {m.ai_feedback && (
-                    <div className="px-4 py-3 text-[12px] text-[#fff] leading-relaxed whitespace-pre-wrap">
+                    <div className="px-4 py-3 text-sm text-[#fff] leading-relaxed whitespace-pre-wrap">
                       {m.ai_feedback}
                     </div>
                   )}
