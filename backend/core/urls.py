@@ -8,7 +8,7 @@ from .views import (
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
-    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, CustomPathViewSet, PathProgressView
+    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, CustomPathViewSet, PathProgressView
 )
 
 router = DefaultRouter()
