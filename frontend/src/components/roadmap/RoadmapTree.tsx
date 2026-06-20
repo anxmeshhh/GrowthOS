@@ -64,7 +64,7 @@ const SectionHeader = memo(function SectionHeader({
 
 // ─── Tree branch ──────────────────────────────────────────────────────────────
 
-const TreeBranch = memo(function TreeBranch({ node, depth }: { node: TreeNode; depth: number }) {
+const TreeBranch = memo(function TreeBranch({ node, depth, isFirst, isLast }: { node: TreeNode; depth: number; isFirst?: boolean; isLast?: boolean }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
 
@@ -104,8 +104,8 @@ const TreeBranch = memo(function TreeBranch({ node, depth }: { node: TreeNode; d
         </div>
         {hasChildren && (
           <div className="space-y-1 pl-2">
-            {node.children.map((child) => (
-              <TreeBranch key={child.id} node={child} depth={1} />
+            {node.children.map((child, idx) => (
+              <TreeBranch key={child.id} node={child} depth={1} isFirst={idx === 0} isLast={idx === node.children.length - 1} />
             ))}
           </div>
         )}
@@ -120,7 +120,14 @@ const TreeBranch = memo(function TreeBranch({ node, depth }: { node: TreeNode; d
         <>
           <span
             className="absolute"
-            style={{ left: indent - 13, top: 0, bottom: 0, width: 1, background: connectorColor }}
+            style={{ 
+              left: indent - 13, 
+              top: isFirst ? -16 : -4, 
+              bottom: isLast ? "auto" : 0, 
+              height: isLast ? (isFirst ? 35 : 23) : "auto",
+              width: 1, 
+              background: connectorColor 
+            }}
             aria-hidden
           />
           <span
@@ -147,8 +154,8 @@ const TreeBranch = memo(function TreeBranch({ node, depth }: { node: TreeNode; d
 
       {hasChildren && open && (
         <div className="mt-1 space-y-1">
-          {node.children.map((child) => (
-            <TreeBranch key={child.id} node={child} depth={depth + 1} />
+          {node.children.map((child, idx) => (
+            <TreeBranch key={child.id} node={child} depth={depth + 1} isFirst={idx === 0} isLast={idx === node.children.length - 1} />
           ))}
         </div>
       )}
@@ -251,8 +258,8 @@ export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
       </div>
 
       <div className="p-4 pb-16 space-y-1">
-        {forest.map((root) => (
-          <TreeBranch key={root.id} node={root} depth={0} />
+        {forest.map((root, idx) => (
+          <TreeBranch key={root.id} node={root} depth={0} isFirst={idx === 0} isLast={idx === forest.length - 1} />
         ))}
       </div>
     </div>

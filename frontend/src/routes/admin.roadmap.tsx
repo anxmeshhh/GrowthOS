@@ -161,21 +161,31 @@ function AdminRoadmapManager() {
                 setValidationError(null);
               }}
               spellCheck={false}
-              placeholder="Paste the complete Roadmap JSON here...
-              
-Example:
+              placeholder='Paste the complete Roadmap JSON here...
+
+Example Structure:
 {
-  &quot;title&quot;: &quot;Full Stack Mastery&quot;,
-  &quot;slug&quot;: &quot;full-stack-mastery&quot;,
-  &quot;estimated_weeks&quot;: 24,
-  &quot;topics&quot;: [
+  "title": "Linux Mastery",
+  "slug": "linux-mastery",
+  "description": "Comprehensive guide to mastering Linux.",
+  "estimated_weeks": 8,
+  "topics": [
     {
-      &quot;title&quot;: &quot;React Basics&quot;,
-      &quot;slug&quot;: &quot;react-basics&quot;,
-      &quot;order&quot;: 1
+      "title": "Command Line Basics",
+      "slug": "cli-basics",
+      "summary": "Learn basic commands like ls, cd, rm, cp.",
+      "node_kind": "topic",
+      "order": 1
+    },
+    {
+      "title": "File Permissions",
+      "slug": "file-permissions",
+      "summary": "Understanding chmod, chown, and user groups.",
+      "node_kind": "milestone",
+      "order": 2
     }
   ]
-}"
+}'
               className="absolute inset-0 w-full h-full bg-[#0a0a0a] text-gray-300 p-6 font-mono text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-500/50 custom-scrollbar leading-relaxed"
             />
           </div>
