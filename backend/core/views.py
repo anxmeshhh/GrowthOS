@@ -1743,10 +1743,116 @@ class AdminUserDetailView(views.APIView):
         except User.DoesNotExist:
             return None
 
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+        
+        level = 1
+        n = 100
+        temp_xp = total_xp
+        while temp_xp >= n:
+            temp_xp -= n
+            level += 1
+            n = int(n * 1.5)
+
+        topics_completed = TopicProgress.objects.filter(user=user, status='completed').count()
+        notes_written = TopicNote.objects.filter(user=user).exclude(content='').count()
+        quizzes_passed = Contribution.objects.filter(user=user, action_type='quiz_passed').count()
+        
+        today = timezone.now().date()
+        streak = 0
+        check = today
+        while True:
+            if Contribution.objects.filter(user=user, action_type='daily_login', created_at__date=check).exists():
+                streak += 1
+                check -= timezone.timedelta(days=1)
+            else:
+                break
+
+        xp_breakdown = list(
+            Contribution.objects.filter(user=user)
+            .values('action_type')
+            .annotate(total=Sum('points'), count=Count('id'))
+            .order_by('-total')
+        )
+
+        completed_topics_qs = TopicProgress.objects.filter(user=user, status='completed').select_related('topic__path')
+        paths = set(tp.topic.path for tp in completed_topics_qs if tp.topic.path)
+        path_list = [{"id": p.id, "title": p.title, "slug": p.slug} for p in paths]
+
+        from .helpers import get_user_badges
+        badges = get_user_badges(user)
+        
+        # Heatmap
+        from django.db.models.functions import TruncDate
+        contributions = Contribution.objects.filter(user=user) \
+            .annotate(date=TruncDate('created_at')) \
+            .values('date') \
+            .annotate(total_points=Sum('points'))
+        heatmap_data = [{"date": str(c['date']), "count": c['total_points']} for c in contributions]
+
+        # Activity
+        acts = Contribution.objects.filter(user=user).order_by('-created_at')[:10]
+        activity_data = []
+        for a in acts:
+            label = a.action_type.replace('_', ' ').title()
+            label = f"{label} (+{a.points} XP)"
+            activity_data.append({
+                "id": a.id,
+                "label": label,
+                "action_type": a.action_type,
+                "points": a.points,
+                "date": a.created_at.isoformat()
+            })
+
+        return Response({
+            "profile": {
+                "username": user.username,
+                "email": user.email,
+                "date_joined": user.date_joined,
+                "total_xp": total_xp,
+                "level": level,
+                "streak": streak,
+                "topics_completed": topics_completed,
+                "notes_written": notes_written,
+                "quizzes_passed": quizzes_passed,
+                "xp_breakdown": xp_breakdown,
+                "completed_paths": path_list,
+                "badges": badges,
+                "is_active": user.is_active,
+                "is_staff": user.is_staff,
+            },
+            "custom_paths": [{"id": p.id, "title": p.title, "slug": p.slug} for p in LearningPath.objects.filter(created_by=user, is_custom=True)],
+            "notes": [{"id": n.id, "topic_title": n.topic.title, "content": n.content[:100], "created_at": n.created_at.isoformat()} for n in TopicNote.objects.filter(user=user).select_related('topic')],
+            "github_connected": bool(profile.github_access_token),
+            "github_username": profile.github_username,
+            "github_repos": [{"id": r.id, "repo_name": r.repo_name, "is_active": r.is_active} for r in GitHubRepo.objects.filter(user=user)],
+            "heatmap": heatmap_data,
+            "activity": activity_data
+        })
+
     def patch(self, request, pk):
         user = self.get_object(pk)
         if not user:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if 'action' in request.data:
+            action = request.data['action']
+            if action == 'delete_path':
+                LearningPath.objects.filter(id=request.data.get('target_id'), created_by=user).delete()
+            elif action == 'delete_note':
+                TopicNote.objects.filter(id=request.data.get('target_id'), user=user).delete()
+            elif action == 'disconnect_github':
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+                profile.github_access_token = ''
+                profile.github_username = ''
+                profile.save()
+                GitHubRepo.objects.filter(user=user).delete()
+            return Response({"status": "success"})
 
         if 'is_active' in request.data:
             user.is_active = request.data['is_active']
@@ -1761,6 +1867,17 @@ class AdminUserDetailView(views.APIView):
             'is_active': user.is_active,
             'is_staff': user.is_staff,
         })
+
+    def delete(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        if user.is_superuser:
+            return Response({'error': 'Cannot delete superuser'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 from .models import AdminRequest
 from django.core import serializers
