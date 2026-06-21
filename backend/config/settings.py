@@ -12,9 +12,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-f*b9r^dw-1j4%mniwl&jka*^bfrx^t(cglx=43e2c!v*l4ph6("
 
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -58,15 +58,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database — MySQL
+# Database Configuration
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "growthos",
-        "USER": "root",
-        "PASSWORD": "theanimesh2005",
-        "HOST": "localhost",
-        "PORT": "3306",
+        "NAME": os.environ.get("MYSQL_DATABASE", "growthos"),
+        "USER": os.environ.get("MYSQL_USER", "root"),
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "theanimesh2005"),
+        "HOST": os.environ.get("MYSQL_HOST", "localhost"),
+        "PORT": os.environ.get("MYSQL_PORT", "3306"),
         "OPTIONS": {
             "charset": "utf8mb4",
         },
@@ -86,18 +86,25 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",      # Vite dev server (default)
-    "http://localhost:3000",      # Alternative frontend port
-    "http://localhost:8080",      # Another common port
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8080",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8080",
+    "https://growth-os.tech",
+    "https://www.growth-os.tech",
 ]
+
+prod_origins = os.environ.get("CORS_ALLOWED_ORIGINS")
+if prod_origins:
+    CORS_ALLOWED_ORIGINS.extend(prod_origins.split(","))
 
 CORS_ALLOW_ALL_ORIGINS = False  # Explicitly use whitelist
 

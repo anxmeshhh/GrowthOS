@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  proxy:
+    image: nginx:alpine
+    container_name: growthos_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - growthos_network
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    container_name: growthos_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  db:
+    image: mysql:8.0
+    container_name: growthos_db
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-growthos}
+      MYSQL_USER: ${MYSQL_USER:-growthos_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - growthos_network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: growthos_backend
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DEBUG=False
+      - ALLOWED_HOSTS=growth-os.tech,www.growth-os.tech,api.growth-os.tech
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-growthos}
+      - MYSQL_USER=${MYSQL_USER:-growthos_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - growthos_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_BASE_URL=https://api.growth-os.tech
+    container_name: growthos_frontend
+    networks:
+      - growthos_network
+    restart: unless-stopped
+
+networks:
+  growthos_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  static_volume:
+  media_volume:
