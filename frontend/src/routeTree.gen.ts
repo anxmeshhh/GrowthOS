@@ -12,17 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomPathsRouteImport } from './routes/custom-paths'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
+import { Route as PortfolioUsernameRouteImport } from './routes/portfolio.$username'
 import { Route as PathsCreateRouteImport } from './routes/paths.create'
 import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -42,6 +45,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RoadmapRoute = RoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -67,6 +75,11 @@ const NotesRoute = NotesRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscoverRoute = DiscoverRouteImport.update({
@@ -97,6 +110,11 @@ const IndexRoute = IndexRouteImport.update({
 const TopicTopicIdRoute = TopicTopicIdRouteImport.update({
   id: '/topic/$topicId',
   path: '/topic/$topicId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioUsernameRoute = PortfolioUsernameRouteImport.update({
+  id: '/portfolio/$username',
+  path: '/portfolio/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PathsCreateRoute = PathsCreateRouteImport.update({
@@ -131,11 +149,13 @@ export interface FileRoutesByFullPath {
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
+  '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
+  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
@@ -143,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/paths/create': typeof PathsCreateRoute
+  '/portfolio/$username': typeof PortfolioUsernameRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
 }
@@ -152,11 +173,13 @@ export interface FileRoutesByTo {
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
+  '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
+  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
@@ -164,6 +187,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/paths/create': typeof PathsCreateRoute
+  '/portfolio/$username': typeof PortfolioUsernameRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
 }
@@ -174,11 +198,13 @@ export interface FileRoutesById {
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
+  '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/projects': typeof ProjectsRoute
+  '/review': typeof ReviewRoute
   '/roadmap': typeof RoadmapRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
@@ -186,6 +212,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/paths/create': typeof PathsCreateRoute
+  '/portfolio/$username': typeof PortfolioUsernameRoute
   '/topic/$topicId': typeof TopicTopicIdRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
 }
@@ -197,11 +224,13 @@ export interface FileRouteTypes {
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
+    | '/explore'
     | '/login'
     | '/notes'
     | '/profile'
     | '/progress'
     | '/projects'
+    | '/review'
     | '/roadmap'
     | '/settings'
     | '/signup'
@@ -209,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/roadmap'
     | '/paths/create'
+    | '/portfolio/$username'
     | '/topic/$topicId'
     | '/auth/github/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -218,11 +248,13 @@ export interface FileRouteTypes {
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
+    | '/explore'
     | '/login'
     | '/notes'
     | '/profile'
     | '/progress'
     | '/projects'
+    | '/review'
     | '/roadmap'
     | '/settings'
     | '/signup'
@@ -230,6 +262,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/roadmap'
     | '/paths/create'
+    | '/portfolio/$username'
     | '/topic/$topicId'
     | '/auth/github/callback'
   id:
@@ -239,11 +272,13 @@ export interface FileRouteTypes {
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
+    | '/explore'
     | '/login'
     | '/notes'
     | '/profile'
     | '/progress'
     | '/projects'
+    | '/review'
     | '/roadmap'
     | '/settings'
     | '/signup'
@@ -251,6 +286,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/roadmap'
     | '/paths/create'
+    | '/portfolio/$username'
     | '/topic/$topicId'
     | '/auth/github/callback'
   fileRoutesById: FileRoutesById
@@ -261,11 +297,13 @@ export interface RootRouteChildren {
   CustomPathsRoute: typeof CustomPathsRoute
   DashboardRoute: typeof DashboardRoute
   DiscoverRoute: typeof DiscoverRoute
+  ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   ProjectsRoute: typeof ProjectsRoute
+  ReviewRoute: typeof ReviewRoute
   RoadmapRoute: typeof RoadmapRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
@@ -273,6 +311,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminRoadmapRoute: typeof AdminRoadmapRoute
   PathsCreateRoute: typeof PathsCreateRoute
+  PortfolioUsernameRoute: typeof PortfolioUsernameRoute
   TopicTopicIdRoute: typeof TopicTopicIdRoute
   AuthGithubCallbackRoute: typeof AuthGithubCallbackRoute
 }
@@ -298,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/roadmap'
       fullPath: '/roadmap'
       preLoaderRoute: typeof RoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects': {
@@ -333,6 +379,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover': {
@@ -375,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/topic/$topicId'
       fullPath: '/topic/$topicId'
       preLoaderRoute: typeof TopicTopicIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio/$username': {
+      id: '/portfolio/$username'
+      path: '/portfolio/$username'
+      fullPath: '/portfolio/$username'
+      preLoaderRoute: typeof PortfolioUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paths/create': {
@@ -421,11 +481,13 @@ const rootRouteChildren: RootRouteChildren = {
   CustomPathsRoute: CustomPathsRoute,
   DashboardRoute: DashboardRoute,
   DiscoverRoute: DiscoverRoute,
+  ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   ProjectsRoute: ProjectsRoute,
+  ReviewRoute: ReviewRoute,
   RoadmapRoute: RoadmapRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
@@ -433,6 +495,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminRoadmapRoute: AdminRoadmapRoute,
   PathsCreateRoute: PathsCreateRoute,
+  PortfolioUsernameRoute: PortfolioUsernameRoute,
   TopicTopicIdRoute: TopicTopicIdRoute,
   AuthGithubCallbackRoute: AuthGithubCallbackRoute,
 }

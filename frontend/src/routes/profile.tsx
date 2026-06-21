@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { PageShell, PageHeader, Card } from "@/components/growth-ui";
 import {
@@ -15,6 +16,10 @@ import {
   TrendingUp,
   Zap,
   Play,
+  Share2,
+  Check,
+  MessageSquare,
+  Layers,
 } from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
 import { useAppTutorial } from "@/components/tutorial-overlay";
@@ -64,6 +69,15 @@ function ProfilePage() {
   });
 
   const { startTutorial } = useAppTutorial();
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = () => {
+    if (profile?.username) {
+      navigator.clipboard.writeText(`${window.location.origin}/portfolio/${profile.username}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const { data: heatmap = [], isLoading: hLoading } = useQuery({
     queryKey: ["heatmap"],
@@ -103,9 +117,9 @@ function ProfilePage() {
         subtitle="Track your progress, achievements, and contributions across the GrowthOS ecosystem."
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
         {/* ── [A] Identity card (Left Column, Span 4) ─────────────────────────────────────────── */}
-        <div className="xl:col-span-4 flex flex-col gap-6">
+        <div className="lg:col-span-4 flex flex-col gap-6">
           <Card className="flex flex-col overflow-hidden shadow-2xl shadow-green-900/5 ring-1 ring-white/5">
             {/* Avatar + name */}
             <div className="px-6 pt-10 pb-8 flex flex-col items-center text-center border-b border-white/5 relative overflow-hidden">
@@ -125,18 +139,28 @@ function ProfilePage() {
               <div className="flex flex-wrap justify-center items-center gap-2 mt-3 relative z-10">
                 <PillBadge icon={<Calendar size={12} />} label={joined} />
                 <PillBadge
-                  icon={<Shield size={12} className="text-[#22c55e]" />}
+                icon={<Shield size={12} className="text-[#22c55e]" />}
                   label={`Level ${level}`}
                   accent
                 />
               </div>
-              <button
-                onClick={startTutorial}
-                className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111] hover:bg-[#1a1a1a] border border-white/10 text-sm font-medium text-gray-300 transition-all relative z-10 cursor-pointer"
-              >
-                <Play size={14} className="text-[#22c55e]" />
-                Replay Tutorial
-              </button>
+              
+              <div className="flex items-center gap-3 mt-6 relative z-10">
+                <button
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 border border-[#3b82f6]/20 text-sm font-medium text-[#3b82f6] transition-all cursor-pointer"
+                >
+                  {copied ? <Check size={14} /> : <Share2 size={14} />}
+                  {copied ? "Copied!" : "Share Portfolio"}
+                </button>
+                <button
+                  onClick={startTutorial}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111] hover:bg-[#1a1a1a] border border-white/10 text-sm font-medium text-gray-300 transition-all cursor-pointer"
+                >
+                  <Play size={14} className="text-[#22c55e]" />
+                  Replay Tutorial
+                </button>
+              </div>
             </div>
 
             {/* XP progress */}
@@ -177,6 +201,16 @@ function ProfilePage() {
                 icon={<ClipboardCheck size={16} className="text-[#22c55e]" />}
                 label="Quizzes"
                 value={pLoading ? "—" : String(profile.quizzes_passed)}
+              />
+              <StatCell
+                icon={<MessageSquare size={16} className="text-[#a855f7]" />}
+                label="Concepts"
+                value={pLoading ? "—" : String(profile.feynman_mastered || 0)}
+              />
+              <StatCell
+                icon={<Layers size={16} className="text-[#60a5fa]" />}
+                label="Cards"
+                value={pLoading ? "—" : String(profile.flashcards_mastered || 0)}
               />
             </div>
           </Card>
@@ -220,7 +254,7 @@ function ProfilePage() {
         </div>
 
         {/* ── Right Column (Span 8) ────────────────────────────────────────────────── */}
-        <div className="xl:col-span-8 flex flex-col gap-6">
+        <div className="lg:col-span-8 flex flex-col gap-6">
           {/* ── [D] Heatmap ───────────────────────────────────────────────── */}
           <Card className="flex flex-col overflow-hidden">
             <CardHeader

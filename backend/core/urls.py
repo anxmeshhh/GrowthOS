@@ -4,11 +4,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     RegisterView, LearningPathViewSet, BookmarkViewSet, GeneratePathView,
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
-    VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView,
-    ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView,
-    AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, ReviveStreakView, ResetProgressView,
+    VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView, GenerateFlashcardsView,
+    ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView, TopicFeynmanView,
+    AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
-    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView
+    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView,
+    GlobalReviewQueueView, ExploreRoadmapsView
 )
 
 router = DefaultRouter()
@@ -46,10 +47,16 @@ urlpatterns = [
     path('topics/<str:topic_id>/quiz/', TopicQuizView.as_view(), name='topic_quiz'),
     path('topics/<str:topic_id>/submit-quiz/', SubmitQuizView.as_view(), name='topic_submit_quiz'),
     path('topics/<str:topic_id>/flashcards/', TopicFlashcardView.as_view(), name='topic_flashcards'),
+    path('topics/<str:topic_id>/generate-flashcards/', GenerateFlashcardsView.as_view(), name='generate_flashcards'),
     path('topics/<str:topic_id>/project-ideas/', ProjectIdeasView.as_view(), name='topic_project_ideas'),
     path('topics/<str:topic_id>/scan-repo/', ScanRepoView.as_view(), name='topic_scan_repo'),
     path('topics/<str:topic_id>/note-documents/', NoteDocumentView.as_view(), name='topic_note_documents'),
     path('topics/<str:topic_id>/screenshots/', TopicScreenshotView.as_view(), name='topic_screenshots'),
+    path('topics/<str:topic_id>/feynman/', TopicFeynmanView.as_view(), name='topic_feynman'),
+    
+    # Global Review
+    path('flashcards/review-queue/', GlobalReviewQueueView.as_view(), name='global_review_queue'),
+    path('explore/roadmaps/', ExploreRoadmapsView.as_view(), name='explore_roadmaps'),
     
     # Verification Endpoints
     path('materials/<int:pk>/verify/', VerifyMaterialView.as_view(), name='verify_material'),
@@ -70,6 +77,7 @@ urlpatterns = [
     path('github/path/sync/', SyncPathToGitHubView.as_view(), name='sync_github_path'),
     path('github/workspace/commit/', CommitWorkspaceToGitHubView.as_view(), name='commit_github_workspace'),
     path('portfolio/', PortfolioView.as_view(), name='portfolio'),
+    path('portfolio/public/<str:username>/', PublicPortfolioView.as_view(), name='public_portfolio'),
     path('profile/reset/', ResetProgressView.as_view(), name='profile_reset'),
     
     # Admin Dashboard

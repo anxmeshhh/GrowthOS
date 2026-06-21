@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, ArrowRight, Map as MapIcon, Bookmark } from "lucide-react";
+import { Loader2, ArrowRight, Map as MapIcon, Bookmark, Zap } from "lucide-react";
 import { PageShell, PageHeader, Card, Btn, Badge } from "@/components/growth-ui";
 import { RoadmapTree } from "@/components/roadmap/RoadmapTree";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -116,7 +116,7 @@ function RoadmapPage() {
           title="No paths available yet"
           subtitle="Pick something to learn and it'll show up here."
         />
-        <Link to="/discover">
+        <Link to="/explore">
           <Btn>Discover paths</Btn>
         </Link>
       </PageShell>
@@ -151,8 +151,37 @@ function RoadmapPageInner({
   const ringCircumference = 2 * Math.PI * 42;
   const ringOffset = ringCircumference - (completionPct / 100) * ringCircumference;
 
+  const { data: reviewData } = useQuery({
+    queryKey: ["global_review"],
+    queryFn: async () => {
+      const res = await apiFetch("/flashcards/review-queue/");
+      if (!res.ok) return { due_cards: [] };
+      return res.json();
+    },
+  });
+  const dueCardsCount = reviewData?.due_cards?.length || 0;
+
   return (
     <PageShell>
+      {dueCardsCount > 0 && (
+        <div className="mb-6 rounded-xl border border-[#22c55e]/20 bg-[#22c55e]/5 p-4 flex items-center justify-between shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#22c55e]/20 text-[#22c55e]">
+              <Zap size={20} className="animate-pulse" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#f0f0f0]">Daily Review Available</div>
+              <div className="text-sm text-[#888]">You have {dueCardsCount} flashcards due across your enrolled topics.</div>
+            </div>
+          </div>
+          <Link to="/review">
+            <button className="rounded-lg bg-[#22c55e] px-4 py-2 text-sm font-medium text-black hover:bg-[#16a34a] transition-colors flex items-center gap-2">
+              Start Session <ArrowRight size={14} />
+            </button>
+          </Link>
+        </div>
+      )}
+
       <PageHeader
         kicker="Learning roadmap"
         title={activePath.title}

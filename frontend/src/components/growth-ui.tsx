@@ -81,9 +81,11 @@ export function Progress({ value, color = "#22c55e" }: { value: number; color?: 
 export function Badge({
   children,
   tone = "muted",
+  className = "",
 }: {
   children: ReactNode;
   tone?: "muted" | "green" | "amber" | "red" | "blue";
+  className?: string;
 }) {
   const map: Record<string, string> = {
     muted: "bg-[#151515] text-[#eee] border-[#1a1a1a]",
@@ -94,7 +96,7 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded border text-sm tracking-wide ${map[tone]}`}
+      className={`inline-flex items-center px-1.5 py-0.5 rounded border text-sm tracking-wide ${map[tone]} ${className}`}
     >
       {children}
     </span>

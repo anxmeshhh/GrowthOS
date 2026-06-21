@@ -266,3 +266,20 @@ class VerifiedProject(models.Model):
 
     def __str__(self):
         return f"Project by {self.user.username} for {self.topic.title}"
+
+class TopicFeynman(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feynman_entries')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='feynman_entries')
+    concept = models.CharField(max_length=255)
+    explanation = models.TextField()
+    feedback = models.TextField(blank=True, null=True)
+    score = models.IntegerField(default=0)
+    is_self_graded = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.concept} ({self.score}/100)"

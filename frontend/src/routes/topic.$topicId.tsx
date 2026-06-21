@@ -25,6 +25,9 @@ import {
   Plus,
   RotateCcw,
   GitBranch,
+  Sparkles,
+  Headphones,
+  MessageSquare,
 } from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +39,7 @@ export const Route = createFileRoute("/topic/$topicId")({
   component: TopicWorkspace,
 });
 
-type Tab = "notes" | "flash" | "quiz" | "build";
+type Tab = "notes" | "flash" | "quiz" | "build" | "feynman";
 
 /* ─────────────────────────────────────────────
    Utility
@@ -87,8 +90,19 @@ function TopicWorkspace() {
   });
 
   const [tab, setTab] = useState<Tab>("notes");
-  const [seconds, setSeconds] = useState(0);
-  const [running, setRunning] = useState(true);
+  type PomoMode = "focus" | "shortBreak" | "longBreak";
+  const [pomoMode, setPomoMode] = useState<PomoMode>("focus");
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [pomoRunning, setPomoRunning] = useState(false);
+  const [focusRadioEnabled, setFocusRadioEnabled] = useState(false);
+
+  const switchMode = (m: PomoMode) => {
+    setPomoMode(m);
+    setPomoRunning(false);
+    if (m === "focus") setTimeLeft(25 * 60);
+    else if (m === "shortBreak") setTimeLeft(5 * 60);
+    else setTimeLeft(15 * 60);
+  };
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const pasteZoneRef = useRef<HTMLDivElement>(null);
@@ -214,10 +228,18 @@ function TopicWorkspace() {
   }, [handlePaste]);
 
   useEffect(() => {
-    if (!running) return;
-    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
+    if (!pomoRunning) return;
+    const t = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setPomoRunning(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
     return () => clearInterval(t);
-  }, [running]);
+  }, [pomoRunning]);
 
   if (isLoading)
     return (
@@ -255,6 +277,7 @@ function TopicWorkspace() {
     { id: "notes", label: "Notes", icon: <BookOpen size={13} /> },
     { id: "flash", label: "Flashcards", icon: <Layers size={13} /> },
     { id: "quiz", label: "Quiz", icon: <Zap size={13} /> },
+    { id: "feynman", label: "Feynman", icon: <MessageSquare size={13} /> },
     { id: "build", label: "Build", icon: <Hammer size={13} /> },
   ];
 
@@ -285,19 +308,58 @@ function TopicWorkspace() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Focus Radio */}
+          <button
+            onClick={() => setFocusRadioEnabled(!focusRadioEnabled)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-lg font-medium transition-all border ${
+              focusRadioEnabled
+                ? "border-[#a855f7]/30 bg-[#a855f7]/10 text-[#a855f7]"
+                : "border-[#2a2a2a] bg-[#111] text-[#eee] hover:border-[#a855f7]/40 hover:text-[#a855f7] hover:bg-[#a855f7]/5"
+            }`}
+            title="Focus Radio (Lo-Fi Beats)"
+          >
+            <Headphones size={12} className={focusRadioEnabled ? "animate-pulse" : ""} />
+            <span className="hidden sm:inline">Radio</span>
+          </button>
+          
+          {focusRadioEnabled && (
+            <iframe
+              width="0"
+              height="0"
+              src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=0"
+              frameBorder="0"
+              allow="autoplay"
+              className="hidden"
+            />
+          )}
+
           {/* Timer */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0f0f0f] border border-[#1e1e1e]">
+            <div className="flex items-center gap-1.5 mr-2 pr-2 border-r border-[#1e1e1e]">
+              <button 
+                onClick={() => switchMode("focus")} 
+                className={`text-xs uppercase tracking-wider font-semibold ${pomoMode === "focus" ? "text-[#ef4444]" : "text-[#555] hover:text-[#eee]"}`}
+              >
+                Focus
+              </button>
+              <button 
+                onClick={() => switchMode("shortBreak")} 
+                className={`text-xs uppercase tracking-wider font-semibold ${pomoMode === "shortBreak" ? "text-[#3b82f6]" : "text-[#555] hover:text-[#eee]"}`}
+              >
+                Break
+              </button>
+            </div>
             <div
-              className={`w-1.5 h-1.5 rounded-full ${running ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#666]"}`}
+              className={`w-1.5 h-1.5 rounded-full ${pomoRunning ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#666]"}`}
             />
             <span className="font-mono text-lg text-[#e8e8e8] tabular-nums">
-              {formatTime(seconds)}
+              {formatTime(timeLeft)}
             </span>
             <button
-              onClick={() => setRunning((r) => !r)}
+              onClick={() => setPomoRunning((r) => !r)}
               className="text-[#eee] hover:text-[#fff] transition-colors ml-0.5"
             >
-              {running ? <Pause size={12} /> : <Play size={12} />}
+              {pomoRunning ? <Pause size={12} /> : <Play size={12} />}
             </button>
           </div>
 
@@ -512,6 +574,7 @@ function TopicWorkspace() {
             {tab === "notes" && <StudyNotesTab topicId={topic.id} />}
             {tab === "flash" && <FlashcardsTab topicId={topic.id} />}
             {tab === "quiz" && <QuizTab topicId={topic.id} />}
+            {tab === "feynman" && <FeynmanTab topicId={topic.id} />}
             {tab === "build" && (
               <BuildTab topic={topic} materials={materials} progress={progress} />
             )}
@@ -1055,7 +1118,10 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   const queryClient = useQueryClient();
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [draftCards, setDraftCards] = useState<{ front: string; back: string }[]>([]);
+  const [draftCards, setDraftCards] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<"review" | "browse">("review");
+  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  const [isReviewFlipped, setIsReviewFlipped] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["flashcards", topicId],
@@ -1083,6 +1149,21 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
     },
   });
 
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch(`/topics/${topicId}/generate-flashcards/`, {
+        method: "POST"
+      });
+      if (!res.ok) throw new Error("Failed to generate flashcards");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flashcards", topicId] });
+      queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+      queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+    },
+  });
+
   if (isLoading)
     return (
       <div className="flex items-center justify-center py-16">
@@ -1104,6 +1185,55 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
     );
 
   const flashcards = data?.flashcards || [];
+
+  const now = new Date();
+  const dueCards = flashcards.filter((f: any) => !f.next_review || new Date(f.next_review) <= now);
+  const futureCards = flashcards.filter((f: any) => f.next_review && new Date(f.next_review) > now);
+
+  const handleGrade = (grade: "again" | "hard" | "good" | "easy") => {
+    const cardToGrade = dueCards[currentReviewIndex];
+    let { interval = 0, ease = 2.5, repetitions = 0 } = cardToGrade;
+
+    if (grade === "again") {
+      repetitions = 0;
+      interval = 1; // 1 minute
+      ease = Math.max(1.3, ease - 0.2);
+    } else {
+      repetitions += 1;
+      if (grade === "hard") {
+        interval = interval === 0 ? 1440 : interval * 1.2;
+        ease = Math.max(1.3, ease - 0.15);
+      } else if (grade === "good") {
+        interval = interval === 0 ? 1440 * 3 : (interval * ease);
+      } else if (grade === "easy") {
+        ease += 0.15;
+        interval = interval === 0 ? 1440 * 4 : (interval * ease * 1.3);
+      }
+    }
+
+    const nextDate = new Date();
+    nextDate.setMinutes(nextDate.getMinutes() + interval);
+
+    const updatedCard = {
+      ...cardToGrade,
+      interval,
+      ease,
+      repetitions,
+      next_review: nextDate.toISOString()
+    };
+
+    // Update the master list
+    const updatedFlashcards = flashcards.map((f: any) => 
+      (f.front === cardToGrade.front && f.back === cardToGrade.back) ? updatedCard : f
+    );
+
+    // Save to backend instantly
+    saveMutation.mutate(updatedFlashcards);
+    
+    setIsReviewFlipped(false);
+    // Since the mutation invalidates queries, it might refetch. 
+    // We just keep index at 0, because the first due card will change as it gets filtered out.
+  };
 
   /* Edit mode */
   if (isEditing) {
@@ -1193,8 +1323,28 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-5">
-        <div className="text-xs uppercase tracking-widest font-mono text-[#fff]">
-          {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
+        <div className="flex items-center gap-3">
+          <div className="text-xs uppercase tracking-widest font-mono text-[#fff]">
+            {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
+          </div>
+          <div className="flex bg-[#111] p-0.5 rounded-lg border border-[#1e1e1e]">
+            <button
+              onClick={() => setViewMode("review")}
+              className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all ${
+                viewMode === "review" ? "bg-[#2a2a2a] text-[#fff]" : "text-[#888] hover:text-[#bbb]"
+              }`}
+            >
+              Review
+            </button>
+            <button
+              onClick={() => setViewMode("browse")}
+              className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all ${
+                viewMode === "browse" ? "bg-[#2a2a2a] text-[#fff]" : "text-[#888] hover:text-[#bbb]"
+              }`}
+            >
+              Browse
+            </button>
+          </div>
         </div>
         <button
           onClick={() => {
@@ -1210,15 +1360,105 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
       {flashcards.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 border border-dashed border-[#141414] rounded-xl">
           <div className="text-lg text-[#fff] mb-4">No flashcards yet</div>
-          <button
-            onClick={() => {
-              setDraftCards([]);
-              setIsEditing(true);
-            }}
-            className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
-          >
-            Create flashcards
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => generateMutation.mutate()}
+              disabled={generateMutation.isPending}
+              className="px-4 py-2 rounded-lg bg-[#3b82f6]/10 text-[#3b82f6] border border-[#3b82f6]/20 text-lg font-medium hover:bg-[#3b82f6]/15 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {generateMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+              Auto-Generate with AI
+            </button>
+            <button
+              onClick={() => {
+                setDraftCards([]);
+                setIsEditing(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
+            >
+              Create manually
+            </button>
+          </div>
+        </div>
+      ) : viewMode === "review" ? (
+        <div className="max-w-2xl mx-auto mt-8">
+          {dueCards.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 border border-[#1e1e1e] bg-[#0a0a0a] rounded-xl text-center">
+              <div className="w-16 h-16 rounded-full bg-[#22c55e]/10 flex items-center justify-center mb-4">
+                <CheckCircle2 size={24} className="text-[#22c55e]" />
+              </div>
+              <div className="text-xl font-semibold text-[#eee] mb-2">You're all caught up!</div>
+              <div className="text-[#888]">No cards are due for review right now.</div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between text-sm font-mono tracking-widest uppercase text-[#888]">
+                <span>Due: <span className="text-[#3b82f6] font-bold">{dueCards.length}</span></span>
+                <span>Future: <span className="text-[#22c55e]">{futureCards.length}</span></span>
+              </div>
+              
+              <div
+                className="perspective-1000 min-h-[250px] cursor-pointer"
+                onClick={() => !isReviewFlipped && setIsReviewFlipped(true)}
+              >
+                <div
+                  className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isReviewFlipped ? "rotate-y-180" : ""}`}
+                >
+                  {/* Front */}
+                  <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-8 shadow-2xl">
+                    <div className="text-sm uppercase font-mono tracking-widest text-[#888] mb-6">
+                      Question
+                    </div>
+                    <div className="text-2xl font-semibold text-[#e8e8e8] text-center leading-snug">
+                      {dueCards[currentReviewIndex].front}
+                    </div>
+                    {!isReviewFlipped && (
+                      <div className="absolute bottom-6 text-[#555] text-sm animate-pulse">
+                        Click to reveal answer
+                      </div>
+                    )}
+                  </div>
+                  {/* Back */}
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 border-[#22c55e]/30 bg-[#061008] flex flex-col items-center justify-center p-8 shadow-2xl">
+                    <div className="text-sm uppercase font-mono tracking-widest text-[#22c55e]/60 mb-6">
+                      Answer
+                    </div>
+                    <div className="text-xl text-[#eee] text-center leading-relaxed">
+                      {dueCards[currentReviewIndex].back}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grading Buttons */}
+              {isReviewFlipped && (
+                <div className="grid grid-cols-4 gap-3 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <button onClick={() => handleGrade("again")} className="flex flex-col items-center py-3 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all">
+                    <span className="text-[#ef4444] font-bold text-lg mb-1">Again</span>
+                    <span className="text-xs text-[#ef4444]/60 font-mono">&lt; 1m</span>
+                  </button>
+                  <button onClick={() => handleGrade("hard")} className="flex flex-col items-center py-3 rounded-lg border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all">
+                    <span className="text-[#f59e0b] font-bold text-lg mb-1">Hard</span>
+                    <span className="text-xs text-[#f59e0b]/60 font-mono">
+                      {dueCards[currentReviewIndex].interval === 0 ? "1d" : "1.2x"}
+                    </span>
+                  </button>
+                  <button onClick={() => handleGrade("good")} className="flex flex-col items-center py-3 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all">
+                    <span className="text-[#22c55e] font-bold text-lg mb-1">Good</span>
+                    <span className="text-xs text-[#22c55e]/60 font-mono">
+                      {dueCards[currentReviewIndex].interval === 0 ? "3d" : "2.5x"}
+                    </span>
+                  </button>
+                  <button onClick={() => handleGrade("easy")} className="flex flex-col items-center py-3 rounded-lg border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all">
+                    <span className="text-[#3b82f6] font-bold text-lg mb-1">Easy</span>
+                    <span className="text-xs text-[#3b82f6]/60 font-mono">
+                      {dueCards[currentReviewIndex].interval === 0 ? "4d" : "3.5x"}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1235,14 +1475,14 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 >
                   {/* Front */}
                   <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
-                    <div className="text-xs uppercase font-mono tracking-widest text-[#eee] mb-3">
-                      Term
+                    <div className="flex items-center justify-between w-full absolute top-3 px-3">
+                      <div className="text-xs font-mono text-[#555]">
+                        {!f.next_review || new Date(f.next_review) <= now ? "DUE" : "SCHEDULED"}
+                      </div>
+                      <RotateCcw size={11} className="text-[#555]" />
                     </div>
-                    <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug">
+                    <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug mt-2">
                       {f.front}
-                    </div>
-                    <div className="absolute bottom-3 right-3">
-                      <RotateCcw size={11} className="text-[#222]" />
                     </div>
                   </div>
                   {/* Back */}
@@ -1544,6 +1784,230 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                 </li>
               ))}
           </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Feynman Tab
+───────────────────────────────────────────── */
+function FeynmanTab({ topicId }: { topicId: number | string }) {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  const [concept, setConcept] = useState("");
+  const [explanation, setExplanation] = useState("");
+  const [selfScore, setSelfScore] = useState(100);
+  const [isNew, setIsNew] = useState(false);
+  const [viewMode, setViewMode] = useState<"ai" | "manual">("ai");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["feynman", topicId],
+    queryFn: async () => {
+      const res = await apiFetch(`/topics/${topicId}/feynman/`);
+      if (!res.ok) throw new Error("Failed to load Feynman entries");
+      return res.json();
+    },
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async (mode: "ai" | "manual") => {
+      const payload: any = { concept, explanation, mode };
+      if (mode === "manual") {
+        payload.score = selfScore;
+      }
+      const res = await apiFetch(`/topics/${topicId}/feynman/`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to submit");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      showToast("Feynman Entry Saved!", "success");
+      queryClient.invalidateQueries({ queryKey: ["feynman", topicId] });
+      queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+      setIsNew(false);
+      setConcept("");
+      setExplanation("");
+      setSelfScore(100);
+    },
+    onError: (err: any) => showToast(err.message, "error"),
+  });
+
+  const entries = data?.feynman_entries || [];
+
+  if (isLoading) {
+    return <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-[#60a5fa]" /></div>;
+  }
+
+  if (isNew) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold text-[#f0f0f0]">New Feynman Explanation</div>
+          <button onClick={() => setIsNew(false)} className="text-[#888] hover:text-[#fff]">Cancel</button>
+        </div>
+
+        <div className="space-y-4 bg-[#0a0a0a] border border-[#1e1e1e] p-6 rounded-xl">
+          <div>
+            <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">Concept</label>
+            <input
+              type="text"
+              value={concept}
+              onChange={(e) => setConcept(e.target.value)}
+              placeholder="e.g. Docker Containers"
+              className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#eee] focus:border-[#60a5fa]/50 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">Explanation (Explain it to a 5-year-old)</label>
+            <textarea
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              placeholder="A container is like a lunchbox..."
+              className="w-full h-48 bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#eee] focus:border-[#60a5fa]/50 outline-none resize-y"
+            />
+          </div>
+
+          <div className="flex border-b border-[#1e1e1e] mb-4">
+            <button
+              onClick={() => setViewMode("ai")}
+              className={`px-4 py-2 text-sm font-semibold uppercase tracking-widest border-b-2 transition-colors ${viewMode === "ai" ? "border-[#a855f7] text-[#a855f7]" : "border-transparent text-[#888] hover:text-[#aaa]"}`}
+            >
+              AI Evaluate
+            </button>
+            <button
+              onClick={() => setViewMode("manual")}
+              className={`px-4 py-2 text-sm font-semibold uppercase tracking-widest border-b-2 transition-colors ${viewMode === "manual" ? "border-[#22c55e] text-[#22c55e]" : "border-transparent text-[#888] hover:text-[#aaa]"}`}
+            >
+              Self-Grade (Manual)
+            </button>
+          </div>
+
+          {viewMode === "manual" && (
+            <div className="mb-4">
+              <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">My Score (0-100)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={selfScore}
+                onChange={(e) => setSelfScore(Number(e.target.value))}
+                className="w-32 bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-[#eee]"
+              />
+            </div>
+          )}
+
+          <div className="pt-2 flex justify-end">
+            <button
+              onClick={() => submitMutation.mutate(viewMode)}
+              disabled={!concept || !explanation || submitMutation.isPending}
+              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === 'ai' ? 'bg-[#a855f7] hover:bg-[#9333ea]' : 'bg-[#22c55e] hover:bg-[#16a34a]'}`}
+            >
+              {submitMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <MessageSquare size={16} />}
+              {viewMode === "ai" ? "Submit to AI Tutor" : "Save Manual Entry"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-xl font-bold text-[#f0f0f0] tracking-tight">Feynman Technique</h2>
+          <p className="text-sm text-[#888] mt-1">Explain concepts simply. Expose logical gaps.</p>
+        </div>
+        <button
+          onClick={() => setIsNew(true)}
+          className="px-4 py-2 bg-[#111] border border-[#2a2a2a] rounded-lg text-[#eee] hover:text-[#fff] hover:border-[#444] transition-colors flex items-center gap-2"
+        >
+          <Plus size={16} /> New Explanation
+        </button>
+      </div>
+
+      {entries.length === 0 ? (
+        <div className="py-16 text-center border border-dashed border-[#1e1e1e] rounded-2xl bg-[#0a0a0a]">
+          <div className="w-12 h-12 rounded-full bg-[#111] border border-[#2a2a2a] flex items-center justify-center mx-auto mb-4">
+            <MessageSquare size={20} className="text-[#888]" />
+          </div>
+          <div className="text-lg text-[#eee] mb-2">No concepts explained yet</div>
+          <div className="text-sm text-[#888]">Use the Feynman Technique to solidify your knowledge.</div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {entries.map((e: any) => {
+            let feedbackObj = null;
+            if (!e.is_self_graded && e.feedback) {
+              try { feedbackObj = JSON.parse(e.feedback); } catch(err) {}
+            }
+            return (
+              <div key={e.id} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden shadow-xl">
+                <div className="px-6 py-4 border-b border-[#1e1e1e] flex justify-between items-center bg-[#0d0d0d]">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-semibold text-[#fff]">{e.concept}</span>
+                    {e.is_self_graded ? (
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20">MANUAL</span>
+                    ) : (
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20">AI GRADED</span>
+                    )}
+                  </div>
+                  <div className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#22c55e]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}>
+                    {e.score}/100
+                  </div>
+                </div>
+                <div className="p-6 space-y-6">
+                  <div>
+                    <div className="text-xs uppercase font-mono tracking-widest text-[#555] mb-2">Your Explanation</div>
+                    <div className="text-[#d0d0d0] leading-relaxed whitespace-pre-wrap">{e.explanation}</div>
+                  </div>
+                  
+                  {e.is_self_graded ? (
+                    e.feedback && (
+                      <div className="bg-[#111] border border-[#22c55e]/20 rounded-lg p-4">
+                        <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e] mb-2">Self-Reflection</div>
+                        <div className="text-[#eee] text-sm">{e.feedback}</div>
+                      </div>
+                    )
+                  ) : (
+                    feedbackObj && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-[#111] border border-[#ef4444]/20 rounded-lg p-4">
+                          <div className="text-xs uppercase font-mono tracking-widest text-[#ef4444] mb-2">Jargon Spotted</div>
+                          {feedbackObj.jargon && feedbackObj.jargon.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {feedbackObj.jargon.map((j: string, i: number) => (
+                                <span key={i} className="text-xs bg-[#ef4444]/10 text-[#ef4444] px-2 py-1 rounded">{j}</span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-[#888]">No jargon spotted. Good job!</div>
+                          )}
+                        </div>
+                        <div className="bg-[#111] border border-[#f59e0b]/20 rounded-lg p-4">
+                          <div className="text-xs uppercase font-mono tracking-widest text-[#f59e0b] mb-2">Logical Gaps</div>
+                          <div className="text-sm text-[#eee] leading-relaxed">{feedbackObj.gaps || "None identified."}</div>
+                        </div>
+                        <div className="bg-[#111] border border-[#60a5fa]/20 rounded-lg p-4 md:col-span-2">
+                          <div className="text-xs uppercase font-mono tracking-widest text-[#60a5fa] mb-2">Tutor Feedback</div>
+                          <div className="text-sm text-[#eee] leading-relaxed">{feedbackObj.feedback}</div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

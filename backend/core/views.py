@@ -10,7 +10,7 @@ from django.conf import settings
 import requests
 import os
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
@@ -732,7 +732,12 @@ class TopicQuizView(views.APIView):
             
         try:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
-            prompt = f"Generate exactly {count} multiple choice quiz questions about: '{topic.title}'. Summary: {topic.summary}. Difficulty level: {difficulty}. For easy: basic recall. For medium: application/understanding. For hard: analysis/edge cases. Return ONLY a JSON array where each object has: 'question' (string), 'options' (array of 4 strings), 'answer' (exact string matching one option)."
+            
+            note = TopicNote.objects.filter(user=request.user, topic=topic).first()
+            user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else "\n\n(No custom study notes provided)"
+            
+            prompt = f"Generate exactly {count} multiple choice quiz questions about: '{topic.title}'. Summary: {topic.summary}.{user_notes}\n\nDifficulty level: {difficulty}. For easy: basic recall. For medium: application/understanding. For hard: analysis/edge cases. Use the provided study notes as the primary source for the questions if they exist. Return ONLY a JSON array where each object has: 'question' (string), 'options' (array of 4 strings), 'answer' (exact string matching one option)."
+            
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model="llama-3.1-8b-instant",
@@ -772,7 +777,14 @@ class TopicFlashcardView(views.APIView):
         valid_cards = []
         for c in cards:
             if isinstance(c, dict) and 'front' in c and 'back' in c:
-                valid_cards.append({'front': c['front'], 'back': c['back']})
+                valid_cards.append({
+                    'front': c['front'], 
+                    'back': c['back'],
+                    'next_review': c.get('next_review', None),
+                    'interval': c.get('interval', 0),
+                    'ease': c.get('ease', 2.5),
+                    'repetitions': c.get('repetitions', 0)
+                })
                 
         flashcard, created = TopicFlashcard.objects.update_or_create(
             user=request.user, topic=topic,
@@ -780,6 +792,66 @@ class TopicFlashcardView(views.APIView):
         )
         Contribution.objects.create(user=request.user, action_type='flashcards_generated', points=1)
         return Response({'flashcards': flashcard.cards})
+
+class GenerateFlashcardsView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
+        
+        try:
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            
+            note = TopicNote.objects.filter(user=request.user, topic=topic).first()
+            user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else ""
+            
+            prompt = f"Generate exactly 8 study flashcards about: '{topic.title}'. Summary: {topic.summary}.{user_notes}\n\nUse the provided study notes as the primary source for the flashcards. If no notes are provided, use general knowledge. Return ONLY a JSON array where each object has: 'front' (the term or question, short string) and 'back' (the definition or answer, concise string). Return ONLY JSON, no markdown blocks."
+            
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.4,
+            )
+            response_content = chat_completion.choices[0].message.content.strip()
+            
+            import json, re
+            match = re.search(r'\[.*\]', response_content, re.DOTALL)
+            if match:
+                raw_cards = json.loads(match.group(0))
+            else:
+                raw_cards = json.loads(response_content)
+                
+            from django.utils import timezone
+            now_iso = timezone.now().isoformat()
+            
+            cards = []
+            for c in raw_cards:
+                cards.append({
+                    'front': c.get('front', ''),
+                    'back': c.get('back', ''),
+                    'next_review': now_iso,
+                    'interval': 0,
+                    'ease': 2.5,
+                    'repetitions': 0
+                })
+                
+            flashcard, created = TopicFlashcard.objects.update_or_create(
+                user=request.user, topic=topic,
+                defaults={'cards': cards}
+            )
+            
+            today = timezone.now().date()
+            already_awarded = Contribution.objects.filter(
+                user=request.user,
+                action_type='flashcards_generated',
+                created_at__date=today
+            ).exists()
+            if not already_awarded:
+                Contribution.objects.create(user=request.user, action_type='flashcards_generated', points=1)
+                
+            return Response({'flashcards': flashcard.cards})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class ProjectIdeasView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1056,6 +1128,15 @@ class UserProfileView(views.APIView):
         notes_written = TopicNote.objects.filter(user=user).exclude(content='').count()
         quizzes_passed = Contribution.objects.filter(user=user, action_type='quiz_passed').count()
         
+        feynman_mastered = TopicFeynman.objects.filter(user=user, score__gte=80).count()
+        flashcards_mastered = 0
+        user_flashcards = TopicFlashcard.objects.filter(user=user)
+        for tf in user_flashcards:
+            if isinstance(tf.cards, list):
+                for c in tf.cards:
+                    if isinstance(c, dict) and c.get('interval', 0) >= 1:
+                        flashcards_mastered += 1
+        
         # Streak calculation
         today = timezone.now().date()
         streak = 0
@@ -1145,6 +1226,8 @@ class UserProfileView(views.APIView):
             "topics_completed": topics_completed,
             "notes_written": notes_written,
             "quizzes_passed": quizzes_passed,
+            "feynman_mastered": feynman_mastered,
+            "flashcards_mastered": flashcards_mastered,
             "xp_breakdown": xp_breakdown,
             "completed_paths": path_list,
             "badges": badges,
@@ -1603,6 +1686,53 @@ class PortfolioView(views.APIView):
         projects = VerifiedProject.objects.filter(user=request.user).select_related('topic')
         serializer = VerifiedProjectSerializer(projects, many=True)
         return Response(serializer.data)
+
+class PublicPortfolioView(views.APIView):
+    permission_classes = []
+
+    def get(self, request, username):
+        from django.contrib.auth.models import User
+        from rest_framework.permissions import AllowAny
+        from django.shortcuts import get_object_or_404
+        user = get_object_or_404(User, username=username)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+        
+        level = 1
+        n = 100
+        temp_xp = total_xp
+        while temp_xp >= n:
+            temp_xp -= n
+            level += 1
+            n = int(n * 1.5)
+
+        projects = VerifiedProject.objects.filter(user=user).select_related('topic', 'topic__path')
+        # We need to manually construct the data because the serializer might require request context or something
+        project_data = []
+        for p in projects:
+            project_data.append({
+                "id": p.id,
+                "repo_url": p.repo_url,
+                "repo_name": p.repo_name,
+                "ai_score": p.ai_score,
+                "verified_at": p.verified_at,
+                "topic_title": p.topic.title,
+                "path_title": p.topic.path.title if p.topic.path else ""
+            })
+
+        from .helpers import get_user_badges
+        badges = get_user_badges(user)
+
+        return Response({
+            "username": user.username,
+            "selected_title": profile.selected_title,
+            "github_username": profile.github_username,
+            "level": level,
+            "total_xp": total_xp,
+            "projects": project_data,
+            "badges": badges,
+            "date_joined": user.date_joined
+        })
 
 class ReviveStreakView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -2532,9 +2662,116 @@ class AdminRoadmapUploadView(views.APIView):
             },
         }
         if topic_errors:
-            summary["topic_warnings"] = topic_errors
+            summary["warnings"] = topic_errors
 
         return summary
+
+class TopicFeynmanView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
+        entries = TopicFeynman.objects.filter(user=request.user, topic=topic)
+        data = []
+        for e in entries:
+            data.append({
+                'id': e.id,
+                'concept': e.concept,
+                'explanation': e.explanation,
+                'feedback': e.feedback,
+                'score': e.score,
+                'is_self_graded': e.is_self_graded,
+                'created_at': e.created_at
+            })
+        return Response({'feynman_entries': data})
+
+    def post(self, request, topic_id):
+        topic = _resolve_topic(topic_id)
+        concept = request.data.get('concept', '').strip()
+        explanation = request.data.get('explanation', '').strip()
+        mode = request.data.get('mode', 'ai') # 'ai' or 'manual'
+
+        if not concept or not explanation:
+            return Response({'error': 'Concept and explanation are required.'}, status=400)
+
+        if mode == 'manual':
+            score = request.data.get('score', 100)
+            feedback = request.data.get('feedback', '')
+            entry = TopicFeynman.objects.create(
+                user=request.user,
+                topic=topic,
+                concept=concept,
+                explanation=explanation,
+                feedback=feedback,
+                score=int(score),
+                is_self_graded=True
+            )
+            return Response({'id': entry.id, 'feedback': entry.feedback, 'score': entry.score, 'is_self_graded': True})
+        
+        # AI Mode
+        try:
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            
+            prompt = f"""
+I am using the Feynman Technique to learn. I am trying to explain the concept of '{concept}' to a 5-year-old.
+Here is my explanation:
+"{explanation}"
+
+Please evaluate my explanation. 
+1. Identify any complex jargon that a 5-year-old wouldn't understand.
+2. Identify any gaps in logic or missing core ideas.
+3. Score my explanation out of 100 based on simplicity and accuracy.
+
+Return ONLY a JSON object with this exact structure:
+{{
+  "jargon": ["word1", "word2"],
+  "gaps": "Your feedback on logical gaps...",
+  "feedback": "Overall constructive feedback...",
+  "score": 85
+}}
+"""
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.3,
+            )
+            response_content = chat_completion.choices[0].message.content.strip()
+            
+            import json, re
+            match = re.search(r'\{.*\}', response_content, re.DOTALL)
+            if match:
+                ai_resp = json.loads(match.group(0))
+            else:
+                ai_resp = json.loads(response_content)
+                
+            entry = TopicFeynman.objects.create(
+                user=request.user,
+                topic=topic,
+                concept=concept,
+                explanation=explanation,
+                feedback=json.dumps(ai_resp),
+                score=int(ai_resp.get('score', 0)),
+                is_self_graded=False
+            )
+            
+            # Award points
+            today = timezone.now().date()
+            already_awarded = Contribution.objects.filter(
+                user=request.user,
+                action_type='feynman_completed',
+                created_at__date=today
+            ).exists()
+            if not already_awarded:
+                Contribution.objects.create(user=request.user, action_type='feynman_completed', points=2)
+                
+            return Response({
+                'id': entry.id, 
+                'feedback': entry.feedback, 
+                'score': entry.score, 
+                'is_self_graded': False
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class AdminRoadmapListView(views.APIView):
     permission_classes = [IsAdminUser]
@@ -2550,3 +2787,67 @@ class AdminRoadmapDetailView(views.APIView):
         path = get_object_or_404(LearningPath, slug=slug, is_custom=False)
         path.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class GlobalReviewQueueView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.utils import timezone
+        import dateutil.parser
+
+        user = request.user
+        flashcards = TopicFlashcard.objects.filter(user=user).select_related('topic', 'topic__path')
+        
+        now = timezone.now()
+        due_cards = []
+
+        for tf in flashcards:
+            if not isinstance(tf.cards, list):
+                continue
+                
+            for idx, c in enumerate(tf.cards):
+                if not isinstance(c, dict):
+                    continue
+                    
+                next_review_str = c.get('next_review')
+                is_due = False
+                
+                if not next_review_str:
+                    is_due = True
+                else:
+                    try:
+                        next_review_date = dateutil.parser.isoparse(next_review_str)
+                        if now >= next_review_date:
+                            is_due = True
+                    except Exception:
+                        is_due = True
+                        
+                if is_due:
+                    due_cards.append({
+                        'topic_id': tf.topic.id,
+                        'topic_title': tf.topic.title,
+                        'path_title': tf.topic.path.title if tf.topic.path else '',
+                        'card_index': idx,
+                        'card': c
+                    })
+
+        return Response({'due_cards': due_cards})
+
+class ExploreRoadmapsView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        public_paths = LearningPath.objects.filter(visibility='public').order_by('-created_at')
+        data = []
+        for p in public_paths:
+            topics = p.topics.all().order_by('order')
+            topics_data = [{'title': t.title, 'summary': t.summary} for t in topics]
+            data.append({
+                'id': p.id,
+                'title': p.title,
+                'description': p.description,
+                'slug': p.slug,
+                'created_by': p.created_by.username if p.created_by else 'System',
+                'topics': topics_data
+            })
+        return Response({'public_roadmaps': data})
