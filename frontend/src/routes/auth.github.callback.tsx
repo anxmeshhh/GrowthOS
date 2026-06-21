@@ -67,11 +67,19 @@ function GithubCallbackPage() {
           window.location.href = redirectUrl;
         } else {
           const errData = await res.json().catch(() => ({}));
+          const isNotFound = res.status === 404;
           setError(
             errData.error ||
               `Failed to ${isConnect ? "connect workspace" : "authenticate"} with GitHub.`,
           );
-          setTimeout(() => navigate({ to: isConnect ? "/settings" : "/login" }), 3000);
+          
+          setTimeout(() => {
+            if (isConnect) {
+              navigate({ to: "/settings" });
+            } else {
+              navigate({ to: isNotFound ? "/signup" : "/login" });
+            }
+          }, 3000);
         }
       } catch (err) {
         setError("Error connecting to server. Please try again.");

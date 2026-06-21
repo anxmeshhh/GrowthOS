@@ -113,7 +113,8 @@ function LoginPage() {
           showToast("Google login successful!", "success");
           window.location.href = "/dashboard";
         } else {
-          showToast("Failed to authenticate with Google.", "error");
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || "Failed to authenticate with Google.", "error");
         }
       } catch (err) {
         showToast("Error connecting to server.", "error");

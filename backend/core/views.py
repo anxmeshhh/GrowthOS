@@ -104,19 +104,11 @@ class GoogleLoginView(views.APIView):
             if not email:
                 return Response({'error': 'Google account must have an email'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get or Create User
-            user, created = User.objects.get_or_create(username=email, defaults={
-                'email': email,
-                'first_name': first_name,
-                'last_name': last_name
-            })
-            
-            # Setup Profile and Bonus if new
-            if created:
-                user.set_unusable_password()
-                user.save()
-                UserProfile.objects.get_or_create(user=user)
-                Contribution.objects.create(user=user, action_type='signup_bonus', points=1)
+            # Try to get the user; if they don't exist, return 404
+            try:
+                user = User.objects.get(username=email)
+            except User.DoesNotExist:
+                return Response({'error': 'Account not found. Please sign up.'}, status=status.HTTP_404_NOT_FOUND)
                 
             # Issue JWTs
             refresh = RefreshToken.for_user(user)
@@ -177,12 +169,11 @@ class GitHubLoginView(views.APIView):
             if not primary_email:
                 return Response({'error': 'GitHub account must have a primary email'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get or Create User
-            user, created = User.objects.get_or_create(username=primary_email, defaults={
-                'email': primary_email,
-                'first_name': user_info.get('name', '').split()[0] if user_info.get('name') else github_login,
-                'last_name': ''
-            })
+            # Try to get the user; if they don't exist, return 404
+            try:
+                user = User.objects.get(username=primary_email)
+            except User.DoesNotExist:
+                return Response({'error': 'Account not found. Please sign up.'}, status=status.HTTP_404_NOT_FOUND)
 
             from .encryption import encrypt_token
 
@@ -192,11 +183,6 @@ class GitHubLoginView(views.APIView):
             profile.github_username = github_login
             profile.github_access_token = encrypt_token(access_token)
             profile.save()
-
-            if created:
-                user.set_unusable_password()
-                user.save()
-                Contribution.objects.create(user=user, action_type='signup_bonus', points=1)
 
             # Issue JWTs
             refresh = RefreshToken.for_user(user)
