@@ -75,14 +75,8 @@ export function useAppTutorial() {
   };
 
   useEffect(() => {
-    // Automatically start tutorial for new users
-    if (typeof window !== "undefined") {
-      const hasSeen = localStorage.getItem("hasSeenTutorial");
-      if (!hasSeen) {
-        // Small delay to let the UI render
-        setTimeout(startTutorial, 1000);
-      }
-    }
+    // Automatic tutorial startup has been disabled based on your request.
+    // The tutorial can still be started manually via the startTutorial function.
   }, []);
 
   return { startTutorial };
