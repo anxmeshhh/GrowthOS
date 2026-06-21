@@ -986,6 +986,14 @@ class NoteDocumentView(views.APIView):
         file_obj = request.data.get('file')
         if not file_obj:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        allowed_extensions = ('.pdf', '.docx', '.pptx')
+        if not file_obj.name.lower().endswith(allowed_extensions):
+            return Response(
+                {'error': 'Invalid file type. Only PDF, DOCX, and PPTX are allowed.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         doc = NoteDocument.objects.create(
             user=request.user,
             topic=topic,

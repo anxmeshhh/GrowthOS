@@ -323,6 +323,82 @@ function SettingsPage() {
           </div>
         </div>
 
+        {/* ── Focus Engine (Pomodoro) ─────────────────────────────────── */}
+        <div className="settings-card">
+          <CardHeader icon={<Clock size={10} className="text-[#f5f5f5]" />} title="Focus Engine" />
+
+          <div className="settings-card-body space-y-6">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="settings-row-label">Focus Duration</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    placeholder="0"
+                    value={state.settings.pomodoroFocus === 0 ? "" : state.settings.pomodoroFocus}
+                    onChange={(e) =>
+                      update((s) => ({
+                        ...s,
+                        settings: { ...s.settings, pomodoroFocus: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-16 bg-[#0a0a0a] border border-[#161616] rounded-md px-2 py-1 text-xs text-[#22c55e] font-mono text-center focus:outline-none focus:border-[#22c55e]/50 placeholder:text-[#22c55e]/30"
+                  />
+                  <span className="text-xs text-[#555] font-mono">min</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="settings-row-label">Short Break</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={60}
+                    placeholder="0"
+                    value={state.settings.pomodoroShortBreak === 0 ? "" : state.settings.pomodoroShortBreak}
+                    onChange={(e) =>
+                      update((s) => ({
+                        ...s,
+                        settings: { ...s.settings, pomodoroShortBreak: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-16 bg-[#0a0a0a] border border-[#161616] rounded-md px-2 py-1 text-xs text-[#3b82f6] font-mono text-center focus:outline-none focus:border-[#3b82f6]/50 placeholder:text-[#3b82f6]/30"
+                  />
+                  <span className="text-xs text-[#555] font-mono">min</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="settings-row-label">Long Break</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    placeholder="0"
+                    value={state.settings.pomodoroLongBreak === 0 ? "" : state.settings.pomodoroLongBreak}
+                    onChange={(e) =>
+                      update((s) => ({
+                        ...s,
+                        settings: { ...s.settings, pomodoroLongBreak: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-16 bg-[#0a0a0a] border border-[#161616] rounded-md px-2 py-1 text-xs text-[#a855f7] font-mono text-center focus:outline-none focus:border-[#a855f7]/50 placeholder:text-[#a855f7]/30"
+                  />
+                  <span className="text-xs text-[#555] font-mono">min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ── Admin Privileges ────────────────────────────────────────── */}
         {!profile?.user?.is_staff && (
           <div className="settings-card">

@@ -36,7 +36,9 @@ function PortfolioPage() {
       <PageShell>
         <div className="flex flex-col items-center justify-center h-[60vh]">
           <div className="text-xl text-[#ef4444] font-bold mb-2">Portfolio Not Found</div>
-          <div className="text-[#888]">The user "{username}" does not exist or has no public profile.</div>
+          <div className="text-[#888]">
+            The user "{username}" does not exist or has no public profile.
+          </div>
         </div>
       </PageShell>
     );
@@ -45,7 +47,6 @@ function PortfolioPage() {
   return (
     <PageShell>
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
-        
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 mb-12 bg-[#0a0a0a]/80 border border-[#1a1a1a] p-8 rounded-2xl backdrop-blur-xl">
           <div className="flex items-center gap-6">
@@ -79,7 +80,7 @@ function PortfolioPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-4">
             <div className="flex flex-col items-center p-4 bg-[#050505] rounded-xl border border-[#141414] min-w-[100px]">
               <div className="text-xs text-[#888] uppercase tracking-wider mb-1">Level</div>
@@ -93,22 +94,22 @@ function PortfolioPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           {/* Main Content - Projects */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck className="text-[#22c55e]" size={24} />
               <h2 className="text-2xl font-semibold text-[#fff]">Verified Projects</h2>
             </div>
-            
+
             {data.projects.length === 0 ? (
-              <Card className="p-8 text-center text-[#888]">
-                No verified projects yet.
-              </Card>
+              <Card className="p-8 text-center text-[#888]">No verified projects yet.</Card>
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {data.projects.map((proj: any) => (
-                  <Card key={proj.id} className="p-6 bg-[#0a0a0a]/50 hover:bg-[#0a0a0a] transition-all group">
+                  <Card
+                    key={proj.id}
+                    className="p-6 bg-[#0a0a0a]/50 hover:bg-[#0a0a0a] transition-all group"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="text-xs text-[#3b82f6] font-medium tracking-wide uppercase mb-2">
@@ -149,9 +150,7 @@ function PortfolioPage() {
             </div>
 
             {data.badges.length === 0 ? (
-              <Card className="p-6 text-center text-[#888]">
-                No achievements unlocked yet.
-              </Card>
+              <Card className="p-6 text-center text-[#888]">No achievements unlocked yet.</Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
                 {data.badges.map((b: any) => (
@@ -166,7 +165,6 @@ function PortfolioPage() {
               </div>
             )}
           </div>
-
         </div>
       </div>
     </PageShell>

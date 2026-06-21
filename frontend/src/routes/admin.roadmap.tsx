@@ -15,7 +15,7 @@ import {
   RefreshCw,
   Trash2,
   Edit2,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -190,7 +190,7 @@ function AdminRoadmapManager() {
     },
     onError: (err: any) => {
       showToast(err.message || "Failed to delete roadmap", "error");
-    }
+    },
   });
 
   const handleEditClick = (roadmap: any) => {
@@ -200,13 +200,14 @@ function AdminRoadmapManager() {
       slug: roadmap.slug,
       description: roadmap.description,
       estimated_weeks: roadmap.estimated_weeks,
-      topics: roadmap.topics?.map((t: any) => ({
-        title: t.title,
-        slug: t.slug,
-        summary: t.summary,
-        node_kind: t.node_kind,
-        order: t.order
-      })) || []
+      topics:
+        roadmap.topics?.map((t: any) => ({
+          title: t.title,
+          slug: t.slug,
+          summary: t.summary,
+          node_kind: t.node_kind,
+          order: t.order,
+        })) || [],
     };
     setJsonContent(JSON.stringify(payload, null, 2));
     setIsValidated(false);
@@ -247,7 +248,7 @@ function AdminRoadmapManager() {
           if (t.node_kind && !["topic", "milestone", "optional"].includes(t.node_kind)) {
             throw new Error(
               `Topic[${i}] in ${label} has invalid node_kind '${t.node_kind}'. ` +
-              `Must be topic | milestone | optional.`,
+                `Must be topic | milestone | optional.`,
             );
           }
         });
@@ -317,7 +318,6 @@ function AdminRoadmapManager() {
   return (
     <div className="min-h-screen bg-[#030303] text-white font-sans selection:bg-red-500/30">
       <div className="p-6 max-w-5xl mx-auto">
-
         {/* ── Page header ──────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -331,9 +331,7 @@ function AdminRoadmapManager() {
               <Map className="text-purple-500" />
               Roadmap Manager
             </h1>
-            <p className="text-gray-400 font-mono text-sm mt-1">
-              Centralized System Path Upload
-            </p>
+            <p className="text-gray-400 font-mono text-sm mt-1">Centralized System Path Upload</p>
           </div>
           <div className="px-3 py-1 rounded-full border border-red-900 bg-red-950/30 text-red-500 text-xs font-mono uppercase tracking-widest flex items-center gap-2">
             <ShieldAlert size={14} />
@@ -343,7 +341,6 @@ function AdminRoadmapManager() {
 
         {/* ── Editor card ──────────────────────────────────────────────────── */}
         <div className="rounded-xl border border-[#222] bg-[#0a0a0a] overflow-hidden flex flex-col h-[70vh] mb-6">
-
           {/* Toolbar */}
           <div className="p-4 border-b border-[#111] bg-[#0f0f0f] flex items-center justify-between shrink-0">
             <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider font-mono">
@@ -434,12 +431,14 @@ function AdminRoadmapManager() {
             {isLoadingRoadmaps ? (
               <div className="p-5 text-sm text-gray-500 font-mono">Loading roadmaps...</div>
             ) : roadmaps.length === 0 ? (
-              <div className="p-5 text-sm text-gray-500 font-mono">No roadmaps found in the system.</div>
+              <div className="p-5 text-sm text-gray-500 font-mono">
+                No roadmaps found in the system.
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
                 {roadmaps.map((roadmap: any) => (
-                  <div 
-                    key={roadmap.id} 
+                  <div
+                    key={roadmap.id}
                     className="flex flex-col rounded-lg border border-[#1a1a1a] bg-[#0d0d0d] overflow-hidden hover:border-[#333] transition-colors"
                   >
                     <div className="p-4 flex-1">
@@ -451,10 +450,12 @@ function AdminRoadmapManager() {
                       </div>
                       <p className="text-sm text-[#888] font-mono truncate mb-3">/{roadmap.slug}</p>
                       <div className="flex items-center gap-2 text-xs font-mono text-[#555]">
-                        <span className="flex items-center gap-1.5"><BookOpen size={10} /> {roadmap.topics?.length || 0} topics</span>
+                        <span className="flex items-center gap-1.5">
+                          <BookOpen size={10} /> {roadmap.topics?.length || 0} topics
+                        </span>
                       </div>
                     </div>
-                    
+
                     <div className="bg-[#111] px-4 py-2 flex items-center justify-end gap-2 border-t border-[#1a1a1a]">
                       <button
                         onClick={() => handleEditClick(roadmap)}
@@ -464,7 +465,11 @@ function AdminRoadmapManager() {
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete '${roadmap.title}'? This cannot be undone.`)) {
+                          if (
+                            window.confirm(
+                              `Are you sure you want to delete '${roadmap.title}'? This cannot be undone.`,
+                            )
+                          ) {
                             deleteRoadmap.mutate(roadmap.slug);
                           }
                         }}

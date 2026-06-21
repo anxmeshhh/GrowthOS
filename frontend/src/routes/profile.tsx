@@ -139,12 +139,12 @@ function ProfilePage() {
               <div className="flex flex-wrap justify-center items-center gap-2 mt-3 relative z-10">
                 <PillBadge icon={<Calendar size={12} />} label={joined} />
                 <PillBadge
-                icon={<Shield size={12} className="text-[#22c55e]" />}
+                  icon={<Shield size={12} className="text-[#22c55e]" />}
                   label={`Level ${level}`}
                   accent
                 />
               </div>
-              
+
               <div className="flex items-center gap-3 mt-6 relative z-10">
                 <button
                   onClick={handleShare}
@@ -221,7 +221,7 @@ function ProfilePage() {
               icon={<TrendingUp size={14} className="text-[#22c55e]" />}
               title="XP Breakdown"
             />
-            <div className="flex-1 p-6 space-y-5">
+            <div className="flex-1 p-6 space-y-5 max-h-[350px] overflow-y-auto scrollbar-thin pr-4">
               {pLoading ? (
                 <div className="flex flex-col gap-5">
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -294,7 +294,7 @@ function ProfilePage() {
                   <span className="block w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e] animate-pulse" />
                 )}
               </CardHeader>
-              <div className="flex-1 p-4">
+              <div className="flex-1 p-4 max-h-[350px] overflow-y-auto scrollbar-thin pr-4">
                 {activity.length > 0 ? (
                   <ul className="space-y-2">
                     {activity.slice(0, 8).map((a: any, i: number) => (
@@ -378,7 +378,7 @@ function ProfilePage() {
               )}
             </CardHeader>
 
-            <div className="p-6">
+            <div className="p-6 max-h-[350px] overflow-y-auto scrollbar-thin pr-4">
               {pLoading ? (
                 <div className="flex flex-wrap gap-3">
                   {Array.from({ length: 3 }).map((_, i) => (

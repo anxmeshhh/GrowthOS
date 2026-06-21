@@ -12,7 +12,12 @@ export const Route = createFileRoute("/review")({
 /* ─────────────────────────────────────────────
    Algorithm Utility
 ───────────────────────────────────────────── */
-function calculateNextReview(quality: number, currentInterval: number, currentEase: number, currentRepetitions: number) {
+function calculateNextReview(
+  quality: number,
+  currentInterval: number,
+  currentEase: number,
+  currentRepetitions: number,
+) {
   let repetitions = currentRepetitions;
   let interval = currentInterval;
   let ease = currentEase;
@@ -75,12 +80,12 @@ function GlobalReviewPage() {
   const submitGradeMutation = useMutation({
     mutationFn: async ({ quality }: { quality: number }) => {
       if (!currentItem || !topicFlashcards) throw new Error("No card selected");
-      
+
       const { interval, ease, repetitions, next_review } = calculateNextReview(
         quality,
         currentItem.card.interval || 0,
         currentItem.card.ease || 2.5,
-        currentItem.card.repetitions || 0
+        currentItem.card.repetitions || 0,
       );
 
       // Create updated cards array
@@ -90,21 +95,21 @@ function GlobalReviewPage() {
         interval,
         ease,
         repetitions,
-        next_review
+        next_review,
       };
 
       const res = await apiFetch(`/topics/${currentItem.topic_id}/flashcards/`, {
         method: "POST",
         body: JSON.stringify({ cards: updatedCards }),
       });
-      
+
       if (!res.ok) throw new Error("Failed to save progress");
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["global_review"] });
       setFlipped(false);
-    }
+    },
   });
 
   useEffect(() => {
@@ -112,6 +117,25 @@ function GlobalReviewPage() {
       setSessionCompleted(true);
     }
   }, [dueCards, isLoading]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!flipped) setFlipped(true);
+      } else if (flipped && !submitGradeMutation.isPending) {
+        if (e.key === "1") submitGradeMutation.mutate({ quality: 0 });
+        if (e.key === "2") submitGradeMutation.mutate({ quality: 3 });
+        if (e.key === "3") submitGradeMutation.mutate({ quality: 4 });
+        if (e.key === "4") submitGradeMutation.mutate({ quality: 5 });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [flipped, submitGradeMutation]);
 
   if (isLoading) {
     return (
@@ -130,9 +154,12 @@ function GlobalReviewPage() {
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20">
             <CheckCircle2 size={40} className="text-[#22c55e]" />
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-[#f0f0f0] mb-2">You're all caught up!</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-[#f0f0f0] mb-2">
+            You're all caught up!
+          </h2>
           <p className="text-[#888] max-w-md mb-8">
-            You have successfully cleared your entire review queue. Excellent work! Your spaced repetition algorithm will schedule the next batch.
+            You have successfully cleared your entire review queue. Excellent work! Your spaced
+            repetition algorithm will schedule the next batch.
           </p>
           <Link to="/roadmap">
             <Btn>Return to Dashboard</Btn>
@@ -147,10 +174,12 @@ function GlobalReviewPage() {
   return (
     <PageShell>
       <div className="flex flex-col h-full bg-[#030303] min-h-screen p-4 sm:p-8">
-        
         {/* Header */}
         <header className="flex items-center justify-between mb-8 max-w-4xl mx-auto w-full">
-          <Link to="/roadmap" className="flex items-center gap-2 text-[#888] hover:text-[#fff] transition-colors">
+          <Link
+            to="/roadmap"
+            className="flex items-center gap-2 text-[#888] hover:text-[#fff] transition-colors"
+          >
             <X size={20} />
             <span className="text-sm font-mono uppercase tracking-widest">End Session</span>
           </Link>
@@ -163,70 +192,95 @@ function GlobalReviewPage() {
 
         {/* Card Container */}
         <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full mb-20">
-          
           <div className="w-full text-center mb-6">
-            <div className="text-sm font-mono text-[#888] uppercase tracking-widest mb-1">{currentItem.path_title}</div>
+            <div className="text-sm font-mono text-[#888] uppercase tracking-widest mb-1">
+              {currentItem.path_title}
+            </div>
             <div className="text-lg text-[#eee] font-semibold">{currentItem.topic_title}</div>
           </div>
 
-          <div 
-            className="w-full bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl min-h-[300px] flex flex-col justify-center items-center p-8 text-center cursor-pointer hover:border-[#333] transition-colors shadow-2xl"
+          <div
+            className="perspective-1000 min-h-[300px] w-full cursor-pointer"
             onClick={() => !flipped && setFlipped(true)}
           >
-            <h2 className="text-2xl sm:text-3xl font-semibold text-[#fff] leading-relaxed mb-6">
-              {currentItem.card.front}
-            </h2>
-            
-            {flipped ? (
-              <div className="pt-6 mt-6 border-t border-[#1a1a1a] w-full animate-in fade-in slide-in-from-top-4 duration-500">
-                <p className="text-xl text-[#ccc] leading-relaxed">
+            <div
+              className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${flipped ? "rotate-y-180" : ""}`}
+            >
+              {/* Front */}
+              <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-8 shadow-2xl">
+                <div className="text-sm uppercase font-mono tracking-widest text-[#888] mb-6">
+                  Question
+                </div>
+                <div className="text-2xl sm:text-3xl font-semibold text-[#e8e8e8] text-center leading-snug">
+                  {currentItem.card.front}
+                </div>
+                {!flipped && (
+                  <div className="absolute bottom-6 text-[#555] text-sm font-mono uppercase tracking-widest animate-pulse">
+                    Spacebar to reveal
+                  </div>
+                )}
+              </div>
+              {/* Back */}
+              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 border-[#22c55e]/30 bg-[#061008] flex flex-col items-center justify-center p-8 shadow-2xl">
+                <div className="text-sm uppercase font-mono tracking-widest text-[#22c55e]/60 mb-6">
+                  Answer
+                </div>
+                <div className="text-xl sm:text-2xl text-[#eee] text-center leading-relaxed">
                   {currentItem.card.back}
-                </p>
+                </div>
               </div>
-            ) : (
-              <div className="text-sm font-mono uppercase tracking-widest text-[#555] mt-12 animate-pulse">
-                Click to reveal answer
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Grading Buttons */}
           {flipped && (
-            <div className="w-full grid grid-cols-4 gap-2 sm:gap-4 mt-8">
+            <div className="w-full grid grid-cols-4 gap-2 sm:gap-4 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <button
-                onClick={(e) => { e.stopPropagation(); submitGradeMutation.mutate({ quality: 0 }); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  submitGradeMutation.mutate({ quality: 0 });
+                }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/20 hover:bg-[#ef4444]/20 transition-all disabled:opacity-50"
+                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all disabled:opacity-50"
               >
-                <span className="font-bold text-lg mb-1">Again</span>
-                <span className="text-xs font-mono opacity-80">&lt; 1m</span>
-              </button>
-              
-              <button
-                onClick={(e) => { e.stopPropagation(); submitGradeMutation.mutate({ quality: 3 }); }}
-                disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl bg-[#f97316]/10 text-[#f97316] border border-[#f97316]/20 hover:bg-[#f97316]/20 transition-all disabled:opacity-50"
-              >
-                <span className="font-bold text-lg mb-1">Hard</span>
-                <span className="text-xs font-mono opacity-80">1d</span>
-              </button>
-              
-              <button
-                onClick={(e) => { e.stopPropagation(); submitGradeMutation.mutate({ quality: 4 }); }}
-                disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 hover:bg-[#22c55e]/20 transition-all disabled:opacity-50"
-              >
-                <span className="font-bold text-lg mb-1">Good</span>
-                <span className="text-xs font-mono opacity-80">3d</span>
+                <span className="font-bold text-[#ef4444] text-lg mb-1">Again</span>
+                <span className="text-xs font-mono text-[#ef4444]/60 opacity-80">&lt; 1m (1)</span>
               </button>
 
               <button
-                onClick={(e) => { e.stopPropagation(); submitGradeMutation.mutate({ quality: 5 }); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  submitGradeMutation.mutate({ quality: 3 });
+                }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl bg-[#3b82f6]/10 text-[#3b82f6] border border-[#3b82f6]/20 hover:bg-[#3b82f6]/20 transition-all disabled:opacity-50"
+                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-50"
               >
-                <span className="font-bold text-lg mb-1">Easy</span>
-                <span className="text-xs font-mono opacity-80">4d</span>
+                <span className="font-bold text-[#f59e0b] text-lg mb-1">Hard</span>
+                <span className="text-xs font-mono text-[#f59e0b]/60 opacity-80">1d (2)</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  submitGradeMutation.mutate({ quality: 4 });
+                }}
+                disabled={submitGradeMutation.isPending}
+                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all disabled:opacity-50"
+              >
+                <span className="font-bold text-[#22c55e] text-lg mb-1">Good</span>
+                <span className="text-xs font-mono text-[#22c55e]/60 opacity-80">3d (3)</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  submitGradeMutation.mutate({ quality: 5 });
+                }}
+                disabled={submitGradeMutation.isPending}
+                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all disabled:opacity-50"
+              >
+                <span className="font-bold text-[#3b82f6] text-lg mb-1">Easy</span>
+                <span className="text-xs font-mono text-[#3b82f6]/60 opacity-80">4d (4)</span>
               </button>
             </div>
           )}

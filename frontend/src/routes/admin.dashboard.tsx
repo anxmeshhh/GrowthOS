@@ -388,7 +388,10 @@ function AdminDashboard() {
                     <span className="text-sm text-purple-300 group-hover:text-purple-400 font-medium flex items-center gap-2">
                       <Map size={14} /> Roadmap Manager
                     </span>
-                    <ArrowUpRight size={14} className="text-purple-500 group-hover:text-purple-400" />
+                    <ArrowUpRight
+                      size={14}
+                      className="text-purple-500 group-hover:text-purple-400"
+                    />
                   </button>
                 </div>
               </div>

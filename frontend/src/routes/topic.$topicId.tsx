@@ -33,6 +33,7 @@ import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/toast-context";
+import { useGrowth } from "@/lib/growth-store";
 
 export const Route = createFileRoute("/topic/$topicId")({
   head: () => ({ meta: [{ title: `Workspace — GrowthOS` }] }),
@@ -89,19 +90,24 @@ function TopicWorkspace() {
     },
   });
 
+  const { state } = useGrowth();
+  const pomodoroFocus = state.settings?.pomodoroFocus ?? 0;
+  const pomodoroShortBreak = state.settings?.pomodoroShortBreak ?? 0;
+  const pomodoroLongBreak = state.settings?.pomodoroLongBreak ?? 0;
+
   const [tab, setTab] = useState<Tab>("notes");
   type PomoMode = "focus" | "shortBreak" | "longBreak";
   const [pomoMode, setPomoMode] = useState<PomoMode>("focus");
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [timeLeft, setTimeLeft] = useState(pomodoroFocus * 60);
   const [pomoRunning, setPomoRunning] = useState(false);
   const [focusRadioEnabled, setFocusRadioEnabled] = useState(false);
 
   const switchMode = (m: PomoMode) => {
     setPomoMode(m);
     setPomoRunning(false);
-    if (m === "focus") setTimeLeft(25 * 60);
-    else if (m === "shortBreak") setTimeLeft(5 * 60);
-    else setTimeLeft(15 * 60);
+    if (m === "focus") setTimeLeft(pomodoroFocus * 60);
+    else if (m === "shortBreak") setTimeLeft(pomodoroShortBreak * 60);
+    else setTimeLeft(pomodoroLongBreak * 60);
   };
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -321,7 +327,7 @@ function TopicWorkspace() {
             <Headphones size={12} className={focusRadioEnabled ? "animate-pulse" : ""} />
             <span className="hidden sm:inline">Radio</span>
           </button>
-          
+
           {focusRadioEnabled && (
             <iframe
               width="0"
@@ -336,14 +342,14 @@ function TopicWorkspace() {
           {/* Timer */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0f0f0f] border border-[#1e1e1e]">
             <div className="flex items-center gap-1.5 mr-2 pr-2 border-r border-[#1e1e1e]">
-              <button 
-                onClick={() => switchMode("focus")} 
+              <button
+                onClick={() => switchMode("focus")}
                 className={`text-xs uppercase tracking-wider font-semibold ${pomoMode === "focus" ? "text-[#ef4444]" : "text-[#555] hover:text-[#eee]"}`}
               >
                 Focus
               </button>
-              <button 
-                onClick={() => switchMode("shortBreak")} 
+              <button
+                onClick={() => switchMode("shortBreak")}
                 className={`text-xs uppercase tracking-wider font-semibold ${pomoMode === "shortBreak" ? "text-[#3b82f6]" : "text-[#555] hover:text-[#eee]"}`}
               >
                 Break
@@ -837,7 +843,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             type="file"
             id="noteFileUpload"
             className="hidden"
-            accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg"
+            accept=".pdf,.docx,.pptx"
             onChange={(e) => {
               if (e.target.files?.length) setNoteFile(e.target.files[0]);
             }}
@@ -1152,7 +1158,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   const generateMutation = useMutation({
     mutationFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/generate-flashcards/`, {
-        method: "POST"
+        method: "POST",
       });
       if (!res.ok) throw new Error("Failed to generate flashcards");
       return res.json();
@@ -1163,6 +1169,78 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
     },
   });
+
+  const flashcards = data?.flashcards || [];
+
+  const now = new Date();
+  const dueCards = flashcards.filter((f: any) => !f.next_review || new Date(f.next_review) <= now);
+  const futureCards = flashcards.filter((f: any) => f.next_review && new Date(f.next_review) > now);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (viewMode === "review" && dueCards.length > 0) {
+        if (e.code === "Space") {
+          e.preventDefault();
+          if (!isReviewFlipped) setIsReviewFlipped(true);
+        } else if (isReviewFlipped && !saveMutation.isPending) {
+          if (e.key === "1") handleGrade("again");
+          if (e.key === "2") handleGrade("hard");
+          if (e.key === "3") handleGrade("good");
+          if (e.key === "4") handleGrade("easy");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [viewMode, dueCards.length, isReviewFlipped, saveMutation.isPending]);
+
+  const handleGrade = (grade: "again" | "hard" | "good" | "easy") => {
+    const cardToGrade = dueCards[currentReviewIndex];
+    let { interval = 0, ease = 2.5, repetitions = 0 } = cardToGrade;
+
+    if (grade === "again") {
+      repetitions = 0;
+      interval = 1; // 1 minute
+      ease = Math.max(1.3, ease - 0.2);
+    } else {
+      repetitions += 1;
+      if (grade === "hard") {
+        interval = interval === 0 ? 1440 : interval * 1.2;
+        ease = Math.max(1.3, ease - 0.15);
+      } else if (grade === "good") {
+        interval = interval === 0 ? 1440 * 3 : interval * ease;
+      } else if (grade === "easy") {
+        ease += 0.15;
+        interval = interval === 0 ? 1440 * 4 : interval * ease * 1.3;
+      }
+    }
+
+    const nextDate = new Date();
+    nextDate.setMinutes(nextDate.getMinutes() + interval);
+
+    const updatedCard = {
+      ...cardToGrade,
+      interval,
+      ease,
+      repetitions,
+      next_review: nextDate.toISOString(),
+    };
+
+    // Update the master list
+    const updatedFlashcards = flashcards.map((f: any) =>
+      f.front === cardToGrade.front && f.back === cardToGrade.back ? updatedCard : f,
+    );
+
+    // Save to backend instantly
+    saveMutation.mutate(updatedFlashcards);
+
+    setIsReviewFlipped(false);
+    // Since the mutation invalidates queries, it might refetch.
+    // We just keep index at 0, because the first due card will change as it gets filtered out.
+  };
 
   if (isLoading)
     return (
@@ -1183,57 +1261,6 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
         </button>
       </div>
     );
-
-  const flashcards = data?.flashcards || [];
-
-  const now = new Date();
-  const dueCards = flashcards.filter((f: any) => !f.next_review || new Date(f.next_review) <= now);
-  const futureCards = flashcards.filter((f: any) => f.next_review && new Date(f.next_review) > now);
-
-  const handleGrade = (grade: "again" | "hard" | "good" | "easy") => {
-    const cardToGrade = dueCards[currentReviewIndex];
-    let { interval = 0, ease = 2.5, repetitions = 0 } = cardToGrade;
-
-    if (grade === "again") {
-      repetitions = 0;
-      interval = 1; // 1 minute
-      ease = Math.max(1.3, ease - 0.2);
-    } else {
-      repetitions += 1;
-      if (grade === "hard") {
-        interval = interval === 0 ? 1440 : interval * 1.2;
-        ease = Math.max(1.3, ease - 0.15);
-      } else if (grade === "good") {
-        interval = interval === 0 ? 1440 * 3 : (interval * ease);
-      } else if (grade === "easy") {
-        ease += 0.15;
-        interval = interval === 0 ? 1440 * 4 : (interval * ease * 1.3);
-      }
-    }
-
-    const nextDate = new Date();
-    nextDate.setMinutes(nextDate.getMinutes() + interval);
-
-    const updatedCard = {
-      ...cardToGrade,
-      interval,
-      ease,
-      repetitions,
-      next_review: nextDate.toISOString()
-    };
-
-    // Update the master list
-    const updatedFlashcards = flashcards.map((f: any) => 
-      (f.front === cardToGrade.front && f.back === cardToGrade.back) ? updatedCard : f
-    );
-
-    // Save to backend instantly
-    saveMutation.mutate(updatedFlashcards);
-    
-    setIsReviewFlipped(false);
-    // Since the mutation invalidates queries, it might refetch. 
-    // We just keep index at 0, because the first due card will change as it gets filtered out.
-  };
 
   /* Edit mode */
   if (isEditing) {
@@ -1366,7 +1393,11 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
               disabled={generateMutation.isPending}
               className="px-4 py-2 rounded-lg bg-[#3b82f6]/10 text-[#3b82f6] border border-[#3b82f6]/20 text-lg font-medium hover:bg-[#3b82f6]/15 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              {generateMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+              {generateMutation.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Sparkles size={16} />
+              )}
               Auto-Generate with AI
             </button>
             <button
@@ -1393,10 +1424,14 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
           ) : (
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between text-sm font-mono tracking-widest uppercase text-[#888]">
-                <span>Due: <span className="text-[#3b82f6] font-bold">{dueCards.length}</span></span>
-                <span>Future: <span className="text-[#22c55e]">{futureCards.length}</span></span>
+                <span>
+                  Due: <span className="text-[#3b82f6] font-bold">{dueCards.length}</span>
+                </span>
+                <span>
+                  Future: <span className="text-[#22c55e]">{futureCards.length}</span>
+                </span>
               </div>
-              
+
               <div
                 className="perspective-1000 min-h-[250px] cursor-pointer"
                 onClick={() => !isReviewFlipped && setIsReviewFlipped(true)}
@@ -1413,8 +1448,8 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                       {dueCards[currentReviewIndex].front}
                     </div>
                     {!isReviewFlipped && (
-                      <div className="absolute bottom-6 text-[#555] text-sm animate-pulse">
-                        Click to reveal answer
+                      <div className="absolute bottom-6 text-[#555] text-sm animate-pulse font-mono tracking-widest uppercase">
+                        Spacebar to reveal
                       </div>
                     )}
                   </div>
@@ -1433,26 +1468,38 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
               {/* Grading Buttons */}
               {isReviewFlipped && (
                 <div className="grid grid-cols-4 gap-3 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <button onClick={() => handleGrade("again")} className="flex flex-col items-center py-3 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all">
+                  <button
+                    onClick={() => handleGrade("again")}
+                    className="flex flex-col items-center py-3 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all"
+                  >
                     <span className="text-[#ef4444] font-bold text-lg mb-1">Again</span>
-                    <span className="text-xs text-[#ef4444]/60 font-mono">&lt; 1m</span>
+                    <span className="text-xs text-[#ef4444]/60 font-mono">&lt; 1m (1)</span>
                   </button>
-                  <button onClick={() => handleGrade("hard")} className="flex flex-col items-center py-3 rounded-lg border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all">
+                  <button
+                    onClick={() => handleGrade("hard")}
+                    className="flex flex-col items-center py-3 rounded-lg border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all"
+                  >
                     <span className="text-[#f59e0b] font-bold text-lg mb-1">Hard</span>
                     <span className="text-xs text-[#f59e0b]/60 font-mono">
-                      {dueCards[currentReviewIndex].interval === 0 ? "1d" : "1.2x"}
+                      {dueCards[currentReviewIndex].interval === 0 ? "1d" : "1.2x"} (2)
                     </span>
                   </button>
-                  <button onClick={() => handleGrade("good")} className="flex flex-col items-center py-3 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all">
+                  <button
+                    onClick={() => handleGrade("good")}
+                    className="flex flex-col items-center py-3 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all"
+                  >
                     <span className="text-[#22c55e] font-bold text-lg mb-1">Good</span>
                     <span className="text-xs text-[#22c55e]/60 font-mono">
-                      {dueCards[currentReviewIndex].interval === 0 ? "3d" : "2.5x"}
+                      {dueCards[currentReviewIndex].interval === 0 ? "3d" : "2.5x"} (3)
                     </span>
                   </button>
-                  <button onClick={() => handleGrade("easy")} className="flex flex-col items-center py-3 rounded-lg border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all">
+                  <button
+                    onClick={() => handleGrade("easy")}
+                    className="flex flex-col items-center py-3 rounded-lg border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all"
+                  >
                     <span className="text-[#3b82f6] font-bold text-lg mb-1">Easy</span>
                     <span className="text-xs text-[#3b82f6]/60 font-mono">
-                      {dueCards[currentReviewIndex].interval === 0 ? "4d" : "3.5x"}
+                      {dueCards[currentReviewIndex].interval === 0 ? "4d" : "3.5x"} (4)
                     </span>
                   </button>
                 </div>
@@ -1843,7 +1890,11 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
   const entries = data?.feynman_entries || [];
 
   if (isLoading) {
-    return <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-[#60a5fa]" /></div>;
+    return (
+      <div className="py-12 flex justify-center">
+        <Loader2 className="animate-spin text-[#60a5fa]" />
+      </div>
+    );
   }
 
   if (isNew) {
@@ -1851,12 +1902,16 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div className="text-xl font-semibold text-[#f0f0f0]">New Feynman Explanation</div>
-          <button onClick={() => setIsNew(false)} className="text-[#888] hover:text-[#fff]">Cancel</button>
+          <button onClick={() => setIsNew(false)} className="text-[#888] hover:text-[#fff]">
+            Cancel
+          </button>
         </div>
 
         <div className="space-y-4 bg-[#0a0a0a] border border-[#1e1e1e] p-6 rounded-xl">
           <div>
-            <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">Concept</label>
+            <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">
+              Concept
+            </label>
             <input
               type="text"
               value={concept}
@@ -1867,7 +1922,9 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
           </div>
 
           <div>
-            <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">Explanation (Explain it to a 5-year-old)</label>
+            <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">
+              Explanation (Explain it to a 5-year-old)
+            </label>
             <textarea
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
@@ -1893,7 +1950,9 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
 
           {viewMode === "manual" && (
             <div className="mb-4">
-              <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">My Score (0-100)</label>
+              <label className="text-xs uppercase font-mono tracking-widest text-[#888] mb-2 block">
+                My Score (0-100)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -1909,9 +1968,13 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
             <button
               onClick={() => submitMutation.mutate(viewMode)}
               disabled={!concept || !explanation || submitMutation.isPending}
-              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === 'ai' ? 'bg-[#a855f7] hover:bg-[#9333ea]' : 'bg-[#22c55e] hover:bg-[#16a34a]'}`}
+              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === "ai" ? "bg-[#a855f7] hover:bg-[#9333ea]" : "bg-[#22c55e] hover:bg-[#16a34a]"}`}
             >
-              {submitMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <MessageSquare size={16} />}
+              {submitMutation.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <MessageSquare size={16} />
+              )}
               {viewMode === "ai" ? "Submit to AI Tutor" : "Save Manual Entry"}
             </button>
           </div>
@@ -1941,69 +2004,103 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
             <MessageSquare size={20} className="text-[#888]" />
           </div>
           <div className="text-lg text-[#eee] mb-2">No concepts explained yet</div>
-          <div className="text-sm text-[#888]">Use the Feynman Technique to solidify your knowledge.</div>
+          <div className="text-sm text-[#888]">
+            Use the Feynman Technique to solidify your knowledge.
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
           {entries.map((e: any) => {
             let feedbackObj = null;
             if (!e.is_self_graded && e.feedback) {
-              try { feedbackObj = JSON.parse(e.feedback); } catch(err) {}
+              try {
+                feedbackObj = JSON.parse(e.feedback);
+              } catch (err) {}
             }
             return (
-              <div key={e.id} className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden shadow-xl">
+              <div
+                key={e.id}
+                className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl overflow-hidden shadow-xl"
+              >
                 <div className="px-6 py-4 border-b border-[#1e1e1e] flex justify-between items-center bg-[#0d0d0d]">
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-semibold text-[#fff]">{e.concept}</span>
                     {e.is_self_graded ? (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20">MANUAL</span>
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20">
+                        MANUAL
+                      </span>
                     ) : (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20">AI GRADED</span>
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20">
+                        AI GRADED
+                      </span>
                     )}
                   </div>
-                  <div className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#22c55e]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}>
+                  <div
+                    className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#22c55e]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}
+                  >
                     {e.score}/100
                   </div>
                 </div>
                 <div className="p-6 space-y-6">
                   <div>
-                    <div className="text-xs uppercase font-mono tracking-widest text-[#555] mb-2">Your Explanation</div>
-                    <div className="text-[#d0d0d0] leading-relaxed whitespace-pre-wrap">{e.explanation}</div>
+                    <div className="text-xs uppercase font-mono tracking-widest text-[#555] mb-2">
+                      Your Explanation
+                    </div>
+                    <div className="text-[#d0d0d0] leading-relaxed whitespace-pre-wrap">
+                      {e.explanation}
+                    </div>
                   </div>
-                  
-                  {e.is_self_graded ? (
-                    e.feedback && (
-                      <div className="bg-[#111] border border-[#22c55e]/20 rounded-lg p-4">
-                        <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e] mb-2">Self-Reflection</div>
-                        <div className="text-[#eee] text-sm">{e.feedback}</div>
-                      </div>
-                    )
-                  ) : (
-                    feedbackObj && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-[#111] border border-[#ef4444]/20 rounded-lg p-4">
-                          <div className="text-xs uppercase font-mono tracking-widest text-[#ef4444] mb-2">Jargon Spotted</div>
-                          {feedbackObj.jargon && feedbackObj.jargon.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {feedbackObj.jargon.map((j: string, i: number) => (
-                                <span key={i} className="text-xs bg-[#ef4444]/10 text-[#ef4444] px-2 py-1 rounded">{j}</span>
-                              ))}
+
+                  {e.is_self_graded
+                    ? e.feedback && (
+                        <div className="bg-[#111] border border-[#22c55e]/20 rounded-lg p-4">
+                          <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e] mb-2">
+                            Self-Reflection
+                          </div>
+                          <div className="text-[#eee] text-sm">{e.feedback}</div>
+                        </div>
+                      )
+                    : feedbackObj && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-[#111] border border-[#ef4444]/20 rounded-lg p-4">
+                            <div className="text-xs uppercase font-mono tracking-widest text-[#ef4444] mb-2">
+                              Jargon Spotted
                             </div>
-                          ) : (
-                            <div className="text-sm text-[#888]">No jargon spotted. Good job!</div>
-                          )}
+                            {feedbackObj.jargon && feedbackObj.jargon.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {feedbackObj.jargon.map((j: string, i: number) => (
+                                  <span
+                                    key={i}
+                                    className="text-xs bg-[#ef4444]/10 text-[#ef4444] px-2 py-1 rounded"
+                                  >
+                                    {j}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-sm text-[#888]">
+                                No jargon spotted. Good job!
+                              </div>
+                            )}
+                          </div>
+                          <div className="bg-[#111] border border-[#f59e0b]/20 rounded-lg p-4">
+                            <div className="text-xs uppercase font-mono tracking-widest text-[#f59e0b] mb-2">
+                              Logical Gaps
+                            </div>
+                            <div className="text-sm text-[#eee] leading-relaxed">
+                              {feedbackObj.gaps || "None identified."}
+                            </div>
+                          </div>
+                          <div className="bg-[#111] border border-[#60a5fa]/20 rounded-lg p-4 md:col-span-2">
+                            <div className="text-xs uppercase font-mono tracking-widest text-[#60a5fa] mb-2">
+                              Tutor Feedback
+                            </div>
+                            <div className="text-sm text-[#eee] leading-relaxed">
+                              {feedbackObj.feedback}
+                            </div>
+                          </div>
                         </div>
-                        <div className="bg-[#111] border border-[#f59e0b]/20 rounded-lg p-4">
-                          <div className="text-xs uppercase font-mono tracking-widest text-[#f59e0b] mb-2">Logical Gaps</div>
-                          <div className="text-sm text-[#eee] leading-relaxed">{feedbackObj.gaps || "None identified."}</div>
-                        </div>
-                        <div className="bg-[#111] border border-[#60a5fa]/20 rounded-lg p-4 md:col-span-2">
-                          <div className="text-xs uppercase font-mono tracking-widest text-[#60a5fa] mb-2">Tutor Feedback</div>
-                          <div className="text-sm text-[#eee] leading-relaxed">{feedbackObj.feedback}</div>
-                        </div>
-                      </div>
-                    )
-                  )}
+                      )}
                 </div>
               </div>
             );

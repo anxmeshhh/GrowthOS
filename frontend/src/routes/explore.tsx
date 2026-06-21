@@ -38,7 +38,7 @@ function ExplorePage() {
     },
     onError: () => {
       showToast("Error bookmarking roadmap", "error");
-    }
+    },
   });
 
   if (isLoading) {
@@ -61,7 +61,10 @@ function ExplorePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
         {roadmaps.map((rm: any) => (
-          <Card key={rm.id} className="flex flex-col border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden hover:border-[#333] transition-colors">
+          <Card
+            key={rm.id}
+            className="flex flex-col border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden hover:border-[#333] transition-colors"
+          >
             <div className="p-6 flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-[#111] border border-[#222] flex items-center justify-center">
@@ -73,11 +76,14 @@ function ExplorePage() {
               </div>
               <h3 className="text-xl font-bold text-[#f0f0f0] mb-2">{rm.title}</h3>
               <p className="text-sm text-[#aaa] line-clamp-3 mb-6">
-                {rm.description || "A comprehensive learning path covering the essential topics from start to finish."}
+                {rm.description ||
+                  "A comprehensive learning path covering the essential topics from start to finish."}
               </p>
-              
+
               <div className="space-y-2 mb-6">
-                <div className="text-xs uppercase font-mono tracking-widest text-[#555] mb-2">Curriculum Preview</div>
+                <div className="text-xs uppercase font-mono tracking-widest text-[#555] mb-2">
+                  Curriculum Preview
+                </div>
                 {rm.topics.slice(0, 3).map((t: any, i: number) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-[#d0d0d0]">
                     <span className="text-[#22c55e] mt-0.5">•</span>
