@@ -9,7 +9,7 @@ from .views import (
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
     AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView,
-    GlobalReviewQueueView, ExploreRoadmapsView
+    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView
 )
 
 router = DefaultRouter()
@@ -39,6 +39,7 @@ urlpatterns = [
     path('activity/', RecentActivityView.as_view(), name='recent_activity'),
     path('activity/revive-streak/', ReviveStreakView.as_view(), name='revive_streak'),
     path('chat/', ChatAssistantView.as_view(), name='chat_assistant'),
+    path('today/', TodayBriefingView.as_view(), name='today_briefing'),
     
     # Topic Endpoints (supports both numeric ID and slug)
     path('topics/<str:pk>/', TopicDetailView.as_view(), name='topic_detail'),

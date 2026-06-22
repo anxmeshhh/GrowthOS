@@ -15,6 +15,7 @@ import {
   BarChart2,
   Tag,
   CalendarDays,
+  PieChart,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -418,6 +419,70 @@ function ProgressPage() {
             </div>
           </Card>
         </div>
+        
+        {/* ── Mastery Distribution ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <PieChart size={9} className="text-[#3b82f6]" /> Mastery Distribution
+              </SectionLabel>
+            }
+          />
+          <div className="p-4 space-y-4">
+            {profile?.mastery_distribution ? (
+              <div className="flex gap-2 h-8 rounded-lg overflow-hidden">
+                {['mastered', 'proficient', 'familiar', 'needs_review'].map((level) => {
+                  const dist = profile.mastery_distribution;
+                  const total = dist.mastered + dist.proficient + dist.familiar + dist.needs_review;
+                  if (total === 0) return null;
+                  const count = dist[level as keyof typeof dist];
+                  if (count === 0) return null;
+                  const pct = (count / total) * 100;
+                  
+                  const bgColors: Record<string, string> = {
+                    mastered: '#22c55e',
+                    proficient: '#3b82f6',
+                    familiar: '#f59e0b',
+                    needs_review: '#ef4444'
+                  };
+                  
+                  const labels: Record<string, string> = {
+                    mastered: 'Mastered',
+                    proficient: 'Proficient',
+                    familiar: 'Familiar',
+                    needs_review: 'Review'
+                  };
+                  
+                  return (
+                    <div 
+                      key={level}
+                      style={{ width: `${pct}%`, background: bgColors[level] }}
+                      className="h-full group relative transition-all"
+                    >
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#000] border border-[#222] px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+                        <span className="font-semibold" style={{ color: bgColors[level] }}>{labels[level]}</span>: {count} ({pct.toFixed(0)}%)
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
+                No mastery data yet
+              </div>
+            )}
+            
+            {profile?.mastery_distribution && (
+               <div className="flex justify-between text-xs font-mono uppercase tracking-wider text-[#888] pt-2">
+                 <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#22c55e]"></div>Mastered (90+)</div>
+                 <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>Proficient (70+)</div>
+                 <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>Familiar (40+)</div>
+                 <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#ef4444]"></div>Review (0-39)</div>
+               </div>
+            )}
+          </div>
+        </Card>
 
         {/* ── Title Collection ── */}
         <Card>

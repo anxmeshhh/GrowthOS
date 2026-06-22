@@ -13,6 +13,7 @@ import {
   X,
   User,
   ChevronRight,
+  Activity,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ const NAV_GROUPS = [
       { to: "/roadmap", label: "Roadmap", icon: Map },
       { to: "/custom-paths", label: "My Paths", icon: BookOpen },
       { to: "/notes", label: "Notes", icon: BookOpen },
+      { to: "/review", label: "Review", icon: Activity },
       { to: "/assessments", label: "Assessments", icon: ClipboardCheck },
     ],
   },
@@ -54,6 +56,15 @@ const NAV_GROUPS = [
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  
+  const { data: briefing } = useQuery({
+    queryKey: ["today"],
+    queryFn: async () => {
+      const r = await apiFetch("/today/");
+      if (!r.ok) return null;
+      return r.json();
+    },
+  });
 
   return (
     <nav className="flex flex-col gap-5 px-4">
@@ -133,7 +144,13 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   />
                   <span style={{ flex: 1, zIndex: 10, textShadow: active ? "0 2px 10px rgba(255,255,255,0.2)" : "none" }}>{label}</span>
 
-                  {active && (
+                  {to === "/review" && briefing?.due_cards > 0 && (
+                    <span className="flex items-center justify-center bg-[#ef4444] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] shadow-[0_0_10px_rgba(239,68,68,0.3)]">
+                      {briefing.due_cards}
+                    </span>
+                  )}
+
+                  {active && to !== "/review" && (
                     <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
                   )}
                 </Link>

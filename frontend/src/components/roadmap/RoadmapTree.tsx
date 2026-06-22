@@ -226,6 +226,7 @@ export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
           bgColor,
           textColor: "#000000",
           aiScore: t.verified_project?.ai_score,
+          masteryScore: t.mastery_score,
         },
         children: [],
       };

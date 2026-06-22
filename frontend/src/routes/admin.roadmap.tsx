@@ -229,21 +229,24 @@ function AdminRoadmapManager() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── File Import ──────────────────────────────────────────────────────────────
-  const handleFileImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      setJsonContent(text);
-      setIsValidated(false);
-      setValidationError(null);
-      setSyncResult(null);
-      showToast(`Imported: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`, "success");
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  }, [showToast]);
+  const handleFileImport = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        setJsonContent(text);
+        setIsValidated(false);
+        setValidationError(null);
+        setSyncResult(null);
+        showToast(`Imported: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`, "success");
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    },
+    [showToast],
+  );
 
   // Live stats
   const lineCount = jsonContent ? jsonContent.split("\n").length : 0;
@@ -252,7 +255,10 @@ function AdminRoadmapManager() {
   try {
     const p = JSON.parse(jsonContent);
     const arr = Array.isArray(p) ? p : [p];
-    parsedTopicCount = arr.reduce((acc: number, r: any) => acc + (Array.isArray(r.topics) ? r.topics.length : 0), 0);
+    parsedTopicCount = arr.reduce(
+      (acc: number, r: any) => acc + (Array.isArray(r.topics) ? r.topics.length : 0),
+      0,
+    );
   } catch {}
 
   const copySchema = () => {
@@ -381,20 +387,26 @@ function AdminRoadmapManager() {
         {/* ── Schema Reference Panel ────────────────────────────────────────── */}
         <div className="rounded-xl border border-[#1e1e2e] bg-[#0a0a12] overflow-hidden mb-4">
           <button
-            onClick={() => setShowSchema(v => !v)}
+            onClick={() => setShowSchema((v) => !v)}
             className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-[#0d0d18] transition-colors"
           >
             <span className="flex items-center gap-2 text-sm font-semibold text-purple-400 uppercase tracking-wider font-mono">
               <Info size={14} /> JSON Schema Reference
             </span>
-            {showSchema ? <ChevronDown size={14} className="text-purple-500" /> : <ChevronRight size={14} className="text-purple-500" />}
+            {showSchema ? (
+              <ChevronDown size={14} className="text-purple-500" />
+            ) : (
+              <ChevronRight size={14} className="text-purple-500" />
+            )}
           </button>
 
           {showSchema && (
             <div className="border-t border-[#1e1e2e] p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Field table */}
               <div>
-                <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-3">Required Fields</h3>
+                <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-3">
+                  Required Fields
+                </h3>
                 <table className="w-full text-xs font-mono">
                   <thead>
                     <tr className="border-b border-[#222]">
@@ -420,7 +432,8 @@ function AdminRoadmapManager() {
                         <td className="py-1.5 pr-4 text-purple-300">{String(field)}</td>
                         <td className="py-1.5 pr-4 text-blue-400">{String(type)}</td>
                         <td className="py-1.5 text-gray-500">
-                          {req && <span className="text-red-400 mr-1">*</span>}{String(note)}
+                          {req && <span className="text-red-400 mr-1">*</span>}
+                          {String(note)}
                         </td>
                       </tr>
                     ))}
@@ -428,17 +441,37 @@ function AdminRoadmapManager() {
                 </table>
 
                 <div className="mt-4 space-y-2">
-                  <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-2">node_kind Values</h3>
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-2">
+                    node_kind Values
+                  </h3>
                   {[
-                    ["milestone", "#3b5bdb", "Section header — starts a new group. Topics below it are grouped under it."],
-                    ["topic", "#22c55e", "Standard topic (default). Grouped under the previous milestone."],
-                    ["optional", "#888", "Optional topic — dashed border. Grouped under the previous milestone."],
+                    [
+                      "milestone",
+                      "#3b5bdb",
+                      "Section header — starts a new group. Topics below it are grouped under it.",
+                    ],
+                    [
+                      "topic",
+                      "#22c55e",
+                      "Standard topic (default). Grouped under the previous milestone.",
+                    ],
+                    [
+                      "optional",
+                      "#888",
+                      "Optional topic — dashed border. Grouped under the previous milestone.",
+                    ],
                   ].map(([kind, color, desc]) => (
                     <div key={String(kind)} className="flex items-start gap-2">
                       <span
                         className="mt-0.5 shrink-0 px-2 py-0.5 rounded text-xs font-mono font-bold"
-                        style={{ color: String(color), background: `${color}15`, border: `1px solid ${color}30` }}
-                      >{String(kind)}</span>
+                        style={{
+                          color: String(color),
+                          background: `${color}15`,
+                          border: `1px solid ${color}30`,
+                        }}
+                      >
+                        {String(kind)}
+                      </span>
                       <span className="text-xs text-gray-500 font-mono">{String(desc)}</span>
                     </div>
                   ))}
@@ -448,7 +481,9 @@ function AdminRoadmapManager() {
               {/* Example JSON */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400">Example JSON</h3>
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400">
+                    Example JSON
+                  </h3>
                   <button
                     onClick={copySchema}
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono bg-[#1a1a2a] border border-[#2a2a4a] text-purple-400 hover:text-purple-300 transition-colors"
@@ -459,18 +494,25 @@ function AdminRoadmapManager() {
                 <pre
                   className="text-xs font-mono text-gray-400 bg-[#050508] border border-[#1a1a2a] rounded-lg p-4 overflow-auto"
                   style={{ maxHeight: "340px", lineHeight: 1.6 }}
-                >{SCHEMA_EXAMPLE}</pre>
+                >
+                  {SCHEMA_EXAMPLE}
+                </pre>
               </div>
             </div>
           )}
         </div>
 
         {/* ── Editor card ──────────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-[#222] bg-[#0a0a0a] overflow-hidden flex flex-col mb-6" style={{ height: "65vh" }}>
+        <div
+          className="rounded-xl border border-[#222] bg-[#0a0a0a] overflow-hidden flex flex-col mb-6"
+          style={{ height: "65vh" }}
+        >
           {/* Toolbar */}
           <div className="p-3 border-b border-[#111] bg-[#0f0f0f] flex items-center justify-between shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider font-mono">JSON Editor</h2>
+              <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider font-mono">
+                JSON Editor
+              </h2>
               {/* Live stats */}
               {jsonContent && (
                 <div className="flex items-center gap-3 text-xs font-mono text-gray-600">
@@ -517,9 +559,14 @@ function AdminRoadmapManager() {
                 className="px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
                 {isParsing ? (
-                  <><span className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Syncing…</>
+                  <>
+                    <span className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />{" "}
+                    Syncing…
+                  </>
                 ) : (
-                  <><Upload size={12} /> Deploy Roadmap</>
+                  <>
+                    <Upload size={12} /> Deploy Roadmap
+                  </>
                 )}
               </button>
             </div>
@@ -540,7 +587,9 @@ function AdminRoadmapManager() {
           {isValidated && !validationError && (
             <div className="bg-green-950/20 border-b border-green-900/30 p-3 px-6 flex items-center gap-3 shrink-0">
               <CheckCircle2 className="text-green-500 shrink-0" size={16} />
-              <p className="text-sm font-medium text-green-400">JSON valid and ready for deployment.</p>
+              <p className="text-sm font-medium text-green-400">
+                JSON valid and ready for deployment.
+              </p>
             </div>
           )}
 

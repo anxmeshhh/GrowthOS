@@ -355,10 +355,23 @@ class TopicDetailView(views.APIView):
             progress.save()
         materials = TopicMaterial.objects.filter(user=request.user, topic=topic)
         
+        has_notes = TopicNote.objects.filter(user=request.user, topic=topic).exclude(content='').exists()
+        has_flashcards = TopicFlashcard.objects.filter(user=request.user, topic=topic).exists()
+        has_passed_quiz = TopicQuiz.objects.filter(user=request.user, topic=topic, score__gte=70).exists()
+        has_feynman = TopicFeynman.objects.filter(user=request.user, topic=topic).exists()
+        has_project = VerifiedProject.objects.filter(user=request.user, topic=topic).exists()
+        
         return Response({
             'topic': TopicSerializer(topic).data,
             'progress': TopicProgressSerializer(progress).data,
-            'materials': TopicMaterialSerializer(materials, many=True).data
+            'materials': TopicMaterialSerializer(materials, many=True).data,
+            'mastery_checklist': {
+                'notes': has_notes,
+                'flashcards': has_flashcards,
+                'quiz': has_passed_quiz,
+                'feynman': has_feynman,
+                'project': has_project,
+            }
         })
 
 def _resolve_topic(pk):
@@ -406,7 +419,7 @@ class TopicMaterialUploadView(views.APIView):
 
 import os
 import PyPDF2
-from groq import Groq
+from openai import OpenAI
 import json
 import re
 
@@ -419,7 +432,7 @@ class GeneratePathView(views.APIView):
             return Response({'error': 'Prompt is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             ai_prompt = f"""Generate a sequential learning roadmap based on this request: "{prompt}".
 Return EXACTLY a JSON object with this schema:
 {{
@@ -439,7 +452,7 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
 
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": ai_prompt}],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -478,7 +491,7 @@ class VerifyMaterialView(views.APIView):
         text = text[:8000]
 
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
@@ -490,7 +503,7 @@ class VerifyMaterialView(views.APIView):
                         "content": f"Topic: {material.topic.title}\n\nUser's Submission Text:\n{text}"
                     }
                 ],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -706,9 +719,9 @@ Important Knowledge:
 Your goal is to aggressively motivate the user, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally. If anyone asks who built you or where your code is, proudly tell them about Animesh Gupta and share the GitHub link.
 """
         try:
-            from groq import Groq
+            from openai import OpenAI
             import os
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             
             # Save user message
             ChatMessage.objects.create(user=user, role='user', content=user_message)
@@ -717,13 +730,13 @@ Your goal is to aggressively motivate the user, answer their technical questions
             history = ChatMessage.objects.filter(user=user).order_by('-created_at')[:10]
             history = reversed(history)
             
-            groq_messages = [{"role": "system", "content": system_prompt}]
+            openai_messages = [{"role": "system", "content": system_prompt}]
             for h in history:
-                groq_messages.append({"role": "assistant" if h.role == "ai" else "user", "content": h.content})
+                openai_messages.append({"role": "assistant" if h.role == "ai" else "user", "content": h.content})
 
             chat_completion = client.chat.completions.create(
-                messages=groq_messages,
-                model="llama-3.1-8b-instant",
+                messages=openai_messages,
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.7,
                 max_tokens=250,
             )
@@ -776,7 +789,7 @@ class TopicQuizView(views.APIView):
             return Response({'questions': quiz.questions[:count]})
             
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             
             note = TopicNote.objects.filter(user=request.user, topic=topic).first()
             user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else "\n\n(No custom study notes provided)"
@@ -785,7 +798,7 @@ class TopicQuizView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -848,11 +861,13 @@ class TopicFlashcardView(views.APIView):
             card_id = request.data.get('card_id')
             front = request.data.get('front')
             back = request.data.get('back')
+            quality_rating = request.data.get('quality_rating', 0)
             try:
                 fc = Flashcard.objects.get(id=card_id, user=request.user)
                 if front: fc.front = front
                 if back: fc.back = back
                 fc.is_verified = True
+                fc.quality_rating = int(quality_rating)
                 fc.save()
                 Contribution.objects.create(user=request.user, action_type='flashcard_verified', points=1)
                 return Response({"message": "Card verified"})
@@ -873,7 +888,7 @@ class GenerateFlashcardsView(views.APIView):
         topic = _resolve_topic(topic_id)
         
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             
             note = TopicNote.objects.filter(user=request.user, topic=topic).first()
             user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else ""
@@ -882,7 +897,7 @@ class GenerateFlashcardsView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.4,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -932,11 +947,11 @@ class ProjectIdeasView(views.APIView):
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id)
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             prompt = f"Generate exactly 3 project ideas for a student learning '{topic.title}'. Return ONLY a JSON array where each object has: 'title' (short project name), 'description' (2-3 sentence description of what to build and what skills it demonstrates)."
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -993,7 +1008,7 @@ class ScanRepoView(views.APIView):
             tree_text = "(Could not fetch file tree)"
 
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             prompt = f"""You are evaluating a student's GitHub project for the topic: '{topic.title}'.
 
 Repository: {repo_url}
@@ -1008,7 +1023,7 @@ Reply with EXACTLY this JSON format:
 {{"passed": true/false, "score": integer_0_to_100, "feedback": "your detailed feedback"}}"""
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1242,6 +1257,25 @@ class UserProfileView(views.APIView):
         paths = set(tp.topic.path for tp in completed_topics_qs if tp.topic.path)
         path_list = [{"id": p.id, "title": p.title, "slug": p.slug} for p in paths]
 
+        # Mastery Distribution
+        from .serializers import compute_topic_mastery
+        mastery_distribution = {
+            'needs_review': 0, # 0-39
+            'familiar': 0,     # 40-69
+            'proficient': 0,   # 70-89
+            'mastered': 0      # 90-100
+        }
+        for tp in completed_topics_qs:
+            score = compute_topic_mastery(user, tp.topic)
+            if score >= 90:
+                mastery_distribution['mastered'] += 1
+            elif score >= 70:
+                mastery_distribution['proficient'] += 1
+            elif score >= 40:
+                mastery_distribution['familiar'] += 1
+            else:
+                mastery_distribution['needs_review'] += 1
+
         # Achievement badges
         from .helpers import get_user_badges
         badges = get_user_badges(user)
@@ -1311,6 +1345,7 @@ class UserProfileView(views.APIView):
             "flashcards_mastered": flashcards_mastered,
             "xp_breakdown": xp_breakdown,
             "completed_paths": path_list,
+            "mastery_distribution": mastery_distribution,
             "badges": badges,
             "github_username": profile.github_username,
             "has_github_workspace_access": bool(profile.github_access_token),
@@ -2791,7 +2826,7 @@ class TopicFeynmanView(views.APIView):
         
         # AI Mode
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
             
             prompt = f"""
 I am using the Feynman Technique to learn. I am trying to explain the concept of '{concept}' to a 5-year-old.
@@ -2813,7 +2848,7 @@ Return ONLY a JSON object with this exact structure:
 """
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="nvidia/llama-3.1-nemotron-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -2948,3 +2983,69 @@ class ExploreRoadmapsView(views.APIView):
                 'topics': topics_data
             })
         return Response({'public_roadmaps': data})
+
+class TodayBriefingView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import Flashcard, TopicProgress, LearningPath, Topic, UserProfile
+        from django.utils import timezone
+        import datetime
+
+        today = timezone.now().date()
+        
+        # 1. Due Cards & Topics
+        due_cards_qs = Flashcard.objects.filter(user=request.user, next_review_date__lte=today)
+        due_cards_count = due_cards_qs.count()
+        
+        due_topic_ids = list(due_cards_qs.values_list('topic_id', flat=True).distinct())
+        due_topics = []
+        for tid in due_topic_ids:
+            t = Topic.objects.filter(id=tid).first()
+            if t:
+                due_topics.append({"id": t.id, "title": t.title, "slug": t.slug})
+
+        # 2. Last Session Topic
+        last_progress = TopicProgress.objects.filter(user=request.user, status='in_progress').order_by('-started_at').first()
+        last_session_topic = None
+        if last_progress:
+            last_session_topic = {
+                "id": last_progress.topic.id,
+                "title": last_progress.topic.title,
+                "slug": last_progress.topic.slug
+            }
+
+        # 3. Next Topic in active path
+        active_path = LearningPath.objects.filter(topics__topicprogress__user=request.user).distinct().first()
+        next_topic = None
+        if active_path:
+            all_topics = active_path.topics.all().order_by('order')
+            for t in all_topics:
+                prog = TopicProgress.objects.filter(user=request.user, topic=t).first()
+                if not prog or prog.status == 'locked':
+                    next_topic = {"id": t.id, "title": t.title, "slug": t.slug}
+                    break
+
+        # 4. Fading Topics
+        fourteen_days_ago = timezone.now() - datetime.timedelta(days=14)
+        fading_qs = TopicProgress.objects.filter(
+            user=request.user, 
+            status='completed', 
+            completed_at__lte=fourteen_days_ago
+        )
+        fading_topics = []
+        for f in fading_qs:
+            fading_topics.append({"id": f.topic.id, "title": f.topic.title, "slug": f.topic.slug})
+
+        # 5. Streak
+        prof = UserProfile.objects.filter(user=request.user).first()
+        streak = prof.streak if prof else 0
+
+        return Response({
+            "due_cards": due_cards_count,
+            "due_topics": due_topics,
+            "next_topic": next_topic,
+            "fading_topics": fading_topics,
+            "streak": streak,
+            "last_session_topic": last_session_topic
+        })

@@ -31,9 +31,11 @@ class TopicSerializer(serializers.ModelSerializer):
     has_submitted_work = serializers.SerializerMethodField()
     path_github_repo_name = serializers.CharField(source='path.github_repo_name', read_only=True)
 
+    mastery_score = serializers.SerializerMethodField()
+
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project', 'has_submitted_work', 'path_github_repo_name']
+        fields = ['id', 'title', 'slug', 'summary', 'order', 'node_kind', 'created_by', 'user_progress', 'dependencies', 'verified_project', 'has_submitted_work', 'path_github_repo_name', 'mastery_score']
 
     def get_user_progress(self, obj):
         if hasattr(obj, 'user_progress_cache'):
@@ -74,6 +76,52 @@ class TopicSerializer(serializers.ModelSerializer):
             from .models import TopicMaterial
             return TopicMaterial.objects.filter(user=request.user, topic=obj).exists()
         return False
+
+    def get_mastery_score(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return 0
+        return compute_topic_mastery(request.user, obj)
+
+def compute_topic_mastery(user, topic):
+    from .models import TopicQuiz, TopicFeynman, Flashcard, TopicProgress
+    from django.db.models import Avg
+    from django.utils import timezone
+
+    # 1. Quiz Score (40% weight)
+    quiz_avg = TopicQuiz.objects.filter(topic=topic, user=user).aggregate(Avg('score'))['score__avg'] or 0
+    
+    # 2. Feynman Score (30% weight)
+    feynman_avg = TopicFeynman.objects.filter(topic=topic, user=user).aggregate(Avg('score'))['score__avg'] or 0
+    
+    # 3. Flashcard Retention (20% weight)
+    cards = Flashcard.objects.filter(topic_id=topic.id, user=user)
+    total_cards = cards.count()
+    if total_cards > 0:
+        not_due = cards.filter(next_review_date__gt=timezone.now().date()).count()
+        retention = (not_due / total_cards) * 100
+    else:
+        retention = 0
+        
+    # 4. Base Score (Max 90%)
+    raw_score = (quiz_avg * 0.4) + (feynman_avg * 0.3) + (retention * 0.2)
+
+    # 5. Decay Curve (-2 points per day after 7 days since completion)
+    decay = 0
+    progress = TopicProgress.objects.filter(topic=topic, user=user, status='completed').first()
+    if progress and progress.completed_at:
+        days_since = (timezone.now() - progress.completed_at).days
+        if days_since > 7:
+            decay = (days_since - 7) * 2
+
+    final = round(raw_score - decay)
+    if progress and final < 10:
+        # give at least 10 points if they marked it complete
+        final = 10
+        
+    return max(0, min(100, final))
+
+
         
 class LearningPathSerializer(serializers.ModelSerializer):
     topics = TopicSerializer(many=True, read_only=True)

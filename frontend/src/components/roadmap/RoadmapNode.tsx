@@ -17,6 +17,7 @@ export type RoadmapNodeData = {
   onToggleExpand?: (nodeId: string) => void;
   isTreeMode?: boolean;
   aiScore?: number;
+  masteryScore?: number;
 };
 
 export type NodeKind = "topic" | "milestone" | "optional" | "note" | "callout";
@@ -146,7 +147,20 @@ export const RoadmapNode = memo(function RoadmapNode({
       >
         <span className="shrink-0 w-[14px] flex items-center justify-center">
           {isCompleted ? (
-            <CheckCircle2 size={12} style={{ color: s.dot }} strokeWidth={2.5} />
+            data.masteryScore !== undefined ? (
+              <svg width="14" height="14" viewBox="0 0 14 14" className="transform -rotate-90">
+                <title>Mastery: {data.masteryScore}%</title>
+                <circle cx="7" cy="7" r="5.5" fill="transparent" stroke={s.bgHov} strokeWidth="2" />
+                <circle
+                  cx="7" cy="7" r="5.5" fill="transparent"
+                  stroke={s.dot} strokeWidth="2" strokeLinecap="round"
+                  strokeDasharray={`${(data.masteryScore / 100) * 34.55} 34.55`}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+            ) : (
+              <CheckCircle2 size={12} style={{ color: s.dot }} strokeWidth={2.5} />
+            )
           ) : isInProgress ? (
             <span
               className="w-[10px] h-[10px] rounded-full animate-pulse"

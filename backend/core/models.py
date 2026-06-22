@@ -243,6 +243,7 @@ class TopicFlashcard(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='flashcards')
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='flashcards')
     cards = models.JSONField(default=list)
+    quality_rating = models.IntegerField(default=0, help_text="0=unrated, 1=good, -1=bad")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -303,6 +304,7 @@ class Flashcard(models.Model):
     back = models.TextField()
     
     is_verified = models.BooleanField(default=False)
+    quality_rating = models.IntegerField(default=0, help_text="0=unrated, 1=good, -1=bad")
     
     ease_factor = models.FloatField(default=2.5)
     interval_days = models.IntegerField(default=0)

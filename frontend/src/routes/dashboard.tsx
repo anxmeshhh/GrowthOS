@@ -12,6 +12,9 @@ import {
   RotateCcw,
   Sparkles,
   Hexagon,
+  Brain,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { PageShell } from "@/components/growth-ui";
 import { useGrowth, computeStreak } from "@/lib/growth-store";
@@ -157,6 +160,15 @@ function DashboardPage() {
     queryFn: async () => {
       const r = await apiFetch("/profile/");
       if (!r.ok) throw 0;
+      return r.json();
+    },
+  });
+
+  const { data: briefing } = useQuery({
+    queryKey: ["today"],
+    queryFn: async () => {
+      const r = await apiFetch("/today/");
+      if (!r.ok) return null;
       return r.json();
     },
   });
@@ -315,6 +327,93 @@ function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* ── Today's Briefing ── */}
+        {briefing && (
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Focus Suggestion */}
+            <Panel className="p-5 flex flex-col justify-between min-h-[140px] md:col-span-2 relative overflow-hidden bg-gradient-to-br from-[#0c1a0f] to-[#050505] border-[#162213]">
+              <div
+                className="pointer-events-none absolute rounded-full blur-3xl"
+                style={{
+                  width: 300,
+                  height: 300,
+                  background: "#22c55e",
+                  opacity: 0.05,
+                  top: -100,
+                  right: -50,
+                }}
+              />
+              <div className="relative z-10">
+                <SectionLabel>
+                  <Brain size={12} className="text-[#22c55e]" /> Today's Briefing
+                </SectionLabel>
+                <div className="mt-4">
+                  {briefing.fading_topics?.length > 0 ? (
+                    <div className="text-[17px] text-[#eee] font-medium leading-snug">
+                      Knowledge is fading. You have <span className="text-[#ef4444]">{briefing.fading_topics.length}</span> topics decaying. Review them to restore your mastery score.
+                    </div>
+                  ) : briefing.due_cards > 0 ? (
+                    <div className="text-[17px] text-[#eee] font-medium leading-snug">
+                      You have <span className="text-[#22c55e]">{briefing.due_cards}</span> flashcards due across {briefing.due_topics?.length || 0} topics. Clear your review debt to maintain retention.
+                    </div>
+                  ) : briefing.last_session_topic ? (
+                    <div className="text-[17px] text-[#eee] font-medium leading-snug">
+                      Resume your mission on <span className="text-[#fff] font-bold">"{briefing.last_session_topic.title}"</span>. You're making good progress.
+                    </div>
+                  ) : briefing.next_topic ? (
+                    <div className="text-[17px] text-[#eee] font-medium leading-snug">
+                      Your next objective is <span className="text-[#fff] font-bold">"{briefing.next_topic.title}"</span>. Ready to begin?
+                    </div>
+                  ) : (
+                    <div className="text-[17px] text-[#eee] font-medium leading-snug">
+                      All clear! No due reviews. Start a new topic when you are ready.
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 flex gap-3 relative z-10">
+                {briefing.due_cards > 0 && (
+                  <Link to="/review" className="engage-btn text-xs px-4 py-1.5">
+                    Start Review Session <ArrowRight size={12} strokeWidth={2} />
+                  </Link>
+                )}
+                {briefing.last_session_topic && briefing.due_cards === 0 && (
+                  <Link to="/topic/$topicId" params={{ topicId: String(briefing.last_session_topic.id) }} className="engage-btn text-xs px-4 py-1.5 bg-[#0e0e0e] border-[#1e1e1e] text-[#eee]">
+                    Resume Topic <ArrowRight size={12} strokeWidth={2} />
+                  </Link>
+                )}
+              </div>
+            </Panel>
+
+            {/* Review Debt Indicator */}
+            <Panel className="p-5 flex flex-col justify-center items-center text-center relative overflow-hidden bg-gradient-to-b from-[#1a0a0a] to-[#050505] border-[#2a1111]">
+              <div
+                className="pointer-events-none absolute rounded-full blur-2xl"
+                style={{
+                  width: 150,
+                  height: 150,
+                  background: "#ef4444",
+                  opacity: 0.08,
+                  bottom: -50,
+                  right: -50,
+                }}
+              />
+              <Clock size={24} className={briefing.due_cards > 0 ? "text-[#ef4444] mb-3" : "text-[#1e1e1e] mb-3"} />
+              <div className="text-3xl font-mono tabular-nums leading-none text-[#efefef]">
+                {briefing.due_cards}
+              </div>
+              <div className="text-xs font-mono text-[#ef4444] uppercase tracking-[0.1em] mt-2">
+                Cards Due Today
+              </div>
+              {briefing.due_topics?.length > 0 && (
+                <div className="text-[10px] text-[#777] uppercase tracking-widest mt-3">
+                  Across {briefing.due_topics.length} topics
+                </div>
+              )}
+            </Panel>
+          </div>
+        )}
 
         {/* ── Bento grid ── */}
         <div className="grid grid-cols-12 gap-3 auto-rows-[minmax(130px,auto)]">

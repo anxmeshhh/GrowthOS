@@ -28,6 +28,7 @@ import {
   Sparkles,
   Headphones,
   MessageSquare,
+  Circle,
 } from "lucide-react";
 import { PageShell, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +56,62 @@ function stripGeneratedAttachmentMarkdown(value: string) {
       return !/\/media\/(note_documents|screenshots)\//.test(match[1]);
     })
     .join("\n\n");
+}
+
+/* ─────────────────────────────────────────────
+   Mastery Checklist Component
+───────────────────────────────────────────── */
+function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPending }: any) {
+  const criteria = [
+    { label: "Notes written", done: checklist?.notes },
+    { label: "Flashcards generated", done: checklist?.flashcards },
+    { label: "Quiz passed (≥70%)", done: checklist?.quiz },
+    { label: "Feynman completed", done: checklist?.feynman },
+    { label: "Project built", done: checklist?.project, optional: true },
+  ];
+
+  const metCount = criteria.filter((c) => !c.optional && c.done).length;
+  const reqCount = criteria.filter((c) => !c.optional).length;
+  const isReady = metCount >= 3;
+
+  return (
+    <div className="bg-[#0c0c0c] border-b border-[#181818] px-4 py-2 sm:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="text-xs uppercase tracking-[0.15em] font-mono text-[#fff] flex items-center gap-2 mb-1.5">
+            <CheckCircle2 size={12} className="text-[#22c55e]" />
+            Mastery Criteria
+            <span className="bg-[#1e1e1e] text-[#eee] px-1.5 py-0.5 rounded text-[9px] border border-[#2a2a2a]">
+              {metCount}/{reqCount} Core Met
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            {criteria.map((c, i) => (
+              <div key={i} className={`flex items-center gap-1.5 text-xs font-mono ${c.done ? "text-[#22c55e]" : "text-[#666]"}`}>
+                {c.done ? <CheckCircle2 size={11} /> : <Circle size={11} />}
+                {c.label}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <button
+          onClick={onMarkComplete}
+          disabled={isCompleted || isPending}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${
+            isCompleted
+              ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
+              : isReady
+              ? "border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20"
+              : "border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20"
+          }`}
+        >
+          {isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={14} />}
+          <span>{isCompleted ? "Completed" : isReady ? "Mark Complete" : "Mark Complete Anyway"}</span>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /* ─────────────────────────────────────────────
@@ -245,12 +302,18 @@ function TopicWorkspace() {
     }
   };
 
-  const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "notes", label: "Notes", icon: <BookOpen size={13} /> },
-    { id: "flash", label: "Flashcards", icon: <Layers size={13} /> },
-    { id: "quiz", label: "Quiz", icon: <Zap size={13} /> },
-    { id: "feynman", label: "Feynman", icon: <MessageSquare size={13} /> },
-    { id: "build", label: "Build", icon: <Hammer size={13} /> },
+  const checklist = data.mastery_checklist || {};
+  const isFlashUnlocked = checklist.notes;
+  const isQuizUnlocked = isFlashUnlocked && checklist.flashcards;
+  const isFeynmanUnlocked = isQuizUnlocked && checklist.quiz;
+  const isBuildUnlocked = isFeynmanUnlocked && checklist.feynman;
+
+  const TABS: { id: Tab; label: string; icon: React.ReactNode; done: boolean; locked: boolean }[] = [
+    { id: "notes", label: "Notes", icon: <BookOpen size={16} />, done: checklist.notes, locked: false },
+    { id: "flash", label: "Flashcards", icon: <Layers size={16} />, done: checklist.flashcards, locked: !isFlashUnlocked },
+    { id: "quiz", label: "Quiz", icon: <Zap size={16} />, done: checklist.quiz, locked: !isQuizUnlocked },
+    { id: "feynman", label: "Feynman", icon: <MessageSquare size={16} />, done: checklist.feynman, locked: !isFeynmanUnlocked },
+    { id: "build", label: "Build", icon: <Hammer size={16} />, done: checklist.project, locked: !isBuildUnlocked },
   ];
 
   return (
@@ -271,8 +334,19 @@ function TopicWorkspace() {
         <div className="w-px h-5 bg-[#1e1e1e]" />
 
         <div className="min-w-0 flex-1">
-          <div className="text-xs uppercase tracking-[0.2em] font-mono text-[#fff] mb-0.5">
-            Workspace
+          <div className="flex items-center gap-2 mb-0.5">
+            <div className="text-xs uppercase tracking-[0.2em] font-mono text-[#fff]">
+              Workspace
+            </div>
+            {topic.mastery_score !== undefined && (
+              <div className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded border ${
+                topic.mastery_score >= 70 ? "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20" :
+                topic.mastery_score >= 40 ? "bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/20" :
+                "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20"
+              }`}>
+                Mastery: {topic.mastery_score}/100
+              </div>
+            )}
           </div>
           <div className="text-lg font-semibold tracking-[-0.01em] truncate text-[#e8e8e8]">
             {topic.title}
@@ -320,22 +394,16 @@ function TopicWorkspace() {
             )}
             <span className="hidden sm:inline">Commit</span>
           </button>
-
-          {/* Mark done */}
-          <button
-            onClick={() => markDoneMutation.mutate()}
-            disabled={isCompleted || markDoneMutation.isPending}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-lg font-medium transition-all border ${
-              isCompleted
-                ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
-                : "border-[#2a2a2a] bg-[#111] text-[#eee] hover:border-[#22c55e]/40 hover:text-[#22c55e] hover:bg-[#22c55e]/5"
-            }`}
-          >
-            <CheckCircle2 size={12} />
-            <span className="hidden sm:inline">{isCompleted ? "Completed" : "Mark Done"}</span>
-          </button>
         </div>
       </header>
+
+      <MasteryChecklist 
+        topic={topic} 
+        checklist={data.mastery_checklist} 
+        onMarkComplete={() => markDoneMutation.mutate()} 
+        isCompleted={isCompleted}
+        isPending={markDoneMutation.isPending}
+      />
 
       {/* ── Body ── */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
@@ -492,29 +560,51 @@ function TopicWorkspace() {
           </div>
         )}
 
-        {/* ════ RIGHT: Tabs ════ */}
-        <section className="flex-1 flex flex-col bg-[#080808] min-h-0 overflow-hidden">
-          {/* Tab bar */}
-          <div className="shrink-0 flex border-b border-[#131313] px-2 pt-1">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`relative flex items-center gap-1.5 px-4 py-2.5 text-lg font-medium transition-all whitespace-nowrap ${
-                  tab === t.id ? "text-[#e8e8e8]" : "text-[#eee] hover:text-[#eee]"
-                }`}
-              >
-                {t.icon}
-                {t.label}
-                {tab === t.id && (
-                  <span className="absolute bottom-0 left-2 right-2 h-px bg-[#22c55e] rounded-full" />
-                )}
-              </button>
-            ))}
+        {/* ════ RIGHT: Workspace ════ */}
+        <section className="flex-1 flex bg-[#080808] min-h-0 overflow-hidden">
+          {/* Vertical Stepper Sidebar */}
+          <div className="w-16 sm:w-56 shrink-0 border-r border-[#131313] bg-[#0a0a0a] flex flex-col py-4 px-2 sm:px-3 gap-1">
+            <div className="hidden sm:block text-[10px] font-mono text-[#555] uppercase tracking-widest px-3 mb-2">
+              Learning Path
+            </div>
+            {TABS.map((t, idx) => {
+              const isActive = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => !t.locked && setTab(t.id)}
+                  disabled={t.locked}
+                  className={`relative flex items-center gap-3 sm:px-3 py-3 sm:py-2.5 rounded-lg text-left transition-all ${
+                    t.locked 
+                      ? "opacity-40 cursor-not-allowed" 
+                      : isActive 
+                        ? "bg-[#22c55e]/10 text-[#22c55e]" 
+                        : "text-[#888] hover:bg-[#111] hover:text-[#eee]"
+                  }`}
+                >
+                  <div className="flex-1 flex items-center justify-center sm:justify-start gap-3">
+                    <div className="relative shrink-0">
+                      {t.icon}
+                      {t.done && (
+                        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#0a0a0a] rounded-full flex items-center justify-center">
+                          <CheckCircle2 size={10} className="text-[#22c55e]" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="hidden sm:block font-medium text-[15px]">{t.label}</span>
+                  </div>
+                  
+                  {/* Connection line */}
+                  {idx < TABS.length - 1 && (
+                    <div className="hidden sm:block absolute left-[21px] top-[38px] w-px h-4 bg-[#222]" />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Tab content */}
-          <div className="flex-1 overflow-y-auto min-h-0 p-5 scrollbar-thin">
+          {/* Stepper Content */}
+          <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-8 scrollbar-thin">
             {tab === "notes" && <StudyNotesTab topicId={topic.id} />}
             {tab === "flash" && <FlashcardsTab topicId={topic.id} />}
             {tab === "quiz" && <QuizTab topicId={topic.id} />}
@@ -1116,8 +1206,8 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
     }
   }, [pendingCards.length]);
 
-  const handleVerify = (cardId: number, front: string, back: string) => {
-    actionMutation.mutate({ action: 'verify', payload: { card_id: cardId, front, back } });
+  const handleVerify = (cardId: number, front: string, back: string, rating: number = 0) => {
+    actionMutation.mutate({ action: 'verify', payload: { card_id: cardId, front, back, quality_rating: rating } });
   };
 
   const handleDelete = (cardId: number) => {
@@ -1389,6 +1479,8 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
 function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) {
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
+  const [rating, setRating] = useState<number>(0);
+
   return (
     <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
       <div className="p-4 space-y-3">
@@ -1409,18 +1501,42 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
             className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-lg text-[#eee] outline-none focus:border-[#2a2a2a] resize-y min-h-[56px] transition-colors"
           />
         </div>
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-2 items-center">
+          <div className="flex gap-1.5 mr-auto">
+            <button
+              onClick={() => setRating(1)}
+              className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
+                rating === 1 
+                  ? 'bg-[#22c55e]/20 border-[#22c55e]/40 text-[#22c55e]' 
+                  : 'bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]'
+              }`}
+              title="Good AI Generation"
+            >
+              👍
+            </button>
+            <button
+              onClick={() => setRating(-1)}
+              className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
+                rating === -1 
+                  ? 'bg-[#ef4444]/20 border-[#ef4444]/40 text-[#ef4444]' 
+                  : 'bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]'
+              }`}
+              title="Poor AI Generation"
+            >
+              👎
+            </button>
+          </div>
           <button
-            onClick={() => handleVerify(card.id, front, back)}
+            onClick={() => handleVerify(card.id, front, back, rating)}
             disabled={actionMutation.isPending}
-            className="flex-1 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/20 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 max-w-[220px] py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-sm font-medium hover:bg-[#22c55e]/20 transition-colors flex items-center justify-center gap-2"
           >
-            <CheckCircle2 size={16} /> Approve & Add (+1 XP)
+            <CheckCircle2 size={16} /> Approve (+1 XP)
           </button>
           <button
             onClick={() => handleDelete(card.id)}
             disabled={actionMutation.isPending}
-            className="px-4 py-2 rounded-lg bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/20 text-lg font-medium hover:bg-[#ef4444]/20 transition-colors"
+            className="px-4 py-2 rounded-lg bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/20 hover:bg-[#ef4444]/20 transition-colors"
           >
             <Trash2 size={16} />
           </button>
