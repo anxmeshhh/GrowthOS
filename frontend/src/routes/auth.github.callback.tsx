@@ -35,6 +35,7 @@ function GithubCallbackPage() {
     }
 
     const state = urlParams.get("state");
+    const intent = urlParams.get("intent") || "login";
 
     // Choose backend endpoint based on state
     const isConnect = state === "connect_workspace";
@@ -49,7 +50,7 @@ function GithubCallbackPage() {
         const res = await apiFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, redirect_uri: redirectUri }),
+          body: JSON.stringify({ code, redirect_uri: redirectUri, intent }),
         });
 
         if (res.ok) {

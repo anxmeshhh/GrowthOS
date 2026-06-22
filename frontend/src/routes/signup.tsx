@@ -206,7 +206,7 @@ function SignupPage() {
 
   const handleGithubSignup = () => {
     const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/auth/github/callback?intent=signup`;
+    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/github/callback?intent=signup`);
     window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email,repo,gist`;
   };
 
