@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     RegisterView, LearningPathViewSet, BookmarkViewSet, GeneratePathView,
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
-    VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView, GenerateFlashcardsView,
+    VerifyMaterialView, HeatmapView, RecentActivityView, DailyLoginView, ChatAssistantView, TopicNoteView, TopicQuizView, TopicFlashcardView, GenerateFlashcardsView, PomodoroView,
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView, TopicFeynmanView,
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
@@ -34,6 +34,7 @@ urlpatterns = [
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),
     
     # Dashboard Endpoints
+    path('pomodoro/', PomodoroView.as_view(), name='pomodoro'),
     path('heatmap/', HeatmapView.as_view(), name='heatmap'),
     path('activity/', RecentActivityView.as_view(), name='recent_activity'),
     path('activity/revive-streak/', ReviveStreakView.as_view(), name='revive_streak'),

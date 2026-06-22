@@ -149,7 +149,7 @@ function ProgressPage() {
       return (await r.json()).map((d: any) => ({
         date: d.date,
         count: d.count,
-        level: d.count === 0 ? 0 : d.count <= 2 ? 1 : d.count <= 4 ? 2 : d.count <= 6 ? 3 : 4,
+        level: d.count === 0 ? 0 : d.count < 25 ? 1 : d.count < 75 ? 2 : d.count < 150 ? 3 : 4,
       }));
     },
   });

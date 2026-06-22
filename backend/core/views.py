@@ -577,6 +577,7 @@ class RecentActivityView(views.APIView):
             'path_cloned': 'Cloned a learning path',
             'streak_revived': 'Revived a lost streak',
             'quiz_chain': 'Quiz chain bonus',
+            'pomodoro_completed': 'Completed a Focus Session',
         }
         for a in acts:
             label = label_map.get(a.action_type, a.action_type.replace('_', ' ').title())
@@ -589,6 +590,31 @@ class RecentActivityView(views.APIView):
                 "date": a.created_at.isoformat()
             })
         return Response(data)
+
+class PomodoroView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        duration = int(request.data.get('duration_minutes', 25))
+        
+        # Log the session
+        from .models import PomodoroSession
+        session = PomodoroSession.objects.create(
+            user=request.user,
+            duration_minutes=duration
+        )
+        
+        # Add to contribution engine (1 min = 1 XP)
+        Contribution.objects.create(
+            user=request.user,
+            action_type='pomodoro_completed',
+            points=duration
+        )
+        
+        return Response({
+            "message": f"Pomodoro completed! Earned {duration} XP.",
+            "session_id": session.id
+        })
 
 class DailyLoginView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -783,34 +809,62 @@ class TopicFlashcardView(views.APIView):
 
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id)
-        flashcard = TopicFlashcard.objects.filter(user=request.user, topic=topic).first()
-        if flashcard:
-            return Response({'flashcards': flashcard.cards})
-        return Response({'flashcards': []})
+        from .models import Flashcard
+        from django.utils import timezone
+        
+        cards = Flashcard.objects.filter(user=request.user, topic=topic)
+        pending = cards.filter(is_verified=False).values('id', 'front', 'back')
+        active = cards.filter(is_verified=True).values('id', 'front', 'back', 'ease_factor', 'interval_days', 'next_review_date')
+        
+        today = timezone.now().date()
+        due = [c for c in active if c['next_review_date'] <= today]
+        
+        return Response({
+            'pending': list(pending),
+            'active': list(active),
+            'due_count': len(due)
+        })
 
     def post(self, request, topic_id):
         topic = _resolve_topic(topic_id)
-        cards = request.data.get('cards', [])
+        from .models import Flashcard
         
-        # Simple validation
-        valid_cards = []
-        for c in cards:
-            if isinstance(c, dict) and 'front' in c and 'back' in c:
-                valid_cards.append({
-                    'front': c['front'], 
-                    'back': c['back'],
-                    'next_review': c.get('next_review', None),
-                    'interval': c.get('interval', 0),
-                    'ease': c.get('ease', 2.5),
-                    'repetitions': c.get('repetitions', 0)
-                })
+        action = request.data.get('action')
+        
+        if action == 'create_manual':
+            # Create a fully verified card manually
+            front = request.data.get('front')
+            back = request.data.get('back')
+            if front and back:
+                fc = Flashcard.objects.create(
+                    user=request.user, topic=topic,
+                    front=front, back=back, is_verified=True
+                )
+                Contribution.objects.create(user=request.user, action_type='flashcard_created_manually', points=1)
+                return Response({"message": "Card created", "id": fc.id})
                 
-        flashcard, created = TopicFlashcard.objects.update_or_create(
-            user=request.user, topic=topic,
-            defaults={'cards': valid_cards}
-        )
-        Contribution.objects.create(user=request.user, action_type='flashcards_generated', points=1)
-        return Response({'flashcards': flashcard.cards})
+        elif action == 'verify':
+            # Approve a pending AI card
+            card_id = request.data.get('card_id')
+            front = request.data.get('front')
+            back = request.data.get('back')
+            try:
+                fc = Flashcard.objects.get(id=card_id, user=request.user)
+                if front: fc.front = front
+                if back: fc.back = back
+                fc.is_verified = True
+                fc.save()
+                Contribution.objects.create(user=request.user, action_type='flashcard_verified', points=1)
+                return Response({"message": "Card verified"})
+            except Flashcard.DoesNotExist:
+                return Response({"error": "Card not found"}, status=404)
+                
+        elif action == 'delete':
+            card_id = request.data.get('card_id')
+            Flashcard.objects.filter(id=card_id, user=request.user).delete()
+            return Response({"message": "Card deleted"})
+
+        return Response({"error": "Invalid action"}, status=400)
 
 class GenerateFlashcardsView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -840,24 +894,24 @@ class GenerateFlashcardsView(views.APIView):
             else:
                 raw_cards = json.loads(response_content)
                 
-            from django.utils import timezone
-            now_iso = timezone.now().isoformat()
+            from .models import Flashcard
             
-            cards = []
+            created_cards = []
             for c in raw_cards:
-                cards.append({
-                    'front': c.get('front', ''),
-                    'back': c.get('back', ''),
-                    'next_review': now_iso,
-                    'interval': 0,
-                    'ease': 2.5,
-                    'repetitions': 0
-                })
+                fc = Flashcard(
+                    user=request.user,
+                    topic=topic,
+                    front=c.get('front', ''),
+                    back=c.get('back', ''),
+                    is_verified=False
+                )
+                created_cards.append(fc)
                 
-            flashcard, created = TopicFlashcard.objects.update_or_create(
-                user=request.user, topic=topic,
-                defaults={'cards': cards}
-            )
+            if created_cards:
+                Flashcard.objects.bulk_create(created_cards)
+                
+            # Fetch all unverified cards for the response
+            unverified_cards = Flashcard.objects.filter(user=request.user, topic=topic, is_verified=False).values('id', 'front', 'back')
             
             today = timezone.now().date()
             already_awarded = Contribution.objects.filter(
@@ -868,7 +922,7 @@ class GenerateFlashcardsView(views.APIView):
             if not already_awarded:
                 Contribution.objects.create(user=request.user, action_type='flashcards_generated', points=1)
                 
-            return Response({'flashcards': flashcard.cards})
+            return Response({'flashcards': list(unverified_cards)})
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
@@ -2820,45 +2874,61 @@ class GlobalReviewQueueView(views.APIView):
 
     def get(self, request):
         from django.utils import timezone
-        import dateutil.parser
-
-        user = request.user
-        flashcards = TopicFlashcard.objects.filter(user=user).select_related('topic', 'topic__path')
+        from .models import Flashcard
         
-        now = timezone.now()
-        due_cards = []
+        today = timezone.now().date()
+        due_cards = Flashcard.objects.filter(
+            user=request.user,
+            is_verified=True,
+            next_review_date__lte=today
+        ).select_related('topic', 'topic__path')
+        
+        data = []
+        for c in due_cards:
+            data.append({
+                'id': c.id,
+                'topic_id': c.topic.id,
+                'topic_title': c.topic.title,
+                'path_title': c.topic.path.title if c.topic.path else '',
+                'front': c.front,
+                'back': c.back,
+            })
 
-        for tf in flashcards:
-            if not isinstance(tf.cards, list):
-                continue
-                
-            for idx, c in enumerate(tf.cards):
-                if not isinstance(c, dict):
-                    continue
-                    
-                next_review_str = c.get('next_review')
-                is_due = False
-                
-                if not next_review_str:
-                    is_due = True
-                else:
-                    try:
-                        next_review_date = dateutil.parser.isoparse(next_review_str)
-                        if now >= next_review_date:
-                            is_due = True
-                    except Exception:
-                        is_due = True
-                        
-                if is_due:
-                    due_cards.append({
-                        'topic_id': tf.topic.id,
-                        'topic_title': tf.topic.title,
-                        'path_title': tf.topic.path.title if tf.topic.path else '',
-                        'card_index': idx,
-                        'card': c
-                    })
+        return Response({'due_cards': data})
 
-        return Response({'due_cards': due_cards})
+    def post(self, request):
+        from django.utils import timezone
+        import datetime
+        from .models import Flashcard, Contribution
+        
+        card_id = request.data.get('card_id')
+        grade = request.data.get('grade') # 'hard', 'good', 'easy'
+        
+        try:
+            fc = Flashcard.objects.get(id=card_id, user=request.user)
+            
+            # SM-2 inspired simple logic
+            if grade == 'hard':
+                fc.ease_factor = max(1.3, fc.ease_factor - 0.2)
+                fc.interval_days = max(1, int(fc.interval_days * 0.5))
+            elif grade == 'good':
+                fc.interval_days = max(1, int(fc.interval_days * fc.ease_factor))
+            elif grade == 'easy':
+                fc.ease_factor += 0.15
+                fc.interval_days = max(2, int(fc.interval_days * fc.ease_factor * 1.3))
+            
+            if fc.interval_days == 0:
+                fc.interval_days = 1
+                
+            fc.next_review_date = timezone.now().date() + datetime.timedelta(days=fc.interval_days)
+            fc.save()
+            
+            Contribution.objects.create(user=request.user, action_type='flashcards_reviewed', points=1)
+            
+            return Response({"message": "Grade saved", "next_review": fc.next_review_date})
+            
+        except Flashcard.DoesNotExist:
+            return Response({"error": "Card not found"}, status=404)
 
 class ExploreRoadmapsView(views.APIView):
     permission_classes = [IsAuthenticated]

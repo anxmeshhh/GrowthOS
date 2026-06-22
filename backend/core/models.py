@@ -283,3 +283,35 @@ class TopicFeynman(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.concept} ({self.score}/100)"
+
+class PomodoroSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pomodoros')
+    duration_minutes = models.IntegerField(default=25)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-completed_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.duration_minutes}m ({self.completed_at.strftime('%Y-%m-%d')})"
+
+class Flashcard(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='active_flashcards')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='active_flashcards')
+    
+    front = models.TextField()
+    back = models.TextField()
+    
+    is_verified = models.BooleanField(default=False)
+    
+    ease_factor = models.FloatField(default=2.5)
+    interval_days = models.IntegerField(default=0)
+    next_review_date = models.DateField(auto_now_add=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['next_review_date', 'created_at']
+
+    def __str__(self):
+        return f"Flashcard for {self.topic.title}: {self.front[:20]}..."

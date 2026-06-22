@@ -78,29 +78,12 @@ function GlobalReviewPage() {
   });
 
   const submitGradeMutation = useMutation({
-    mutationFn: async ({ quality }: { quality: number }) => {
-      if (!currentItem || !topicFlashcards) throw new Error("No card selected");
+    mutationFn: async ({ quality }: { quality: string }) => {
+      if (!currentItem) throw new Error("No card selected");
 
-      const { interval, ease, repetitions, next_review } = calculateNextReview(
-        quality,
-        currentItem.card.interval || 0,
-        currentItem.card.ease || 2.5,
-        currentItem.card.repetitions || 0,
-      );
-
-      // Create updated cards array
-      const updatedCards = [...topicFlashcards.flashcards];
-      updatedCards[currentItem.card_index] = {
-        ...updatedCards[currentItem.card_index],
-        interval,
-        ease,
-        repetitions,
-        next_review,
-      };
-
-      const res = await apiFetch(`/topics/${currentItem.topic_id}/flashcards/`, {
+      const res = await apiFetch(`/flashcards/review-queue/`, {
         method: "POST",
-        body: JSON.stringify({ cards: updatedCards }),
+        body: JSON.stringify({ card_id: currentItem.id, grade: quality }),
       });
 
       if (!res.ok) throw new Error("Failed to save progress");
@@ -126,10 +109,10 @@ function GlobalReviewPage() {
         e.preventDefault();
         if (!flipped) setFlipped(true);
       } else if (flipped && !submitGradeMutation.isPending) {
-        if (e.key === "1") submitGradeMutation.mutate({ quality: 0 });
-        if (e.key === "2") submitGradeMutation.mutate({ quality: 3 });
-        if (e.key === "3") submitGradeMutation.mutate({ quality: 4 });
-        if (e.key === "4") submitGradeMutation.mutate({ quality: 5 });
+        if (e.key === "1") submitGradeMutation.mutate({ quality: 'hard' }); // Actually 'again' but we'll map it to hard
+        if (e.key === "2") submitGradeMutation.mutate({ quality: 'hard' });
+        if (e.key === "3") submitGradeMutation.mutate({ quality: 'good' });
+        if (e.key === "4") submitGradeMutation.mutate({ quality: 'easy' });
       }
     };
 
@@ -238,7 +221,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 0 });
+                  submitGradeMutation.mutate({ quality: 'hard' });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all disabled:opacity-50"
@@ -250,7 +233,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 3 });
+                  submitGradeMutation.mutate({ quality: 'hard' });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-50"
@@ -262,7 +245,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 4 });
+                  submitGradeMutation.mutate({ quality: 'good' });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all disabled:opacity-50"
@@ -274,7 +257,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 5 });
+                  submitGradeMutation.mutate({ quality: 'easy' });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all disabled:opacity-50"

@@ -1117,17 +1117,12 @@ function QuizTab({ topicId }: { topicId: number }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   Flashcards Tab
-───────────────────────────────────────────── */
 function FlashcardsTab({ topicId }: { topicId: number }) {
   const queryClient = useQueryClient();
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [draftCards, setDraftCards] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<"review" | "browse">("review");
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [isReviewFlipped, setIsReviewFlipped] = useState(false);
+  const [viewMode, setViewMode] = useState<"pending" | "active">("active");
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["flashcards", topicId],
@@ -1139,19 +1134,20 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
     refetchOnWindowFocus: false,
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (cards: { front: string; back: string }[]) => {
+  const actionMutation = useMutation({
+    mutationFn: async ({ action, payload }: { action: string, payload: any }) => {
       const res = await apiFetch(`/topics/${topicId}/flashcards/`, {
         method: "POST",
-        body: JSON.stringify({ cards }),
+        body: JSON.stringify({ action, ...payload }),
       });
-      if (!res.ok) throw new Error("Failed to save flashcards");
+      if (!res.ok) throw new Error("Action failed");
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["flashcards", topicId] });
-      setIsEditing(false);
-      setFlipped({});
+      queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+      queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+      queryClient.invalidateQueries({ queryKey: ["user_profile"] });
     },
   });
 
@@ -1167,79 +1163,27 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
       queryClient.invalidateQueries({ queryKey: ["flashcards", topicId] });
       queryClient.invalidateQueries({ queryKey: ["heatmap"] });
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+      setViewMode("pending");
     },
   });
 
-  const flashcards = data?.flashcards || [];
+  const pendingCards = data?.pending || [];
+  const activeCards = data?.active || [];
+  const dueCount = data?.due_count || 0;
 
-  const now = new Date();
-  const dueCards = flashcards.filter((f: any) => !f.next_review || new Date(f.next_review) <= now);
-  const futureCards = flashcards.filter((f: any) => f.next_review && new Date(f.next_review) > now);
-
+  // Auto-switch to pending if there are pending cards and we just loaded
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      if (viewMode === "review" && dueCards.length > 0) {
-        if (e.code === "Space") {
-          e.preventDefault();
-          if (!isReviewFlipped) setIsReviewFlipped(true);
-        } else if (isReviewFlipped && !saveMutation.isPending) {
-          if (e.key === "1") handleGrade("again");
-          if (e.key === "2") handleGrade("hard");
-          if (e.key === "3") handleGrade("good");
-          if (e.key === "4") handleGrade("easy");
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [viewMode, dueCards.length, isReviewFlipped, saveMutation.isPending]);
-
-  const handleGrade = (grade: "again" | "hard" | "good" | "easy") => {
-    const cardToGrade = dueCards[currentReviewIndex];
-    let { interval = 0, ease = 2.5, repetitions = 0 } = cardToGrade;
-
-    if (grade === "again") {
-      repetitions = 0;
-      interval = 1; // 1 minute
-      ease = Math.max(1.3, ease - 0.2);
-    } else {
-      repetitions += 1;
-      if (grade === "hard") {
-        interval = interval === 0 ? 1440 : interval * 1.2;
-        ease = Math.max(1.3, ease - 0.15);
-      } else if (grade === "good") {
-        interval = interval === 0 ? 1440 * 3 : interval * ease;
-      } else if (grade === "easy") {
-        ease += 0.15;
-        interval = interval === 0 ? 1440 * 4 : interval * ease * 1.3;
-      }
+    if (pendingCards.length > 0 && viewMode === "active") {
+      setViewMode("pending");
     }
+  }, [pendingCards.length]);
 
-    const nextDate = new Date();
-    nextDate.setMinutes(nextDate.getMinutes() + interval);
+  const handleVerify = (cardId: number, front: string, back: string) => {
+    actionMutation.mutate({ action: 'verify', payload: { card_id: cardId, front, back } });
+  };
 
-    const updatedCard = {
-      ...cardToGrade,
-      interval,
-      ease,
-      repetitions,
-      next_review: nextDate.toISOString(),
-    };
-
-    // Update the master list
-    const updatedFlashcards = flashcards.map((f: any) =>
-      f.front === cardToGrade.front && f.back === cardToGrade.back ? updatedCard : f,
-    );
-
-    // Save to backend instantly
-    saveMutation.mutate(updatedFlashcards);
-
-    setIsReviewFlipped(false);
-    // Since the mutation invalidates queries, it might refetch.
-    // We just keep index at 0, because the first due card will change as it gets filtered out.
+  const handleDelete = (cardId: number) => {
+    actionMutation.mutate({ action: 'delete', payload: { card_id: cardId } });
   };
 
   if (isLoading)
@@ -1262,25 +1206,18 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
       </div>
     );
 
-  /* Edit mode */
+  /* Edit mode (Manual Creation) */
   if (isEditing) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="text-lg font-semibold text-[#d0d0d0]">Edit Flashcards</div>
+          <div className="text-lg font-semibold text-[#d0d0d0]">Create Flashcard</div>
           <div className="flex gap-2">
             <button
               onClick={() => setIsEditing(false)}
               className="px-3 py-1.5 text-lg text-[#fff] hover:text-[#fff] transition-colors"
             >
               Cancel
-            </button>
-            <button
-              onClick={() => saveMutation.mutate(draftCards)}
-              disabled={saveMutation.isPending}
-              className="px-3 py-1.5 rounded-md bg-[#22c55e] text-[#030f05] text-lg font-semibold hover:bg-[#16a34a] disabled:opacity-40 transition-all"
-            >
-              {saveMutation.isPending ? "Saving…" : "Save"}
             </button>
           </div>
         </div>
@@ -1289,7 +1226,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
           <div key={i} className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#141414]">
               <span className="text-xs font-mono text-[#fff] uppercase tracking-widest">
-                Card {i + 1}
+                New Card
               </span>
               <button
                 className="text-[#fff] hover:text-[#ef4444] transition-colors"
@@ -1301,7 +1238,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
             <div className="p-4 space-y-3">
               <div>
                 <label className="text-xs text-[#fff] block mb-1 font-mono uppercase tracking-widest">
-                  Front
+                  Front (Question)
                 </label>
                 <input
                   type="text"
@@ -1318,7 +1255,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
               </div>
               <div>
                 <label className="text-xs text-[#fff] block mb-1 font-mono uppercase tracking-widest">
-                  Back
+                  Back (Answer)
                 </label>
                 <textarea
                   value={c.back}
@@ -1332,6 +1269,18 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-lg text-[#d0d0d0] outline-none focus:border-[#2a2a2a] resize-y min-h-[56px] transition-colors"
                 />
               </div>
+              <button
+                onClick={() => {
+                  if (c.front && c.back) {
+                    actionMutation.mutate({ action: 'create_manual', payload: { front: c.front, back: c.back } });
+                    setDraftCards(draftCards.filter((_, idx) => idx !== i));
+                  }
+                }}
+                disabled={!c.front || !c.back || actionMutation.isPending}
+                className="w-full py-2.5 rounded-lg bg-[#22c55e] text-[#030f05] text-lg font-semibold hover:bg-[#16a34a] disabled:opacity-40 transition-all mt-4"
+              >
+                Save & Add
+              </button>
             </div>
           </div>
         ))}
@@ -1340,7 +1289,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
           className="w-full py-3 rounded-xl border border-dashed border-[#1e1e1e] text-lg text-[#eee] hover:border-[#2a2a2a] hover:text-[#fff] transition-all flex items-center justify-center gap-2"
           onClick={() => setDraftCards([...draftCards, { front: "", back: "" }])}
         >
-          <Plus size={13} /> Add card
+          <Plus size={13} /> Add Draft Card
         </button>
       </div>
     );
@@ -1352,39 +1301,42 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
       <div className="flex justify-between items-center mb-5">
         <div className="flex items-center gap-3">
           <div className="text-xs uppercase tracking-widest font-mono text-[#fff]">
-            {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
+            {activeCards.length} Active
           </div>
-          <div className="flex bg-[#111] p-0.5 rounded-lg border border-[#1e1e1e]">
-            <button
-              onClick={() => setViewMode("review")}
-              className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all ${
-                viewMode === "review" ? "bg-[#2a2a2a] text-[#fff]" : "text-[#888] hover:text-[#bbb]"
-              }`}
-            >
-              Review
-            </button>
-            <button
-              onClick={() => setViewMode("browse")}
-              className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all ${
-                viewMode === "browse" ? "bg-[#2a2a2a] text-[#fff]" : "text-[#888] hover:text-[#bbb]"
-              }`}
-            >
-              Browse
-            </button>
-          </div>
+          {pendingCards.length > 0 && (
+             <div className="text-xs uppercase tracking-widest font-mono text-[#f59e0b] bg-[#f59e0b]/10 px-2 py-0.5 rounded border border-[#f59e0b]/20">
+               {pendingCards.length} Pending
+             </div>
+          )}
+          {dueCount > 0 && (
+             <div className="text-xs uppercase tracking-widest font-mono text-[#22c55e] bg-[#22c55e]/10 px-2 py-0.5 rounded border border-[#22c55e]/20">
+               {dueCount} Due
+             </div>
+          )}
         </div>
-        <button
-          onClick={() => {
-            setDraftCards(data?.flashcards || []);
-            setIsEditing(true);
-          }}
-          className="px-3 py-1.5 rounded-md border border-[#1e1e1e] text-lg text-[#fff] hover:border-[#2a2a2a] hover:text-[#fff] transition-all"
-        >
-          Edit
-        </button>
+        <div className="flex bg-[#111] p-0.5 rounded-lg border border-[#1e1e1e]">
+          {pendingCards.length > 0 && (
+            <button
+              onClick={() => setViewMode("pending")}
+              className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all ${
+                viewMode === "pending" ? "bg-[#2a2a2a] text-[#fff]" : "text-[#888] hover:text-[#bbb]"
+              }`}
+            >
+              Verify
+            </button>
+          )}
+          <button
+            onClick={() => setViewMode("active")}
+            className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all ${
+              viewMode === "active" ? "bg-[#2a2a2a] text-[#fff]" : "text-[#888] hover:text-[#bbb]"
+            }`}
+          >
+            Browse
+          </button>
+        </div>
       </div>
 
-      {flashcards.length === 0 ? (
+      {pendingCards.length === 0 && activeCards.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 border border-dashed border-[#141414] rounded-xl">
           <div className="text-lg text-[#fff] mb-4">No flashcards yet</div>
           <div className="flex gap-3">
@@ -1402,7 +1354,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
             </button>
             <button
               onClick={() => {
-                setDraftCards([]);
+                setDraftCards([{ front: "", back: "" }]);
                 setIsEditing(true);
               }}
               className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
@@ -1411,143 +1363,135 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
             </button>
           </div>
         </div>
-      ) : viewMode === "review" ? (
-        <div className="max-w-2xl mx-auto mt-8">
-          {dueCards.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 border border-[#1e1e1e] bg-[#0a0a0a] rounded-xl text-center">
-              <div className="w-16 h-16 rounded-full bg-[#22c55e]/10 flex items-center justify-center mb-4">
-                <CheckCircle2 size={24} className="text-[#22c55e]" />
+      ) : viewMode === "pending" && pendingCards.length > 0 ? (
+        <div className="space-y-4 animate-in fade-in">
+          <div className="bg-[#f59e0b]/5 border border-[#f59e0b]/20 p-4 rounded-xl mb-6">
+            <div className="flex items-start gap-3">
+              <Sparkles className="text-[#f59e0b] mt-1 shrink-0" size={18} />
+              <div>
+                <h4 className="text-[#f59e0b] font-semibold mb-1">Human Verification Required</h4>
+                <p className="text-sm text-[#eee]/80">
+                  AI generated these cards. To ensure quality learning, you must manually read, edit (if necessary), and approve each card before it enters your Spaced Repetition queue. 
+                  <br/><span className="text-[#22c55e] font-mono mt-2 inline-block">+1 XP for every card you verify.</span>
+                </p>
               </div>
-              <div className="text-xl font-semibold text-[#eee] mb-2">You're all caught up!</div>
-              <div className="text-[#888]">No cards are due for review right now.</div>
             </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between text-sm font-mono tracking-widest uppercase text-[#888]">
-                <span>
-                  Due: <span className="text-[#3b82f6] font-bold">{dueCards.length}</span>
-                </span>
-                <span>
-                  Future: <span className="text-[#22c55e]">{futureCards.length}</span>
-                </span>
-              </div>
-
-              <div
-                className="perspective-1000 min-h-[250px] cursor-pointer"
-                onClick={() => !isReviewFlipped && setIsReviewFlipped(true)}
-              >
-                <div
-                  className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isReviewFlipped ? "rotate-y-180" : ""}`}
-                >
-                  {/* Front */}
-                  <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-8 shadow-2xl">
-                    <div className="text-sm uppercase font-mono tracking-widest text-[#888] mb-6">
-                      Question
-                    </div>
-                    <div className="text-2xl font-semibold text-[#e8e8e8] text-center leading-snug">
-                      {dueCards[currentReviewIndex].front}
-                    </div>
-                    {!isReviewFlipped && (
-                      <div className="absolute bottom-6 text-[#555] text-sm animate-pulse font-mono tracking-widest uppercase">
-                        Spacebar to reveal
-                      </div>
-                    )}
-                  </div>
-                  {/* Back */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 border-[#22c55e]/30 bg-[#061008] flex flex-col items-center justify-center p-8 shadow-2xl">
-                    <div className="text-sm uppercase font-mono tracking-widest text-[#22c55e]/60 mb-6">
-                      Answer
-                    </div>
-                    <div className="text-xl text-[#eee] text-center leading-relaxed">
-                      {dueCards[currentReviewIndex].back}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Grading Buttons */}
-              {isReviewFlipped && (
-                <div className="grid grid-cols-4 gap-3 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <button
-                    onClick={() => handleGrade("again")}
-                    className="flex flex-col items-center py-3 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all"
-                  >
-                    <span className="text-[#ef4444] font-bold text-lg mb-1">Again</span>
-                    <span className="text-xs text-[#ef4444]/60 font-mono">&lt; 1m (1)</span>
-                  </button>
-                  <button
-                    onClick={() => handleGrade("hard")}
-                    className="flex flex-col items-center py-3 rounded-lg border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all"
-                  >
-                    <span className="text-[#f59e0b] font-bold text-lg mb-1">Hard</span>
-                    <span className="text-xs text-[#f59e0b]/60 font-mono">
-                      {dueCards[currentReviewIndex].interval === 0 ? "1d" : "1.2x"} (2)
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleGrade("good")}
-                    className="flex flex-col items-center py-3 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all"
-                  >
-                    <span className="text-[#22c55e] font-bold text-lg mb-1">Good</span>
-                    <span className="text-xs text-[#22c55e]/60 font-mono">
-                      {dueCards[currentReviewIndex].interval === 0 ? "3d" : "2.5x"} (3)
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleGrade("easy")}
-                    className="flex flex-col items-center py-3 rounded-lg border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all"
-                  >
-                    <span className="text-[#3b82f6] font-bold text-lg mb-1">Easy</span>
-                    <span className="text-xs text-[#3b82f6]/60 font-mono">
-                      {dueCards[currentReviewIndex].interval === 0 ? "4d" : "3.5x"} (4)
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          </div>
+          
+          {pendingCards.map((c: any) => {
+             return (
+               <PendingCard key={c.id} card={c} handleVerify={handleVerify} handleDelete={handleDelete} actionMutation={actionMutation} />
+             );
+          })}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {flashcards.map((f: any, i: number) => {
-            const isFlipped = flipped[i];
-            return (
-              <div
-                key={i}
-                className="perspective-1000 h-44 cursor-pointer"
-                onClick={() => setFlipped({ ...flipped, [i]: !isFlipped })}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+             <div className="text-[#888] text-sm">Your active deck. Use the Global Review queue to study.</div>
+             <button
+                onClick={() => {
+                  setDraftCards([{ front: "", back: "" }]);
+                  setIsEditing(true);
+                }}
+                className="px-3 py-1.5 rounded-md border border-[#1e1e1e] text-sm text-[#fff] hover:border-[#2a2a2a] hover:text-[#fff] transition-all flex items-center gap-1.5"
               >
+                <Plus size={14} /> Manual Card
+              </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {activeCards.map((f: any, i: number) => {
+              const isFlipped = flipped[i];
+              const isDue = new Date(f.next_review_date) <= new Date();
+              return (
                 <div
-                  className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}
+                  key={f.id}
+                  className="perspective-1000 h-44 cursor-pointer"
+                  onClick={() => setFlipped({ ...flipped, [i]: !isFlipped })}
                 >
-                  {/* Front */}
-                  <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
-                    <div className="flex items-center justify-between w-full absolute top-3 px-3">
-                      <div className="text-xs font-mono text-[#555]">
-                        {!f.next_review || new Date(f.next_review) <= now ? "DUE" : "SCHEDULED"}
+                  <div
+                    className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}
+                  >
+                    {/* Front */}
+                    <div className="absolute inset-0 backface-hidden rounded-xl border border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-5">
+                      <div className="flex items-center justify-between w-full absolute top-3 px-3">
+                        <div className={`text-xs font-mono ${isDue ? 'text-[#f59e0b]' : 'text-[#555]'}`}>
+                          {isDue ? "DUE NOW" : "LEARNED"}
+                        </div>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDelete(f.id); }}
+                            className="text-[#555] hover:text-[#ef4444] transition-colors"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
-                      <RotateCcw size={11} className="text-[#555]" />
+                      <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug mt-2">
+                        {f.front}
+                      </div>
                     </div>
-                    <div className="text-lg font-semibold text-[#e8e8e8] text-center leading-snug mt-2">
-                      {f.front}
+                    {/* Back */}
+                    <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border border-[#22c55e]/15 bg-[#0a0f0a] flex flex-col items-center justify-center p-5">
+                      <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">
+                        Definition
+                      </div>
+                      <div className="text-lg text-[#eee] text-center leading-relaxed">{f.back}</div>
                     </div>
-                  </div>
-                  {/* Back */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border border-[#22c55e]/15 bg-[#0a0f0a] flex flex-col items-center justify-center p-5">
-                    <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e]/40 mb-3">
-                      Definition
-                    </div>
-                    <div className="text-lg text-[#eee] text-center leading-relaxed">{f.back}</div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
   );
 }
+
+function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) {
+  const [front, setFront] = useState(card.front);
+  const [back, setBack] = useState(card.back);
+  return (
+    <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
+      <div className="p-4 space-y-3">
+        <div>
+          <label className="text-xs text-[#888] block mb-1 font-mono uppercase tracking-widest">Question</label>
+          <input
+            type="text"
+            value={front}
+            onChange={(e) => setFront(e.target.value)}
+            className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-lg text-[#e8e8e8] outline-none focus:border-[#2a2a2a] transition-colors"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-[#888] block mb-1 font-mono uppercase tracking-widest">Answer</label>
+          <textarea
+            value={back}
+            onChange={(e) => setBack(e.target.value)}
+            className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2 text-lg text-[#eee] outline-none focus:border-[#2a2a2a] resize-y min-h-[56px] transition-colors"
+          />
+        </div>
+        <div className="flex gap-2 pt-2">
+          <button
+            onClick={() => handleVerify(card.id, front, back)}
+            disabled={actionMutation.isPending}
+            className="flex-1 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/20 transition-colors flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 size={16} /> Approve & Add (+1 XP)
+          </button>
+          <button
+            onClick={() => handleDelete(card.id)}
+            disabled={actionMutation.isPending}
+            className="px-4 py-2 rounded-lg bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/20 text-lg font-medium hover:bg-[#ef4444]/20 transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 /* ─────────────────────────────────────────────
    Build Tab

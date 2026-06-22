@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { GrowthProvider } from "../lib/growth-store";
 import { Sidebar, BottomNavBar } from "../components/growth-sidebar";
+import { PomodoroTimer } from "../components/pomodoro-timer";
 
 function NotFoundComponent() {
   return (
@@ -169,6 +170,7 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
         {children}
       </div>
       {!isAuthRoute && <FloatingChat />}
+      {!isAuthRoute && <PomodoroTimer />}
       {!isAuthRoute && <BottomNavBar />}
     </div>
   );
