@@ -112,6 +112,11 @@ function LoginPage() {
           setAuthTokens(data.access, data.refresh);
           showToast("Google login successful!", "success");
           window.location.href = "/dashboard";
+        } else if (res.status === 404) {
+          showToast("Account not found. Please sign up first.", "error");
+          setTimeout(() => {
+            window.location.href = "/signup";
+          }, 1500);
         } else {
           const errData = await res.json().catch(() => ({}));
           showToast(errData.error || "Failed to authenticate with Google.", "error");
