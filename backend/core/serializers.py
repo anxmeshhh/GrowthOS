@@ -84,12 +84,13 @@ class TopicSerializer(serializers.ModelSerializer):
         return compute_topic_mastery(request.user, obj)
 
 def compute_topic_mastery(user, topic):
-    from .models import TopicQuiz, TopicFeynman, Flashcard, TopicProgress
+    from .models import TopicFeynman, Flashcard, TopicProgress, Contribution
     from django.db.models import Avg
     from django.utils import timezone
 
     # 1. Quiz Score (40% weight)
-    quiz_avg = TopicQuiz.objects.filter(topic=topic, user=user).aggregate(Avg('score'))['score__avg'] or 0
+    quiz_passed = Contribution.objects.filter(user=user, action_type=f'quiz_passed_{topic.id}').exists()
+    quiz_avg = 100 if quiz_passed else 0
     
     # 2. Feynman Score (30% weight)
     feynman_avg = TopicFeynman.objects.filter(topic=topic, user=user).aggregate(Avg('score'))['score__avg'] or 0
