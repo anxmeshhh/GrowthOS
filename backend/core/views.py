@@ -104,11 +104,23 @@ class GoogleLoginView(views.APIView):
             if not email:
                 return Response({'error': 'Google account must have an email'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Try to get the user; if they don't exist, return 404
+            intent = request.data.get('intent', 'login')
+            # Try to get the user; if they don't exist, return 404 unless intent is signup
             try:
                 user = User.objects.get(username=email)
             except User.DoesNotExist:
-                return Response({'error': 'Account not found. Please sign up.'}, status=status.HTTP_404_NOT_FOUND)
+                if intent == 'signup':
+                    user = User.objects.create_user(
+                        username=email,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name
+                    )
+                    user.set_unusable_password()
+                    user.save()
+                    UserProfile.objects.get_or_create(user=user)
+                else:
+                    return Response({'error': 'Account not found. Please sign up.'}, status=status.HTTP_404_NOT_FOUND)
                 
             # Issue JWTs
             refresh = RefreshToken.for_user(user)
@@ -169,11 +181,22 @@ class GitHubLoginView(views.APIView):
             if not primary_email:
                 return Response({'error': 'GitHub account must have a primary email'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Try to get the user; if they don't exist, return 404
+            intent = request.data.get('intent', 'login')
             try:
                 user = User.objects.get(username=primary_email)
             except User.DoesNotExist:
-                return Response({'error': 'Account not found. Please sign up.'}, status=status.HTTP_404_NOT_FOUND)
+                if intent == 'signup':
+                    user = User.objects.create_user(
+                        username=primary_email,
+                        email=primary_email,
+                        first_name=user_info.get('name', '').split()[0] if user_info.get('name') else '',
+                        last_name=' '.join(user_info.get('name', '').split()[1:]) if user_info.get('name') else ''
+                    )
+                    user.set_unusable_password()
+                    user.save()
+                    UserProfile.objects.get_or_create(user=user)
+                else:
+                    return Response({'error': 'Account not found. Please sign up.'}, status=status.HTTP_404_NOT_FOUND)
 
             from .encryption import encrypt_token
 
