@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useToast } from "@/components/toast-context";
 import { apiFetch } from "@/lib/api-client";
 import {
@@ -16,6 +16,11 @@ import {
   Trash2,
   Edit2,
   BookOpen,
+  FileJson,
+  Copy,
+  ChevronDown,
+  ChevronRight,
+  Info,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -220,6 +225,40 @@ function AdminRoadmapManager() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isValidated, setIsValidated] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResponse | null>(null);
+  const [showSchema, setShowSchema] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── File Import ──────────────────────────────────────────────────────────────
+  const handleFileImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setJsonContent(text);
+      setIsValidated(false);
+      setValidationError(null);
+      setSyncResult(null);
+      showToast(`Imported: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`, "success");
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }, [showToast]);
+
+  // Live stats
+  const lineCount = jsonContent ? jsonContent.split("\n").length : 0;
+  const charCount = jsonContent.length;
+  let parsedTopicCount: number | null = null;
+  try {
+    const p = JSON.parse(jsonContent);
+    const arr = Array.isArray(p) ? p : [p];
+    parsedTopicCount = arr.reduce((acc: number, r: any) => acc + (Array.isArray(r.topics) ? r.topics.length : 0), 0);
+  } catch {}
+
+  const copySchema = () => {
+    navigator.clipboard.writeText(SCHEMA_EXAMPLE);
+    showToast("Schema copied to clipboard!", "success");
+  };
 
   // ── Validation ───────────────────────────────────────────────────────────────
   const handleValidate = () => {
@@ -339,14 +378,125 @@ function AdminRoadmapManager() {
           </div>
         </div>
 
+        {/* ── Schema Reference Panel ────────────────────────────────────────── */}
+        <div className="rounded-xl border border-[#1e1e2e] bg-[#0a0a12] overflow-hidden mb-4">
+          <button
+            onClick={() => setShowSchema(v => !v)}
+            className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-[#0d0d18] transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-purple-400 uppercase tracking-wider font-mono">
+              <Info size={14} /> JSON Schema Reference
+            </span>
+            {showSchema ? <ChevronDown size={14} className="text-purple-500" /> : <ChevronRight size={14} className="text-purple-500" />}
+          </button>
+
+          {showSchema && (
+            <div className="border-t border-[#1e1e2e] p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Field table */}
+              <div>
+                <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-3">Required Fields</h3>
+                <table className="w-full text-xs font-mono">
+                  <thead>
+                    <tr className="border-b border-[#222]">
+                      <th className="text-left py-1.5 pr-4 text-gray-500">Field</th>
+                      <th className="text-left py-1.5 pr-4 text-gray-500">Type</th>
+                      <th className="text-left py-1.5 text-gray-500">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#111]">
+                    {[
+                      ["title", "string", "Display name of the roadmap", true],
+                      ["slug", "string", "URL-safe unique ID (e.g. backend-dev)", true],
+                      ["description", "string", "Short description", false],
+                      ["estimated_weeks", "number", "Duration estimate (default: 12)", false],
+                      ["topics", "array", "Array of topic objects", true],
+                      ["topics[].title", "string", "Display name of the topic", true],
+                      ["topics[].slug", "string", "Unique within this path", true],
+                      ["topics[].summary", "string", "Short description", false],
+                      ["topics[].node_kind", "string", "milestone | topic | optional", false],
+                      ["topics[].order", "number", "Display order (1, 2, 3...)", false],
+                    ].map(([field, type, note, req]) => (
+                      <tr key={String(field)}>
+                        <td className="py-1.5 pr-4 text-purple-300">{String(field)}</td>
+                        <td className="py-1.5 pr-4 text-blue-400">{String(type)}</td>
+                        <td className="py-1.5 text-gray-500">
+                          {req && <span className="text-red-400 mr-1">*</span>}{String(note)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="mt-4 space-y-2">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 mb-2">node_kind Values</h3>
+                  {[
+                    ["milestone", "#3b5bdb", "Section header — starts a new group. Topics below it are grouped under it."],
+                    ["topic", "#22c55e", "Standard topic (default). Grouped under the previous milestone."],
+                    ["optional", "#888", "Optional topic — dashed border. Grouped under the previous milestone."],
+                  ].map(([kind, color, desc]) => (
+                    <div key={String(kind)} className="flex items-start gap-2">
+                      <span
+                        className="mt-0.5 shrink-0 px-2 py-0.5 rounded text-xs font-mono font-bold"
+                        style={{ color: String(color), background: `${color}15`, border: `1px solid ${color}30` }}
+                      >{String(kind)}</span>
+                      <span className="text-xs text-gray-500 font-mono">{String(desc)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Example JSON */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400">Example JSON</h3>
+                  <button
+                    onClick={copySchema}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono bg-[#1a1a2a] border border-[#2a2a4a] text-purple-400 hover:text-purple-300 transition-colors"
+                  >
+                    <Copy size={10} /> Copy
+                  </button>
+                </div>
+                <pre
+                  className="text-xs font-mono text-gray-400 bg-[#050508] border border-[#1a1a2a] rounded-lg p-4 overflow-auto"
+                  style={{ maxHeight: "340px", lineHeight: 1.6 }}
+                >{SCHEMA_EXAMPLE}</pre>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* ── Editor card ──────────────────────────────────────────────────── */}
-        <div className="rounded-xl border border-[#222] bg-[#0a0a0a] overflow-hidden flex flex-col h-[70vh] mb-6">
+        <div className="rounded-xl border border-[#222] bg-[#0a0a0a] overflow-hidden flex flex-col mb-6" style={{ height: "65vh" }}>
           {/* Toolbar */}
-          <div className="p-4 border-b border-[#111] bg-[#0f0f0f] flex items-center justify-between shrink-0">
-            <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider font-mono">
-              JSON Payload Editor
-            </h2>
+          <div className="p-3 border-b border-[#111] bg-[#0f0f0f] flex items-center justify-between shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-3">
+              <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider font-mono">JSON Editor</h2>
+              {/* Live stats */}
+              {jsonContent && (
+                <div className="flex items-center gap-3 text-xs font-mono text-gray-600">
+                  <span>{lineCount.toLocaleString()} lines</span>
+                  <span>{charCount.toLocaleString()} chars</span>
+                  {parsedTopicCount !== null && (
+                    <span className="text-purple-500">{parsedTopicCount} topics</span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* File import */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={handleFileImport}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#1a1a1a] border border-[#2a2a4a] text-xs text-purple-400 hover:text-purple-300 font-mono transition-colors cursor-pointer"
+              >
+                <FileJson size={12} /> Import File
+              </button>
               {(jsonContent || syncResult) && (
                 <button
                   onClick={handleReset}
@@ -357,24 +507,19 @@ function AdminRoadmapManager() {
               )}
               <button
                 onClick={handleValidate}
-                className="px-4 py-1.5 rounded bg-[#1a1a1a] border border-[#333] hover:border-gray-500 text-sm text-gray-300 transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded bg-[#1a1a1a] border border-[#333] hover:border-gray-500 text-xs text-gray-300 transition-colors cursor-pointer font-mono"
               >
-                Validate JSON
+                Validate
               </button>
               <button
                 onClick={handleUpload}
                 disabled={!isValidated || isParsing}
-                className="px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                className="px-4 py-1.5 rounded bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer"
               >
                 {isParsing ? (
-                  <>
-                    <span className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    Synchronizing…
-                  </>
+                  <><span className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Syncing…</>
                 ) : (
-                  <>
-                    <Upload size={14} /> Deploy Roadmap
-                  </>
+                  <><Upload size={12} /> Deploy Roadmap</>
                 )}
               </button>
             </div>
@@ -395,14 +540,31 @@ function AdminRoadmapManager() {
           {isValidated && !validationError && (
             <div className="bg-green-950/20 border-b border-green-900/30 p-3 px-6 flex items-center gap-3 shrink-0">
               <CheckCircle2 className="text-green-500 shrink-0" size={16} />
-              <p className="text-sm font-medium text-green-400">
-                JSON schema is valid and ready for deployment.
-              </p>
+              <p className="text-sm font-medium text-green-400">JSON valid and ready for deployment.</p>
             </div>
           )}
 
-          {/* Textarea */}
-          <div className="flex-1 relative">
+          {/* Editor with line numbers */}
+          <div className="flex-1 flex overflow-hidden min-h-0">
+            {/* Line numbers */}
+            <div
+              className="shrink-0 select-none overflow-hidden"
+              style={{
+                background: "#070707",
+                borderRight: "1px solid #111",
+                padding: "24px 10px 24px 10px",
+                minWidth: "48px",
+                textAlign: "right",
+                fontSize: "12px",
+                lineHeight: "20px",
+                fontFamily: "monospace",
+                color: "#333",
+              }}
+            >
+              {Array.from({ length: Math.max(lineCount, 1) }, (_, i) => (
+                <div key={i}>{i + 1}</div>
+              ))}
+            </div>
             <textarea
               value={jsonContent}
               onChange={(e) => {
@@ -412,7 +574,21 @@ function AdminRoadmapManager() {
               }}
               spellCheck={false}
               placeholder={PLACEHOLDER}
-              className="absolute inset-0 w-full h-full bg-[#0a0a0a] text-gray-300 p-6 font-mono text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-500/50 leading-relaxed"
+              style={{
+                flex: 1,
+                background: "#0a0a0a",
+                color: "#d4d4d4",
+                padding: "24px 24px 24px 16px",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                fontSize: "12px",
+                lineHeight: "20px",
+                resize: "none",
+                border: "none",
+                outline: "none",
+                overflowY: "scroll",
+                whiteSpace: "pre",
+                overflowX: "auto",
+              }}
             />
           </div>
         </div>
@@ -533,28 +709,50 @@ function AdminRoadmapManager() {
 
 // ── Placeholder ────────────────────────────────────────────────────────────────
 
-const PLACEHOLDER = `Paste the complete Roadmap JSON here...
+const PLACEHOLDER = `Paste JSON here, or click "Import File" to load a .json file from disk...`;
 
-Example structure:
-{
-  "title": "Linux Mastery",
-  "slug": "linux-mastery",
-  "description": "Comprehensive guide to mastering Linux.",
-  "estimated_weeks": 8,
-  "topics": [
-    {
-      "title": "The Command Line",
-      "slug": "cli-basics",
-      "summary": "ls, cd, rm, cp and navigation.",
-      "node_kind": "milestone",
-      "order": 1
-    },
-    {
-      "title": "File Permissions",
-      "slug": "file-permissions",
-      "summary": "chmod, chown, and user groups.",
-      "node_kind": "topic",
-      "order": 2
-    }
-  ]
-}`;
+const SCHEMA_EXAMPLE = `[
+  {
+    "title": "Backend Developer Path",
+    "slug": "backend-developer",
+    "description": "Master backend engineering from scratch.",
+    "estimated_weeks": 16,
+    "topics": [
+      {
+        "title": "Internet Fundamentals",
+        "slug": "internet-fundamentals",
+        "summary": "How the web works: HTTP, DNS, TCP/IP.",
+        "node_kind": "milestone",
+        "order": 1
+      },
+      {
+        "title": "HTTP & REST APIs",
+        "slug": "http-rest",
+        "summary": "Request/response cycle, status codes, REST.",
+        "node_kind": "topic",
+        "order": 2
+      },
+      {
+        "title": "DNS Deep Dive",
+        "slug": "dns-deep-dive",
+        "summary": "Optional extra: how DNS resolution works.",
+        "node_kind": "optional",
+        "order": 3
+      },
+      {
+        "title": "Databases",
+        "slug": "databases",
+        "summary": "SQL, NoSQL, indexing, normalization.",
+        "node_kind": "milestone",
+        "order": 4
+      },
+      {
+        "title": "PostgreSQL Fundamentals",
+        "slug": "postgresql-fundamentals",
+        "summary": "CRUD, joins, transactions, indexing.",
+        "node_kind": "topic",
+        "order": 5
+      }
+    ]
+  }
+]`;
