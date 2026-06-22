@@ -45,12 +45,6 @@ type Tab = "notes" | "flash" | "quiz" | "build" | "feynman";
 /* ─────────────────────────────────────────────
    Utility
 ───────────────────────────────────────────── */
-function formatTime(s: number) {
-  const m = Math.floor(s / 60);
-  const ss = s % 60;
-  return `${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-}
-
 function stripGeneratedAttachmentMarkdown(value: string) {
   return value
     .split(/\n{2,}/)
@@ -91,24 +85,10 @@ function TopicWorkspace() {
   });
 
   const { state } = useGrowth();
-  const pomodoroFocus = state.settings?.pomodoroFocus ?? 0;
-  const pomodoroShortBreak = state.settings?.pomodoroShortBreak ?? 0;
-  const pomodoroLongBreak = state.settings?.pomodoroLongBreak ?? 0;
 
   const [tab, setTab] = useState<Tab>("notes");
-  type PomoMode = "focus" | "shortBreak" | "longBreak";
-  const [pomoMode, setPomoMode] = useState<PomoMode>("focus");
-  const [timeLeft, setTimeLeft] = useState(pomodoroFocus * 60);
-  const [pomoRunning, setPomoRunning] = useState(false);
   const [focusRadioEnabled, setFocusRadioEnabled] = useState(false);
 
-  const switchMode = (m: PomoMode) => {
-    setPomoMode(m);
-    setPomoRunning(false);
-    if (m === "focus") setTimeLeft(pomodoroFocus * 60);
-    else if (m === "shortBreak") setTimeLeft(pomodoroShortBreak * 60);
-    else setTimeLeft(pomodoroLongBreak * 60);
-  };
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const pasteZoneRef = useRef<HTMLDivElement>(null);
@@ -233,20 +213,6 @@ function TopicWorkspace() {
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  useEffect(() => {
-    if (!pomoRunning) return;
-    const t = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setPomoRunning(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [pomoRunning]);
-
   if (isLoading)
     return (
       <PageShell>
@@ -339,35 +305,7 @@ function TopicWorkspace() {
             />
           )}
 
-          {/* Timer */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0f0f0f] border border-[#1e1e1e]">
-            <div className="flex items-center gap-1.5 mr-2 pr-2 border-r border-[#1e1e1e]">
-              <button
-                onClick={() => switchMode("focus")}
-                className={`text-xs uppercase tracking-wider font-semibold ${pomoMode === "focus" ? "text-[#ef4444]" : "text-[#555] hover:text-[#eee]"}`}
-              >
-                Focus
-              </button>
-              <button
-                onClick={() => switchMode("shortBreak")}
-                className={`text-xs uppercase tracking-wider font-semibold ${pomoMode === "shortBreak" ? "text-[#3b82f6]" : "text-[#555] hover:text-[#eee]"}`}
-              >
-                Break
-              </button>
-            </div>
-            <div
-              className={`w-1.5 h-1.5 rounded-full ${pomoRunning ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e]" : "bg-[#666]"}`}
-            />
-            <span className="font-mono text-lg text-[#e8e8e8] tabular-nums">
-              {formatTime(timeLeft)}
-            </span>
-            <button
-              onClick={() => setPomoRunning((r) => !r)}
-              className="text-[#eee] hover:text-[#fff] transition-colors ml-0.5"
-            >
-              {pomoRunning ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-          </div>
+
 
           {/* Commit */}
           <button
