@@ -49,7 +49,7 @@ export function PomodoroTimer() {
         setMode("break");
         setTimeLeft(5 * 60);
       } else {
-        showToast("Break over! Ready to focus?", "system");
+        showToast("Break over! Ready to focus?", "info");
         setMode("focus");
         setTimeLeft(25 * 60);
       }
