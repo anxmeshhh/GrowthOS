@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { GrowthProvider } from "../lib/growth-store";
-import { Sidebar, MobileTopBar } from "../components/growth-sidebar";
+import { Sidebar, BottomNavBar } from "../components/growth-sidebar";
 
 function NotFoundComponent() {
   return (
@@ -163,13 +163,13 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   }, [isAuthRoute, showToast]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row pb-16 lg:pb-0">
       {!isAuthRoute && <Sidebar />}
       <div className="flex-1 min-w-0 flex flex-col">
-        {!isAuthRoute && <MobileTopBar />}
         {children}
       </div>
       {!isAuthRoute && <FloatingChat />}
+      {!isAuthRoute && <BottomNavBar />}
     </div>
   );
 }
