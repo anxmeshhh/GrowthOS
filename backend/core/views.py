@@ -108,6 +108,9 @@ class GoogleLoginView(views.APIView):
             # Try to get the user; if they don't exist, return 404 unless intent is signup
             try:
                 user = User.objects.get(username=email)
+                if not user.is_active:
+                    user.is_active = True
+                    user.save()
             except User.DoesNotExist:
                 if intent == 'signup':
                     user = User.objects.create_user(
@@ -184,6 +187,9 @@ class GitHubLoginView(views.APIView):
             intent = request.data.get('intent', 'login')
             try:
                 user = User.objects.get(username=primary_email)
+                if not user.is_active:
+                    user.is_active = True
+                    user.save()
             except User.DoesNotExist:
                 if intent == 'signup':
                     user = User.objects.create_user(
