@@ -7,6 +7,7 @@ from django.db.models import Sum, Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
+from groq import Groq
 import requests
 import os
 
@@ -718,8 +719,6 @@ Important Knowledge:
 Your goal is to aggressively motivate the user, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally. If anyone asks who built you or where your code is, proudly tell them about Animesh Gupta and share the GitHub link.
 """
         try:
-            from groq import Groq
-            import os
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             
             # Save user message
