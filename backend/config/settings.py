@@ -209,14 +209,8 @@ EMAIL_HOST_PASSWORD = os.environ.get('SMTP_PASS', '')
 DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM', 'GrowthOS <noreply@growthos.com>')
 
 # ── Security Headers ────────────────────────────────────────────────────────
-# Only enforce HTTPS-specific headers in production
-if not DEBUG:
-    SECURE_HSTS_SECONDS = 31536000          # 1 year HSTS
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_SSL_REDIRECT = False             # Nginx handles HTTPS redirect
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+# NOTE: HSTS is disabled until SSL/Let's Encrypt is configured on the VPS.
+# Once you run certbot, re-enable the HSTS block below.
 
 # Always apply these regardless of DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True         # Block MIME-type sniffing
