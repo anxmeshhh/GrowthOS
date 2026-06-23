@@ -2949,8 +2949,10 @@ class GlobalReviewQueueView(views.APIView):
                 'topic_id': c.topic.id,
                 'topic_title': c.topic.title,
                 'path_title': c.topic.path.title if c.topic.path else '',
-                'front': c.front,
-                'back': c.back,
+                'card': {
+                    'front': c.front,
+                    'back': c.back,
+                }
             })
 
         return Response({'due_cards': data})
