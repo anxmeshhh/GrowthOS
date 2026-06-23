@@ -91,6 +91,13 @@ function GlobalReviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["global_review"] });
+      queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+      queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+      queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      if (currentItem?.topic_id) {
+        queryClient.invalidateQueries({ queryKey: ["topic", String(currentItem.topic_id)] });
+        queryClient.invalidateQueries({ queryKey: ["flashcards", String(currentItem.topic_id)] });
+      }
       setFlipped(false);
     },
   });
@@ -109,10 +116,10 @@ function GlobalReviewPage() {
         e.preventDefault();
         if (!flipped) setFlipped(true);
       } else if (flipped && !submitGradeMutation.isPending) {
-        if (e.key === "1") submitGradeMutation.mutate({ quality: 'hard' }); // Actually 'again' but we'll map it to hard
-        if (e.key === "2") submitGradeMutation.mutate({ quality: 'hard' });
-        if (e.key === "3") submitGradeMutation.mutate({ quality: 'good' });
-        if (e.key === "4") submitGradeMutation.mutate({ quality: 'easy' });
+        if (e.key === "1") submitGradeMutation.mutate({ quality: "hard" }); // Actually 'again' but we'll map it to hard
+        if (e.key === "2") submitGradeMutation.mutate({ quality: "hard" });
+        if (e.key === "3") submitGradeMutation.mutate({ quality: "good" });
+        if (e.key === "4") submitGradeMutation.mutate({ quality: "easy" });
       }
     };
 
@@ -183,32 +190,32 @@ function GlobalReviewPage() {
           </div>
 
           <div
-            className="perspective-1000 min-h-[300px] w-full cursor-pointer"
+            className="perspective-1000 min-h-[350px] sm:min-h-[400px] w-full cursor-pointer"
             onClick={() => !flipped && setFlipped(true)}
           >
             <div
               className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${flipped ? "rotate-y-180" : ""}`}
             >
               {/* Front */}
-              <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-8 shadow-2xl">
-                <div className="text-sm uppercase font-mono tracking-widest text-[#888] mb-6">
+              <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-6 sm:p-8 shadow-2xl overflow-y-auto">
+                <div className="text-sm uppercase font-mono tracking-widest text-[#888] mb-6 shrink-0">
                   Question
                 </div>
-                <div className="text-2xl sm:text-3xl font-semibold text-[#e8e8e8] text-center leading-snug">
+                <div className="text-xl sm:text-3xl font-semibold text-[#e8e8e8] text-center leading-snug my-auto">
                   {currentItem.card.front}
                 </div>
                 {!flipped && (
-                  <div className="absolute bottom-6 text-[#555] text-sm font-mono uppercase tracking-widest animate-pulse">
+                  <div className="absolute bottom-6 text-[#555] text-sm font-mono uppercase tracking-widest animate-pulse shrink-0">
                     Spacebar to reveal
                   </div>
                 )}
               </div>
               {/* Back */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 border-[#22c55e]/30 bg-[#061008] flex flex-col items-center justify-center p-8 shadow-2xl">
-                <div className="text-sm uppercase font-mono tracking-widest text-[#22c55e]/60 mb-6">
+              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 border-[#22c55e]/30 bg-[#061008] flex flex-col items-center justify-center p-6 sm:p-8 shadow-2xl overflow-y-auto">
+                <div className="text-sm uppercase font-mono tracking-widest text-[#22c55e]/60 mb-6 shrink-0">
                   Answer
                 </div>
-                <div className="text-xl sm:text-2xl text-[#eee] text-center leading-relaxed">
+                <div className="text-lg sm:text-2xl text-[#eee] text-center leading-relaxed my-auto">
                   {currentItem.card.back}
                 </div>
               </div>
@@ -217,11 +224,11 @@ function GlobalReviewPage() {
 
           {/* Grading Buttons */}
           {flipped && (
-            <div className="w-full grid grid-cols-4 gap-2 sm:gap-4 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 'hard' });
+                  submitGradeMutation.mutate({ quality: "hard" });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all disabled:opacity-50"
@@ -233,7 +240,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 'hard' });
+                  submitGradeMutation.mutate({ quality: "hard" });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-50"
@@ -245,7 +252,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 'good' });
+                  submitGradeMutation.mutate({ quality: "good" });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all disabled:opacity-50"
@@ -257,7 +264,7 @@ function GlobalReviewPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  submitGradeMutation.mutate({ quality: 'easy' });
+                  submitGradeMutation.mutate({ quality: "easy" });
                 }}
                 disabled={submitGradeMutation.isPending}
                 className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all disabled:opacity-50"

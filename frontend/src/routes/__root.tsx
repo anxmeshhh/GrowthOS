@@ -166,9 +166,7 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row pb-16 lg:pb-0">
       {!isAuthRoute && <Sidebar />}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {children}
-      </div>
+      <div className="flex-1 min-w-0 flex flex-col">{children}</div>
       {!isAuthRoute && <FloatingChat />}
       {!isAuthRoute && <PomodoroTimer />}
       {!isAuthRoute && <BottomNavBar />}

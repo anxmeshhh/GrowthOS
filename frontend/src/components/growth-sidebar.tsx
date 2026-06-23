@@ -56,7 +56,7 @@ const NAV_GROUPS = [
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  
+
   const { data: briefing } = useQuery({
     queryKey: ["today"],
     queryFn: async () => {
@@ -84,7 +84,13 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             >
               {group.label}
             </span>
-            <div style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, rgba(255,255,255,0.06) 0%, transparent 100%)" }} />
+            <div
+              style={{
+                flex: 1,
+                height: "1px",
+                background: "linear-gradient(90deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
+              }}
+            />
           </div>
 
           {/* Items */}
@@ -106,8 +112,12 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                     fontSize: "14px",
                     fontWeight: active ? 600 : 500,
                     color: active ? "#ffffff" : "#999999",
-                    background: active ? "linear-gradient(90deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.02) 100%)" : "transparent",
-                    boxShadow: active ? "inset 1px 0 0 0 #22c55e, inset 0 0 0 1px rgba(255,255,255,0.03)" : "none",
+                    background: active
+                      ? "linear-gradient(90deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.02) 100%)"
+                      : "transparent",
+                    boxShadow: active
+                      ? "inset 1px 0 0 0 #22c55e, inset 0 0 0 1px rgba(255,255,255,0.03)"
+                      : "none",
                     transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
                     textDecoration: "none",
                     position: "relative",
@@ -142,7 +152,15 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                       transition: "all 200ms ease",
                     }}
                   />
-                  <span style={{ flex: 1, zIndex: 10, textShadow: active ? "0 2px 10px rgba(255,255,255,0.2)" : "none" }}>{label}</span>
+                  <span
+                    style={{
+                      flex: 1,
+                      zIndex: 10,
+                      textShadow: active ? "0 2px 10px rgba(255,255,255,0.2)" : "none",
+                    }}
+                  >
+                    {label}
+                  </span>
 
                   {to === "/review" && briefing?.due_cards > 0 && (
                     <span className="flex items-center justify-center bg-[#ef4444] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] shadow-[0_0_10px_rgba(239,68,68,0.3)]">
@@ -151,7 +169,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   )}
 
                   {active && to !== "/review" && (
-                    <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+                    <ChevronRight
+                      size={14}
+                      style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }}
+                    />
                   )}
                 </Link>
               );
@@ -216,11 +237,17 @@ function SidebarFooter() {
       }}
     >
       {/* Top subtle border gradient */}
-      <div style={{
-        position: "absolute",
-        top: 0, left: "10%", right: "10%", height: "1px",
-        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)"
-      }} />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: "10%",
+          right: "10%",
+          height: "1px",
+          background:
+            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
+        }}
+      />
 
       {/* Streak bar — glowing premium card */}
       {streak > 0 && (
@@ -236,17 +263,27 @@ function SidebarFooter() {
             border: "1px solid rgba(245,158,11,0.15)",
             boxShadow: "0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
             position: "relative",
-            overflow: "hidden"
+            overflow: "hidden",
           }}
         >
           {/* Subtle animated background glow */}
-          <div style={{
-            position: "absolute", left: "-20%", top: 0, width: "140%", height: "100%",
-            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)",
-            animation: "shimmer 3s infinite linear"
-          }} />
-          
-          <Flame size={14} style={{ color: "#f59e0b", animation: "flame-flicker 2s infinite ease-in-out" }} />
+          <div
+            style={{
+              position: "absolute",
+              left: "-20%",
+              top: 0,
+              width: "140%",
+              height: "100%",
+              background:
+                "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)",
+              animation: "shimmer 3s infinite linear",
+            }}
+          />
+
+          <Flame
+            size={14}
+            style={{ color: "#f59e0b", animation: "flame-flicker 2s infinite ease-in-out" }}
+          />
           <span
             style={{
               fontSize: "12px",
@@ -254,7 +291,7 @@ function SidebarFooter() {
               fontWeight: 600,
               letterSpacing: "0.02em",
               zIndex: 1,
-              textShadow: "0 1px 4px rgba(0,0,0,0.5)"
+              textShadow: "0 1px 4px rgba(0,0,0,0.5)",
             }}
           >
             {streak} Day Streak
@@ -268,7 +305,7 @@ function SidebarFooter() {
               background: "rgba(0,0,0,0.4)",
               overflow: "hidden",
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.5)",
-              zIndex: 1
+              zIndex: 1,
             }}
           >
             <div
@@ -277,7 +314,7 @@ function SidebarFooter() {
                 width: `${Math.min(100, (streak / 30) * 100)}%`,
                 background: "linear-gradient(90deg, #f59e0b, #ef4444)",
                 borderRadius: "2px",
-                boxShadow: "0 0 6px rgba(245,158,11,0.8)"
+                boxShadow: "0 0 6px rgba(245,158,11,0.8)",
               }}
             />
           </div>
@@ -285,16 +322,19 @@ function SidebarFooter() {
       )}
 
       {/* User row (Player Card) */}
-      <div style={{ 
-        display: "flex", alignItems: "center", gap: "12px",
-        padding: "10px",
-        borderRadius: "12px",
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        transition: "all 200ms ease",
-        cursor: "pointer"
-      }}
-      className="hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.1)]"
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          padding: "10px",
+          borderRadius: "12px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.04)",
+          transition: "all 200ms ease",
+          cursor: "pointer",
+        }}
+        className="hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.1)]"
       >
         {/* Avatar */}
         <div
@@ -302,7 +342,8 @@ function SidebarFooter() {
             height: "36px",
             width: "36px",
             borderRadius: "10px",
-            background: "linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(16,185,129,0.05) 100%)",
+            background:
+              "linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(16,185,129,0.05) 100%)",
             border: "1px solid rgba(34,197,94,0.2)",
             display: "flex",
             alignItems: "center",
@@ -329,7 +370,7 @@ function SidebarFooter() {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              letterSpacing: "-0.01em"
+              letterSpacing: "-0.01em",
             }}
           >
             {username}
@@ -346,14 +387,14 @@ function SidebarFooter() {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               fontWeight: 600,
-              opacity: 0.9
+              opacity: 0.9,
             }}
           >
             {title}
           </div>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
@@ -385,7 +426,8 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
               width: "32px",
               height: "32px",
               borderRadius: "10px",
-              background: "linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.02) 100%)",
+              background:
+                "linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.02) 100%)",
               border: "1px solid rgba(34,197,94,0.3)",
               boxShadow: "0 0 16px rgba(34,197,94,0.15), inset 0 1px 0 rgba(255,255,255,0.1)",
               flexShrink: 0,
@@ -407,7 +449,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
                 letterSpacing: "-0.03em",
                 color: "#ffffff",
                 lineHeight: 1.1,
-                textShadow: "0 2px 10px rgba(0,0,0,0.3)"
+                textShadow: "0 2px 10px rgba(0,0,0,0.3)",
               }}
             >
               GrowthOS
@@ -420,7 +462,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
                 letterSpacing: "0.15em",
                 color: "rgba(255,255,255,0.3)",
                 fontWeight: 600,
-                marginTop: "2px"
+                marginTop: "2px",
               }}
             >
               Command Center
@@ -464,7 +506,7 @@ export function Sidebar() {
         boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
         position: "sticky",
         top: "16px",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
       className="hidden lg:flex flex-col"
     >
@@ -553,4 +595,3 @@ export function BottomNavBar() {
     </div>
   );
 }
-

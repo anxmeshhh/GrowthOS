@@ -170,7 +170,9 @@ export function FloatingChat() {
                 <Sparkles size={16} className="text-[#22c55e]" />
               </div>
               <div>
-                <h3 className="text-[15px] font-semibold text-gray-100 tracking-wide">GrowthOS Mentor</h3>
+                <h3 className="text-[15px] font-semibold text-gray-100 tracking-wide">
+                  GrowthOS Mentor
+                </h3>
                 <div className="flex items-center gap-1.5 text-xs font-mono tracking-widest uppercase text-[#22c55e]">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-75"></span>

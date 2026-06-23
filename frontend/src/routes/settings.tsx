@@ -360,7 +360,11 @@ function SettingsPage() {
                     min={0}
                     max={60}
                     placeholder="0"
-                    value={state.settings.pomodoroShortBreak === 0 ? "" : state.settings.pomodoroShortBreak}
+                    value={
+                      state.settings.pomodoroShortBreak === 0
+                        ? ""
+                        : state.settings.pomodoroShortBreak
+                    }
                     onChange={(e) =>
                       update((s) => ({
                         ...s,
@@ -383,7 +387,9 @@ function SettingsPage() {
                     min={0}
                     max={120}
                     placeholder="0"
-                    value={state.settings.pomodoroLongBreak === 0 ? "" : state.settings.pomodoroLongBreak}
+                    value={
+                      state.settings.pomodoroLongBreak === 0 ? "" : state.settings.pomodoroLongBreak
+                    }
                     onChange={(e) =>
                       update((s) => ({
                         ...s,

@@ -152,8 +152,13 @@ export const RoadmapNode = memo(function RoadmapNode({
                 <title>Mastery: {data.masteryScore}%</title>
                 <circle cx="7" cy="7" r="5.5" fill="transparent" stroke={s.bgHov} strokeWidth="2" />
                 <circle
-                  cx="7" cy="7" r="5.5" fill="transparent"
-                  stroke={s.dot} strokeWidth="2" strokeLinecap="round"
+                  cx="7"
+                  cy="7"
+                  r="5.5"
+                  fill="transparent"
+                  stroke={s.dot}
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeDasharray={`${(data.masteryScore / 100) * 34.55} 34.55`}
                   className="transition-all duration-1000 ease-out"
                 />

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { apiFetch } from "@/lib/api-client";
@@ -388,12 +388,14 @@ function ProfilePage() {
               ) : profile?.completed_paths?.length > 0 ? (
                 <div className="flex flex-wrap gap-3">
                   {profile.completed_paths.map((p: any) => (
-                    <span
+                    <Link
                       key={p.id}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-green-900/30 bg-green-950/20 text-sm font-medium text-[#22c55e] shadow-sm hover:bg-green-950/40 transition-colors cursor-default"
+                      to="/roadmap"
+                      search={{ pathSlug: p.slug }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-green-900/30 bg-green-950/20 text-sm font-medium text-[#22c55e] shadow-sm hover:bg-green-950/40 hover:scale-105 transition-all cursor-pointer"
                     >
                       <Award size={14} /> {p.title}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               ) : (

@@ -351,19 +351,29 @@ function DashboardPage() {
                 <div className="mt-4">
                   {briefing.fading_topics?.length > 0 ? (
                     <div className="text-[17px] text-[#eee] font-medium leading-snug">
-                      Knowledge is fading. You have <span className="text-[#ef4444]">{briefing.fading_topics.length}</span> topics decaying. Review them to restore your mastery score.
+                      Knowledge is fading. You have{" "}
+                      <span className="text-[#ef4444]">{briefing.fading_topics.length}</span> topics
+                      decaying. Review them to restore your mastery score.
                     </div>
                   ) : briefing.due_cards > 0 ? (
                     <div className="text-[17px] text-[#eee] font-medium leading-snug">
-                      You have <span className="text-[#22c55e]">{briefing.due_cards}</span> flashcards due across {briefing.due_topics?.length || 0} topics. Clear your review debt to maintain retention.
+                      You have <span className="text-[#22c55e]">{briefing.due_cards}</span>{" "}
+                      flashcards due across {briefing.due_topics?.length || 0} topics. Clear your
+                      review debt to maintain retention.
                     </div>
                   ) : briefing.last_session_topic ? (
                     <div className="text-[17px] text-[#eee] font-medium leading-snug">
-                      Resume your mission on <span className="text-[#fff] font-bold">"{briefing.last_session_topic.title}"</span>. You're making good progress.
+                      Resume your mission on{" "}
+                      <span className="text-[#fff] font-bold">
+                        "{briefing.last_session_topic.title}"
+                      </span>
+                      . You're making good progress.
                     </div>
                   ) : briefing.next_topic ? (
                     <div className="text-[17px] text-[#eee] font-medium leading-snug">
-                      Your next objective is <span className="text-[#fff] font-bold">"{briefing.next_topic.title}"</span>. Ready to begin?
+                      Your next objective is{" "}
+                      <span className="text-[#fff] font-bold">"{briefing.next_topic.title}"</span>.
+                      Ready to begin?
                     </div>
                   ) : (
                     <div className="text-[17px] text-[#eee] font-medium leading-snug">
@@ -379,7 +389,11 @@ function DashboardPage() {
                   </Link>
                 )}
                 {briefing.last_session_topic && briefing.due_cards === 0 && (
-                  <Link to="/topic/$topicId" params={{ topicId: String(briefing.last_session_topic.id) }} className="engage-btn text-xs px-4 py-1.5 bg-[#0e0e0e] border-[#1e1e1e] text-[#eee]">
+                  <Link
+                    to="/topic/$topicId"
+                    params={{ topicId: String(briefing.last_session_topic.id) }}
+                    className="engage-btn text-xs px-4 py-1.5 bg-[#0e0e0e] border-[#1e1e1e] text-[#eee]"
+                  >
                     Resume Topic <ArrowRight size={12} strokeWidth={2} />
                   </Link>
                 )}
@@ -399,7 +413,10 @@ function DashboardPage() {
                   right: -50,
                 }}
               />
-              <Clock size={24} className={briefing.due_cards > 0 ? "text-[#ef4444] mb-3" : "text-[#1e1e1e] mb-3"} />
+              <Clock
+                size={24}
+                className={briefing.due_cards > 0 ? "text-[#ef4444] mb-3" : "text-[#1e1e1e] mb-3"}
+              />
               <div className="text-3xl font-mono tabular-nums leading-none text-[#efefef]">
                 {briefing.due_cards}
               </div>

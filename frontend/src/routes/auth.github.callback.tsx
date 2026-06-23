@@ -73,7 +73,7 @@ function GithubCallbackPage() {
             errData.error ||
               `Failed to ${isConnect ? "connect workspace" : "authenticate"} with GitHub.`,
           );
-          
+
           setTimeout(() => {
             if (isConnect) {
               navigate({ to: "/settings" });
