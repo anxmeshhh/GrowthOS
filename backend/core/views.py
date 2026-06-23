@@ -358,7 +358,7 @@ class TopicDetailView(views.APIView):
         
         has_notes = TopicNote.objects.filter(user=request.user, topic=topic).exclude(content='').exists()
         has_flashcards = TopicFlashcard.objects.filter(user=request.user, topic=topic).exists()
-        has_passed_quiz = TopicQuiz.objects.filter(user=request.user, topic=topic, score__gte=70).exists()
+        has_passed_quiz = Contribution.objects.filter(user=request.user, action_type=f'quiz_passed_{topic.id}').exists()
         has_feynman = TopicFeynman.objects.filter(user=request.user, topic=topic).exists()
         has_project = VerifiedProject.objects.filter(user=request.user, topic=topic).exists()
         
