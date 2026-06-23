@@ -408,7 +408,18 @@ function TopicWorkspace() {
             return (
               <button
                 key={t.id}
-                onClick={() => !t.locked && setTab(t.id)}
+                onClick={() => {
+                  if (!t.locked) {
+                    setTab(t.id);
+                    queryClient.invalidateQueries({ queryKey: ["topic", topicId] });
+                    if (t.id === "flash") {
+                      queryClient.invalidateQueries({ queryKey: ["flashcards", topicId] });
+                    }
+                    if (t.id === "quiz") {
+                      queryClient.invalidateQueries({ queryKey: ["quiz", topicId] });
+                    }
+                  }
+                }}
                 disabled={t.locked}
                 className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 ${
                   t.locked
