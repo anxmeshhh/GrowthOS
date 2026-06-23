@@ -3016,7 +3016,7 @@ class TodayBriefingView(views.APIView):
             }
 
         # 3. Next Topic in active path
-        active_path = LearningPath.objects.filter(topics__topicprogress__user=request.user).distinct().first()
+        active_path = LearningPath.objects.filter(topics__progress__user=request.user).distinct().first()
         next_topic = None
         if active_path:
             all_topics = active_path.topics.all().order_by('order')
@@ -3039,7 +3039,7 @@ class TodayBriefingView(views.APIView):
 
         # 5. Streak
         prof = UserProfile.objects.filter(user=request.user).first()
-        streak = prof.streak if prof else 0
+        streak = prof.current_streak if prof else 0
 
         return Response({
             "due_cards": due_cards_count,
