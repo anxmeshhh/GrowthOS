@@ -52,6 +52,10 @@ env/
 psycopg2/
 db.sqlite3
 .env
+*.env
+.env.*
+!.env.example
+!.env.prod.example
 media/
 
 # Editor / System

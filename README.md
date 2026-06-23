@@ -1,6 +1,11 @@
 # GrowthOS
 
+[![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/anxmeshhh/GrowthOS)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **The execution layer for self-taught developers.**
+
+> **We are Open Source!** 🎉 Check out our [Contributing Guide](CONTRIBUTING.md) to see how you can run GrowthOS locally and build with us!
 
 GrowthOS is a learning operating system that helps self-taught developers stop wandering through scattered tutorials, notes, bookmarks, and unfinished plans. It gives each learner a clear path, one daily mission, proof-based progress, long-term review, and career-ready evidence of their work.
 
