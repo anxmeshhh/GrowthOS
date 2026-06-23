@@ -3,21 +3,45 @@ import { Play, Pause, Square, Timer } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/toast-context";
+import { useGrowth } from "@/lib/growth-store";
 
 export function PomodoroTimer() {
+  const { state } = useGrowth();
+  const focusTime = (state?.settings?.pomodoroFocus || 25) * 60;
+  const breakTime = (state?.settings?.pomodoroShortBreak || 5) * 60;
+
   const [isOpen, setIsOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [timeLeft, setTimeLeft] = useState(focusTime);
   const [isActive, setIsActive] = useState(false);
   const [mode, setMode] = useState<"focus" | "break">("focus");
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Create audio for completion sound
     audioRef.current = new Audio("https://cdn.freesound.org/previews/411/411089_5121236-lq.mp3"); // Simple bell chime
+
+    // Click outside to close
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
+
+  // Sync timeLeft when settings change, but only if not active
+  useEffect(() => {
+    if (!isActive) {
+      setTimeLeft(mode === "focus" ? focusTime : breakTime);
+    }
+  }, [focusTime, breakTime, mode, isActive]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -47,11 +71,11 @@ export function PomodoroTimer() {
 
         // Switch to break
         setMode("break");
-        setTimeLeft(5 * 60);
+        setTimeLeft(breakTime);
       } else {
         showToast("Break over! Ready to focus?", "info");
         setMode("focus");
-        setTimeLeft(25 * 60);
+        setTimeLeft(focusTime);
       }
     }
 
@@ -64,18 +88,19 @@ export function PomodoroTimer() {
 
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(mode === "focus" ? 25 * 60 : 5 * 60);
+    setTimeLeft(mode === "focus" ? focusTime : breakTime);
   };
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progress =
     mode === "focus"
-      ? ((25 * 60 - timeLeft) / (25 * 60)) * 100
-      : ((5 * 60 - timeLeft) / (5 * 60)) * 100;
+      ? ((focusTime - timeLeft) / focusTime) * 100
+      : ((breakTime - timeLeft) / breakTime) * 100;
 
   return (
     <div
+      ref={containerRef}
       style={{
         position: "fixed",
         zIndex: 40,
@@ -127,7 +152,7 @@ export function PomodoroTimer() {
                 onClick={() => {
                   setMode("focus");
                   setIsActive(false);
-                  setTimeLeft(25 * 60);
+                  setTimeLeft(focusTime);
                 }}
                 style={{
                   fontSize: "10px",
@@ -146,7 +171,7 @@ export function PomodoroTimer() {
                 onClick={() => {
                   setMode("break");
                   setIsActive(false);
-                  setTimeLeft(5 * 60);
+                  setTimeLeft(breakTime);
                 }}
                 style={{
                   fontSize: "10px",
@@ -263,7 +288,6 @@ export function PomodoroTimer() {
         </div>
       )}
 
-      {/* Floating Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
