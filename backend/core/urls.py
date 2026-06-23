@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.throttling import AnonRateThrottle
 from .views import (
     RegisterView, LearningPathViewSet, BookmarkViewSet, GeneratePathView,
     TopicDetailView, TopicProgressUpdateView, TopicMaterialUploadView,
@@ -12,6 +13,11 @@ from .views import (
     GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView
 )
 
+# Strict throttle for login endpoint — max 5 attempts per minute per IP
+class LoginRateThrottle(AnonRateThrottle):
+    rate = '5/minute'
+    scope = 'login'
+
 router = DefaultRouter()
 router.register(r'paths', LearningPathViewSet, basename='path')
 router.register(r'bookmarks', BookmarkViewSet, basename='bookmark')
@@ -20,7 +26,7 @@ router.register(r'custom-paths', CustomPathViewSet, basename='custom-path')
 urlpatterns = [
     # Auth Endpoints
     path('auth/register/', RegisterView.as_view(), name='auth_register'),
-    path('auth/login/', TokenObtainPairView.as_view(), name='auth_login'),
+    path('auth/login/', TokenObtainPairView.as_view(throttle_classes=[LoginRateThrottle]), name='auth_login'),
     path('auth/google/', GoogleLoginView.as_view(), name='auth_google'),
     path('auth/github/', GitHubLoginView.as_view(), name='auth_github'),
     path('auth/github/connect/', GitHubConnectView.as_view(), name='auth_github_connect'),

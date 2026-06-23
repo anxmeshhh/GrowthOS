@@ -137,7 +137,17 @@ CORS_ALLOW_HEADERS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    # Rate limiting — protects against brute force and scraping
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/hour',      # Unauthenticated users: 60 requests/hour
+        'user': '500/hour',     # Authenticated users: 500 requests/hour
+        'login': '5/minute',    # Login endpoint: max 5 attempts/minute
+    }
 }
 
 from datetime import timedelta
@@ -197,3 +207,18 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('SMTP_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('SMTP_PASS', '')
 DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM', 'GrowthOS <noreply@growthos.com>')
+
+# ── Security Headers ────────────────────────────────────────────────────────
+# Only enforce HTTPS-specific headers in production
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000          # 1 year HSTS
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = False             # Nginx handles HTTPS redirect
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# Always apply these regardless of DEBUG
+SECURE_CONTENT_TYPE_NOSNIFF = True         # Block MIME-type sniffing
+SECURE_BROWSER_XSS_FILTER = True           # Legacy XSS filter header
+X_FRAME_OPTIONS = 'DENY'                   # Block clickjacking
