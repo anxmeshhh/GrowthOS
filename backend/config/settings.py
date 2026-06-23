@@ -216,3 +216,4 @@ DEFAULT_FROM_EMAIL = os.environ.get('SMTP_FROM', 'GrowthOS <noreply@growthos.com
 SECURE_CONTENT_TYPE_NOSNIFF = True         # Block MIME-type sniffing
 SECURE_BROWSER_XSS_FILTER = True           # Legacy XSS filter header
 X_FRAME_OPTIONS = 'DENY'                   # Block clickjacking
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'  # Fixes Google OAuth popup block
