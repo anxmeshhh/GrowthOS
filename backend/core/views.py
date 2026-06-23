@@ -419,7 +419,6 @@ class TopicMaterialUploadView(views.APIView):
 
 import os
 import PyPDF2
-from openai import OpenAI
 import json
 import re
 
@@ -432,7 +431,7 @@ class GeneratePathView(views.APIView):
             return Response({'error': 'Prompt is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             ai_prompt = f"""Generate a sequential learning roadmap based on this request: "{prompt}".
 Return EXACTLY a JSON object with this schema:
 {{
@@ -452,7 +451,7 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
 
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": ai_prompt}],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -491,7 +490,7 @@ class VerifyMaterialView(views.APIView):
         text = text[:8000]
 
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
@@ -503,7 +502,7 @@ class VerifyMaterialView(views.APIView):
                         "content": f"Topic: {material.topic.title}\n\nUser's Submission Text:\n{text}"
                     }
                 ],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -719,9 +718,9 @@ Important Knowledge:
 Your goal is to aggressively motivate the user, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally. If anyone asks who built you or where your code is, proudly tell them about Animesh Gupta and share the GitHub link.
 """
         try:
-            from openai import OpenAI
+            from groq import Groq
             import os
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             
             # Save user message
             ChatMessage.objects.create(user=user, role='user', content=user_message)
@@ -730,13 +729,13 @@ Your goal is to aggressively motivate the user, answer their technical questions
             history = ChatMessage.objects.filter(user=user).order_by('-created_at')[:10]
             history = reversed(history)
             
-            openai_messages = [{"role": "system", "content": system_prompt}]
+            chat_messages = [{"role": "system", "content": system_prompt}]
             for h in history:
-                openai_messages.append({"role": "assistant" if h.role == "ai" else "user", "content": h.content})
+                chat_messages.append({"role": "assistant" if h.role == "ai" else "user", "content": h.content})
 
             chat_completion = client.chat.completions.create(
-                messages=openai_messages,
-                model="meta/llama-3.1-70b-instruct",
+                messages=chat_messages,
+                model="llama-3.1-8b-instant",
                 temperature=0.7,
                 max_tokens=250,
             )
@@ -789,7 +788,7 @@ class TopicQuizView(views.APIView):
             return Response({'questions': quiz.questions[:count]})
             
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             
             note = TopicNote.objects.filter(user=request.user, topic=topic).first()
             user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else "\n\n(No custom study notes provided)"
@@ -798,7 +797,7 @@ class TopicQuizView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -888,7 +887,7 @@ class GenerateFlashcardsView(views.APIView):
         topic = _resolve_topic(topic_id)
         
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             
             note = TopicNote.objects.filter(user=request.user, topic=topic).first()
             user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else ""
@@ -897,7 +896,7 @@ class GenerateFlashcardsView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.4,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -947,11 +946,11 @@ class ProjectIdeasView(views.APIView):
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id)
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             prompt = f"Generate exactly 3 project ideas for a student learning '{topic.title}'. Return ONLY a JSON array where each object has: 'title' (short project name), 'description' (2-3 sentence description of what to build and what skills it demonstrates)."
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1008,7 +1007,7 @@ class ScanRepoView(views.APIView):
             tree_text = "(Could not fetch file tree)"
 
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             prompt = f"""You are evaluating a student's GitHub project for the topic: '{topic.title}'.
 
 Repository: {repo_url}
@@ -1023,7 +1022,7 @@ Reply with EXACTLY this JSON format:
 {{"passed": true/false, "score": integer_0_to_100, "feedback": "your detailed feedback"}}"""
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1074,11 +1073,20 @@ class NoteDocumentView(views.APIView):
         file_obj = request.data.get('file')
         if not file_obj:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
+        # File type validation
         allowed_extensions = ('.pdf', '.docx', '.pptx')
         if not file_obj.name.lower().endswith(allowed_extensions):
             return Response(
-                {'error': 'Invalid file type. Only PDF, DOCX, and PPTX are allowed.'}, 
+                {'error': 'Invalid file type. Only PDF, DOCX, and PPTX are allowed.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # File size validation — max 10 MB
+        MAX_DOC_SIZE = 10 * 1024 * 1024  # 10 MB
+        if file_obj.size > MAX_DOC_SIZE:
+            return Response(
+                {'error': f'File too large. Maximum allowed size is 10 MB. Your file is {round(file_obj.size / 1024 / 1024, 1)} MB.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -1115,6 +1123,23 @@ class TopicScreenshotView(views.APIView):
         image = request.data.get('image')
         if not image:
             return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Image size validation — max 5 MB
+        MAX_IMG_SIZE = 5 * 1024 * 1024  # 5 MB
+        if hasattr(image, 'size') and image.size > MAX_IMG_SIZE:
+            return Response(
+                {'error': f'Image too large. Maximum allowed size is 5 MB. Your image is {round(image.size / 1024 / 1024, 1)} MB.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Image type validation
+        allowed_img_types = ('image/jpeg', 'image/png', 'image/gif', 'image/webp')
+        if hasattr(image, 'content_type') and image.content_type not in allowed_img_types:
+            return Response(
+                {'error': 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         caption = request.data.get('caption', '')
         screenshot = TopicScreenshot.objects.create(
             user=request.user,
@@ -2826,7 +2851,7 @@ class TopicFeynmanView(views.APIView):
         
         # AI Mode
         try:
-            client = OpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=os.environ.get("NVIDIA_API_KEY") or getattr(settings, "NVIDIA_API_KEY", ""))
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             
             prompt = f"""
 I am using the Feynman Technique to learn. I am trying to explain the concept of '{concept}' to a 5-year-old.
@@ -2848,7 +2873,7 @@ Return ONLY a JSON object with this exact structure:
 """
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="meta/llama-3.1-70b-instruct",
+                model="llama-3.1-8b-instant",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
