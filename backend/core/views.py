@@ -1231,9 +1231,8 @@ class UserProfileView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        try:
-            user = request.user
-            profile, _ = UserProfile.objects.get_or_create(user=user)
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
         total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
         
         level = 1
@@ -1383,13 +1382,6 @@ class UserProfileView(views.APIView):
             },
             "selected_title": profile.selected_title,
         })
-        except Exception as e:
-            import traceback
-            error_details = traceback.format_exc()
-            return Response({
-                "error": str(e),
-                "traceback": error_details
-            }, status=500)
 
     def patch(self, request):
         user = request.user
