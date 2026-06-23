@@ -78,15 +78,13 @@ export function PomodoroTimer() {
     <div
       style={{
         position: "fixed",
-        bottom: "80px", // Above mobile nav
-        right: "20px",
         zIndex: 40,
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-end",
         gap: "12px",
       }}
-      className="lg:bottom-6 lg:right-6"
+      className="bottom-6 right-[96px] sm:bottom-8 sm:right-[104px]"
     >
       {/* Widget Panel */}
       {isOpen && (

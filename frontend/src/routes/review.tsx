@@ -147,7 +147,7 @@ function GlobalReviewPage() {
           <h2 className="text-3xl font-bold tracking-tight text-[#f0f0f0] mb-2">
             You're all caught up!
           </h2>
-          <p className="text-[#888] max-w-md mb-8">
+          <p className="text-[#aaa] max-w-md mb-8 leading-relaxed text-lg">
             You have successfully cleared your entire review queue. Excellent work! Your spaced
             repetition algorithm will schedule the next batch.
           </p>
@@ -168,13 +168,13 @@ function GlobalReviewPage() {
         <header className="flex items-center justify-between mb-8 max-w-4xl mx-auto w-full">
           <Link
             to="/roadmap"
-            className="flex items-center gap-2 text-[#888] hover:text-[#fff] transition-colors"
+            className="flex items-center gap-2 text-[#666] hover:text-[#fff] transition-colors"
           >
             <X size={20} />
-            <span className="text-sm font-mono uppercase tracking-widest">End Session</span>
+            <span className="text-xs font-mono uppercase tracking-[0.2em] font-medium">End Session</span>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="text-xs font-mono uppercase tracking-widest text-[#22c55e] border border-[#22c55e]/20 bg-[#22c55e]/10 px-3 py-1 rounded">
+            <div className="text-xs font-mono uppercase tracking-[0.2em] font-medium text-[#22c55e] border border-[#22c55e]/20 bg-[#22c55e]/5 px-3 py-1.5 rounded-md shadow-inner">
               {dueCards.length} Due
             </div>
           </div>
@@ -182,11 +182,11 @@ function GlobalReviewPage() {
 
         {/* Card Container */}
         <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full mb-20">
-          <div className="w-full text-center mb-6">
-            <div className="text-sm font-mono text-[#888] uppercase tracking-widest mb-1">
+          <div className="w-full text-center mb-8">
+            <div className="text-xs font-mono text-[#666] uppercase tracking-[0.2em] font-medium mb-1.5">
               {currentItem.path_title}
             </div>
-            <div className="text-lg text-[#eee] font-semibold">{currentItem.topic_title}</div>
+            <div className="text-xl text-[#e8e8e8] font-semibold">{currentItem.topic_title}</div>
           </div>
 
           <div
@@ -197,25 +197,25 @@ function GlobalReviewPage() {
               className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${flipped ? "rotate-y-180" : ""}`}
             >
               {/* Front */}
-              <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-[#181818] bg-[#0a0a0a] hover:border-[#222] transition-colors flex flex-col items-center justify-center p-6 sm:p-8 shadow-2xl overflow-y-auto">
-                <div className="text-sm uppercase font-mono tracking-widest text-[#888] mb-6 shrink-0">
+              <div className="absolute inset-0 backface-hidden rounded-2xl border border-[#1a1a1a] bg-[#0a0a0a] flex flex-col items-center justify-center p-8 sm:p-12 shadow-2xl overflow-y-auto">
+                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#666] mb-8 shrink-0">
                   Question
                 </div>
-                <div className="text-xl sm:text-3xl font-semibold text-[#e8e8e8] text-center leading-snug my-auto">
+                <div className="text-2xl sm:text-4xl font-semibold text-[#e8e8e8] text-center leading-relaxed my-auto">
                   {currentItem.card.front}
                 </div>
                 {!flipped && (
-                  <div className="absolute bottom-6 text-[#555] text-sm font-mono uppercase tracking-widest animate-pulse shrink-0">
-                    Spacebar to reveal
+                  <div className="absolute bottom-8 text-[#444] text-xs font-mono uppercase tracking-[0.2em] font-medium animate-pulse shrink-0">
+                    Press spacebar to reveal
                   </div>
                 )}
               </div>
               {/* Back */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 border-[#22c55e]/30 bg-[#061008] flex flex-col items-center justify-center p-6 sm:p-8 shadow-2xl overflow-y-auto">
-                <div className="text-sm uppercase font-mono tracking-widest text-[#22c55e]/60 mb-6 shrink-0">
+              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border border-[#1a1a1a] bg-[#0d0d0d] flex flex-col items-center justify-center p-8 sm:p-12 shadow-2xl overflow-y-auto">
+                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#22c55e]/80 mb-8 shrink-0">
                   Answer
                 </div>
-                <div className="text-lg sm:text-2xl text-[#eee] text-center leading-relaxed my-auto">
+                <div className="text-xl sm:text-3xl font-medium text-[#d4d4d4] text-center leading-relaxed my-auto">
                   {currentItem.card.back}
                 </div>
               </div>
@@ -224,17 +224,17 @@ function GlobalReviewPage() {
 
           {/* Grading Buttons */}
           {flipped && (
-            <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   submitGradeMutation.mutate({ quality: "hard" });
                 }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 transition-all disabled:opacity-50"
+                className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#ef4444]/20 bg-[#ef4444]/5 hover:bg-[#ef4444]/15 hover:border-[#ef4444]/40 transition-all disabled:opacity-50 shadow-inner"
               >
-                <span className="font-bold text-[#ef4444] text-lg mb-1">Again</span>
-                <span className="text-xs font-mono text-[#ef4444]/60 opacity-80">&lt; 1m (1)</span>
+                <span className="font-bold text-[#ef4444] text-xl mb-1.5">Again</span>
+                <span className="text-[10px] font-mono text-[#ef4444]/50 tracking-[0.2em] uppercase">&lt; 1m (1)</span>
               </button>
 
               <button
@@ -243,10 +243,10 @@ function GlobalReviewPage() {
                   submitGradeMutation.mutate({ quality: "hard" });
                 }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#f59e0b]/30 bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 transition-all disabled:opacity-50"
+                className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#f59e0b]/20 bg-[#f59e0b]/5 hover:bg-[#f59e0b]/15 hover:border-[#f59e0b]/40 transition-all disabled:opacity-50 shadow-inner"
               >
-                <span className="font-bold text-[#f59e0b] text-lg mb-1">Hard</span>
-                <span className="text-xs font-mono text-[#f59e0b]/60 opacity-80">1d (2)</span>
+                <span className="font-bold text-[#f59e0b] text-xl mb-1.5">Hard</span>
+                <span className="text-[10px] font-mono text-[#f59e0b]/50 tracking-[0.2em] uppercase">1d (2)</span>
               </button>
 
               <button
@@ -255,10 +255,10 @@ function GlobalReviewPage() {
                   submitGradeMutation.mutate({ quality: "good" });
                 }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 transition-all disabled:opacity-50"
+                className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#3b82f6]/20 bg-[#3b82f6]/5 hover:bg-[#3b82f6]/15 hover:border-[#3b82f6]/40 transition-all disabled:opacity-50 shadow-inner"
               >
-                <span className="font-bold text-[#22c55e] text-lg mb-1">Good</span>
-                <span className="text-xs font-mono text-[#22c55e]/60 opacity-80">3d (3)</span>
+                <span className="font-bold text-[#3b82f6] text-xl mb-1.5">Good</span>
+                <span className="text-[10px] font-mono text-[#3b82f6]/50 tracking-[0.2em] uppercase">3d (3)</span>
               </button>
 
               <button
@@ -267,10 +267,10 @@ function GlobalReviewPage() {
                   submitGradeMutation.mutate({ quality: "easy" });
                 }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-4 rounded-xl border border-[#3b82f6]/30 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 transition-all disabled:opacity-50"
+                className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#22c55e]/20 bg-[#22c55e]/5 hover:bg-[#22c55e]/15 hover:border-[#22c55e]/40 transition-all disabled:opacity-50 shadow-inner"
               >
-                <span className="font-bold text-[#3b82f6] text-lg mb-1">Easy</span>
-                <span className="text-xs font-mono text-[#3b82f6]/60 opacity-80">4d (4)</span>
+                <span className="font-bold text-[#22c55e] text-xl mb-1.5">Easy</span>
+                <span className="text-[10px] font-mono text-[#22c55e]/50 tracking-[0.2em] uppercase">4d (4)</span>
               </button>
             </div>
           )}
