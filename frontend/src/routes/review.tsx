@@ -190,34 +190,37 @@ function GlobalReviewPage() {
           </div>
 
           <div
-            className="perspective-1000 min-h-[350px] sm:min-h-[400px] w-full cursor-pointer"
+            className="perspective-1000 h-[350px] sm:h-[450px] w-full cursor-pointer"
             onClick={() => !flipped && setFlipped(true)}
           >
             <div
               className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${flipped ? "rotate-y-180" : ""}`}
             >
               {/* Front */}
-              <div className="absolute inset-0 backface-hidden rounded-2xl border border-[#1a1a1a] bg-[#0a0a0a] flex flex-col items-center justify-center p-8 sm:p-12 shadow-2xl overflow-y-auto">
-                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#666] mb-8 shrink-0">
+              <div className="absolute inset-0 backface-hidden rounded-2xl border border-[#1e1e1e] bg-[#0d0d0d] flex flex-col justify-between p-8 sm:p-12 shadow-2xl overflow-y-auto">
+                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#666] shrink-0">
                   Question
                 </div>
-                <div className="text-2xl sm:text-4xl font-semibold text-[#e8e8e8] text-center leading-relaxed my-auto">
+                <div className="text-2xl sm:text-4xl font-medium text-[#e8e8e8] leading-relaxed my-auto py-8">
                   {currentItem.card.front}
                 </div>
-                {!flipped && (
-                  <div className="absolute bottom-8 text-[#444] text-xs font-mono uppercase tracking-[0.2em] font-medium animate-pulse shrink-0">
-                    Press spacebar to reveal
-                  </div>
-                )}
+                <div className="flex items-center justify-between shrink-0">
+                  {!flipped ? (
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-medium text-[#444] animate-pulse">
+                      Press spacebar to reveal
+                    </span>
+                  ) : <span />}
+                </div>
               </div>
               {/* Back */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border border-[#1a1a1a] bg-[#0d0d0d] flex flex-col items-center justify-center p-8 sm:p-12 shadow-2xl overflow-y-auto">
-                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#22c55e]/80 mb-8 shrink-0">
+              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border border-[#22c55e]/20 bg-[#080f08] flex flex-col justify-between p-8 sm:p-12 shadow-2xl overflow-y-auto">
+                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#22c55e]/60 shrink-0">
                   Answer
                 </div>
-                <div className="text-xl sm:text-3xl font-medium text-[#d4d4d4] text-center leading-relaxed my-auto">
+                <div className="text-xl sm:text-3xl font-medium text-[#d4d4d4] leading-relaxed my-auto py-8">
                   {currentItem.card.back}
                 </div>
+                <div className="shrink-0" />
               </div>
             </div>
           </div>
