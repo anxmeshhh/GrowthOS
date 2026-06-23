@@ -222,6 +222,9 @@ function TopicWorkspace() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["topic", topicId] });
       queryClient.invalidateQueries({ queryKey: ["paths"] });
+      queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+      queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+      queryClient.invalidateQueries({ queryKey: ["user_profile"] });
     },
   });
 
@@ -1062,6 +1065,8 @@ function QuizTab({ topicId }: { topicId: number }) {
           queryClient.invalidateQueries({ queryKey: ["topic", String(topicId)] });
           queryClient.invalidateQueries({ queryKey: ["heatmap"] });
           queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+          queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+          queryClient.invalidateQueries({ queryKey: ["paths"] });
         }
       }
     } catch (e) {
@@ -1911,6 +1916,9 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
       showToast("Feynman Entry Saved!", "success");
       queryClient.invalidateQueries({ queryKey: ["feynman", topicId] });
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+      queryClient.invalidateQueries({ queryKey: ["heatmap"] });
+      queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      queryClient.invalidateQueries({ queryKey: ["paths"] });
       setIsNew(false);
       setConcept("");
       setExplanation("");
