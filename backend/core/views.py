@@ -452,7 +452,7 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
 
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": ai_prompt}],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -503,7 +503,7 @@ class VerifyMaterialView(views.APIView):
                         "content": f"Topic: {material.topic.title}\n\nUser's Submission Text:\n{text}"
                     }
                 ],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -736,7 +736,7 @@ Your goal is to aggressively motivate the user, answer their technical questions
 
             chat_completion = client.chat.completions.create(
                 messages=openai_messages,
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.7,
                 max_tokens=250,
             )
@@ -798,7 +798,7 @@ class TopicQuizView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -897,7 +897,7 @@ class GenerateFlashcardsView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.4,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -951,7 +951,7 @@ class ProjectIdeasView(views.APIView):
             prompt = f"Generate exactly 3 project ideas for a student learning '{topic.title}'. Return ONLY a JSON array where each object has: 'title' (short project name), 'description' (2-3 sentence description of what to build and what skills it demonstrates)."
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1023,7 +1023,7 @@ Reply with EXACTLY this JSON format:
 {{"passed": true/false, "score": integer_0_to_100, "feedback": "your detailed feedback"}}"""
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -2848,7 +2848,7 @@ Return ONLY a JSON object with this exact structure:
 """
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="nvidia/llama-3.1-nemotron-70b-instruct",
+                model="meta/llama-3.1-70b-instruct",
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
