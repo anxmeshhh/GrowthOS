@@ -539,7 +539,7 @@ function drawTextInShape(ctx: CanvasRenderingContext2D, text: string, cx: number
   while (fontSize > 8) {
     ctx.font = `bold ${fontSize}px sans-serif`;
     lineHeight = fontSize * 1.2;
-    const words = text.split(" ");
+    const words = text.split(/\s+/);
     lines = [];
     let line = "";
     let wordTooLong = false;
