@@ -11,6 +11,7 @@ import {
   Eraser,
   UserSquare2,
   Maximize,
+  Type,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,7 +34,7 @@ type DraggedShape = {
   rotation: number;
 };
 
-type BaseStroke = { color: string; thickness: number; rotation?: number };
+type BaseStroke = { color: string; thickness: number; rotation?: number; text?: string };
 type RawStroke = BaseStroke & { type: "raw"; points: Point[] };
 type LineStroke = BaseStroke & { type: "line"; start: Point; end: Point };
 type CircleStroke = BaseStroke & { type: "circle"; center: Point; radius: number };
@@ -528,6 +529,73 @@ function getCenter(stroke: Stroke): Point {
   return { x: 0, y: 0 };
 }
 
+function drawTextInShape(ctx: CanvasRenderingContext2D, text: string, cx: number, cy: number, maxWidth: number, maxHeight: number) {
+  if (!text) return;
+  let fontSize = 40;
+  let lines: string[] = [];
+  let lineHeight = fontSize * 1.2;
+
+  // Decrease font size until it fits
+  while (fontSize > 8) {
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    lineHeight = fontSize * 1.2;
+    const words = text.split(" ");
+    lines = [];
+    let line = "";
+    let wordTooLong = false;
+
+    for (let n = 0; n < words.length; n++) {
+      const wordWidth = ctx.measureText(words[n]).width;
+      if (wordWidth > maxWidth) {
+        wordTooLong = true;
+        break;
+      }
+
+      const testLine = line + words[n] + " ";
+      const metrics = ctx.measureText(testLine);
+
+      if (metrics.width > maxWidth && n > 0) {
+        lines.push(line);
+        line = words[n] + " ";
+      } else {
+        line = testLine;
+      }
+    }
+
+    if (wordTooLong) {
+      fontSize -= 2;
+      continue;
+    }
+
+    lines.push(line);
+
+    if (lines.length * lineHeight <= maxHeight) {
+      break; // Fits!
+    }
+    fontSize -= 2;
+  }
+
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  ctx.fillStyle = "black";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const totalHeight = lines.length * lineHeight;
+  let startY = cy - totalHeight / 2 + lineHeight / 2;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(-1, 1);
+  ctx.translate(-cx, -cy);
+
+  lines.forEach((l) => {
+    ctx.fillText(l.trim(), cx, startY);
+    startY += lineHeight;
+  });
+
+  ctx.restore();
+}
+
 export const Route = createFileRoute("/air-draw")({
   head: () => ({ meta: [{ title: "Air Draw — GrowthOS" }] }),
   component: AirDrawPage,
@@ -541,20 +609,23 @@ function AirDrawPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [color, setColor] = useState("#3b82f6"); // Default to blue since they clicked it
-  const [isDrawingMode, setIsDrawingMode] = useState(true);
+  const [activeMode, setActiveMode] = useState<"draw" | "text" | "hover">("draw");
   const [isFakeBgEnabled, setIsFakeBgEnabled] = useState(false);
+  const [isTextEditing, setIsTextEditing] = useState(false);
+  const [currentText, setCurrentText] = useState("");
 
   // Use refs to ensure the requestAnimationFrame loop always sees the latest state
   const colorRef = useRef(color);
-  const isDrawingModeRef = useRef(isDrawingMode);
+  const activeModeRef = useRef(activeMode);
   const isFakeBgEnabledRef = useRef(isFakeBgEnabled);
+  const selectedTextShapeRef = useRef<Stroke | null>(null);
 
   useEffect(() => {
     colorRef.current = color;
   }, [color]);
   useEffect(() => {
-    isDrawingModeRef.current = isDrawingMode;
-  }, [isDrawingMode]);
+    activeModeRef.current = activeMode;
+  }, [activeMode]);
   useEffect(() => {
     isFakeBgEnabledRef.current = isFakeBgEnabled;
   }, [isFakeBgEnabled]);
@@ -739,8 +810,15 @@ function AirDrawPage() {
         ctx.rotate(rot);
         ctx.beginPath();
         ctx.arc(0, 0, stroke.radius, 0, 2 * Math.PI);
+        if (stroke.text || stroke === selectedTextShapeRef.current) {
+          ctx.fillStyle = "white";
+          ctx.fill();
+        }
         ctx.stroke();
         ctx.restore();
+        if (stroke.text) {
+          drawTextInShape(ctx, stroke.text, cx, cy, stroke.radius * 1.5, stroke.radius * 1.5);
+        }
       } else if (stroke.type === "rectangle") {
         ctx.save();
         const cx = stroke.x + stroke.width / 2;
@@ -749,8 +827,15 @@ function AirDrawPage() {
         ctx.rotate(rot);
         ctx.beginPath();
         ctx.rect(-stroke.width / 2, -stroke.height / 2, stroke.width, stroke.height);
+        if (stroke.text || stroke === selectedTextShapeRef.current) {
+          ctx.fillStyle = "white";
+          ctx.fill();
+        }
         ctx.stroke();
         ctx.restore();
+        if (stroke.text) {
+          drawTextInShape(ctx, stroke.text, cx, cy, stroke.width * 0.9, stroke.height * 0.9);
+        }
       } else if (stroke.type === "triangle") {
         ctx.save();
         const cx = (stroke.p1.x + stroke.p2.x + stroke.p3.x) / 3;
@@ -762,8 +847,32 @@ function AirDrawPage() {
         ctx.lineTo(stroke.p2.x - cx, stroke.p2.y - cy);
         ctx.lineTo(stroke.p3.x - cx, stroke.p3.y - cy);
         ctx.closePath();
+        if (stroke.text || stroke === selectedTextShapeRef.current) {
+          ctx.fillStyle = "white";
+          ctx.fill();
+        }
         ctx.stroke();
         ctx.restore();
+        if (stroke.text) {
+          drawTextInShape(ctx, stroke.text, cx, cy, 80, 80);
+        }
+      } else if (stroke.type === "square") {
+        ctx.save();
+        const cx = stroke.x + stroke.width / 2;
+        const cy = stroke.y + stroke.height / 2;
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        ctx.rect(-stroke.width / 2, -stroke.height / 2, stroke.width, stroke.height);
+        if (stroke.text || stroke === selectedTextShapeRef.current) {
+          ctx.fillStyle = "white";
+          ctx.fill();
+        }
+        ctx.stroke();
+        ctx.restore();
+        if (stroke.text) {
+          drawTextInShape(ctx, stroke.text, cx, cy, stroke.width * 0.9, stroke.height * 0.9);
+        }
       } else if (stroke.type === "connection") {
         if (stroke.path.length === 0) return;
         ctx.beginPath();
@@ -1040,7 +1149,35 @@ function AirDrawPage() {
             lastDrawPosRef.current = null;
             currentStrokePointsRef.current = [];
           } else {
-            if (isDrawingModeRef.current) {
+            if (activeModeRef.current === "text") {
+              if (pPinching && !isPinchingRef.current) {
+                // Find shape
+                let hitShapeIndex = -1;
+                for (let i = strokesRef.current.length - 1; i >= 0; i--) {
+                  const s = strokesRef.current[i];
+                  if (s.type === "raw" || s.type === "connection") continue;
+                  const center = getCenter(s);
+                  const dist = Math.sqrt((pPx - center.x) ** 2 + (pPy - center.y) ** 2);
+                  let radius = 50;
+                  if (s.type === "circle") radius = s.radius!;
+                  else if (s.type === "square") radius = s.width! / 2;
+                  else if (s.type === "rectangle") radius = s.width! / 2;
+                  else if (s.type === "triangle") radius = 60;
+                  
+                  if (dist < radius) {
+                    hitShapeIndex = i;
+                    break;
+                  }
+                }
+                if (hitShapeIndex !== -1) {
+                  const s = strokesRef.current[hitShapeIndex];
+                  selectedTextShapeRef.current = s;
+                  setIsTextEditing(true);
+                  setCurrentText(s.text || "");
+                  redrawCanvas(canvasRef.current!);
+                }
+              }
+            } else if (activeModeRef.current === "draw") {
               if (pPinching) {
                 if (!isPinchingRef.current) {
                   // Just started pinching
@@ -1302,7 +1439,7 @@ function AirDrawPage() {
           isPinchingRef.current = pPinching;
         } else {
           // Hand lost
-          if (isPinchingRef.current && isDrawingModeRef.current) {
+          if (isPinchingRef.current && activeModeRef.current === "draw") {
             if (draggedShapeRef.current) {
               // Place it where it was
               const dragged = draggedShapeRef.current;
@@ -1451,6 +1588,50 @@ function AirDrawPage() {
             </span>
           </div>
 
+          {/* Text Editing Modal Overlay */}
+          {isTextEditing && (
+            <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center min-w-[300px]">
+                <h3 className="text-black font-bold mb-4">Enter Text</h3>
+                <textarea
+                  autoFocus
+                  value={currentText}
+                  onChange={(e) => setCurrentText(e.target.value)}
+                  className="w-full border border-gray-300 rounded p-2 text-black mb-4 focus:ring-2 focus:ring-green-500 outline-none"
+                  rows={4}
+                  placeholder="Type inside shape..."
+                />
+                <div className="flex gap-4">
+                  <Btn
+                    variant="solid"
+                    tone="green"
+                    onClick={() => {
+                      if (selectedTextShapeRef.current) {
+                        selectedTextShapeRef.current.text = currentText;
+                      }
+                      setIsTextEditing(false);
+                      selectedTextShapeRef.current = null;
+                      if (canvasRef.current) redrawCanvas(canvasRef.current);
+                    }}
+                  >
+                    Save
+                  </Btn>
+                  <Btn
+                    variant="outline"
+                    tone="neutral"
+                    onClick={() => {
+                      setIsTextEditing(false);
+                      selectedTextShapeRef.current = null;
+                      if (canvasRef.current) redrawCanvas(canvasRef.current);
+                    }}
+                  >
+                    Cancel
+                  </Btn>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Floating Controls Panel */}
           <div className="absolute right-4 top-4 bottom-4 w-48 bg-black/60 backdrop-blur-lg rounded-2xl border border-white/10 p-4 flex flex-col gap-6 overflow-y-auto z-30 shadow-2xl">
             <div className="flex flex-col gap-3">
@@ -1463,9 +1644,9 @@ function AirDrawPage() {
                     key={c}
                     onClick={() => {
                       setColor(c);
-                      setIsDrawingMode(true);
+                      setActiveMode("draw");
                     }}
-                    className={`w-8 h-8 rounded-full border-2 transition-transform mx-auto ${color === c && isDrawingMode ? "scale-125 border-white" : "border-transparent hover:scale-110"}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-transform mx-auto ${color === c && activeMode === "draw" ? "scale-125 border-white" : "border-transparent hover:scale-110"}`}
                     style={{ backgroundColor: c }}
                   />
                 ))}
@@ -1479,17 +1660,25 @@ function AirDrawPage() {
                 Tools
               </h3>
               <Btn
-                variant={isDrawingMode ? "solid" : "outline"}
-                tone={isDrawingMode ? "green" : "neutral"}
-                onClick={() => setIsDrawingMode(true)}
+                variant={activeMode === "draw" ? "solid" : "outline"}
+                tone={activeMode === "draw" ? "green" : "neutral"}
+                onClick={() => setActiveMode("draw")}
                 className="w-full justify-start"
               >
                 <PenTool size={16} className="mr-2" /> Draw
               </Btn>
               <Btn
-                variant={!isDrawingMode ? "solid" : "outline"}
-                tone={!isDrawingMode ? "green" : "neutral"}
-                onClick={() => setIsDrawingMode(false)}
+                variant={activeMode === "text" ? "solid" : "outline"}
+                tone={activeMode === "text" ? "green" : "neutral"}
+                onClick={() => setActiveMode("text")}
+                className="w-full justify-start"
+              >
+                <Type size={16} className="mr-2" /> Text
+              </Btn>
+              <Btn
+                variant={activeMode === "hover" ? "solid" : "outline"}
+                tone={activeMode === "hover" ? "green" : "neutral"}
+                onClick={() => setActiveMode("hover")}
                 className="w-full justify-start"
               >
                 <Eraser size={16} className="mr-2" /> Hover
