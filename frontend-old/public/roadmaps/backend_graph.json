@@ -1,0 +1,2778 @@
+{
+  "nodes": [
+    {
+      "id": "personal_recommendation_opinion",
+      "label": "Personal Recommendation / Opinion",
+      "x": 44,
+      "y": 79,
+      "width": 326,
+      "height": 28,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Legend"
+    },
+    {
+      "id": "alternative_option_pick_this_or_purple",
+      "label": "Alternative Option / Pick this or purple",
+      "x": 44,
+      "y": 110,
+      "width": 326,
+      "height": 28,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Legend"
+    },
+    {
+      "id": "order_not_strict_learn_anytime",
+      "label": "Order not strict / Learn anytime",
+      "x": 44,
+      "y": 141,
+      "width": 326,
+      "height": 28,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Legend"
+    },
+    {
+      "id": "visit_beginner_friendly_version",
+      "label": "Visit Beginner Friendly Version",
+      "x": 65,
+      "y": 196,
+      "width": 310,
+      "height": 50,
+      "bgColor": "#343434",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "find_the_detailed_version_of_this_roadmap_along_with_other_similar_roadmaps",
+      "label": "Find the detailed version of this roadmap along with other similar roadmaps",
+      "x": 651,
+      "y": 79,
+      "width": 486,
+      "height": 86,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "roadmap_sh",
+      "label": "roadmap.sh",
+      "x": 775,
+      "y": 172,
+      "width": 236,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "internet",
+      "label": "Internet",
+      "x": 601,
+      "y": 341,
+      "width": 173,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "how_does_the_internet_work",
+      "label": "How does the internet work?",
+      "x": 730,
+      "y": 341,
+      "width": 340,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "what_is_http",
+      "label": "What is HTTP?",
+      "x": 730,
+      "y": 383,
+      "width": 340,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "what_is_domain_name",
+      "label": "What is Domain Name?",
+      "x": 730,
+      "y": 425,
+      "width": 340,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "what_is_hosting",
+      "label": "What is hosting?",
+      "x": 730,
+      "y": 467,
+      "width": 340,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "dns_and_how_it_works",
+      "label": "DNS and how it works?",
+      "x": 730,
+      "y": 509,
+      "width": 340,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "browsers_and_how_they_work",
+      "label": "Browsers and how they work?",
+      "x": 730,
+      "y": 551,
+      "width": 340,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "pick_a_language",
+      "label": "Pick a Language",
+      "x": 377,
+      "y": 442,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "x": 44,
+      "y": 341,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "go",
+      "label": "Go",
+      "x": 186,
+      "y": 341,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "python",
+      "label": "Python",
+      "x": 44,
+      "y": 383,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "ruby",
+      "label": "Ruby",
+      "x": 186,
+      "y": 383,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "java",
+      "label": "Java",
+      "x": 44,
+      "y": 425,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "c_sharp",
+      "label": "C#",
+      "x": 186,
+      "y": 425,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "php",
+      "label": "PHP",
+      "x": 44,
+      "y": 467,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "rust",
+      "label": "Rust",
+      "x": 186,
+      "y": 467,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Pick a Language"
+    },
+    {
+      "id": "version_control_systems",
+      "label": "Version Control Systems",
+      "x": 463,
+      "y": 542,
+      "width": 250,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "git",
+      "label": "Git",
+      "x": 601,
+      "y": 642,
+      "width": 173,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "github",
+      "label": "Github",
+      "x": 44,
+      "y": 541,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Version Control Systems"
+    },
+    {
+      "id": "gitlab",
+      "label": "GitLab",
+      "x": 44,
+      "y": 583,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Version Control Systems"
+    },
+    {
+      "id": "repo_hosting_services",
+      "label": "Repo Hosting Services",
+      "x": 44,
+      "y": 651,
+      "width": 250,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "bitbucket",
+      "label": "Bitbucket",
+      "x": 44,
+      "y": 708,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Repo Hosting Services"
+    },
+    {
+      "id": "postgresql",
+      "label": "PostgreSQL",
+      "x": 463,
+      "y": 683,
+      "width": 250,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "relational_databases",
+      "label": "Relational Databases",
+      "x": 463,
+      "y": 783,
+      "width": 250,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "mysql",
+      "label": "MySQL",
+      "x": 730,
+      "y": 641,
+      "width": 215,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Relational Databases"
+    },
+    {
+      "id": "mariadb",
+      "label": "MariaDB",
+      "x": 730,
+      "y": 683,
+      "width": 215,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Relational Databases"
+    },
+    {
+      "id": "ms_sql",
+      "label": "MS SQL",
+      "x": 730,
+      "y": 725,
+      "width": 215,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Relational Databases"
+    },
+    {
+      "id": "oracle",
+      "label": "Oracle",
+      "x": 730,
+      "y": 767,
+      "width": 215,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Relational Databases"
+    },
+    {
+      "id": "sqlite",
+      "label": "SQLite",
+      "x": 730,
+      "y": 809,
+      "width": 215,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Relational Databases"
+    },
+    {
+      "id": "redis_caching",
+      "label": "Redis",
+      "x": 44,
+      "y": 782,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Caching"
+    },
+    {
+      "id": "memcached",
+      "label": "Memcached",
+      "x": 44,
+      "y": 824,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Caching"
+    },
+    {
+      "id": "hateoas",
+      "label": "HATEOAS",
+      "x": 320,
+      "y": 874,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "open_api_specs",
+      "label": "Open API Specs",
+      "x": 320,
+      "y": 916,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "caching",
+      "label": "Caching",
+      "x": 377,
+      "y": 928,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "learn_about_apis",
+      "label": "Learn about APIs",
+      "x": 601,
+      "y": 928,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "server_side",
+      "label": "Server Side",
+      "x": 44,
+      "y": 887,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Caching"
+    },
+    {
+      "id": "cdn",
+      "label": "CDN",
+      "x": 44,
+      "y": 929,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Caching"
+    },
+    {
+      "id": "client_side",
+      "label": "Client Side",
+      "x": 44,
+      "y": 971,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Caching"
+    },
+    {
+      "id": "rest",
+      "label": "REST",
+      "x": 524,
+      "y": 994,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Learn about APIs"
+    },
+    {
+      "id": "json_apis",
+      "label": "JSON APIs",
+      "x": 524,
+      "y": 1036,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Learn about APIs"
+    },
+    {
+      "id": "soap",
+      "label": "SOAP",
+      "x": 524,
+      "y": 1078,
+      "width": 93,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Learn about APIs"
+    },
+    {
+      "id": "grpc",
+      "label": "gRPC",
+      "x": 621,
+      "y": 1078,
+      "width": 93,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Learn about APIs"
+    },
+    {
+      "id": "graphql_api_learning",
+      "label": "GraphQL",
+      "x": 524,
+      "y": 1120,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Learn about APIs"
+    },
+    {
+      "id": "jwt",
+      "label": "JWT",
+      "x": 835,
+      "y": 928,
+      "width": 120,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "oauth",
+      "label": "OAuth",
+      "x": 958,
+      "y": 928,
+      "width": 120,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "basic_authentication",
+      "label": "Basic Authentication",
+      "x": 835,
+      "y": 970,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "token_authentication",
+      "label": "Token Authentication",
+      "x": 835,
+      "y": 1012,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "cookie_based_auth",
+      "label": "Cookie Based Auth",
+      "x": 835,
+      "y": 1054,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "openid",
+      "label": "OpenID",
+      "x": 835,
+      "y": 1106,
+      "width": 120,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "saml",
+      "label": "SAML",
+      "x": 958,
+      "y": 1106,
+      "width": 120,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Authentication"
+    },
+    {
+      "id": "md5",
+      "label": "MD5",
+      "x": 44,
+      "y": 1085,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Hashing Algorithms"
+    },
+    {
+      "id": "sha",
+      "label": "SHA",
+      "x": 44,
+      "y": 1127,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Hashing Algorithms"
+    },
+    {
+      "id": "scrypt",
+      "label": "scrypt",
+      "x": 44,
+      "y": 1169,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Hashing Algorithms"
+    },
+    {
+      "id": "bcrypt",
+      "label": "bcrypt",
+      "x": 44,
+      "y": 1211,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Hashing Algorithms"
+    },
+    {
+      "id": "web_security",
+      "label": "Web Security",
+      "x": 601,
+      "y": 1228,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "testing",
+      "label": "Testing",
+      "x": 601,
+      "y": 1338,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "integration_testing",
+      "label": "Integration Testing",
+      "x": 835,
+      "y": 1228,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Testing"
+    },
+    {
+      "id": "unit_testing",
+      "label": "Unit Testing",
+      "x": 835,
+      "y": 1270,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Testing"
+    },
+    {
+      "id": "functional_testing",
+      "label": "Functional Testing",
+      "x": 835,
+      "y": 1312,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Testing"
+    },
+    {
+      "id": "https",
+      "label": "HTTPS",
+      "x": 44,
+      "y": 1338,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "API Security Best Practices"
+    },
+    {
+      "id": "owasp_risks",
+      "label": "OWASP Risks",
+      "x": 186,
+      "y": 1338,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "API Security Best Practices"
+    },
+    {
+      "id": "cors",
+      "label": "CORS",
+      "x": 44,
+      "y": 1380,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "API Security Best Practices"
+    },
+    {
+      "id": "ssl_tls",
+      "label": "SSL/TLS",
+      "x": 186,
+      "y": 1380,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "API Security Best Practices"
+    },
+    {
+      "id": "csp",
+      "label": "CSP",
+      "x": 44,
+      "y": 1422,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "API Security Best Practices"
+    },
+    {
+      "id": "server_security",
+      "label": "Server Security",
+      "x": 186,
+      "y": 1422,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "API Security Best Practices"
+    },
+    {
+      "id": "ci_cd",
+      "label": "CI / CD",
+      "x": 601,
+      "y": 1448,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "more_about_databases",
+      "label": "More about Databases",
+      "x": 601,
+      "y": 1558,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "orms",
+      "label": "ORMs",
+      "x": 835,
+      "y": 1381,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "acid",
+      "label": "ACID",
+      "x": 835,
+      "y": 1423,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "transactions",
+      "label": "Transactions",
+      "x": 835,
+      "y": 1465,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "n_plus_1_problem",
+      "label": "N+1 Problem",
+      "x": 835,
+      "y": 1507,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "normalization",
+      "label": "Normalization",
+      "x": 835,
+      "y": 1549,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "failure_modes",
+      "label": "Failure Modes",
+      "x": 835,
+      "y": 1591,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "profiling_perfor",
+      "label": "Profiling Perfor.",
+      "x": 835,
+      "y": 1633,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "migrations",
+      "label": "Migrations",
+      "x": 835,
+      "y": 1675,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "More about Databases"
+    },
+    {
+      "id": "scaling_databases",
+      "label": "Scaling Databases",
+      "x": 377,
+      "y": 1558,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "database_indexes",
+      "label": "Database Indexes",
+      "x": 44,
+      "y": 1558,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Scaling Databases"
+    },
+    {
+      "id": "data_replication",
+      "label": "Data Replication",
+      "x": 44,
+      "y": 1600,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Scaling Databases"
+    },
+    {
+      "id": "sharding_strategies",
+      "label": "Sharding Strategies",
+      "x": 44,
+      "y": 1642,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Scaling Databases"
+    },
+    {
+      "id": "cap_theorem",
+      "label": "CAP Theorem",
+      "x": 44,
+      "y": 1684,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Scaling Databases"
+    },
+    {
+      "id": "software_design_architecture",
+      "label": "Software Design & Architecture",
+      "x": 494,
+      "y": 1768,
+      "width": 250,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "architectural_patterns",
+      "label": "Architectural Patterns",
+      "x": 835,
+      "y": 1768,
+      "width": 250,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "monolithic_apps",
+      "label": "Monolithic Apps",
+      "x": 835,
+      "y": 1827,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Architectural Patterns"
+    },
+    {
+      "id": "microservices",
+      "label": "Microservices",
+      "x": 835,
+      "y": 1869,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Architectural Patterns"
+    },
+    {
+      "id": "soa",
+      "label": "SOA",
+      "x": 835,
+      "y": 1911,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Architectural Patterns"
+    },
+    {
+      "id": "serverless",
+      "label": "Serverless",
+      "x": 835,
+      "y": 1953,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Architectural Patterns"
+    },
+    {
+      "id": "service_mesh",
+      "label": "Service Mesh",
+      "x": 835,
+      "y": 1995,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Architectural Patterns"
+    },
+    {
+      "id": "twelve_factor_apps",
+      "label": "Twelve Factor Apps",
+      "x": 835,
+      "y": 2037,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Architectural Patterns"
+    },
+    {
+      "id": "design_and_development_principles",
+      "label": "Design and Development Principles",
+      "x": 463,
+      "y": 1911,
+      "width": 290,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "gof_design_patterns",
+      "label": "GOF Design Patterns",
+      "x": 44,
+      "y": 1827,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Design and Development Principles"
+    },
+    {
+      "id": "solid_principles",
+      "label": "SOLID Principles",
+      "x": 44,
+      "y": 1869,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Design and Development Principles"
+    },
+    {
+      "id": "domain_driven_design",
+      "label": "Domain Driven Design",
+      "x": 44,
+      "y": 1911,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Design and Development Principles"
+    },
+    {
+      "id": "test_driven_development",
+      "label": "Test Driven Development",
+      "x": 44,
+      "y": 1953,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Design and Development Principles"
+    },
+    {
+      "id": "cqrs",
+      "label": "CQRS",
+      "x": 44,
+      "y": 2005,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Design and Development Principles"
+    },
+    {
+      "id": "event_sourcing",
+      "label": "Event Sourcing",
+      "x": 44,
+      "y": 2047,
+      "width": 240,
+      "height": 40,
+      "bgColor": "#e0e0e0",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Design and Development Principles"
+    },
+    {
+      "id": "docker",
+      "label": "Docker",
+      "x": 494,
+      "y": 2050,
+      "width": 173,
+      "height": 40,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": "Containerization vs Virtualization"
+    },
+    {
+      "id": "lxc",
+      "label": "LXC",
+      "x": 494,
+      "y": 2092,
+      "width": 173,
+      "height": 40,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": "Containerization vs Virtualization"
+    },
+    {
+      "id": "kubernetes",
+      "label": "Kubernetes",
+      "x": 422,
+      "y": 2139,
+      "width": 150,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "containerization_vs_virtualization",
+      "label": "Containerization vs Virtualization",
+      "x": 601,
+      "y": 2139,
+      "width": 300,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "nginx",
+      "label": "Nginx",
+      "x": 44,
+      "y": 2268,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Web Servers"
+    },
+    {
+      "id": "apache",
+      "label": "Apache",
+      "x": 44,
+      "y": 2310,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Web Servers"
+    },
+    {
+      "id": "caddy",
+      "label": "Caddy",
+      "x": 44,
+      "y": 2352,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Web Servers"
+    },
+    {
+      "id": "ms_iis",
+      "label": "MS IIS",
+      "x": 44,
+      "y": 2394,
+      "width": 180,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Web Servers"
+    },
+    {
+      "id": "web_servers",
+      "label": "Web Servers",
+      "x": 377,
+      "y": 2368,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "elasticsearch",
+      "label": "Elasticsearch",
+      "x": 524,
+      "y": 2310,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Search Engines"
+    },
+    {
+      "id": "solr",
+      "label": "Solr",
+      "x": 524,
+      "y": 2352,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Search Engines"
+    },
+    {
+      "id": "search_engines",
+      "label": "Search Engines",
+      "x": 601,
+      "y": 2368,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "rabbitmq",
+      "label": "RabbitMQ",
+      "x": 835,
+      "y": 2310,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Message Brokers"
+    },
+    {
+      "id": "kafka",
+      "label": "Kafka",
+      "x": 835,
+      "y": 2352,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Message Brokers"
+    },
+    {
+      "id": "message_brokers",
+      "label": "Message Brokers",
+      "x": 835,
+      "y": 2368,
+      "width": 243,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "mongodb",
+      "label": "MongoDB",
+      "x": 44,
+      "y": 2698,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Document DBs"
+    },
+    {
+      "id": "couchdb",
+      "label": "CouchDB",
+      "x": 44,
+      "y": 2740,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Document DBs"
+    },
+    {
+      "id": "redis_kv",
+      "label": "Redis",
+      "x": 186,
+      "y": 2698,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Key-Value"
+    },
+    {
+      "id": "dynamodb",
+      "label": "DynamoDB",
+      "x": 186,
+      "y": 2740,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Key-Value"
+    },
+    {
+      "id": "firebase",
+      "label": "Firebase",
+      "x": 44,
+      "y": 2843,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Realtime"
+    },
+    {
+      "id": "rethinkdb",
+      "label": "RethinkDB",
+      "x": 44,
+      "y": 2885,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Realtime"
+    },
+    {
+      "id": "nosql_databases",
+      "label": "NoSQL Databases",
+      "x": 377,
+      "y": 2798,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "real_time_data",
+      "label": "Real-Time Data",
+      "x": 601,
+      "y": 2698,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "server_sent_events",
+      "label": "Server Sent Events",
+      "x": 835,
+      "y": 2698,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Real-Time Data"
+    },
+    {
+      "id": "websockets",
+      "label": "WebSockets",
+      "x": 835,
+      "y": 2740,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Real-Time Data"
+    },
+    {
+      "id": "long_polling",
+      "label": "Long Polling",
+      "x": 835,
+      "y": 2782,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Real-Time Data"
+    },
+    {
+      "id": "short_polling",
+      "label": "Short Polling",
+      "x": 835,
+      "y": 2824,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Real-Time Data"
+    },
+    {
+      "id": "graphql_main",
+      "label": "GraphQL",
+      "x": 601,
+      "y": 2848,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "influx_db",
+      "label": "Influx DB",
+      "x": 44,
+      "y": 2988,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Time Series"
+    },
+    {
+      "id": "timescale",
+      "label": "TimeScale",
+      "x": 44,
+      "y": 3030,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Time Series"
+    },
+    {
+      "id": "cassandra",
+      "label": "Cassandra",
+      "x": 186,
+      "y": 2988,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Column DBs"
+    },
+    {
+      "id": "base",
+      "label": "Base",
+      "x": 186,
+      "y": 3030,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Column DBs"
+    },
+    {
+      "id": "neo4j",
+      "label": "Neo4j",
+      "x": 328,
+      "y": 2988,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Graph DBs"
+    },
+    {
+      "id": "aws_neptune",
+      "label": "AWS Neptune",
+      "x": 328,
+      "y": 3030,
+      "width": 140,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Graph DBs"
+    },
+    {
+      "id": "graceful_degradation",
+      "label": "Graceful Degradation",
+      "x": 835,
+      "y": 2988,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Mitigation Strategies"
+    },
+    {
+      "id": "throttling",
+      "label": "Throttling",
+      "x": 835,
+      "y": 3030,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Mitigation Strategies"
+    },
+    {
+      "id": "backpressure",
+      "label": "Backpressure",
+      "x": 835,
+      "y": 3072,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Mitigation Strategies"
+    },
+    {
+      "id": "loadshifting",
+      "label": "Loadshifting",
+      "x": 835,
+      "y": 3114,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Mitigation Strategies"
+    },
+    {
+      "id": "circuit_breaker",
+      "label": "Circuit Breaker",
+      "x": 835,
+      "y": 3156,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Mitigation Strategies"
+    },
+    {
+      "id": "building_for_scale",
+      "label": "Building For Scale",
+      "x": 601,
+      "y": 3288,
+      "width": 200,
+      "height": 50,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "migration_strategies",
+      "label": "Migration Strategies",
+      "x": 835,
+      "y": 3236,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "types_of_scaling",
+      "label": "Types of Scaling",
+      "x": 835,
+      "y": 3328,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "metrics_logging_and_other_observable_items_that_can_help_in_debugging_and_solving_issues_when_things_go_wrong",
+      "label": "Metrics logging and other observable items that can help in debugging and solving issues when things go wrong.",
+      "x": 835,
+      "y": 3370,
+      "width": 243,
+      "height": 110,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "observability",
+      "label": "Observability",
+      "x": 835,
+      "y": 3482,
+      "width": 243,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "instrumentation",
+      "label": "Instrumentation",
+      "x": 524,
+      "y": 3370,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Difference & Usage"
+    },
+    {
+      "id": "monitoring",
+      "label": "Monitoring",
+      "x": 524,
+      "y": 3412,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Difference & Usage"
+    },
+    {
+      "id": "telemetry",
+      "label": "Telemetry",
+      "x": 524,
+      "y": 3454,
+      "width": 190,
+      "height": 40,
+      "bgColor": "#ffee55",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": "Difference & Usage"
+    },
+    {
+      "id": "visit_the_devops_beginner_roadmap",
+      "label": "Visit the DevOps Beginner Roadmap",
+      "x": 44,
+      "y": 3208,
+      "width": 310,
+      "height": 50,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "basic_infrastructure_knowledge",
+      "label": "Basic Infrastructure Knowledge",
+      "x": 44,
+      "y": 3288,
+      "width": 310,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "have_a_look_at_the_following_relevant_tracks",
+      "label": "Have a look at the following relevant tracks",
+      "x": 418,
+      "y": 3688,
+      "width": 550,
+      "height": 50,
+      "bgColor": "#ffffff",
+      "textColor": "#000000",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "devops",
+      "label": "DevOps",
+      "x": 508,
+      "y": 3768,
+      "width": 173,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    },
+    {
+      "id": "full_stack",
+      "label": "Full Stack",
+      "x": 708,
+      "y": 3768,
+      "width": 173,
+      "height": 50,
+      "bgColor": "#4147d3",
+      "textColor": "#ffffff",
+      "shape": "rounded",
+      "category": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_internet_how_does_the_internet_work",
+      "source": "internet",
+      "target": "how_does_the_internet_work",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_internet_what_is_http",
+      "source": "internet",
+      "target": "what_is_http",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_internet_what_is_domain_name",
+      "source": "internet",
+      "target": "what_is_domain_name",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_internet_what_is_hosting",
+      "source": "internet",
+      "target": "what_is_hosting",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_internet_dns_and_how_it_works",
+      "source": "internet",
+      "target": "dns_and_how_it_works",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_internet_browsers_and_how_they_work",
+      "source": "internet",
+      "target": "browsers_and_how_they_work",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_javascript",
+      "source": "pick_a_language",
+      "target": "javascript",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_go",
+      "source": "pick_a_language",
+      "target": "go",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_python",
+      "source": "pick_a_language",
+      "target": "python",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_ruby",
+      "source": "pick_a_language",
+      "target": "ruby",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_java",
+      "source": "pick_a_language",
+      "target": "java",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_c_sharp",
+      "source": "pick_a_language",
+      "target": "c_sharp",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_php",
+      "source": "pick_a_language",
+      "target": "php",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_pick_a_language_rust",
+      "source": "pick_a_language",
+      "target": "rust",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_version_control_systems_git",
+      "source": "version_control_systems",
+      "target": "git",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_version_control_systems_github",
+      "source": "version_control_systems",
+      "target": "github",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_version_control_systems_gitlab",
+      "source": "version_control_systems",
+      "target": "gitlab",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_repo_hosting_services_bitbucket",
+      "source": "repo_hosting_services",
+      "target": "bitbucket",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_postgresql_relational_databases",
+      "source": "postgresql",
+      "target": "relational_databases",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_relational_databases_mysql",
+      "source": "relational_databases",
+      "target": "mysql",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_relational_databases_mariadb",
+      "source": "relational_databases",
+      "target": "mariadb",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_relational_databases_ms_sql",
+      "source": "relational_databases",
+      "target": "ms_sql",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_relational_databases_oracle",
+      "source": "relational_databases",
+      "target": "oracle",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_relational_databases_sqlite",
+      "source": "relational_databases",
+      "target": "sqlite",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_redis_caching_caching",
+      "source": "redis_caching",
+      "target": "caching",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_memcached_caching",
+      "source": "memcached",
+      "target": "caching",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_caching_learn_about_apis",
+      "source": "caching",
+      "target": "learn_about_apis",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_caching_server_side",
+      "source": "caching",
+      "target": "server_side",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_caching_cdn",
+      "source": "caching",
+      "target": "cdn",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_caching_client_side",
+      "source": "caching",
+      "target": "client_side",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_rest",
+      "source": "learn_about_apis",
+      "target": "rest",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_json_apis",
+      "source": "learn_about_apis",
+      "target": "json_apis",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_soap",
+      "source": "learn_about_apis",
+      "target": "soap",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_grpc",
+      "source": "learn_about_apis",
+      "target": "grpc",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_graphql_api_learning",
+      "source": "learn_about_apis",
+      "target": "graphql_api_learning",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_jwt",
+      "source": "learn_about_apis",
+      "target": "jwt",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_oauth",
+      "source": "learn_about_apis",
+      "target": "oauth",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_basic_authentication",
+      "source": "learn_about_apis",
+      "target": "basic_authentication",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_token_authentication",
+      "source": "learn_about_apis",
+      "target": "token_authentication",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_cookie_based_auth",
+      "source": "learn_about_apis",
+      "target": "cookie_based_auth",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_openid",
+      "source": "learn_about_apis",
+      "target": "openid",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_learn_about_apis_saml",
+      "source": "learn_about_apis",
+      "target": "saml",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_md5_web_security",
+      "source": "md5",
+      "target": "web_security",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_sha_web_security",
+      "source": "sha",
+      "target": "web_security",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_scrypt_web_security",
+      "source": "scrypt",
+      "target": "web_security",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_bcrypt_web_security",
+      "source": "bcrypt",
+      "target": "web_security",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_security_https",
+      "source": "web_security",
+      "target": "https",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_security_owasp_risks",
+      "source": "web_security",
+      "target": "owasp_risks",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_security_cors",
+      "source": "web_security",
+      "target": "cors",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_security_ssl_tls",
+      "source": "web_security",
+      "target": "ssl_tls",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_security_csp",
+      "source": "web_security",
+      "target": "csp",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_security_server_security",
+      "source": "web_security",
+      "target": "server_security",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_testing_ci_cd",
+      "source": "testing",
+      "target": "ci_cd",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_testing_integration_testing",
+      "source": "testing",
+      "target": "integration_testing",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_testing_unit_testing",
+      "source": "testing",
+      "target": "unit_testing",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_testing_functional_testing",
+      "source": "testing",
+      "target": "functional_testing",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_ci_cd_more_about_databases",
+      "source": "ci_cd",
+      "target": "more_about_databases",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_orms",
+      "source": "more_about_databases",
+      "target": "orms",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_acid",
+      "source": "more_about_databases",
+      "target": "acid",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_transactions",
+      "source": "more_about_databases",
+      "target": "transactions",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_n_plus_1_problem",
+      "source": "more_about_databases",
+      "target": "n_plus_1_problem",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_normalization",
+      "source": "more_about_databases",
+      "target": "normalization",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_failure_modes",
+      "source": "more_about_databases",
+      "target": "failure_modes",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_profiling_perfor",
+      "source": "more_about_databases",
+      "target": "profiling_perfor",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_migrations",
+      "source": "more_about_databases",
+      "target": "migrations",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_relational_databases_scaling_databases",
+      "source": "relational_databases",
+      "target": "scaling_databases",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_scaling_databases_database_indexes",
+      "source": "scaling_databases",
+      "target": "database_indexes",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_scaling_databases_data_replication",
+      "source": "scaling_databases",
+      "target": "data_replication",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_scaling_databases_sharding_strategies",
+      "source": "scaling_databases",
+      "target": "sharding_strategies",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_scaling_databases_cap_theorem",
+      "source": "scaling_databases",
+      "target": "cap_theorem",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_more_about_databases_software_design_architecture",
+      "source": "more_about_databases",
+      "target": "software_design_architecture",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_software_design_architecture_architectural_patterns",
+      "source": "software_design_architecture",
+      "target": "architectural_patterns",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_software_design_architecture_design_and_development_principles",
+      "source": "software_design_architecture",
+      "target": "design_and_development_principles",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_architectural_patterns_monolithic_apps",
+      "source": "architectural_patterns",
+      "target": "monolithic_apps",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_architectural_patterns_microservices",
+      "source": "architectural_patterns",
+      "target": "microservices",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_architectural_patterns_soa",
+      "source": "architectural_patterns",
+      "target": "soa",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_architectural_patterns_serverless",
+      "source": "architectural_patterns",
+      "target": "serverless",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_architectural_patterns_service_mesh",
+      "source": "architectural_patterns",
+      "target": "service_mesh",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_architectural_patterns_twelve_factor_apps",
+      "source": "architectural_patterns",
+      "target": "twelve_factor_apps",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_design_and_development_principles_gof_design_patterns",
+      "source": "design_and_development_principles",
+      "target": "gof_design_patterns",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_design_and_development_principles_solid_principles",
+      "source": "design_and_development_principles",
+      "target": "solid_principles",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_design_and_development_principles_domain_driven_design",
+      "source": "design_and_development_principles",
+      "target": "domain_driven_design",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_design_and_development_principles_test_driven_development",
+      "source": "design_and_development_principles",
+      "target": "test_driven_development",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_design_and_development_principles_cqrs",
+      "source": "design_and_development_principles",
+      "target": "cqrs",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_design_and_development_principles_event_sourcing",
+      "source": "design_and_development_principles",
+      "target": "event_sourcing",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_docker_containerization_vs_virtualization",
+      "source": "docker",
+      "target": "containerization_vs_virtualization",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_lxc_containerization_vs_virtualization",
+      "source": "lxc",
+      "target": "containerization_vs_virtualization",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_kubernetes_containerization_vs_virtualization",
+      "source": "kubernetes",
+      "target": "containerization_vs_virtualization",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_containerization_vs_virtualization_web_servers",
+      "source": "containerization_vs_virtualization",
+      "target": "web_servers",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_web_servers_nginx",
+      "source": "web_servers",
+      "target": "nginx",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_servers_apache",
+      "source": "web_servers",
+      "target": "apache",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_servers_caddy",
+      "source": "web_servers",
+      "target": "caddy",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_servers_ms_iis",
+      "source": "web_servers",
+      "target": "ms_iis",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_web_servers_search_engines",
+      "source": "web_servers",
+      "target": "search_engines",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_search_engines_elasticsearch",
+      "source": "search_engines",
+      "target": "elasticsearch",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_search_engines_solr",
+      "source": "search_engines",
+      "target": "solr",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_search_engines_message_brokers",
+      "source": "search_engines",
+      "target": "message_brokers",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_message_brokers_rabbitmq",
+      "source": "message_brokers",
+      "target": "rabbitmq",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_message_brokers_kafka",
+      "source": "message_brokers",
+      "target": "kafka",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_mongodb",
+      "source": "nosql_databases",
+      "target": "mongodb",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_couchdb",
+      "source": "nosql_databases",
+      "target": "couchdb",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_redis_kv",
+      "source": "nosql_databases",
+      "target": "redis_kv",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_dynamodb",
+      "source": "nosql_databases",
+      "target": "dynamodb",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_firebase",
+      "source": "nosql_databases",
+      "target": "firebase",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_rethinkdb",
+      "source": "nosql_databases",
+      "target": "rethinkdb",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_influx_db",
+      "source": "nosql_databases",
+      "target": "influx_db",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_timescale",
+      "source": "nosql_databases",
+      "target": "timescale",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_cassandra",
+      "source": "nosql_databases",
+      "target": "cassandra",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_base",
+      "source": "nosql_databases",
+      "target": "base",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_neo4j",
+      "source": "nosql_databases",
+      "target": "neo4j",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_nosql_databases_aws_neptune",
+      "source": "nosql_databases",
+      "target": "aws_neptune",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_message_brokers_real_time_data",
+      "source": "message_brokers",
+      "target": "real_time_data",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_real_time_data_server_sent_events",
+      "source": "real_time_data",
+      "target": "server_sent_events",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_real_time_data_websockets",
+      "source": "real_time_data",
+      "target": "websockets",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_real_time_data_long_polling",
+      "source": "real_time_data",
+      "target": "long_polling",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_real_time_data_short_polling",
+      "source": "real_time_data",
+      "target": "short_polling",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_real_time_data_graphql_main",
+      "source": "real_time_data",
+      "target": "graphql_main",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_graphql_main_building_for_scale",
+      "source": "graphql_main",
+      "target": "building_for_scale",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_building_for_scale_instrumentation",
+      "source": "building_for_scale",
+      "target": "instrumentation",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_building_for_scale_monitoring",
+      "source": "building_for_scale",
+      "target": "monitoring",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_building_for_scale_telemetry",
+      "source": "building_for_scale",
+      "target": "telemetry",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_building_for_scale_migration_strategies",
+      "source": "building_for_scale",
+      "target": "migration_strategies",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_building_for_scale_types_of_scaling",
+      "source": "building_for_scale",
+      "target": "types_of_scaling",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_migration_strategies_graceful_degradation",
+      "source": "migration_strategies",
+      "target": "graceful_degradation",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_migration_strategies_throttling",
+      "source": "migration_strategies",
+      "target": "throttling",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_migration_strategies_backpressure",
+      "source": "migration_strategies",
+      "target": "backpressure",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_migration_strategies_loadshifting",
+      "source": "migration_strategies",
+      "target": "loadshifting",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_migration_strategies_circuit_breaker",
+      "source": "migration_strategies",
+      "target": "circuit_breaker",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_types_of_scaling_observability",
+      "source": "types_of_scaling",
+      "target": "observability",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_metrics_logging_and_other_observable_items_that_can_help_in_debugging_and_solving_issues_when_things_go_wrong_observability",
+      "source": "metrics_logging_and_other_observable_items_that_can_help_in_debugging_and_solving_issues_when_things_go_wrong",
+      "target": "observability",
+      "type": "step",
+      "label": null
+    },
+    {
+      "id": "e_basic_infrastructure_knowledge_building_for_scale",
+      "source": "basic_infrastructure_knowledge",
+      "target": "building_for_scale",
+      "type": "default",
+      "label": null
+    },
+    {
+      "id": "e_have_a_look_at_the_following_relevant_tracks_devops",
+      "source": "have_a_look_at_the_following_relevant_tracks",
+      "target": "devops",
+      "type": "smoothstep",
+      "label": null
+    },
+    {
+      "id": "e_have_a_look_at_the_following_relevant_tracks_full_stack",
+      "source": "have_a_look_at_the_following_relevant_tracks",
+      "target": "full_stack",
+      "type": "smoothstep",
+      "label": null
+    }
+  ],
+  "meta": {
+    "imageWidth": 1513,
+    "imageHeight": 5469,
+    "sourceFile": "../frontend/public/roadmaps/backend.pdf"
+  }
+}

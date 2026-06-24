@@ -174,7 +174,7 @@ function SettingsPage() {
       <div className="settings-stack">
         {/* ── Account ──────────────────────────────────────────────────── */}
         <div className="settings-card">
-          <CardHeader icon={<User size={10} className="text-[#22c55e]" />} title="Account" />
+          <CardHeader icon={<User size={10} className="text-[#00FF66]" />} title="Account" />
 
           <div className="settings-card-body">
             <div className="account-fields">
@@ -217,7 +217,7 @@ function SettingsPage() {
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#161616] rounded-md p-3">
                     <span className="github-status-connected">
-                      <CheckCircle2 size={12} className="text-[#22c55e]" />
+                      <CheckCircle2 size={12} className="text-[#00FF66]" />
                       Connected as&nbsp;
                       <a
                         href={`https://github.com/${profile.github_username}`}
@@ -240,7 +240,7 @@ function SettingsPage() {
                     </button>
                   </div>
                   {profile?.has_github_workspace_access ? (
-                    <p className="text-xs text-[#4ade80] font-mono tracking-wide uppercase">
+                    <p className="text-xs text-[#00FF66] font-mono tracking-wide uppercase">
                       ✓ Workspace permissions granted & encrypted
                     </p>
                   ) : (
@@ -252,7 +252,7 @@ function SettingsPage() {
               ) : (
                 <div className="w-full">
                   <button
-                    className="w-full group flex items-center justify-center gap-3 h-10 px-4 rounded-md border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-xs font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+                    className="w-full group flex items-center justify-center gap-3 h-10 px-4 rounded-md border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-xs font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00FF66]"
                     onClick={() => {
                       const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
                       const redirectUri = `${window.location.origin}/auth/github/callback`;
@@ -292,7 +292,7 @@ function SettingsPage() {
             icon={<Clock size={10} className="text-[#f59e0b]" />}
             title="Daily Time Budget"
           >
-            <span className="section-label" style={{ color: "#22c55e" }}>
+            <span className="section-label" style={{ color: "#00FF66" }}>
               {minutesToDisplay(state.settings.dailyMinutes)}
             </span>
           </CardHeader>
@@ -344,7 +344,7 @@ function SettingsPage() {
                         settings: { ...s.settings, pomodoroFocus: Number(e.target.value) },
                       }))
                     }
-                    className="w-16 bg-[#0a0a0a] border border-[#161616] rounded-md px-2 py-1 text-xs text-[#22c55e] font-mono text-center focus:outline-none focus:border-[#22c55e]/50 placeholder:text-[#22c55e]/30"
+                    className="w-16 bg-[#0a0a0a] border border-[#161616] rounded-md px-2 py-1 text-xs text-[#00FF66] font-mono text-center focus:outline-none focus:border-[#00FF66]/50 placeholder:text-[#00FF66]/30"
                   />
                   <span className="text-xs text-[#555] font-mono">min</span>
                 </div>
@@ -610,7 +610,7 @@ function SettingsPage() {
           transition: border-color 0.15s ease;
         }
         .github-input-wrap:focus-within {
-          border-color: rgba(34,197,94,0.3);
+          border-color: rgba(0,255,102,0.3);
         }
         .github-prefix {
           font-size: 11px;
@@ -646,7 +646,7 @@ function SettingsPage() {
           gap: 5px;
           font-size: 9px;
           font-family: ui-monospace, monospace;
-          color: #22c55e;
+          color: #00FF66;
           text-transform: uppercase;
           letter-spacing: 0.1em;
         }
@@ -661,17 +661,17 @@ function SettingsPage() {
           letter-spacing: 0.1em;
         }
         .github-link {
-          color: #22c55e;
+          color: #00FF66;
           text-decoration: underline;
           text-underline-offset: 2px;
           transition: color 0.15s;
         }
-        .github-link:hover { color: #4ade80; }
+        .github-link:hover { color: #00FF66; }
 
         /* ── Slider ── */
         .time-slider {
           width: 100%;
-          accent-color: #22c55e;
+          accent-color: #00FF66;
           height: 2px;
           cursor: pointer;
         }

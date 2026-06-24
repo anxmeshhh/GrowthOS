@@ -45,7 +45,7 @@ function ExplorePage() {
     return (
       <PageShell>
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-[#22c55e]" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#00FF66]" />
         </div>
       </PageShell>
     );
@@ -68,7 +68,7 @@ function ExplorePage() {
             <div className="p-6 flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-[#111] border border-[#222] flex items-center justify-center">
-                  <MapIcon size={20} className="text-[#22c55e]" />
+                  <MapIcon size={20} className="text-[#00FF66]" />
                 </div>
                 <div className="text-xs font-mono px-2 py-1 bg-[#111] text-[#888] rounded uppercase tracking-widest border border-[#222]">
                   {rm.topics.length} Modules
@@ -86,7 +86,7 @@ function ExplorePage() {
                 </div>
                 {rm.topics.slice(0, 3).map((t: any, i: number) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-[#d0d0d0]">
-                    <span className="text-[#22c55e] mt-0.5">•</span>
+                    <span className="text-[#00FF66] mt-0.5">•</span>
                     <span className="line-clamp-1">{t.title}</span>
                   </div>
                 ))}
@@ -102,7 +102,7 @@ function ExplorePage() {
               <button
                 onClick={() => bookmarkMutation.mutate(rm.slug)}
                 disabled={bookmarkMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] hover:border-[#22c55e] text-[#eee] rounded-md transition-all text-sm font-medium disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] hover:border-[#00FF66] text-[#eee] rounded-md transition-all text-sm font-medium disabled:opacity-50"
               >
                 <Bookmark size={14} />
                 Enroll

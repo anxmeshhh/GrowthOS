@@ -37,6 +37,38 @@ import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/toast-context";
 import { useGrowth } from "@/lib/growth-store";
 
+/* Optional caption editor shown directly under a pasted screenshot.
+   Saves on blur / Enter; leaving it blank is fine (caption is optional). */
+function ScreenshotCaption({
+  initial,
+  onSave,
+}: {
+  initial?: string;
+  onSave: (caption: string) => void;
+}) {
+  const [val, setVal] = useState(initial || "");
+  useEffect(() => {
+    setVal(initial || "");
+  }, [initial]);
+  return (
+    <input
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      onBlur={() => {
+        const next = val.trim();
+        if (next !== (initial || "")) onSave(next);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+      }}
+      placeholder="Add a caption (optional)"
+      maxLength={255}
+      className="w-full bg-transparent px-2.5 py-1.5 text-[11px] text-[#cbd5d1] outline-none border-t border-[#1a1a1a] placeholder:text-[#555]"
+    />
+  );
+}
+
 export const Route = createFileRoute("/topic/$topicId")({
   head: () => ({ meta: [{ title: `Workspace — GrowthOS` }] }),
   component: TopicWorkspace,
@@ -76,70 +108,39 @@ function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPen
   const isReady = metCount >= 3;
 
   return (
-    <div
-      className="shrink-0 border-b px-4 py-2.5 sm:px-5"
-      style={{
-        background: "rgba(12,19,25,0.90)",
-        borderColor: "rgba(255,255,255,0.06)",
-      }}
-    >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div className="bg-[#0c0c0c] border-b border-[#181818] px-4 py-2 sm:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <div
-            className="text-[10px] uppercase tracking-[0.22em] font-mono flex items-center gap-2 mb-2"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-          >
-            <CheckCircle2 size={11} style={{ color: "#3fb950" }} />
-            Mastery Progress
-            <span
-              className="px-1.5 py-0.5 rounded-md text-[9px] font-mono"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                color: "#dde6ef",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              {metCount}/{reqCount} Core
+          <div className="text-xs uppercase tracking-[0.15em] font-mono text-[#fff] flex items-center gap-2 mb-1.5">
+            <CheckCircle2 size={12} className="text-[#00FF66]" />
+            Mastery Criteria
+            <span className="bg-[#1e1e1e] text-[#eee] px-1.5 py-0.5 rounded text-[9px] border border-[#2a2a2a]">
+              {metCount}/{reqCount} Core Met
             </span>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             {criteria.map((c, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-1.5 text-xs font-mono animate-criteria-pop"
-                style={{
-                  color: c.done ? "#3fb950" : "rgba(255,255,255,0.25)",
-                  animationDelay: `${i * 50}ms`,
-                }}
-              >
-                {c.done ? (
-                  <CheckCircle2 size={11} style={{ filter: "drop-shadow(0 0 4px rgba(63,185,80,0.5))" }} />
-                ) : (
-                  <Circle size={11} />
-                )}
+              <div key={i} className={`flex items-center gap-1.5 text-xs font-mono ${c.done ? "text-[#00FF66]" : "text-[#666]"}`}>
+                {c.done ? <CheckCircle2 size={11} /> : <Circle size={11} />}
                 {c.label}
-                {c.optional && (
-                  <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 9 }}>(opt)</span>
-                )}
               </div>
             ))}
           </div>
         </div>
-
+        
         <button
           onClick={onMarkComplete}
           disabled={isCompleted || isPending}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-[0.12em] transition-all"
-          style={
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${
             isCompleted
-              ? { background: "rgba(63,185,80,0.08)", color: "#3fb950", border: "1px solid rgba(63,185,80,0.2)", cursor: "default" }
+              ? "border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] cursor-default"
               : isReady
-              ? { background: "rgba(63,185,80,0.1)", color: "#3fb950", border: "1px solid rgba(63,185,80,0.3)", boxShadow: "0 0 14px rgba(63,185,80,0.1)" }
-              : { background: "rgba(227,167,38,0.08)", color: "#e3a726", border: "1px solid rgba(227,167,38,0.2)" }
-          }
+              ? "border-[#00FF66] bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20"
+              : "border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20"
+          }`}
         >
-          {isPending ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
-          <span>{isCompleted ? "Completed" : isReady ? "Mark Complete" : "Mark Anyway"}</span>
+          {isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={14} />}
+          <span>{isCompleted ? "Completed" : isReady ? "Mark Complete" : "Mark Complete Anyway"}</span>
         </button>
       </div>
     </div>
@@ -241,6 +242,21 @@ function TopicWorkspace() {
     onSuccess: () => refetchScreenshots(),
   });
 
+  const updateCaptionMutation = useMutation({
+    mutationFn: async ({ id, caption }: { id: number; caption: string }) => {
+      const formData = new FormData();
+      formData.append("id", String(id));
+      formData.append("caption", caption);
+      const res = await apiFetch(`/topics/${topicId}/screenshots/`, {
+        method: "PATCH",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Caption update failed");
+      return res.json();
+    },
+    onSuccess: () => refetchScreenshots(),
+  });
+
   const markDoneMutation = useMutation({
     mutationFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/progress/`, {
@@ -309,35 +325,23 @@ function TopicWorkspace() {
 
   if (isLoading)
     return (
-      <div
-        className="flex items-center justify-center min-h-screen"
-        style={{ background: "#070c12" }}
-      >
-        <div className="flex flex-col items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center"
-            style={{ background: "rgba(63,185,80,0.08)", border: "1px solid rgba(63,185,80,0.2)" }}
-          >
-            <Loader2 size={20} className="animate-spin" style={{ color: "#3fb950" }} />
+      <PageShell>
+        <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={24} className="animate-spin text-[#00FF66]" />
+            <span className="text-lg font-mono text-[#fff] tracking-widest uppercase">
+              Loading workspace
+            </span>
           </div>
-          <span
-            className="font-mono uppercase tracking-[0.25em] text-xs"
-            style={{ color: "#6b7785" }}
-          >
-            Loading workspace
-          </span>
         </div>
-      </div>
+      </PageShell>
     );
 
   if (!data)
     return (
-      <div
-        className="flex items-center justify-center min-h-screen"
-        style={{ background: "#070c12" }}
-      >
-        <div className="text-sm font-mono" style={{ color: "#f85149" }}>Error loading topic.</div>
-      </div>
+      <PageShell>
+        <div className="p-8 text-[#ef4444] text-lg">Error loading topic.</div>
+      </PageShell>
     );
 
   const { topic, progress, materials } = data;
@@ -352,89 +356,65 @@ function TopicWorkspace() {
   };
 
   const checklist = data.mastery_checklist || {};
-  const isFlashUnlocked = checklist.notes;
-  const isQuizUnlocked = isFlashUnlocked && checklist.flashcards;
-  const isFeynmanUnlocked = isQuizUnlocked && checklist.quiz;
-  const isBuildUnlocked = isFeynmanUnlocked && checklist.feynman;
-
+  // Free exploration: every module is accessible. The checklist still tracks
+  // completion (shown as checkmarks), but nothing is gated behind prerequisites.
   const TABS: { id: Tab; label: string; icon: React.ReactNode; done: boolean; locked: boolean }[] = [
     { id: "notes", label: "Notes", icon: <BookOpen size={16} />, done: checklist.notes, locked: false },
-    { id: "flash", label: "Flashcards", icon: <Layers size={16} />, done: checklist.flashcards, locked: !isFlashUnlocked },
-    { id: "quiz", label: "Quiz", icon: <Zap size={16} />, done: checklist.quiz, locked: !isQuizUnlocked },
-    { id: "feynman", label: "Feynman", icon: <MessageSquare size={16} />, done: checklist.feynman, locked: !isFeynmanUnlocked },
-    { id: "build", label: "Build", icon: <Hammer size={16} />, done: checklist.project, locked: !isBuildUnlocked },
+    { id: "flash", label: "Flashcards", icon: <Layers size={16} />, done: checklist.flashcards, locked: false },
+    { id: "quiz", label: "Quiz", icon: <Zap size={16} />, done: checklist.quiz, locked: false },
+    { id: "feynman", label: "Feynman", icon: <MessageSquare size={16} />, done: checklist.feynman, locked: false },
+    { id: "build", label: "Build", icon: <Hammer size={16} />, done: checklist.project, locked: false },
   ];
 
   return (
-    <main
-      className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden"
-      style={{ background: "#070c12" }}
-    >
-      {/* ── Header ── */}
+    <main className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden bg-[#060606]">
+      {/* ── Single unified header ── */}
       <header
-        className="shrink-0 z-20"
-        style={{
-          background: "rgba(12,19,25,0.95)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-        }}
+        className="shrink-0 border-b border-[#181818] z-20"
+        style={{ background: "linear-gradient(180deg,#0d0d0d 0%,#080808 100%)" }}
       >
         {/* Nav row */}
-        <div className="h-14 px-4 sm:px-5 flex items-center gap-3.5">
+        <div className="h-14 px-4 sm:px-6 flex items-center gap-4">
           <Link
             to="/roadmap"
-            className="flex items-center gap-1.5 transition-colors shrink-0"
-            style={{ color: "#6b7785" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#dde6ef")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#6b7785")}
+            className="flex items-center gap-1.5 text-[#aaa] hover:text-[#eee] transition-colors shrink-0"
           >
             <ArrowLeft size={14} />
-            <span className="text-xs font-mono tracking-[0.15em] uppercase hidden sm:block">Back</span>
+            <span className="text-sm font-mono tracking-widest uppercase hidden sm:block">Back</span>
           </Link>
 
-          <div
-            className="w-px h-4 shrink-0"
-            style={{ background: "rgba(255,255,255,0.08)" }}
-          />
+          <div className="w-px h-5 bg-[#1e1e1e]" />
 
           <div className="min-w-0 flex-1 flex items-center gap-3">
             <div>
-              <div
-                className="text-[15px] font-semibold tracking-[-0.01em] truncate flex items-center gap-2"
-                style={{ color: "#dde6ef" }}
-              >
+              <div className="text-[15px] font-semibold tracking-[-0.01em] truncate text-[#e8e8e8] flex items-center gap-2">
                 {topic.title}
                 <button
                   onClick={() => setShowWorkflowModal(true)}
-                  className="transition-colors shrink-0"
+                  className="text-[#666] hover:text-[#00FF66] transition-colors ml-1"
                   title="How this workspace works"
-                  style={{ color: "rgba(255,255,255,0.2)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#3fb950")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
                 >
-                  <Info size={15} />
+                  <Info size={18} />
                 </button>
               </div>
               {topic.mastery_score !== undefined && (
-                <div className="text-[10px] font-mono" style={{ color: "#6b7785" }}>
-                  Mastery score: {topic.mastery_score}/100
+                <div className="text-[10px] font-mono text-[#444]">
+                  Mastery {topic.mastery_score}/100
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setFocusRadioEnabled(!focusRadioEnabled)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-[0.12em] transition-all"
-              style={
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${
                 focusRadioEnabled
-                  ? { background: "rgba(188,140,255,0.1)", color: "#bc8cff", border: "1px solid rgba(188,140,255,0.25)" }
-                  : { background: "rgba(255,255,255,0.04)", color: "#6b7785", border: "1px solid rgba(255,255,255,0.08)" }
-              }
+                  ? "border-[#a855f7]/30 bg-[#a855f7]/10 text-[#a855f7]"
+                  : "border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#a855f7]/40 hover:text-[#a855f7]"
+              }`}
             >
-              <Headphones size={11} className={focusRadioEnabled ? "animate-pulse" : ""} />
+              <Headphones size={12} className={focusRadioEnabled ? "animate-pulse" : ""} />
               <span className="hidden sm:inline">Radio</span>
             </button>
 
@@ -448,54 +428,29 @@ function TopicWorkspace() {
             <button
               onClick={() => setShowCommitModal(true)}
               disabled={commitGitHubMutation.isPending}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-[0.12em] transition-all"
-              style={{ background: "rgba(255,255,255,0.04)", color: "#6b7785", border: "1px solid rgba(255,255,255,0.08)" }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.color = "#4d9de0";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(77,157,224,0.25)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.color = "#6b7785";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
-              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#3b5bdb]/40 hover:text-[#60a5fa]"
             >
-              {commitGitHubMutation.isPending ? <Loader2 size={11} className="animate-spin" /> : <GitBranch size={11} />}
+              {commitGitHubMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <GitBranch size={12} />}
               <span className="hidden sm:inline">Commit</span>
             </button>
 
             <button
               onClick={() => markDoneMutation.mutate()}
               disabled={isCompleted || markDoneMutation.isPending}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-[0.12em] transition-all"
-              style={
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${
                 isCompleted
-                  ? { background: "rgba(63,185,80,0.08)", color: "#3fb950", border: "1px solid rgba(63,185,80,0.2)", cursor: "default", boxShadow: "0 0 12px rgba(63,185,80,0.1)" }
-                  : { background: "rgba(255,255,255,0.04)", color: "#6b7785", border: "1px solid rgba(255,255,255,0.08)" }
-              }
-              onMouseEnter={e => {
-                if (!isCompleted) {
-                  (e.currentTarget as HTMLElement).style.color = "#3fb950";
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(63,185,80,0.25)";
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isCompleted) {
-                  (e.currentTarget as HTMLElement).style.color = "#6b7785";
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
-                }
-              }}
+                  ? "border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] cursor-default"
+                  : "border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#00FF66]/40 hover:text-[#00FF66]"
+              }`}
             >
-              {markDoneMutation.isPending ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
+              {markDoneMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
               <span className="hidden sm:inline">{isCompleted ? "Completed" : "Done"}</span>
             </button>
           </div>
         </div>
 
-        {/* Tab bar */}
-        <div
-          className="px-3 sm:px-4 flex items-center gap-0.5 overflow-x-auto"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
-        >
+        {/* Tab bar row */}
+        <div className="px-4 sm:px-6 flex items-center gap-1 border-t border-[#111]">
           {TABS.map((t) => {
             const isActive = tab === t.id;
             return (
@@ -514,28 +469,18 @@ function TopicWorkspace() {
                   }
                 }}
                 disabled={t.locked}
-                className="relative flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-mono uppercase tracking-[0.12em] transition-all border-b-2 shrink-0"
-                style={
+                className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 ${
                   t.locked
-                    ? { opacity: 0.25, cursor: "not-allowed", borderColor: "transparent", color: "#6b7785" }
+                    ? "opacity-30 cursor-not-allowed border-transparent text-[#555]"
                     : isActive
-                    ? { borderColor: "#3fb950", color: "#3fb950", textShadow: "0 0 12px rgba(63,185,80,0.4)" }
-                    : { borderColor: "transparent", color: "#6b7785" }
-                }
-                onMouseEnter={e => {
-                  if (!t.locked && !isActive) (e.currentTarget as HTMLElement).style.color = "#dde6ef";
-                }}
-                onMouseLeave={e => {
-                  if (!t.locked && !isActive) (e.currentTarget as HTMLElement).style.color = "#6b7785";
-                }}
+                      ? "border-[#00FF66] text-[#00FF66]"
+                      : "border-transparent text-[#666] hover:text-[#ccc]"
+                }`}
               >
                 {t.icon}
                 <span>{t.label}</span>
                 {t.done && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full ml-0.5"
-                    style={{ background: "#3fb950", boxShadow: "0 0 5px rgba(63,185,80,0.6)" }}
-                  />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] ml-0.5" />
                 )}
               </button>
             );
@@ -549,12 +494,9 @@ function TopicWorkspace() {
         {/* ════ LEFT: Screenshots ════ */}
         <section
           ref={pasteZoneRef}
-          className={`flex flex-col lg:w-[42%] xl:w-[38%] max-h-[38vh] lg:max-h-none lg:h-full overflow-hidden transition-colors`}
-          style={{
-            borderBottom: isDragging ? "1px solid rgba(63,185,80,0.3)" : "1px solid rgba(255,255,255,0.06)",
-            borderRight: "1px solid rgba(255,255,255,0.06)",
-            background: isDragging ? "rgba(63,185,80,0.02)" : "#070c12",
-          }}
+          className={`flex flex-col lg:w-[42%] xl:w-[38%] border-b lg:border-b-0 lg:border-r border-[#131313] bg-[#060606]
+                      max-h-[38vh] lg:max-h-none lg:h-full overflow-hidden transition-colors
+                      ${isDragging ? "border-[#00FF66]/30 bg-[#00FF66]/[0.03]" : ""}`}
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -566,57 +508,36 @@ function TopicWorkspace() {
             if (e.dataTransfer.files?.length) handleScreenshotFiles(e.dataTransfer.files);
           }}
         >
-          {/* Left panel header */}
-          <div
-            className="shrink-0 px-4 pt-3.5 pb-3"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            <div className="flex items-center justify-between mb-3">
+          {/* Section header */}
+          <div className="shrink-0 px-5 pt-4 pb-3 border-b border-[#131313]">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div
-                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(63,185,80,0.08)", border: "1px solid rgba(63,185,80,0.18)" }}
-                >
-                  <ImageIcon size={11} style={{ color: "#3fb950" }} />
+                <div className="w-6 h-6 rounded-md bg-[#00FF66]/10 flex items-center justify-center">
+                  <ImageIcon size={12} className="text-[#00FF66]" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold leading-none" style={{ color: "#dde6ef" }}>
+                  <div className="text-lg font-semibold text-[#d0d0d0] leading-none">
                     Screenshots
                   </div>
-                  <div
-                    className="text-[10px] font-mono mt-0.5"
-                    style={{ color: "#6b7785" }}
-                  >
+                  <div className="text-sm text-[#fff] font-mono mt-0.5">
                     {screenshots.length} saved
                   </div>
                 </div>
               </div>
               {uploadScreenshotMutation.isPending && (
-                <div className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: "#3fb950" }}>
+                <div className="flex items-center gap-1.5 text-sm text-[#00FF66] font-mono">
                   <Loader2 size={10} className="animate-spin" />
-                  Uploading…
+                  Uploading
                 </div>
               )}
             </div>
 
             {/* Drop zone */}
             <div
-              className="cursor-pointer rounded-lg flex items-center gap-2.5 py-2 px-3 transition-all"
-              style={{
-                border: `1px dashed ${isDragging ? "rgba(63,185,80,0.5)" : "rgba(255,255,255,0.1)"}`,
-                background: isDragging ? "rgba(63,185,80,0.04)" : "rgba(255,255,255,0.02)",
-              }}
+              className={`mt-3 border border-dashed rounded-lg py-2.5 px-3 flex items-center gap-2.5 cursor-pointer
+                          transition-all hover:border-[#2a2a2a] hover:bg-[#0d0d0d]
+                          ${isDragging ? "border-[#00FF66]/40 bg-[#00FF66]/5" : "border-[#1e1e1e]"}`}
               onClick={() => document.getElementById("screenshotUpload")?.click()}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.18)";
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.035)";
-              }}
-              onMouseLeave={e => {
-                if (!isDragging) {
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)";
-                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)";
-                }
-              }}
             >
               <input
                 type="file"
@@ -629,102 +550,82 @@ function TopicWorkspace() {
                   e.target.value = "";
                 }}
               />
-              <Clipboard size={12} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-              <span className="text-xs" style={{ color: "#6b7785" }}>
-                <kbd
-                  className="px-1.5 py-0.5 rounded text-[11px] font-mono"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#9ba8b4" }}
-                >
+              <Clipboard size={13} className="text-[#fff] shrink-0" />
+              <span className="text-sm text-[#eee]">
+                <kbd className="px-1.5 py-0.5 bg-[#141414] rounded text-sm font-mono text-[#fff] border border-[#222]">
                   Ctrl+V
                 </kbd>
-                <span className="mx-1.5 opacity-40">·</span>
+                <span className="mx-1.5 text-[#eee]">·</span>
                 drag or click to upload
               </span>
             </div>
           </div>
 
           {/* Gallery */}
-          <div className="flex-1 overflow-y-auto p-3 min-h-0 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 min-h-0 scrollbar-thin">
             {screenshots.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-10 px-6">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-3"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  <ImageIcon size={16} style={{ color: "rgba(255,255,255,0.12)" }} />
+                <div className="w-12 h-12 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a] flex items-center justify-center mb-3">
+                  <ImageIcon size={18} className="text-[#222]" />
                 </div>
-                <div className="text-xs font-mono uppercase tracking-[0.18em]" style={{ color: "#6b7785" }}>
-                  No screenshots yet
-                </div>
-                <div className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.2)" }}>
-                  Paste or drag an image above
-                </div>
+                <div className="text-lg text-[#fff] font-mono">No screenshots yet</div>
+                <div className="text-sm text-[#eee] mt-1">Paste or drag an image above</div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 {screenshots.map((ss: any) => (
                   <div
                     key={ss.id}
-                    className="group relative rounded-lg overflow-hidden cursor-pointer transition-all"
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.07)",
-                      background: "#0c1319",
-                    }}
-                    onClick={() => setLightboxImg(ss.image_url || ss.image)}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.14)"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.07)"}
+                    className="group relative rounded-lg overflow-hidden border border-[#1a1a1a] bg-[#0d0d0d] hover:border-[#2a2a2a] transition-all"
                   >
-                    <img
-                      src={ss.image_url || ss.image}
-                      alt={ss.caption || "Screenshot"}
-                      className="w-full aspect-video object-cover opacity-75 group-hover:opacity-100 transition-opacity"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-                      >
-                        <Maximize2 size={12} style={{ color: "rgba(255,255,255,0.8)" }} />
-                      </div>
-                    </div>
-                    <button
-                      className="absolute top-1.5 right-1.5 w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                      style={{ background: "rgba(0,0,0,0.7)", color: "#9ba8b4" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteScreenshotMutation.mutate(ss.id);
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.color = "#f85149")}
-                      onMouseLeave={e => (e.currentTarget.style.color = "#9ba8b4")}
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => setLightboxImg(ss.image_url || ss.image)}
                     >
-                      <Trash2 size={10} />
-                    </button>
-                    <div className="absolute bottom-0 inset-x-0 px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                      <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.5)" }}>
-                        {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                      <img
+                        src={ss.image_url || ss.image}
+                        alt={ss.caption || "Screenshot"}
+                        className="w-full aspect-video object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                          <Maximize2 size={13} className="text-white/80" />
+                        </div>
+                      </div>
+                      <button
+                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/70 text-[#eee] hover:text-[#ef4444] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteScreenshotMutation.mutate(ss.id);
+                        }}
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                      <div className="absolute bottom-0 inset-x-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                        <div className="text-xs font-mono text-[#eee]">
+                          {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </div>
                       </div>
                     </div>
+                    <ScreenshotCaption
+                      initial={ss.caption}
+                      onSave={(caption) => updateCaptionMutation.mutate({ id: ss.id, caption })}
+                    />
                   </div>
                 ))}
               </div>
             )}
 
             {topic.summary && (
-              <div
-                className="rounded-lg p-3 mt-3"
-                style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
-              >
-                <div
-                  className="text-[10px] font-mono uppercase tracking-[0.22em] mb-1.5"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                >
+              <div className="border border-[#141414] rounded-lg p-3 mt-4 bg-[#090909]">
+                <div className="text-xs uppercase font-mono tracking-widest text-[#fff] mb-1.5">
                   Summary
                 </div>
-                <div className="text-sm leading-relaxed" style={{ color: "#9ba8b4" }}>{topic.summary}</div>
+                <div className="text-lg text-[#eee] leading-relaxed">{topic.summary}</div>
               </div>
             )}
           </div>
@@ -752,8 +653,8 @@ function TopicWorkspace() {
         )}
 
         {/* ════ RIGHT: Workspace ════ */}
-        <section className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ background: "#080f16" }}>
-          <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-8 custom-scrollbar">
+        <section className="flex-1 flex flex-col bg-[#080808] min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-8 scrollbar-thin">
             {tab === "notes" && <StudyNotesTab topicId={topic.id} />}
             {tab === "flash" && <FlashcardsTab topicId={topic.id} />}
             {tab === "quiz" && <QuizTab topicId={topic.id} />}
@@ -766,88 +667,70 @@ function TopicWorkspace() {
       </div>
 
       {showWorkflowModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(7,12,18,0.85)", backdropFilter: "blur(8px)" }}
-          onClick={() => setShowWorkflowModal(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-2xl overflow-hidden animate-fade-in-up"
-            style={{
-              background: "rgba(12,19,25,0.98)",
-              border: "1px solid rgba(255,255,255,0.09)",
-              boxShadow: "0 32px 64px rgba(0,0,0,0.6)",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Shine line */}
-            <div
-              aria-hidden
-              className="h-px w-full"
-              style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)" }}
-            />
-            <div
-              className="px-6 py-4 flex items-center justify-between"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: "#dde6ef" }}>
-                <Info size={15} style={{ color: "#3fb950" }} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000]/80 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-[#1e1e1e] flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-[#f0f0f0] flex items-center gap-2">
+                <Info size={18} className="text-[#00FF66]" />
                 Mastery Workflow
               </h3>
               <button
                 onClick={() => setShowWorkflowModal(false)}
-                className="transition-colors"
-                style={{ color: "rgba(255,255,255,0.3)" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#dde6ef")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+                className="text-[#555] hover:text-[#fff] transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
-            <div className="p-6 space-y-5">
-              <p className="text-sm leading-relaxed" style={{ color: "#9ba8b4" }}>
-                This workspace uses a strict{" "}
-                <strong style={{ color: "#dde6ef" }}>Spaced Repetition engine</strong>. Complete phases sequentially to ensure deep understanding before advancing.
-              </p>
-
-              {[
-                { step: "1", label: "Notes",          icon: <BookOpen size={13} />,    color: "#3fb950",  desc: "Distill the topic using markdown. Attach reference files and screenshots. This unlocks AI flashcard generation." },
-                { step: "2", label: "Flashcards",     icon: <Layers size={13} />,      color: "#4d9de0",  desc: "AI generates cards from your notes. Verify each card for quality before they enter your daily review queue." },
-                { step: "3", label: "Quiz",           icon: <Zap size={13} />,         color: "#e3a726",  desc: "Prove your retention. Score ≥70% on a dynamically generated quiz to unlock Feynman and Build." },
-                { step: "4", label: "Feynman & Build",icon: <Hammer size={13} />,      color: "#bc8cff",  desc: "Submit a GitHub repo demonstrating your application of the knowledge for AI evaluation and final mastery." },
-              ].map((s) => (
-                <div key={s.step} className="flex items-start gap-3.5">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                    style={{
-                      background: `color-mix(in srgb, ${s.color} 12%, transparent)`,
-                      border: `1px solid color-mix(in srgb, ${s.color} 25%, transparent)`,
-                      color: s.color,
-                    }}
-                  >
-                    {s.icon}
+            <div className="p-6 space-y-6">
+              <div className="text-base text-[#d4d4d4] leading-relaxed">
+                This workspace uses a strict <strong className="text-[#e8e8e8]">Spaced Repetition engine</strong>. You must complete phases sequentially to ensure deep understanding before moving forward.
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+                    <BookOpen size={14} className="text-[#00FF66]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium" style={{ color: "#dde6ef" }}>
-                      {s.step}. {s.label}
-                    </h4>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: "#6b7785" }}>{s.desc}</p>
+                    <h4 className="text-lg font-medium text-[#e8e8e8]">1. Notes</h4>
+                    <p className="text-[#888] text-sm mt-1">Distill the topic using markdown. Attach reference files and screenshots. This unlocks AI flashcard generation.</p>
                   </div>
                 </div>
-              ))}
+
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+                    <Layers size={14} className="text-[#3b82f6]" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-medium text-[#e8e8e8]">2. Flashcards</h4>
+                    <p className="text-[#888] text-sm mt-1">AI generates cards from your notes. You must manually verify each card for quality before they enter your daily review queue.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+                    <Zap size={14} className="text-[#f59e0b]" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-medium text-[#e8e8e8]">3. Quiz</h4>
+                    <p className="text-[#888] text-sm mt-1">Prove your retention. You must score 100% on a dynamically generated quiz to unlock the Feynman and Build phases.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+                    <Hammer size={14} className="text-[#a855f7]" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-medium text-[#e8e8e8]">4. Feynman & Build</h4>
+                    <p className="text-[#888] text-sm mt-1">Submit a GitHub repo demonstrating your application of the knowledge for AI evaluation and final topic mastery.</p>
+                  </div>
+                </div>
+              </div>
 
               <button
                 onClick={() => setShowWorkflowModal(false)}
-                className="w-full py-2.5 rounded-xl text-sm font-mono uppercase tracking-[0.12em] transition-all"
-                style={{ background: "rgba(255,255,255,0.04)", color: "#9ba8b4", border: "1px solid rgba(255,255,255,0.08)" }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)";
-                  (e.currentTarget as HTMLElement).style.color = "#dde6ef";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-                  (e.currentTarget as HTMLElement).style.color = "#9ba8b4";
-                }}
+                className="w-full py-3 rounded-xl bg-[#111] border border-[#1e1e1e] hover:border-[#333] hover:bg-[#1a1a1a] text-[#eee] font-medium transition-all"
               >
                 Got it
               </button>
@@ -857,166 +740,112 @@ function TopicWorkspace() {
       )}
 
       {showCommitModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(7,12,18,0.85)", backdropFilter: "blur(8px)" }}
-          onClick={() => setShowCommitModal(false)}
-        >
-          <div
-            className="w-full max-w-md rounded-2xl overflow-hidden animate-fade-in-up"
-            style={{
-              background: "rgba(12,19,25,0.98)",
-              border: "1px solid rgba(77,157,224,0.2)",
-              boxShadow: "0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(77,157,224,0.08)",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div
-              aria-hidden
-              className="h-px w-full"
-              style={{ background: "linear-gradient(90deg, transparent, rgba(77,157,224,0.3), transparent)" }}
-            />
-            <div
-              className="px-6 py-4 flex items-center justify-between"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: "#dde6ef" }}>
-                <GitBranch size={15} style={{ color: "#4d9de0" }} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000]/80 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-[#1e1e1e] flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-[#f0f0f0] flex items-center gap-2">
+                <GitBranch size={18} className="text-[#60a5fa]" />
                 Commit Workspace
               </h3>
               <button
                 onClick={() => setShowCommitModal(false)}
-                className="transition-colors"
-                style={{ color: "rgba(255,255,255,0.3)" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#dde6ef")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+                className="text-[#555] hover:text-[#fff] transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
-
-            <div className="p-5 space-y-5">
-              {/* Repo input */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  Target Repository
-                </label>
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm text-[#888] font-medium">Target Repository Name</label>
                 <div className="relative">
                   <input
                     type="text"
                     value={repoName}
-                    onChange={(e) => { setRepoName(e.target.value); setRepoDropdownOpen(true); }}
+                    onChange={(e) => {
+                      setRepoName(e.target.value);
+                      setRepoDropdownOpen(true);
+                    }}
                     onFocus={() => setRepoDropdownOpen(true)}
                     onBlur={() => setTimeout(() => setRepoDropdownOpen(false), 200)}
                     placeholder="e.g. growthos-my-path"
-                    className="w-full rounded-lg px-3 py-2.5 text-sm font-mono outline-none transition-all pr-9"
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.09)",
-                      color: "#dde6ef",
-                    }}
-                    onFocusCapture={e => (e.currentTarget.style.borderColor = "rgba(77,157,224,0.35)")}
-                    onBlurCapture={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)")}
+                    className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#666] focus:outline-none focus:border-[#00FF66]/50 font-mono text-sm transition-colors pr-10"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.25)" }} />
+                  <div className="absolute right-3 top-3 pointer-events-none">
+                    <ChevronDown size={16} className="text-[#555]" />
                   </div>
 
                   {repoDropdownOpen && githubRepos.length > 0 && (
-                    <div
-                      className="absolute top-full left-0 right-0 mt-1 rounded-xl max-h-48 overflow-y-auto z-10 custom-scrollbar"
-                      style={{
-                        background: "rgba(12,19,25,0.98)",
-                        border: "1px solid rgba(255,255,255,0.09)",
-                        boxShadow: "0 16px 32px rgba(0,0,0,0.5)",
-                      }}
-                    >
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg max-h-48 overflow-y-auto z-10 shadow-2xl">
                       {githubRepos
                         .filter((r: any) => r.name.toLowerCase().includes(repoName.toLowerCase()))
                         .map((r: any) => (
                           <div
                             key={r.id}
-                            onClick={() => { setRepoName(r.name); setRepoDropdownOpen(false); }}
-                            className="px-3 py-2.5 cursor-pointer text-sm font-mono flex items-center justify-between transition-colors"
-                            style={{ color: "#9ba8b4", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                            onMouseEnter={e => {
-                              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-                              (e.currentTarget as HTMLElement).style.color = "#dde6ef";
+                            onClick={() => {
+                              setRepoName(r.name);
+                              setRepoDropdownOpen(false);
                             }}
-                            onMouseLeave={e => {
-                              (e.currentTarget as HTMLElement).style.background = "transparent";
-                              (e.currentTarget as HTMLElement).style.color = "#9ba8b4";
-                            }}
+                            className="px-3 py-2.5 hover:bg-[#141414] cursor-pointer text-[#d0d0d0] text-sm font-mono border-b border-[#111] last:border-0 transition-colors flex items-center justify-between"
                           >
                             <span>{r.name}</span>
                             {r.private && (
-                              <span
-                                className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-md"
-                                style={{ background: "rgba(255,255,255,0.05)", color: "#6b7785" }}
-                              >
+                              <span className="text-xs bg-[#1a1a1a] text-[#888] px-1.5 py-0.5 rounded">
                                 Private
                               </span>
                             )}
                           </div>
                         ))}
-                      {githubRepos.filter((r: any) => r.name.toLowerCase().includes(repoName.toLowerCase())).length === 0 && (
-                        <div className="px-3 py-4 text-xs font-mono text-center" style={{ color: "#6b7785" }}>
-                          No matching repositories
+                      {githubRepos.filter((r: any) =>
+                        r.name.toLowerCase().includes(repoName.toLowerCase()),
+                      ).length === 0 && (
+                        <div className="px-3 py-3 text-sm text-[#555] italic text-center">
+                          No matching repositories found
                         </div>
                       )}
                     </div>
                   )}
                 </div>
-                <p className="text-xs" style={{ color: "#6b7785" }}>
-                  Files push to <span style={{ color: "#9ba8b4", fontFamily: "monospace" }}>/{topic.slug}/</span> inside this repo.
+                <p className="text-sm text-[#555] leading-relaxed">
+                  Files will be pushed to <strong className="text-[#aaa]">/{topic.slug}/</strong>{" "}
+                  inside this repository. Leave empty to auto-generate a name.
                 </p>
               </div>
 
-              {/* Assets list */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  Assets to Commit
-                </label>
-                <div
-                  className="rounded-xl p-3 space-y-2"
-                  style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
-                >
-                  {["Markdown Notes", "Screenshots & Images", "Flashcard JSON", "Quizzes JSON", "Uploaded Documents"].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-xs font-mono" style={{ color: "#9ba8b4" }}>
-                      <CheckCircle2 size={12} style={{ color: "#3fb950", flexShrink: 0 }} />
-                      {item}
-                    </div>
-                  ))}
+              <div className="space-y-3">
+                <label className="text-sm text-[#888] font-medium">Assets to Commit</label>
+                <div className="bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 space-y-2.5 text-sm text-[#bbb]">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Markdown Notes
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Screenshots & Images
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Flashcard JSON
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Quizzes JSON
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Uploaded Documents
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => commitGitHubMutation.mutate(repoName)}
-                disabled={commitGitHubMutation.isPending}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-mono uppercase tracking-[0.12em] transition-all disabled:opacity-40"
-                style={{
-                  background: "rgba(77,157,224,0.1)",
-                  border: "1px solid rgba(77,157,224,0.3)",
-                  color: "#4d9de0",
-                }}
-                onMouseEnter={e => {
-                  if (!commitGitHubMutation.isPending) {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(77,157,224,0.16)";
-                    (e.currentTarget as HTMLElement).style.boxShadow = "0 0 16px rgba(77,157,224,0.15)";
-                  }
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(77,157,224,0.1)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                }}
-              >
-                {commitGitHubMutation.isPending ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <GitBranch size={14} />
-                )}
-                Push to GitHub
-              </button>
+              <div className="pt-2">
+                <button
+                  onClick={() => commitGitHubMutation.mutate(repoName)}
+                  disabled={commitGitHubMutation.isPending}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#111] border border-[#3b5bdb]/40 text-[#60a5fa] font-medium hover:bg-[#3b5bdb]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {commitGitHubMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <GitBranch size={16} />
+                  )}
+                  Push to GitHub
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1129,7 +958,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             Markdown Notes
           </label>
           <span
-            className={`text-xs uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}
+            className={`text-xs uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#00FF66]/60"}`}
           >
             {saving ? "Saving…" : "Saved"}
           </span>
@@ -1183,7 +1012,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
           </div>
           {noteFile && (
             <button
-              className="ml-auto px-3 py-1.5 rounded-md bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
+              className="ml-auto px-3 py-1.5 rounded-md bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-lg font-medium hover:bg-[#00FF66]/15 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 uploadDocMutation.mutate(noteFile);
@@ -1213,7 +1042,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
                 className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#141414] bg-[#0a0a0a] hover:border-[#1e1e1e] transition-colors"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <FileText size={13} className="shrink-0 text-[#22c55e]/60" />
+                  <FileText size={13} className="shrink-0 text-[#00FF66]/60" />
                   <span className="text-lg text-[#eee] truncate">
                     {doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}
                   </span>
@@ -1302,7 +1131,7 @@ function QuizTab({ topicId }: { topicId: number }) {
   };
 
   const DIFF_STYLES = {
-    easy: { active: "border-[#22c55e]/40 bg-[#22c55e]/8 text-[#22c55e]", dot: "bg-[#22c55e]" },
+    easy: { active: "border-[#00FF66]/40 bg-[#00FF66]/8 text-[#00FF66]", dot: "bg-[#00FF66]" },
     medium: { active: "border-[#f59e0b]/40 bg-[#f59e0b]/8 text-[#f59e0b]", dot: "bg-[#f59e0b]" },
     hard: { active: "border-[#ef4444]/40 bg-[#ef4444]/8 text-[#ef4444]", dot: "bg-[#ef4444]" },
   };
@@ -1362,7 +1191,7 @@ function QuizTab({ topicId }: { topicId: number }) {
         <div
           className={`rounded-xl border p-4 flex items-center justify-between ${
             score === questions.length
-              ? "border-[#22c55e]/20 bg-[#22c55e]/5"
+              ? "border-[#00FF66]/20 bg-[#00FF66]/5"
               : "border-[#f59e0b]/20 bg-[#f59e0b]/5"
           }`}
         >
@@ -1372,7 +1201,7 @@ function QuizTab({ topicId }: { topicId: number }) {
               <span className="text-xl text-[#888] font-normal">/{questions.length}</span>
             </div>
             <div
-              className={`text-lg mt-1 font-medium ${score === questions.length ? "text-[#22c55e]" : "text-[#f59e0b]"}`}
+              className={`text-lg mt-1 font-medium ${score === questions.length ? "text-[#00FF66]" : "text-[#f59e0b]"}`}
             >
               {score === questions.length ? "Perfect score!" : "Review your notes and try again"}
             </div>
@@ -1407,7 +1236,7 @@ function QuizTab({ topicId }: { topicId: number }) {
                     key={j}
                     className={`w-full text-left px-4 py-3.5 rounded-xl text-[16px] transition-all border leading-relaxed ${
                       isCorrect
-                        ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"
+                        ? "border-[#00FF66]/40 bg-[#00FF66]/10 text-[#00FF66]"
                         : isWrong
                           ? "border-[#ef4444]/40 bg-[#ef4444]/10 text-[#ef4444]"
                           : isSelected
@@ -1433,8 +1262,8 @@ function QuizTab({ topicId }: { topicId: number }) {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || Object.keys(answers).length < questions.length}
-          className="w-full py-2.5 rounded-xl bg-[#22c55e] text-[#030f05] text-lg font-semibold
-                     hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="w-full py-2.5 rounded-xl bg-[#00FF66] text-[#030f05] text-lg font-semibold
+                     hover:bg-[#00CC52] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           {isSubmitting
             ? "Submitting…"
@@ -1607,7 +1436,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   }
                 }}
                 disabled={!c.front || !c.back || actionMutation.isPending}
-                className="w-full py-2.5 rounded-lg bg-[#22c55e] text-[#030f05] text-lg font-semibold hover:bg-[#16a34a] disabled:opacity-40 transition-all mt-4"
+                className="w-full py-2.5 rounded-lg bg-[#00FF66] text-[#030f05] text-lg font-semibold hover:bg-[#00CC52] disabled:opacity-40 transition-all mt-4"
               >
                 Save & Add
               </button>
@@ -1649,7 +1478,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 setDraftCards([{ front: "", back: "" }]);
                 setIsEditing(true);
               }}
-              className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-lg font-medium hover:bg-[#00FF66]/15 transition-colors"
             >
               Create manually
             </button>
@@ -1664,7 +1493,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 <h4 className="text-[#f59e0b] font-semibold mb-1">Human Verification Required</h4>
                 <p className="text-sm text-[#eee]/80">
                   AI generated these cards. To ensure quality learning, you must manually read, edit (if necessary), and approve each card before it enters your Spaced Repetition queue. 
-                  <br/><span className="text-[#22c55e] font-mono mt-2 inline-block">+1 XP for every card you verify.</span>
+                  <br/><span className="text-[#00FF66] font-mono mt-2 inline-block">+1 XP for every card you verify.</span>
                 </p>
               </div>
             </div>
@@ -1724,9 +1553,9 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   {/* Back */}
                   <div
                     style={backStyle}
-                    className="absolute inset-0 rounded-2xl border border-[#22c55e]/15 bg-[#080f08] flex flex-col justify-between p-6"
+                    className="absolute inset-0 rounded-2xl border border-[#00FF66]/15 bg-[#080f08] flex flex-col justify-between p-6"
                   >
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e]/50">Answer</div>
+                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#00FF66]/50">Answer</div>
                     <div className="text-[#d4d4d4] text-base leading-relaxed">{f.back}</div>
                     <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest">Tap to flip back</div>
                   </div>
@@ -1771,7 +1600,7 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
               onClick={() => setRating(1)}
               className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
                 rating === 1 
-                  ? 'bg-[#22c55e]/20 border-[#22c55e]/40 text-[#22c55e]' 
+                  ? 'bg-[#00FF66]/20 border-[#00FF66]/40 text-[#00FF66]' 
                   : 'bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]'
               }`}
               title="Good AI Generation"
@@ -1793,7 +1622,7 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
           <button
             onClick={() => handleVerify(card.id, front, back, rating)}
             disabled={actionMutation.isPending}
-            className="flex-1 max-w-[220px] py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-sm font-medium hover:bg-[#22c55e]/20 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 max-w-[220px] py-2 rounded-lg bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-sm font-medium hover:bg-[#00FF66]/20 transition-colors flex items-center justify-center gap-2"
           >
             <CheckCircle2 size={16} /> Approve (+1 XP)
           </button>
@@ -1861,11 +1690,11 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
   if (progress?.status === "completed") {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-14 h-14 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center mb-4">
-          <CheckCircle2 size={22} className="text-[#22c55e]" />
+        <div className="w-14 h-14 rounded-full bg-[#00FF66]/10 border border-[#00FF66]/20 flex items-center justify-center mb-4">
+          <CheckCircle2 size={22} className="text-[#00FF66]" />
         </div>
         <div className="text-lg font-semibold text-[#e8e8e8]">Topic Verified</div>
-        <div className="text-lg text-[#22c55e]/70 mt-1">Your proof of work was accepted</div>
+        <div className="text-lg text-[#00FF66]/70 mt-1">Your proof of work was accepted</div>
       </div>
     );
   }
@@ -1878,7 +1707,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           {[
             {
               mode: "ai" as const,
-              accent: "#22c55e",
+              accent: "#00FF66",
               label: "AI Project Ideas",
               desc: "Get tailored project suggestions. Pick one and build it.",
               tag: "Guided",
@@ -1948,7 +1777,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                   className="p-4 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#1e1e1e] transition-colors"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="text-sm font-mono text-[#22c55e]/60 mt-0.5 shrink-0 tabular-nums">
+                    <span className="text-sm font-mono text-[#00FF66]/60 mt-0.5 shrink-0 tabular-nums">
                       0{i + 1}
                     </span>
                     <div>
@@ -2007,8 +1836,8 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
               <button
                 onClick={() => scanRepoMutation.mutate(repoUrl)}
                 disabled={!repoUrl || scanRepoMutation.isPending}
-                className="px-5 py-3 rounded-xl bg-[#22c55e] text-[#030f05] text-base font-semibold
-                           hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                className="px-5 py-3 rounded-xl bg-[#00FF66] text-[#030f05] text-base font-semibold
+                           hover:bg-[#00CC52] disabled:opacity-30 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
                 {scanRepoMutation.isPending ? (
                   <span className="flex items-center gap-1.5">
@@ -2022,17 +1851,17 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
 
             {scanResult && (
               <div
-                className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#22c55e]/20 bg-[#22c55e]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}
+                className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#00FF66]/20 bg-[#00FF66]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span
-                    className={`text-lg font-semibold ${scanResult.passed ? "text-[#22c55e]" : "text-[#ef4444]"}`}
+                    className={`text-lg font-semibold ${scanResult.passed ? "text-[#00FF66]" : "text-[#ef4444]"}`}
                   >
                     {scanResult.passed ? "✓ Approved" : "✗ Needs work"}
                   </span>
                   {scanResult.score !== undefined && (
                     <span
-                      className={`text-sm font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                      className={`text-sm font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#00FF66] bg-[#00FF66]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
                     >
                       {scanResult.score}/100
                     </span>
@@ -2067,7 +1896,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                     <div className="flex items-center gap-2">
                       {m.ai_score > 0 && (
                         <span
-                          className={`text-xs font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                          className={`text-xs font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#00FF66] bg-[#00FF66]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
                         >
                           {m.ai_score}/100
                         </span>
@@ -2075,7 +1904,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                       <span
                         className={`text-xs font-mono px-1.5 py-0.5 rounded capitalize ${
                           m.ai_status === "verified"
-                            ? "text-[#22c55e] bg-[#22c55e]/10"
+                            ? "text-[#00FF66] bg-[#00FF66]/10"
                             : m.ai_status === "rejected"
                               ? "text-[#ef4444] bg-[#ef4444]/10"
                               : "text-[#f59e0b] bg-[#f59e0b]/10"
@@ -2208,7 +2037,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
             </button>
             <button
               onClick={() => setViewMode("manual")}
-              className={`px-4 py-2 text-sm font-semibold uppercase tracking-widest border-b-2 transition-colors ${viewMode === "manual" ? "border-[#22c55e] text-[#22c55e]" : "border-transparent text-[#888] hover:text-[#aaa]"}`}
+              className={`px-4 py-2 text-sm font-semibold uppercase tracking-widest border-b-2 transition-colors ${viewMode === "manual" ? "border-[#00FF66] text-[#00FF66]" : "border-transparent text-[#888] hover:text-[#aaa]"}`}
             >
               Self-Grade (Manual)
             </button>
@@ -2234,7 +2063,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
             <button
               onClick={() => submitMutation.mutate(viewMode)}
               disabled={!concept || !explanation || submitMutation.isPending}
-              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === "ai" ? "bg-[#a855f7] hover:bg-[#9333ea]" : "bg-[#22c55e] hover:bg-[#16a34a]"}`}
+              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === "ai" ? "bg-[#a855f7] hover:bg-[#9333ea]" : "bg-[#00FF66] hover:bg-[#00CC52]"}`}
             >
               {submitMutation.isPending ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -2292,7 +2121,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-semibold text-[#fff]">{e.concept}</span>
                     {e.is_self_graded ? (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20">
                         MANUAL
                       </span>
                     ) : (
@@ -2302,7 +2131,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
                     )}
                   </div>
                   <div
-                    className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#22c55e]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}
+                    className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#00FF66]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}
                   >
                     {e.score}/100
                   </div>
@@ -2319,8 +2148,8 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
 
                   {e.is_self_graded
                     ? e.feedback && (
-                        <div className="bg-[#111] border border-[#22c55e]/20 rounded-lg p-4">
-                          <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e] mb-2">
+                        <div className="bg-[#111] border border-[#00FF66]/20 rounded-lg p-4">
+                          <div className="text-xs uppercase font-mono tracking-widest text-[#00FF66] mb-2">
                             Self-Reflection
                           </div>
                           <div className="text-[#eee] text-sm">{e.feedback}</div>

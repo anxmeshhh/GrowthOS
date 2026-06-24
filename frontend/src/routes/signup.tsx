@@ -38,7 +38,7 @@ function PasswordStrength({ password }: { password: string }) {
         ? "bg-yellow-500"
         : score === 3
           ? "bg-blue-400"
-          : "bg-[#22c55e]";
+          : "bg-[#00FF66]";
 
   return (
     <div className="mt-2 space-y-2">
@@ -57,7 +57,7 @@ function PasswordStrength({ password }: { password: string }) {
           <span
             key={c.label}
             className={`text-xs font-mono transition-colors duration-200 ${
-              c.ok ? "text-[#22c55e]" : "text-[#777]"
+              c.ok ? "text-[#00FF66]" : "text-[#777]"
             }`}
           >
             {c.ok ? "✓" : "·"} {c.label}
@@ -94,8 +94,8 @@ function LeftPanel() {
     <div className="hidden lg:flex lg:w-[46%] relative flex-col justify-between p-12 overflow-hidden bg-[#050505]">
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-[#22c55e] opacity-[0.05] blur-[80px]" />
-        <div className="absolute top-[30%] left-[5%] w-[250px] h-[250px] rounded-full bg-[#22c55e] opacity-[0.04] blur-[60px]" />
+        <div className="absolute bottom-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-[#00FF66] opacity-[0.05] blur-[80px]" />
+        <div className="absolute top-[30%] left-[5%] w-[250px] h-[250px] rounded-full bg-[#00FF66] opacity-[0.04] blur-[60px]" />
       </div>
 
       {/* Grid lines */}
@@ -103,7 +103,7 @@ function LeftPanel() {
         className="absolute inset-0 opacity-[0.035]"
         style={{
           backgroundImage:
-            "linear-gradient(#22c55e 1px, transparent 1px), linear-gradient(90deg, #22c55e 1px, transparent 1px)",
+            "linear-gradient(#00FF66 1px, transparent 1px), linear-gradient(90deg, #00FF66 1px, transparent 1px)",
           backgroundSize: "60px 60px",
         }}
       />
@@ -127,7 +127,7 @@ function LeftPanel() {
           {steps.map((s, i) => (
             <div key={s.icon} className="flex gap-4 items-start">
               <div className="shrink-0 w-8 h-8 rounded-lg border border-[#1e1e1e] bg-[#0a0a0a] flex items-center justify-center">
-                <span className="text-xs font-mono text-[#22c55e]">{s.icon}</span>
+                <span className="text-xs font-mono text-[#00FF66]">{s.icon}</span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-[#ddd]">{s.title}</p>
@@ -140,7 +140,7 @@ function LeftPanel() {
         {/* Avatars / social proof */}
         <div className="flex items-center gap-3 pt-2">
           <div className="flex -space-x-2">
-            {["#22c55e", "#16a34a", "#15803d", "#14532d"].map((c, i) => (
+            {["#00FF66", "#00CC52", "#15803d", "#14532d"].map((c, i) => (
               <div
                 key={i}
                 className="w-7 h-7 rounded-full border-2 border-[#050505] flex items-center justify-center text-xs font-bold text-[#000]"
@@ -156,7 +156,7 @@ function LeftPanel() {
         </div>
 
         {/* Quote */}
-        <div className="border-l-2 border-[#22c55e]/40 pl-4 mt-8">
+        <div className="border-l-2 border-[#00FF66]/40 pl-4 mt-8">
           <p className="text-[#888] text-sm leading-relaxed italic transition-opacity duration-500">
             "{quote}"
           </p>
@@ -165,7 +165,7 @@ function LeftPanel() {
 
       {/* Bottom tag */}
       <div className="relative z-10 flex items-center gap-2 text-[#666] text-xs font-mono">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
         Free to start, no credit card
       </div>
     </div>
@@ -245,7 +245,7 @@ function SignupPage() {
             <button
               type="button"
               onClick={() => googleSignup()}
-              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00FF66]"
             >
               <svg
                 width="18"
@@ -276,7 +276,7 @@ function SignupPage() {
             <button
               type="button"
               onClick={handleGithubSignup}
-              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00FF66]"
             >
               <Github className="w-4 h-4 shrink-0" />
               Sign up with GitHub
@@ -380,7 +380,7 @@ function SignupPage() {
                     required
                     placeholder="you@example.com"
                     defaultValue={email}
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#22c55e]/60 focus:ring-1 focus:ring-[#22c55e]/25 focus:bg-[#0f0f0f]"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/60 focus:ring-1 focus:ring-[#00FF66]/25 focus:bg-[#0f0f0f]"
                   />
                 </div>
               </div>
@@ -400,7 +400,7 @@ function SignupPage() {
                     required
                     maxLength={6}
                     placeholder="Enter 6-digit code"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm tracking-[0.5em] text-center placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#22c55e]/60 focus:ring-1 focus:ring-[#22c55e]/25 focus:bg-[#0f0f0f]"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm tracking-[0.5em] text-center placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/60 focus:ring-1 focus:ring-[#00FF66]/25 focus:bg-[#0f0f0f]"
                   />
                 </div>
                 <p className="text-xs text-[#555] mt-2">
@@ -408,7 +408,7 @@ function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-[#22c55e] hover:underline"
+                    className="text-[#00FF66] hover:underline"
                   >
                     Change email
                   </button>
@@ -430,7 +430,7 @@ function SignupPage() {
                       type="text"
                       required
                       placeholder="John Doe"
-                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#22c55e]/60 focus:ring-1 focus:ring-[#22c55e]/25 focus:bg-[#0f0f0f]"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/60 focus:ring-1 focus:ring-[#00FF66]/25 focus:bg-[#0f0f0f]"
                     />
                   </div>
                 </div>
@@ -449,7 +449,7 @@ function SignupPage() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#22c55e]/60 focus:ring-1 focus:ring-[#22c55e]/25 focus:bg-[#0f0f0f]"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/60 focus:ring-1 focus:ring-[#00FF66]/25 focus:bg-[#0f0f0f]"
                     />
                   </div>
                   <PasswordStrength password={password} />
@@ -461,7 +461,7 @@ function SignupPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#22c55e] text-[#000] text-sm font-bold tracking-wide transition-all duration-200 hover:bg-[#16a34a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000] overflow-hidden mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-[#00FF66] text-[#000] text-sm font-bold tracking-wide transition-all duration-200 hover:bg-[#00CC52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF66] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000] overflow-hidden mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="relative z-10">
                 {step === 1 ? "Continue" : step === 2 ? "Verify Email" : "Create Account"}
@@ -495,7 +495,7 @@ function SignupPage() {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="text-[#22c55e] hover:text-[#16a34a] font-semibold transition-colors"
+              className="text-[#00FF66] hover:text-[#00CC52] font-semibold transition-colors"
             >
               Log in →
             </Link>

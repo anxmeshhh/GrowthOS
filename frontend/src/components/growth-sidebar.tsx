@@ -14,8 +14,10 @@ import {
   User,
   ChevronRight,
   Activity,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { Logo } from "@/components/logo";
@@ -54,7 +56,7 @@ const NAV_GROUPS = [
 
 // ─── NavList ─────────────────────────────────────────────────────────────────
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const { data: briefing } = useQuery({
@@ -67,31 +69,33 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   });
 
   return (
-    <nav className="flex flex-col gap-5 px-4">
+    <nav className={`flex flex-col gap-5 ${collapsed ? "px-2" : "px-4"}`}>
       {NAV_GROUPS.map((group) => (
         <div key={group.label} className="space-y-1.5">
-          {/* Group label */}
-          <div className="px-2 mb-2 flex items-center gap-3">
-            <span
-              style={{
-                fontSize: "10px",
-                letterSpacing: "0.15em",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.4)",
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-              }}
-            >
-              {group.label}
-            </span>
-            <div
-              style={{
-                flex: 1,
-                height: "1px",
-                background: "linear-gradient(90deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
-              }}
-            />
-          </div>
+          {/* Group label (hidden when collapsed) */}
+          {!collapsed && (
+            <div className="px-2 mb-2 flex items-center gap-3">
+              <span
+                style={{
+                  fontSize: "10px",
+                  letterSpacing: "0.15em",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.4)",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                }}
+              >
+                {group.label}
+              </span>
+              <div
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  background: "linear-gradient(90deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
+                }}
+              />
+            </div>
+          )}
 
           {/* Items */}
           <div className="flex flex-col gap-1">
@@ -103,20 +107,22 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   to={to}
                   id={`nav-${to.replace("/", "")}`}
                   onClick={onNavigate}
+                  title={collapsed ? label : undefined}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "12px",
-                    padding: "10px 14px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    gap: collapsed ? "0" : "12px",
+                    padding: collapsed ? "11px 0" : "10px 14px",
                     borderRadius: "10px",
                     fontSize: "14px",
                     fontWeight: active ? 600 : 500,
                     color: active ? "#ffffff" : "#999999",
                     background: active
-                      ? "linear-gradient(90deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.02) 100%)"
+                      ? "linear-gradient(90deg, rgba(0,255,102,0.1) 0%, rgba(0,255,102,0.02) 100%)"
                       : "transparent",
                     boxShadow: active
-                      ? "inset 1px 0 0 0 #22c55e, inset 0 0 0 1px rgba(255,255,255,0.03)"
+                      ? "inset 1px 0 0 0 #00FF66, inset 0 0 0 1px rgba(255,255,255,0.03)"
                       : "none",
                     transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
                     textDecoration: "none",
@@ -126,49 +132,27 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   className="nav-item group"
                   data-active={active ? "" : undefined}
                 >
-                  {/* Glowing left edge behind border */}
-                  {active && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        top: "20%",
-                        bottom: "20%",
-                        width: "4px",
-                        background: "#22c55e",
-                        filter: "blur(6px)",
-                        opacity: 0.6,
-                      }}
-                    />
-                  )}
-
                   <Icon
                     size={18}
                     strokeWidth={active ? 2.5 : 2}
                     className="nav-icon"
                     style={{
-                      color: active ? "#22c55e" : "rgba(255,255,255,0.4)",
+                      color: active ? "#00FF66" : "rgba(255,255,255,0.4)",
                       flexShrink: 0,
                       transition: "all 200ms ease",
                     }}
                   />
-                  <span
-                    style={{
-                      flex: 1,
-                      zIndex: 10,
-                      textShadow: active ? "0 2px 10px rgba(255,255,255,0.2)" : "none",
-                    }}
-                  >
-                    {label}
-                  </span>
+                  {!collapsed && (
+                    <span style={{ flex: 1, zIndex: 10 }}>{label}</span>
+                  )}
 
-                  {to === "/review" && briefing?.due_cards > 0 && (
-                    <span className="flex items-center justify-center bg-[#ef4444] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] shadow-[0_0_10px_rgba(239,68,68,0.3)]">
+                  {!collapsed && to === "/review" && briefing?.due_cards > 0 && (
+                    <span className="flex items-center justify-center bg-[#ef4444] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px]">
                       {briefing.due_cards}
                     </span>
                   )}
 
-                  {active && to !== "/review" && (
+                  {!collapsed && active && to !== "/review" && (
                     <ChevronRight
                       size={14}
                       style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }}
@@ -186,25 +170,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         .nav-item:not([data-active]):hover {
           color: #f0f0f0 !important;
           background: rgba(255,255,255,0.04) !important;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02) !important;
         }
         .nav-item:not([data-active]):hover .nav-icon {
           color: #a3a3a3 !important;
-          transform: scale(1.05);
-        }
-        .nav-item[data-active] .nav-icon {
-          animation: icon-pulse 2s infinite ease-in-out;
-        }
-        @keyframes icon-pulse {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(34,197,94,0)); }
-          50% { transform: scale(1.05); filter: drop-shadow(0 0 8px rgba(34,197,94,0.4)); }
-        }
-        @keyframes flame-flicker {
-          0% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
-          25% { transform: scale(1.1) rotate(2deg); opacity: 1; filter: drop-shadow(0 0 6px rgba(245,158,11,0.6)); }
-          50% { transform: scale(0.95) rotate(-1deg); opacity: 0.8; }
-          75% { transform: scale(1.05) rotate(1deg); opacity: 1; filter: drop-shadow(0 0 4px rgba(245,158,11,0.4)); }
-          100% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
         }
       `}</style>
     </nav>
@@ -213,7 +181,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 // ─── SidebarFooter ───────────────────────────────────────────────────────────
 
-function SidebarFooter() {
+function SidebarFooter({ collapsed = false }: { collapsed?: boolean }) {
   const { data: profile } = useQuery({
     queryKey: ["user_profile"],
     queryFn: async () => {
@@ -231,7 +199,7 @@ function SidebarFooter() {
   return (
     <div
       style={{
-        padding: "16px",
+        padding: collapsed ? "12px 8px" : "16px",
         marginTop: "auto",
         position: "relative",
       }}
@@ -249,8 +217,8 @@ function SidebarFooter() {
         }}
       />
 
-      {/* Streak bar — glowing premium card */}
-      {streak > 0 && (
+      {/* Streak bar — premium card */}
+      {!collapsed && streak > 0 && (
         <div
           style={{
             display: "flex",
@@ -326,14 +294,16 @@ function SidebarFooter() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
-          padding: "10px",
+          justifyContent: collapsed ? "center" : "flex-start",
+          gap: collapsed ? "0" : "12px",
+          padding: collapsed ? "6px" : "10px",
           borderRadius: "12px",
           background: "rgba(255,255,255,0.02)",
           border: "1px solid rgba(255,255,255,0.04)",
           transition: "all 200ms ease",
           cursor: "pointer",
         }}
+        title={collapsed ? `${username} · ${title}` : undefined}
         className="hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.1)]"
       >
         {/* Avatar */}
@@ -343,8 +313,8 @@ function SidebarFooter() {
             width: "36px",
             borderRadius: "10px",
             background:
-              "linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(16,185,129,0.05) 100%)",
-            border: "1px solid rgba(34,197,94,0.2)",
+              "linear-gradient(135deg, rgba(0,255,102,0.2) 0%, rgba(0,255,102,0.05) 100%)",
+            border: "1px solid rgba(0,255,102,0.2)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -352,7 +322,7 @@ function SidebarFooter() {
             fontFamily: "ui-monospace, monospace",
             fontSize: "11px",
             fontWeight: 700,
-            color: "#4ade80",
+            color: "#00FF66",
             letterSpacing: "0.05em",
             boxShadow: "0 2px 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
           }}
@@ -360,7 +330,8 @@ function SidebarFooter() {
           {initials}
         </div>
 
-        {/* Name + title */}
+        {/* Name + title (hidden when collapsed) */}
+        {!collapsed && (
         <div style={{ minWidth: 0, flex: 1 }}>
           <div
             style={{
@@ -382,7 +353,7 @@ function SidebarFooter() {
               fontFamily: "ui-monospace, monospace",
               textTransform: "uppercase",
               letterSpacing: "0.15em",
-              color: "#4ade80",
+              color: "#00FF66",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -393,6 +364,7 @@ function SidebarFooter() {
             {title}
           </div>
         </div>
+        )}
       </div>
 
       <style>{`
@@ -407,68 +379,126 @@ function SidebarFooter() {
 
 // ─── SidebarInner ────────────────────────────────────────────────────────────
 
-function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarInner({
+  onNavigate,
+  collapsed = false,
+  onToggle,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+  onToggle?: () => void;
+}) {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div
-        style={{
-          padding: "24px 20px 20px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Logo container with neon glassmorphism */}
-          <div
+      <div style={{ padding: collapsed ? "20px 8px 16px" : "24px 20px 20px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "space-between",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+            {/* Logo tile */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
+                borderRadius: "10px",
+                background: "rgba(0,255,102,0.1)",
+                border: "1px solid rgba(0,255,102,0.25)",
+                flexShrink: 0,
+              }}
+            >
+              <Logo size={18} />
+            </div>
+            {!collapsed && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0px", minWidth: 0 }}>
+                <span
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    letterSpacing: "-0.03em",
+                    color: "#ffffff",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  GrowthOS
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontFamily: "ui-monospace, monospace",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.15em",
+                    color: "rgba(255,255,255,0.3)",
+                    fontWeight: 600,
+                    marginTop: "2px",
+                  }}
+                >
+                  Command Center
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Collapse toggle (desktop) */}
+          {onToggle && !collapsed && (
+            <button
+              onClick={onToggle}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="sidebar-toggle"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "30px",
+                height: "30px",
+                borderRadius: "8px",
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.06)",
+                color: "rgba(255,255,255,0.45)",
+                cursor: "pointer",
+                flexShrink: 0,
+                transition: "all 150ms ease",
+              }}
+            >
+              <PanelLeftClose size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Expand toggle when collapsed (full-width, below logo) */}
+        {onToggle && collapsed && (
+          <button
+            onClick={onToggle}
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+            className="sidebar-toggle"
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "32px",
-              height: "32px",
-              borderRadius: "10px",
-              background:
-                "linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.02) 100%)",
-              border: "1px solid rgba(34,197,94,0.3)",
-              boxShadow: "0 0 16px rgba(34,197,94,0.15), inset 0 1px 0 rgba(255,255,255,0.1)",
-              flexShrink: 0,
+              width: "100%",
+              height: "30px",
+              marginTop: "12px",
+              borderRadius: "8px",
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.06)",
+              color: "rgba(255,255,255,0.45)",
+              cursor: "pointer",
+              transition: "all 150ms ease",
             }}
           >
-            <Logo size={18} />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "16px",
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-                color: "#ffffff",
-                lineHeight: 1.1,
-                textShadow: "0 2px 10px rgba(0,0,0,0.3)",
-              }}
-            >
-              GrowthOS
-            </span>
-            <span
-              style={{
-                fontSize: "10px",
-                fontFamily: "ui-monospace, monospace",
-                textTransform: "uppercase",
-                letterSpacing: "0.15em",
-                color: "rgba(255,255,255,0.3)",
-                fontWeight: 600,
-                marginTop: "2px",
-              }}
-            >
-              Command Center
-            </span>
-          </div>
-        </div>
+            <PanelLeftOpen size={16} />
+          </button>
+        )}
       </div>
 
       {/* Nav scroll area */}
@@ -480,21 +510,29 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
           scrollbarWidth: "none",
         }}
       >
-        <NavList onNavigate={onNavigate} />
+        <NavList onNavigate={onNavigate} collapsed={collapsed} />
       </div>
 
-      <SidebarFooter />
+      <SidebarFooter collapsed={collapsed} />
+
+      <style>{`
+        .sidebar-toggle:hover {
+          color: #ffffff !important;
+          background: rgba(255,255,255,0.06) !important;
+          border-color: rgba(255,255,255,0.12) !important;
+        }
+      `}</style>
     </div>
   );
 }
 
 // ─── Sidebar (desktop) ───────────────────────────────────────────────────────
 
-export function Sidebar() {
+export function Sidebar({ collapsed = false, onToggle }: { collapsed?: boolean; onToggle?: () => void }) {
   return (
     <aside
       style={{
-        width: "260px",
+        width: collapsed ? "76px" : "260px",
         flexShrink: 0,
         margin: "16px 0 16px 16px",
         height: "calc(100vh - 32px)",
@@ -503,15 +541,183 @@ export function Sidebar() {
         WebkitBackdropFilter: "blur(24px)",
         border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: "20px",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
         position: "sticky",
         top: "16px",
         overflow: "hidden",
+        transition: "width 220ms cubic-bezier(0.4,0,0.2,1)",
       }}
       className="hidden lg:flex flex-col"
     >
-      <SidebarInner />
+      <SidebarInner collapsed={collapsed} onToggle={onToggle} />
     </aside>
+  );
+}
+
+// ─── MobileTopBar (hamburger + slide-in drawer) ────────────────────────────────
+
+export function MobileTopBar() {
+  const [open, setOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Close on route change.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll while open.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  return (
+    <>
+      {/* Fixed top bar — mobile/tablet only */}
+      <header
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "56px",
+          background: "rgba(3,3,3,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid #1a1a1a",
+          paddingTop: "env(safe-area-inset-top)",
+          zIndex: 45,
+        }}
+        className="flex lg:hidden items-center justify-between px-4"
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "30px",
+              height: "30px",
+              borderRadius: "9px",
+              background: "rgba(0,255,102,0.1)",
+              border: "1px solid rgba(0,255,102,0.25)",
+            }}
+          >
+            <Logo size={17} />
+          </div>
+          <span style={{ fontSize: "16px", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+            GrowthOS
+          </span>
+        </div>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "38px",
+            height: "38px",
+            borderRadius: "9px",
+            background: "transparent",
+            border: "1px solid #1a1a1a",
+            color: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          <Menu size={18} />
+        </button>
+      </header>
+
+      {/* Overlay + drawer */}
+      {open && (
+        <div className="lg:hidden" style={{ position: "fixed", inset: 0, zIndex: 60 }}>
+          <div
+            onClick={() => setOpen(false)}
+            style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(2px)" }}
+          />
+          <aside
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: "280px",
+              maxWidth: "84vw",
+              background: "#050505",
+              borderRight: "1px solid #1a1a1a",
+              display: "flex",
+              flexDirection: "column",
+              animation: "drawer-in 0.22s cubic-bezier(0.4,0,0.2,1)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "16px 16px 8px",
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "10px",
+                    background: "rgba(0,255,102,0.1)",
+                    border: "1px solid rgba(0,255,102,0.25)",
+                  }}
+                >
+                  <Logo size={18} />
+                </div>
+                <span style={{ fontSize: "16px", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+                  GrowthOS
+                </span>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "none",
+                  color: "#888",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: "auto", padding: "8px 0 14px" }}>
+              <NavList onNavigate={() => setOpen(false)} />
+            </div>
+
+            <SidebarFooter />
+          </aside>
+
+          <style>{`
+            @keyframes drawer-in {
+              from { transform: translateX(-100%); }
+              to   { transform: translateX(0); }
+            }
+          `}</style>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -561,7 +767,7 @@ export function BottomNavBar() {
               flex: 1,
               height: "100%",
               textDecoration: "none",
-              color: active ? "#22c55e" : "rgba(255,255,255,0.4)",
+              color: active ? "#00FF66" : "rgba(255,255,255,0.4)",
               transition: "all 200ms ease",
               position: "relative",
             }}
@@ -573,8 +779,8 @@ export function BottomNavBar() {
                   top: 0,
                   width: "30%",
                   height: "2px",
-                  background: "#22c55e",
-                  boxShadow: "0 2px 8px rgba(34,197,94,0.8)",
+                  background: "#00FF66",
+                  boxShadow: "0 2px 8px rgba(0,255,102,0.8)",
                   borderRadius: "0 0 2px 2px",
                 }}
               />

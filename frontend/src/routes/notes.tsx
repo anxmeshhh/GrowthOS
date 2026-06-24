@@ -395,7 +395,7 @@ function NotesPage() {
 
           <div className="lib-header-meta">
             <span className="lib-stat-pill">
-              <BookOpen size={10} className="text-[#22c55e]" />
+              <BookOpen size={10} className="text-[#00FF66]" />
               {noteCount} notes
             </span>
             <span className="lib-stat-pill">
@@ -492,7 +492,7 @@ function NotesPage() {
                     {/* Card header */}
                     <div className="lib-item-header">
                       <div className="lib-item-header-left">
-                        <BookOpen size={11} className="text-[#22c55e] shrink-0" />
+                        <BookOpen size={11} className="text-[#00FF66] shrink-0" />
                         <span className="lib-item-topic">{item.topicTitle}</span>
                       </div>
                       <div className="lib-item-actions">
@@ -696,7 +696,7 @@ function NotesPage() {
                     className="lib-modal-topic-btn"
                   >
                     <div className="lib-modal-topic-icon">
-                      <BookOpen size={12} className="text-[#22c55e]" />
+                      <BookOpen size={12} className="text-[#00FF66]" />
                     </div>
                     <div className="lib-modal-topic-text">
                       <span className="lib-modal-topic-title">{t.title}</span>
@@ -704,7 +704,7 @@ function NotesPage() {
                     </div>
                     <ExternalLink
                       size={12}
-                      className="text-[#eee] group-hover:text-[#22c55e] transition-colors shrink-0"
+                      className="text-[#eee] group-hover:text-[#00FF66] transition-colors shrink-0"
                     />
                   </button>
                 ))
@@ -981,7 +981,7 @@ function NotesPage() {
         }
 
         .lib-item-note::before {
-          background: linear-gradient(90deg, transparent, #22c55e18, transparent);
+          background: linear-gradient(90deg, transparent, #00FF6618, transparent);
         }
 
         .lib-item-doc::before {
@@ -1368,7 +1368,7 @@ function NotesPage() {
         }
 
         .lib-modal-topic-btn:hover {
-          border-color: #22c55e20;
+          border-color: #00FF6620;
           background: #0c150e;
         }
 

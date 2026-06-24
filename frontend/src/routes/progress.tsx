@@ -73,8 +73,8 @@ const RARITY_CONFIG: Record<
 > = {
   common: { color: "#888", bg: "#88888812", border: "#222", label: "Common", Icon: Star },
   uncommon: {
-    color: "#22c55e",
-    bg: "#22c55e10",
+    color: "#00FF66",
+    bg: "#00FF6610",
     border: "#14532d",
     label: "Uncommon",
     Icon: Shield,
@@ -295,9 +295,9 @@ function ProgressPage() {
           </StatCard>
 
           {/* Total XP */}
-          <StatCard accent="#22c55e" accentBg="#040d07" accentBorder="#0d1f0e">
+          <StatCard accent="#00FF66" accentBg="#040d07" accentBorder="#0d1f0e">
             <SectionLabel>
-              <Star size={9} className="text-[#22c55e]" /> Total XP Earned
+              <Star size={9} className="text-[#00FF66]" /> Total XP Earned
             </SectionLabel>
             <div className="mt-3 flex items-baseline gap-1.5">
               <span className="text-[29px] font-semibold tracking-tight tabular-nums text-[#efefef] leading-none">
@@ -305,7 +305,7 @@ function ProgressPage() {
               </span>
               <span className="text-sm text-[#fff] font-mono">XP</span>
             </div>
-            <div className="text-xs font-mono text-[#22c55e]/70 mt-1">+120 this week</div>
+            <div className="text-xs font-mono text-[#00FF66]/70 mt-1">+120 this week</div>
           </StatCard>
         </div>
 
@@ -320,7 +320,7 @@ function ProgressPage() {
                 </SectionLabel>
               }
               right={
-                <span className="text-xs font-mono text-[#22c55e] uppercase tracking-[0.15em]">
+                <span className="text-xs font-mono text-[#00FF66] uppercase tracking-[0.15em]">
                   {activePaths.length} active
                 </span>
               }
@@ -344,7 +344,7 @@ function ProgressPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-sm font-mono tabular-nums text-[#22c55e]">
+                          <span className="text-sm font-mono tabular-nums text-[#00FF66]">
                             {p.pct}%
                           </span>
                           <ChevronRight
@@ -355,10 +355,10 @@ function ProgressPage() {
                       </div>
                       <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#22c55e] rounded-full transition-all duration-700"
+                          className="h-full bg-[#00FF66] rounded-full transition-all duration-700"
                           style={{
                             width: `${p.pct}%`,
-                            boxShadow: p.pct > 0 ? "0 0 6px #22c55e30" : "none",
+                            boxShadow: p.pct > 0 ? "0 0 6px #00FF6630" : "none",
                           }}
                         />
                       </div>
@@ -441,7 +441,7 @@ function ProgressPage() {
                   const pct = (count / total) * 100;
 
                   const bgColors: Record<string, string> = {
-                    mastered: "#22c55e",
+                    mastered: "#00FF66",
                     proficient: "#3b82f6",
                     familiar: "#f59e0b",
                     needs_review: "#ef4444",
@@ -479,7 +479,7 @@ function ProgressPage() {
             {profile?.mastery_distribution && (
               <div className="flex justify-between text-xs font-mono uppercase tracking-wider text-[#888] pt-2">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-[#22c55e]"></div>Mastered (90+)
+                  <div className="w-2 h-2 rounded-full bg-[#00FF66]"></div>Mastered (90+)
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>Proficient (70+)
@@ -554,7 +554,7 @@ function ProgressPage() {
                         {tag.name}
                       </span>
                       {isEquipped && (
-                        <span className="text-xs font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#22c55e]/15 text-[#22c55e] leading-none tracking-wider">
+                        <span className="text-xs font-mono uppercase px-1.5 py-0.5 rounded-[2px] bg-[#00FF66]/15 text-[#00FF66] leading-none tracking-wider">
                           Equipped
                         </span>
                       )}
@@ -599,22 +599,27 @@ function ProgressPage() {
               </span>
             }
           />
-          <div className="p-4 overflow-x-auto">
-            <div className="min-w-[680px]">
+          <div className="p-4 overflow-x-auto custom-scrollbar">
+            <div className="min-w-[720px]">
               <ActivityCalendar
                 data={hd}
                 theme={{
-                  light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                  dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  light: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                  dark: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
                 }}
                 colorScheme="dark"
                 blockSize={11}
-                blockMargin={4}
-                fontSize={10}
+                blockRadius={2}
+                blockMargin={2}
+                fontSize={11}
+                weekStart={0}
+                showWeekdayLabels
+                showColorLegend={false}
+                showTotalCount={false}
                 labels={{ totalCount: "{{count}} contributions in the last year" }}
                 style={{
                   fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                  color: "#333",
+                  color: "#7d8590",
                 }}
               />
             </div>

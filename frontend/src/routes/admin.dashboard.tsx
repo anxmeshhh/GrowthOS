@@ -668,7 +668,7 @@ function UserInspectorSidebar({
                     {/* Heatmap */}
                     <div className="p-6 rounded-xl border border-white/5 bg-[#111]">
                       <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-4 uppercase tracking-wider">
-                        <Zap size={14} className="text-[#22c55e]" /> Contributions
+                        <Zap size={14} className="text-[#00FF66]" /> Contributions
                       </h4>
                       <div className="overflow-x-auto pb-2 custom-scrollbar">
                         <ActivityCalendar

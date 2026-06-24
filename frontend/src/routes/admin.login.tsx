@@ -22,7 +22,6 @@ function AdminLogin() {
 
     try {
       // First authenticate normally
-      // F3: Use the env-driven base URL instead of hardcoded localhost
       const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
       const res = await fetch(`${apiBase}/auth/login/`, {
         method: "POST",

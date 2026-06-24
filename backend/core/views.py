@@ -1232,6 +1232,18 @@ class TopicScreenshotView(views.APIView):
         serializer = TopicScreenshotSerializer(screenshot, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def patch(self, request, topic_id):
+        # Update an optional caption on an existing screenshot.
+        screenshot_id = request.data.get('id') or request.query_params.get('id')
+        if not screenshot_id:
+            return Response({'error': 'No screenshot ID provided'}, status=status.HTTP_400_BAD_REQUEST)
+        screenshot = get_object_or_404(TopicScreenshot, id=screenshot_id, user=request.user)
+        caption = request.data.get('caption', '')
+        screenshot.caption = caption[:255]
+        screenshot.save(update_fields=['caption'])
+        serializer = TopicScreenshotSerializer(screenshot, context={'request': request})
+        return Response(serializer.data)
+
     def delete(self, request, topic_id):
         screenshot_id = request.query_params.get('id')
         if not screenshot_id:

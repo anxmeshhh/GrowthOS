@@ -45,7 +45,7 @@ const SectionHeader = memo(function SectionHeader({
         className="font-mono font-semibold tracking-wide flex items-center gap-1.5"
         style={{
           fontSize: "11px",
-          color: node.data.status === "completed" ? "#22c55e" : "#60a5fa",
+          color: node.data.status === "completed" ? "#00FF66" : "#60a5fa",
         }}
       >
         {node.data.status === "completed" && <CheckCircle2 size={12} strokeWidth={2.5} />}
@@ -101,9 +101,9 @@ const TreeBranch = memo(function TreeBranch({
               className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1.5"
               style={{
                 fontSize: "10px",
-                color: isCompleted ? "#4ade80" : "#60a5fa",
+                color: isCompleted ? "#00FF66" : "#60a5fa",
                 background: isCompleted ? "#061a0f" : "#0a0f1e",
-                border: `1px solid ${isCompleted ? "#22c55e" : "#3b5bdb"}`,
+                border: `1px solid ${isCompleted ? "#00FF66" : "#3b5bdb"}`,
               }}
             >
               {isCompleted && <CheckCircle2 size={11} strokeWidth={3} />}
@@ -273,7 +273,7 @@ export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
         <LegendItem kind="milestone" label="Milestone" />
         <LegendItem kind="optional" label="Optional" />
         <div className="ml-auto flex items-center gap-1.5">
-          <CheckCircle2 size={12} style={{ color: "#22c55e" }} strokeWidth={2} />
+          <CheckCircle2 size={12} style={{ color: "#00FF66" }} strokeWidth={2} />
           <span style={{ fontSize: "10px", color: "#444", fontFamily: "monospace" }}>
             completed
           </span>

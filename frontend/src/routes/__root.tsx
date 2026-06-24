@@ -7,12 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { GrowthProvider } from "../lib/growth-store";
-import { Sidebar, BottomNavBar } from "../components/growth-sidebar";
+import { Sidebar, BottomNavBar, MobileTopBar } from "../components/growth-sidebar";
 import { PomodoroTimer } from "../components/pomodoro-timer";
 
 function NotFoundComponent() {
@@ -150,6 +150,18 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   // Initialize tutorial
   useAppTutorial();
 
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+  const toggleSidebar = () => {
+    setCollapsed((v) => {
+      const next = !v;
+      if (typeof window !== "undefined") localStorage.setItem("sidebar_collapsed", String(next));
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (!isAuthRoute) {
       apiFetch("/auth/daily-login/", { method: "POST" })
@@ -164,9 +176,12 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   }, [isAuthRoute, showToast]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] flex flex-col lg:flex-row pb-16 lg:pb-0">
-      {!isAuthRoute && <Sidebar />}
-      <div className="flex-1 min-w-0 flex flex-col">{children}</div>
+    <div className="min-h-screen bg-[#030303] text-[#f0f0f0] flex flex-col lg:flex-row pb-16 lg:pb-0">
+      {!isAuthRoute && <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />}
+      {!isAuthRoute && <MobileTopBar />}
+      <div className={`flex-1 min-w-0 flex flex-col ${isAuthRoute ? "" : "pt-14 lg:pt-0"}`}>
+        {children}
+      </div>
       {!isAuthRoute && <FloatingChat />}
       {!isAuthRoute && <PomodoroTimer />}
       {!isAuthRoute && <BottomNavBar />}

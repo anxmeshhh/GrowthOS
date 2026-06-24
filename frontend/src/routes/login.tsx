@@ -30,8 +30,8 @@ function LeftPanel() {
     <div className="hidden lg:flex lg:w-[46%] relative flex-col justify-between p-12 overflow-hidden bg-[#050505]">
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#22c55e] opacity-[0.06] blur-[100px]" />
-        <div className="absolute top-[20%] left-[10%] w-[200px] h-[200px] rounded-full bg-[#22c55e] opacity-[0.04] blur-[60px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#00FF66] opacity-[0.06] blur-[100px]" />
+        <div className="absolute top-[20%] left-[10%] w-[200px] h-[200px] rounded-full bg-[#00FF66] opacity-[0.04] blur-[60px]" />
       </div>
 
       {/* Grid lines */}
@@ -39,7 +39,7 @@ function LeftPanel() {
         className="absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            "linear-gradient(#22c55e 1px, transparent 1px), linear-gradient(90deg, #22c55e 1px, transparent 1px)",
+            "linear-gradient(#00FF66 1px, transparent 1px), linear-gradient(90deg, #00FF66 1px, transparent 1px)",
           backgroundSize: "60px 60px",
         }}
       />
@@ -69,13 +69,13 @@ function LeftPanel() {
                 </p>
                 <p className="text-sm text-[#777] mt-0.5">{item.sub}</p>
               </div>
-              <span className="text-xl font-bold text-[#22c55e] tabular-nums">{item.value}</span>
+              <span className="text-xl font-bold text-[#00FF66] tabular-nums">{item.value}</span>
             </div>
           ))}
         </div>
 
         {/* Quote */}
-        <div className="border-l-2 border-[#22c55e]/40 pl-4">
+        <div className="border-l-2 border-[#00FF66]/40 pl-4">
           <p className="text-[#888] text-sm leading-relaxed italic transition-opacity duration-500">
             "{quote}"
           </p>
@@ -84,7 +84,7 @@ function LeftPanel() {
 
       {/* Bottom tag */}
       <div className="relative z-10 flex items-center gap-2 text-[#666] text-xs font-mono">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
         System operational
       </div>
     </div>
@@ -158,7 +158,7 @@ function LoginPage() {
         <div className="text-center space-y-4">
           <p className="text-sm uppercase tracking-[0.4em] font-mono text-[#777]">We present</p>
           <div className="relative flex items-center justify-center gap-3">
-            <div className="absolute w-20 h-20 rounded-full bg-[#22c55e] opacity-20 blur-2xl animate-pulse" />
+            <div className="absolute w-20 h-20 rounded-full bg-[#00FF66] opacity-20 blur-2xl animate-pulse" />
             <Logo size={40} className="relative z-10" />
             <h1 className="relative z-10 text-4xl sm:text-5xl font-bold tracking-tight text-[#f0f0f0]">
               GrowthOS
@@ -196,7 +196,7 @@ function LoginPage() {
             <button
               type="button"
               onClick={() => googleLogin()}
-              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00FF66]"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -223,7 +223,7 @@ function LoginPage() {
             <button
               type="button"
               onClick={handleGithubLogin}
-              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#22c55e]"
+              className="group w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#bbb] text-sm font-medium transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#111] hover:text-[#f0f0f0] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00FF66]"
             >
               <Github className="w-4 h-4 shrink-0" />
               Continue with GitHub
@@ -282,7 +282,7 @@ function LoginPage() {
                   autoComplete="email"
                   required
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#f0f0f0] text-sm placeholder-[#666] transition-all duration-200 focus:outline-none focus:border-[#22c55e]/50 focus:ring-1 focus:ring-[#22c55e]/30 focus:bg-[#0d0d0d]"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#f0f0f0] text-sm placeholder-[#666] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/50 focus:ring-1 focus:ring-[#00FF66]/30 focus:bg-[#0d0d0d]"
                 />
               </div>
             </div>
@@ -298,7 +298,7 @@ function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  className="text-xs text-[#22c55e] hover:text-[#16a34a] transition-colors focus-visible:outline-none"
+                  className="text-xs text-[#00FF66] hover:text-[#00CC52] transition-colors focus-visible:outline-none"
                 >
                   Forgot?
                 </button>
@@ -310,14 +310,14 @@ function LoginPage() {
                 autoComplete="current-password"
                 required
                 placeholder="••••••••"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#f0f0f0] text-sm placeholder-[#666] transition-all duration-200 focus:outline-none focus:border-[#22c55e]/50 focus:ring-1 focus:ring-[#22c55e]/30 focus:bg-[#0d0d0d]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#1e1e1e] bg-[#0a0a0a] text-[#f0f0f0] text-sm placeholder-[#666] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/50 focus:ring-1 focus:ring-[#00FF66]/30 focus:bg-[#0d0d0d]"
               />
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              className="group relative w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-[#22c55e] text-[#000] text-sm font-semibold tracking-wide transition-all duration-200 hover:bg-[#16a34a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000] overflow-hidden mt-2"
+              className="group relative w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-[#00FF66] text-[#000] text-sm font-semibold tracking-wide transition-all duration-200 hover:bg-[#00CC52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF66] focus-visible:ring-offset-2 focus-visible:ring-offset-[#000] overflow-hidden mt-2"
             >
               <span className="relative z-10">Sign in</span>
               <ArrowRight className="relative z-10 w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -331,7 +331,7 @@ function LoginPage() {
             No account?{" "}
             <Link
               to="/signup"
-              className="text-[#22c55e] hover:text-[#16a34a] font-medium transition-colors"
+              className="text-[#00FF66] hover:text-[#00CC52] font-medium transition-colors"
             >
               Create one free →
             </Link>

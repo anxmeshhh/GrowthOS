@@ -177,22 +177,22 @@ function RoadmapPageInner({
                   transition-colors duration-150
                   ${
                     isActive
-                      ? "border-[#22c55e]/35 bg-[#0a1a10]"
+                      ? "border-[#00FF66]/35 bg-[#0a1a10]"
                       : "border-[#1c1c1c] bg-transparent hover:border-[#2a2a2a] hover:bg-[#0d0d0d]"
                   }
                 `}
               >
                 <Bookmark
                   size={11}
-                  className={isActive ? "fill-[#22c55e] text-[#22c55e]" : "text-[#fff]"}
+                  className={isActive ? "fill-[#00FF66] text-[#00FF66]" : "text-[#fff]"}
                 />
                 <span
-                  className={`whitespace-nowrap text-lg font-medium ${isActive ? "text-[#22c55e]" : "text-[#fff]"}`}
+                  className={`whitespace-nowrap text-lg font-medium ${isActive ? "text-[#00FF66]" : "text-[#fff]"}`}
                 >
                   {p.title}
                 </span>
                 <span
-                  className={`whitespace-nowrap text-sm font-mono ${isActive ? "text-[#22c55e]/60" : "text-[#eee]"}`}
+                  className={`whitespace-nowrap text-sm font-mono ${isActive ? "text-[#00FF66]/60" : "text-[#eee]"}`}
                 >
                   {pPct}%
                 </span>
@@ -215,7 +215,7 @@ function RoadmapPageInner({
                   cy="48"
                   r="42"
                   fill="none"
-                  stroke="#22c55e"
+                  stroke="#00FF66"
                   strokeWidth="6"
                   strokeLinecap="round"
                   strokeDasharray={ringCircumference}
@@ -241,7 +241,7 @@ function RoadmapPageInner({
               </div>
               <div className="mt-2 flex items-center gap-3 text-sm text-[#eee]">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> {completedCount} done
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#00FF66]" /> {completedCount} done
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#d4a72c]" /> {inProgressCount}{" "}
@@ -299,7 +299,7 @@ function RoadmapPageInner({
         </div>
         <div className="flex items-center gap-4 text-sm text-[#eee]">
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" /> Done
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00FF66]" /> Done
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-[#d4a72c]" /> Active

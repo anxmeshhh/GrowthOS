@@ -102,7 +102,7 @@ function RoadmapResultCard({ result }: { result: RoadmapResult }) {
           className="text-xs font-mono px-2 py-0.5 rounded"
           style={
             isNew
-              ? { background: "#0a1e12", color: "#22c55e", border: "1px solid #1a3a22" }
+              ? { background: "#0a1e12", color: "#00FF66", border: "1px solid #1a3a22" }
               : { background: "#0a0f1e", color: "#60a5fa", border: "1px solid #1e3a5f" }
           }
         >
@@ -112,7 +112,7 @@ function RoadmapResultCard({ result }: { result: RoadmapResult }) {
 
       {/* Topic stats */}
       <div className="px-4 py-2.5 flex flex-wrap items-center gap-2">
-        <StatPill icon={Plus} value={result.topics.created} label="created" color="#22c55e" />
+        <StatPill icon={Plus} value={result.topics.created} label="created" color="#00FF66" />
         <StatPill icon={RefreshCw} value={result.topics.updated} label="updated" color="#60a5fa" />
         <StatPill icon={Minus} value={result.topics.deleted} label="deleted" color="#ef4444" />
 
@@ -452,7 +452,7 @@ function AdminRoadmapManager() {
                     ],
                     [
                       "topic",
-                      "#22c55e",
+                      "#00FF66",
                       "Standard topic (default). Grouped under the previous milestone.",
                     ],
                     [

@@ -280,7 +280,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
         <MiniMap
           nodeColor={(n) => {
             const bg = (n.data as RoadmapNodeData)?.bgColor ?? "";
-            if (bg === "#4147d3") return "#22c55e";
+            if (bg === "#4147d3") return "#00FF66";
             if (bg === "#e0e0e0") return "#374151";
             if (bg === "#ffffff") return "#1f1f1f";
             return "#2a2a2a";
@@ -297,7 +297,7 @@ export function InteractiveRoadmap({ topics = [], graphData }: InteractiveRoadma
           Legend
         </div>
         <LegendRow color="border-[#ffe92b]" label="Topic" />
-        <LegendRow color="border-[#22c55e]" label="Milestone" isGreen />
+        <LegendRow color="border-[#00FF66]" label="Milestone" isGreen />
         <LegendRow color="border-[#fff] border-dashed" label="Optional" />
         <LegendRow completed label="Completed" />
       </div>
@@ -319,8 +319,8 @@ function LegendRow({
   return (
     <div className="flex items-center gap-2">
       {completed ? (
-        <span className="w-3 h-3 rounded-full bg-[#22c55e]/20 border border-[#22c55e] flex items-center justify-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+        <span className="w-3 h-3 rounded-full bg-[#00FF66]/20 border border-[#00FF66] flex items-center justify-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66]" />
         </span>
       ) : (
         <span

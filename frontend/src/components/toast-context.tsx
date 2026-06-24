@@ -39,16 +39,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             className={`pointer-events-auto flex items-center gap-3 rounded-lg border px-4 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 ${
               toast.type === "xp"
-                ? "bg-[#0d1a0d]/90 border-[#22c55e]/30 text-[#f0f0f0]"
+                ? "bg-[#0d1a0d]/90 border-[#00FF66]/30 text-[#f0f0f0]"
                 : toast.type === "success"
-                  ? "bg-[#0d1a0d]/90 border-[#22c55e]/30 text-[#f0f0f0]"
+                  ? "bg-[#0d1a0d]/90 border-[#00FF66]/30 text-[#f0f0f0]"
                   : toast.type === "error"
                     ? "bg-[#1a0a0a]/90 border-[#ef4444]/30 text-[#f0f0f0]"
                     : "bg-[#111]/90 border-[#666] text-[#f0f0f0]"
             }`}
           >
             {toast.type === "xp" ? (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22c55e]/20 text-[#22c55e] animate-pulse">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00FF66]/20 text-[#00FF66] animate-pulse">
                 <Sparkles size={16} />
               </div>
             ) : null}

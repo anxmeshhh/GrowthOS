@@ -95,7 +95,7 @@ function GithubCallbackPage() {
     <div className="min-h-screen bg-[#000] flex items-center justify-center">
       <div className="text-center space-y-6">
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-24 h-24 rounded-full bg-[#22c55e] opacity-20 blur-2xl animate-pulse" />
+          <div className="absolute w-24 h-24 rounded-full bg-[#00FF66] opacity-20 blur-2xl animate-pulse" />
           <Logo size={48} className="relative z-10 animate-bounce" />
         </div>
 

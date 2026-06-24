@@ -100,7 +100,7 @@ function IconBtn({
         const el = e.currentTarget as HTMLElement;
         el.style.background = danger ? "#1a0707" : "#0f1a0f";
         el.style.borderColor = danger ? "#7f1d1d" : "#2a4a2a";
-        el.style.color = danger ? "#ef4444" : "#22c55e";
+        el.style.color = danger ? "#ef4444" : "#00FF66";
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
@@ -348,7 +348,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
           className="w-10 h-10 rounded-full flex items-center justify-center"
           style={{ background: "#0f1a0f", border: "1px solid #1e3a1e" }}
         >
-          <Plus size={18} style={{ color: "#22c55e" }} />
+          <Plus size={18} style={{ color: "#00FF66" }} />
         </div>
         <div className="text-center">
           <p className="text-lg font-mono" style={{ color: "#3a5a3a" }}>
@@ -429,7 +429,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
             </DialogTitle>
             <DialogDescription className="text-lg" style={{ color: "#3a5a3a" }}>
               Creates your own copy of{" "}
-              <span style={{ color: "#22c55e" }}>"{selectedPathForClone?.title}"</span> — topics and
+              <span style={{ color: "#00FF66" }}>"{selectedPathForClone?.title}"</span> — topics and
               structure included.
             </DialogDescription>
           </DialogHeader>
@@ -467,7 +467,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
                   color: "#c4c4c4",
                 }}
                 onFocus={(e) => {
-                  (e.target as HTMLElement).style.borderColor = "#22c55e";
+                  (e.target as HTMLElement).style.borderColor = "#00FF66";
                 }}
                 onBlur={(e) => {
                   (e.target as HTMLElement).style.borderColor = "#1e2e1e";
@@ -521,7 +521,7 @@ export function CustomPathList({ onPathCloned }: CustomPathListProps) {
                 onClick={handleClonePath}
                 disabled={cloning || !cloneTitle.trim()}
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-lg font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: "#0f1a0f", border: "1px solid #22c55e", color: "#22c55e" }}
+                style={{ background: "#0f1a0f", border: "1px solid #00FF66", color: "#00FF66" }}
                 onMouseEnter={(e) => {
                   if (!cloning && cloneTitle.trim())
                     (e.currentTarget as HTMLElement).style.background = "#162a16";
