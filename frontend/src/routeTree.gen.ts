@@ -18,11 +18,13 @@ import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as JobRoadmapRouteImport } from './routes/job-roadmap'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomPathsRouteImport } from './routes/custom-paths'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
+import { Route as AirDrawRouteImport } from './routes/air-draw'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
 import { Route as PortfolioUsernameRouteImport } from './routes/portfolio.$username'
@@ -77,6 +79,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JobRoadmapRoute = JobRoadmapRouteImport.update({
+  id: '/job-roadmap',
+  path: '/job-roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -100,6 +107,11 @@ const CustomPathsRoute = CustomPathsRouteImport.update({
 const AssessmentsRoute = AssessmentsRouteImport.update({
   id: '/assessments',
   path: '/assessments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AirDrawRoute = AirDrawRouteImport.update({
+  id: '/air-draw',
+  path: '/air-draw',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -145,11 +157,13 @@ const AuthGithubCallbackRoute = AuthGithubCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
+  '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
@@ -169,11 +183,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
+  '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
@@ -194,11 +210,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
+  '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
@@ -220,11 +238,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/air-draw'
     | '/assessments'
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/explore'
+    | '/job-roadmap'
     | '/login'
     | '/notes'
     | '/profile'
@@ -244,11 +264,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/air-draw'
     | '/assessments'
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/explore'
+    | '/job-roadmap'
     | '/login'
     | '/notes'
     | '/profile'
@@ -268,11 +290,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/air-draw'
     | '/assessments'
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/explore'
+    | '/job-roadmap'
     | '/login'
     | '/notes'
     | '/profile'
@@ -293,11 +317,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AirDrawRoute: typeof AirDrawRoute
   AssessmentsRoute: typeof AssessmentsRoute
   CustomPathsRoute: typeof CustomPathsRoute
   DashboardRoute: typeof DashboardRoute
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRoute
+  JobRoadmapRoute: typeof JobRoadmapRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProfileRoute: typeof ProfileRoute
@@ -381,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/job-roadmap': {
+      id: '/job-roadmap'
+      path: '/job-roadmap'
+      fullPath: '/job-roadmap'
+      preLoaderRoute: typeof JobRoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -414,6 +447,13 @@ declare module '@tanstack/react-router' {
       path: '/assessments'
       fullPath: '/assessments'
       preLoaderRoute: typeof AssessmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/air-draw': {
+      id: '/air-draw'
+      path: '/air-draw'
+      fullPath: '/air-draw'
+      preLoaderRoute: typeof AirDrawRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -477,11 +517,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AirDrawRoute: AirDrawRoute,
   AssessmentsRoute: AssessmentsRoute,
   CustomPathsRoute: CustomPathsRoute,
   DashboardRoute: DashboardRoute,
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRoute,
+  JobRoadmapRoute: JobRoadmapRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProfileRoute: ProfileRoute,

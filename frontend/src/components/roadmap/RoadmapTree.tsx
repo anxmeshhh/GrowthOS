@@ -5,6 +5,7 @@ import { CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 
 type RoadmapTreeProps = {
   topics: any[];
+  disableLinks?: boolean;
 };
 
 type TreeNode = {
@@ -69,11 +70,13 @@ const TreeBranch = memo(function TreeBranch({
   depth,
   isFirst,
   isLast,
+  disableLinks,
 }: {
   node: TreeNode;
   depth: number;
   isFirst?: boolean;
   isLast?: boolean;
+  disableLinks?: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
@@ -88,28 +91,36 @@ const TreeBranch = memo(function TreeBranch({
   // Top-level milestone
   if (node.kind === "milestone" && depth === 0) {
     const isCompleted = node.data.status === "completed";
+    const MilestoneContent = (
+      <span
+        className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1.5"
+        style={{
+          fontSize: "10px",
+          color: isCompleted ? "#4ade80" : "#60a5fa",
+          background: isCompleted ? "#061a0f" : "#0a0f1e",
+          border: `1px solid ${isCompleted ? "#22c55e" : "#3b5bdb"}`,
+        }}
+      >
+        {isCompleted && <CheckCircle2 size={11} strokeWidth={3} />}
+        {node.data.label}
+      </span>
+    );
+
     return (
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-px flex-1" style={{ background: "#1a2a40" }} />
-          <Link
-            to="/topic/$topicId"
-            params={{ topicId: node.data.topicId }}
-            className="no-underline"
-          >
-            <span
-              className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1.5"
-              style={{
-                fontSize: "10px",
-                color: isCompleted ? "#4ade80" : "#60a5fa",
-                background: isCompleted ? "#061a0f" : "#0a0f1e",
-                border: `1px solid ${isCompleted ? "#22c55e" : "#3b5bdb"}`,
-              }}
+          {disableLinks ? (
+            <div className="no-underline">{MilestoneContent}</div>
+          ) : (
+            <Link
+              to="/topic/$topicId"
+              params={{ topicId: node.data.topicId }}
+              className="no-underline"
             >
-              {isCompleted && <CheckCircle2 size={11} strokeWidth={3} />}
-              {node.data.label}
-            </span>
-          </Link>
+              {MilestoneContent}
+            </Link>
+          )}
           <div className="h-px flex-1" style={{ background: "#1a2a40" }} />
         </div>
         {hasChildren && (
@@ -121,6 +132,7 @@ const TreeBranch = memo(function TreeBranch({
                 depth={1}
                 isFirst={idx === 0}
                 isLast={idx === node.children.length - 1}
+                disableLinks={disableLinks}
               />
             ))}
           </div>
@@ -157,6 +169,10 @@ const TreeBranch = memo(function TreeBranch({
       <div style={{ paddingLeft: indent }}>
         {node.kind === "milestone" && depth > 0 ? (
           <SectionHeader node={node} isOpen={open} onToggle={handleToggle} />
+        ) : disableLinks ? (
+          <div className="block no-underline">
+            <RoadmapNode data={{ ...node.data, isTreeMode: true }} />
+          </div>
         ) : (
           <Link
             to="/topic/$topicId"
@@ -177,6 +193,7 @@ const TreeBranch = memo(function TreeBranch({
               depth={depth + 1}
               isFirst={idx === 0}
               isLast={idx === node.children.length - 1}
+              disableLinks={disableLinks}
             />
           ))}
         </div>
@@ -203,7 +220,7 @@ function LegendItem({ kind, label }: { kind: NodeKind; label: string }) {
   );
 }
 
-export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
+export function RoadmapTree({ topics = [], disableLinks }: RoadmapTreeProps) {
   const forest = useMemo(() => {
     const sorted = [...topics].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -288,6 +305,7 @@ export function RoadmapTree({ topics = [] }: RoadmapTreeProps) {
             depth={0}
             isFirst={idx === 0}
             isLast={idx === forest.length - 1}
+            disableLinks={disableLinks}
           />
         ))}
       </div>

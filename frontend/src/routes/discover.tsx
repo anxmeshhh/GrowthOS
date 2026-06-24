@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookMarked, Plus, Search, Compass, Loader2, Pencil } from "lucide-react";
+import { BookMarked, Plus, Search, Compass, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { useState } from "react";
+import { Btn } from "@/components/growth-ui";
 
 export const Route = createFileRoute("/discover")({
   head: () => ({ meta: [{ title: "Discover Paths — GrowthOS" }] }),
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/discover")({
 function DiscoverPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const { data: paths = [], isLoading } = useQuery({
     queryKey: ["paths"],
@@ -47,6 +49,18 @@ function DiscoverPage() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["paths"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (slug: string) => {
+      const res = await apiFetch(`/paths/${slug}/`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete path");
+      return slug;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["paths"] });
+      setDeleteConfirm(null);
     },
   });
 
@@ -115,6 +129,7 @@ function DiscoverPage() {
                   path={path}
                   onBookmark={() => bookmarkMutation.mutate(path.slug)}
                   bookmarkPending={bookmarkMutation.isPending}
+                  onDelete={() => setDeleteConfirm(path.slug)}
                 />
               ))}
             </div>
@@ -127,6 +142,37 @@ function DiscoverPage() {
           </>
         )}
       </div>
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-[#111] border border-[#222] p-6 rounded-xl max-w-sm w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-[#f0f0f0] mb-2 flex items-center gap-2">
+              <Trash2 className="text-[#ef4444]" size={20} />
+              Delete Path?
+            </h3>
+            <p className="text-[#eee] text-sm mb-6 leading-relaxed">
+              Are you sure you want to delete this path? This action cannot be undone and you will
+              lose all tracking progress.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Btn variant="outline" onClick={() => setDeleteConfirm(null)}>
+                Cancel
+              </Btn>
+              <Btn
+                tone="red"
+                onClick={() => deleteMutation.mutate(deleteConfirm)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  "Delete Path"
+                )}
+              </Btn>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -135,10 +181,12 @@ function PathCard({
   path,
   onBookmark,
   bookmarkPending,
+  onDelete,
 }: {
   path: any;
   onBookmark: () => void;
   bookmarkPending: boolean;
+  onDelete: () => void;
 }) {
   const isCustom = path.is_custom;
   const topicCount = path.topics?.length || 0;
@@ -182,18 +230,27 @@ function PathCard({
           </div>
         </div>
 
-        <button
-          onClick={onBookmark}
-          disabled={bookmarkPending}
-          title={path.is_bookmarked ? "Remove bookmark" : "Bookmark path"}
-          className={`w-8 h-8 rounded-[8px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
-            path.is_bookmarked
-              ? "bg-[#22c55e] border-[#22c55e]"
-              : "bg-transparent border-[#1e1e1e] hover:border-[#2e2e2e] hover:bg-[#161616]"
-          }`}
-        >
-          <BookMarked size={13} className={path.is_bookmarked ? "text-black" : "text-[#eee]"} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onDelete}
+            title="Delete path"
+            className="w-8 h-8 rounded-[8px] border border-[#1e1e1e] bg-transparent flex items-center justify-center flex-shrink-0 transition-all duration-150 hover:border-[#ef4444]/50 hover:bg-[#ef4444]/10 hover:text-[#ef4444] text-[#888]"
+          >
+            <Trash2 size={13} />
+          </button>
+          <button
+            onClick={onBookmark}
+            disabled={bookmarkPending}
+            title={path.is_bookmarked ? "Remove bookmark" : "Bookmark path"}
+            className={`w-8 h-8 rounded-[8px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
+              path.is_bookmarked
+                ? "bg-[#22c55e] border-[#22c55e]"
+                : "bg-transparent border-[#1e1e1e] hover:border-[#2e2e2e] hover:bg-[#161616]"
+            }`}
+          >
+            <BookMarked size={13} className={path.is_bookmarked ? "text-black" : "text-[#eee]"} />
+          </button>
+        </div>
       </div>
 
       {/* Description */}

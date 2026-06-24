@@ -14,6 +14,8 @@ import {
   User,
   ChevronRight,
   Activity,
+  Briefcase,
+  PenTool,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +38,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/discover", label: "Discover", icon: Compass },
       { to: "/roadmap", label: "Roadmap", icon: Map },
+      { to: "/job-roadmap", label: "Job Roadmap", icon: Briefcase },
       { to: "/custom-paths", label: "My Paths", icon: BookOpen },
       { to: "/notes", label: "Notes", icon: BookOpen },
       { to: "/review", label: "Review", icon: Activity },
@@ -44,7 +47,10 @@ const NAV_GROUPS = [
   },
   {
     label: "Build",
-    items: [{ to: "/projects", label: "Projects", icon: Github }],
+    items: [
+      { to: "/projects", label: "Projects", icon: Github },
+      { to: "/air-draw", label: "Air Draw", icon: PenTool },
+    ],
   },
   {
     label: "System",

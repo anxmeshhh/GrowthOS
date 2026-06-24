@@ -10,7 +10,7 @@ from .views import (
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
     AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView,
-    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView
+    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, JobDescriptionRoadmapView
 )
 
 # Strict throttle for login endpoint — max 5 attempts per minute per IP
@@ -38,6 +38,7 @@ urlpatterns = [
     
     # Path Endpoints
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),
+    path('job-roadmap/generate/', JobDescriptionRoadmapView.as_view(), name='generate_job_roadmap'),
     
     # Dashboard Endpoints
     path('pomodoro/', PomodoroView.as_view(), name='pomodoro'),
