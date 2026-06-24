@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-import random
+import secrets
 import string
 
 class AdminRequest(models.Model):
@@ -37,7 +37,8 @@ class OTPVerification(models.Model):
     is_verified = models.BooleanField(default=False)
 
     def generate_otp(self):
-        self.otp = ''.join(random.choices(string.digits, k=6))
+        # M8: Use secrets module for cryptographically secure OTP generation
+        self.otp = ''.join(secrets.choice(string.digits) for _ in range(6))
         self.created_at = timezone.now()
         self.is_verified = False
         self.save()
@@ -145,6 +146,15 @@ class TopicMaterial(models.Model):
     ai_feedback = models.TextField(blank=True, null=True)
     ai_score = models.IntegerField(default=0)
 
+    class Meta:
+        # M1: Enforce score is always in [0, 100] at the DB level
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(ai_score__gte=0) & models.Q(ai_score__lte=100),
+                name='topicmaterial_ai_score_range',
+            ),
+        ]
+
     def __str__(self):
         return f"{self.user.username} - {self.topic.title} ({self.ai_status})"
 
@@ -161,6 +171,14 @@ class TopicProgress(models.Model):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        # M2: Prevent duplicate progress rows under concurrent requests
+        unique_together = ('user', 'topic')
+        # M1: Indexed for hot query pattern: filter by user+status
+        indexes = [
+            models.Index(fields=['user', 'status'], name='topicprogress_user_status_idx'),
+        ]
+
     def __str__(self):
         return f"{self.user.username} - {self.topic.title} ({self.status})"
 
@@ -172,6 +190,14 @@ class Contribution(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        # M1: Hot query pattern — daily dedup check: filter(user, action_type, created_at__date)
+        indexes = [
+            models.Index(fields=['user', 'action_type', 'created_at'], name='contrib_user_action_date'),
+        ]
+        # M1: Score sanity gate — points should not be negative
+        constraints = [
+            models.CheckConstraint(check=models.Q(points__gte=0), name='contribution_points_non_negative'),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at} - {self.action_type}"
@@ -264,6 +290,13 @@ class VerifiedProject(models.Model):
     class Meta:
         unique_together = ('user', 'topic')
         ordering = ['-verified_at']
+        # M1: Enforce score is always in [0, 100] at the DB level
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(ai_score__gte=0) & models.Q(ai_score__lte=100),
+                name='verifiedproject_ai_score_range',
+            ),
+        ]
 
     def __str__(self):
         return f"Project by {self.user.username} for {self.topic.title}"

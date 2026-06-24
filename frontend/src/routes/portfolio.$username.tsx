@@ -7,7 +7,8 @@ export const Route = createFileRoute("/portfolio/$username")({
   component: PortfolioPage,
 });
 
-const API_BASE = "http://127.0.0.1:8000/api";
+// F3: Use the env-driven base URL so this works in production
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 function PortfolioPage() {
   const { username } = Route.useParams();

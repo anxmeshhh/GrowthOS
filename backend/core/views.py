@@ -88,20 +88,40 @@ class GoogleLoginView(views.APIView):
         if not access_token:
             return Response({'error': 'Missing access token'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Verify token with Google
+        client_id = os.environ.get('GOOGLE_CLIENT_ID', '')
+
+        # H1: Verify the token with Google's tokeninfo endpoint so we can
+        # check `aud` (audience) and `email_verified` — a token minted for
+        # any other app would have the wrong `aud` and be rejected here.
         try:
-            google_response = requests.get(
-                'https://www.googleapis.com/oauth2/v3/userinfo',
-                headers={'Authorization': f'Bearer {access_token}'}
+            token_info_response = requests.get(
+                'https://oauth2.googleapis.com/tokeninfo',
+                params={'access_token': access_token},
+                timeout=10,
             )
-            if not google_response.ok:
+            if not token_info_response.ok:
                 return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
-                
-            user_info = google_response.json()
-            email = user_info.get('email')
+
+            token_info = token_info_response.json()
+
+            if client_id and token_info.get('aud') != client_id:
+                return Response({'error': 'Token was not issued for this application'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if str(token_info.get('email_verified', 'false')).lower() != 'true':
+                return Response({'error': 'Google email is not verified'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch full profile (name fields) from userinfo
+            user_info_response = requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'},
+                timeout=10,
+            )
+            user_info = user_info_response.json() if user_info_response.ok else {}
+
+            email = token_info.get('email') or user_info.get('email')
             first_name = user_info.get('given_name', '')
             last_name = user_info.get('family_name', '')
-            
+
             if not email:
                 return Response({'error': 'Google account must have an email'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -133,8 +153,10 @@ class GoogleLoginView(views.APIView):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Google login error")
+            return Response({'error': 'Google authentication failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GitHubLoginView(views.APIView):
     permission_classes = (AllowAny,)
@@ -158,7 +180,8 @@ class GitHubLoginView(views.APIView):
                     'client_secret': client_secret,
                     'code': code,
                     'redirect_uri': redirect_uri
-                }
+                },
+                timeout=10,
             )
             token_data = token_response.json()
             access_token = token_data.get('access_token')
@@ -169,7 +192,8 @@ class GitHubLoginView(views.APIView):
             # Fetch user info
             user_response = requests.get(
                 'https://api.github.com/user',
-                headers={'Authorization': f'token {access_token}'}
+                headers={'Authorization': f'token {access_token}'},
+                timeout=10,
             )
             user_info = user_response.json()
             github_login = user_info.get('login')
@@ -177,13 +201,18 @@ class GitHubLoginView(views.APIView):
             # Fetch emails
             emails_response = requests.get(
                 'https://api.github.com/user/emails',
-                headers={'Authorization': f'token {access_token}'}
+                headers={'Authorization': f'token {access_token}'},
+                timeout=10,
             )
             emails_data = emails_response.json()
-            primary_email = next((e['email'] for e in emails_data if e.get('primary')), None)
+            # H2: require the primary email to also be verified before linking
+            primary_email = next(
+                (e['email'] for e in emails_data if e.get('primary') and e.get('verified')),
+                None,
+            )
 
             if not primary_email:
-                return Response({'error': 'GitHub account must have a primary email'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'GitHub account must have a verified primary email'}, status=status.HTTP_400_BAD_REQUEST)
 
             intent = request.data.get('intent', 'login')
             try:
@@ -221,8 +250,10 @@ class GitHubLoginView(views.APIView):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("GitHub login error")
+            return Response({'error': 'GitHub authentication failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GitHubConnectView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -245,7 +276,8 @@ class GitHubConnectView(views.APIView):
                     'client_secret': client_secret,
                     'code': code,
                     'redirect_uri': redirect_uri
-                }
+                },
+                timeout=10,
             )
             token_data = token_response.json()
             access_token = token_data.get('access_token')
@@ -256,7 +288,8 @@ class GitHubConnectView(views.APIView):
             # Fetch user info
             user_response = requests.get(
                 'https://api.github.com/user',
-                headers={'Authorization': f'token {access_token}'}
+                headers={'Authorization': f'token {access_token}'},
+                timeout=10,
             )
             user_info = user_response.json()
             github_login = user_info.get('login')
@@ -270,8 +303,10 @@ class GitHubConnectView(views.APIView):
 
             return Response({'message': 'GitHub connected successfully'}, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("GitHub connect error")
+            return Response({'error': 'GitHub connection failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class RegisterView(generics.CreateAPIView):
     queryset = UserSerializer.Meta.model.objects.all()
@@ -296,6 +331,8 @@ class RegisterView(generics.CreateAPIView):
 
 class LearningPathViewSet(viewsets.ModelViewSet):
     serializer_class = LearningPathSerializer
+    # C4: require authentication for all CRUD operations
+    permission_classes = [IsAuthenticated]
     lookup_field = 'slug'
 
     def get_queryset(self):
@@ -315,6 +352,24 @@ class LearningPathViewSet(viewsets.ModelViewSet):
             return base_qs.distinct()
             
         return base_qs.prefetch_related('topics').filter(is_active=True, is_custom=False).distinct()
+
+    def update(self, request, *args, **kwargs):
+        path = self.get_object()
+        if not path.is_custom:
+            if not request.user.is_staff:
+                return Response({'error': 'Only admins can modify official paths.'}, status=status.HTTP_403_FORBIDDEN)
+        elif path.created_by != request.user:
+            return Response({'error': 'You can only modify your own paths.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        path = self.get_object()
+        if not path.is_custom:
+            if not request.user.is_staff:
+                return Response({'error': 'Only admins can delete official paths.'}, status=status.HTTP_403_FORBIDDEN)
+        elif path.created_by != request.user:
+            return Response({'error': 'You can only delete your own paths.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def bookmark(self, request, slug=None):
@@ -345,7 +400,7 @@ class TopicDetailView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        topic = _resolve_topic(pk)
+        topic = _resolve_topic(pk, user=request.user)
         
         progress, created = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
         if progress.status in ['locked', 'available']:
@@ -375,22 +430,42 @@ class TopicDetailView(views.APIView):
             }
         })
 
-def _resolve_topic(pk):
-    """Resolve a topic by numeric ID or slug."""
+def _resolve_topic(pk, user=None):
+    """Resolve a topic by numeric ID or slug, enforcing path-level visibility.
+
+    H3: Without the user gate, any authenticated caller could pass an arbitrary
+    topic ID to quiz/progress endpoints — leaking content from other users'
+    private paths and enabling XP farming against topics they don't own.
+    """
+    from django.http import Http404
+    from django.db.models import Q
+
     try:
-        return Topic.objects.get(pk=int(pk))
+        topic = Topic.objects.select_related('path').get(pk=int(pk))
     except (ValueError, Topic.DoesNotExist):
-        topic = Topic.objects.filter(slug=pk).first()
+        topic = Topic.objects.select_related('path').filter(slug=pk).first()
         if topic is None:
-            from django.http import Http404
-            raise Http404(f"No topic found with slug '{pk}'")
-        return topic
+            raise Http404(f"No topic found with id/slug '{pk}'")
+
+    if user is not None:
+        path = topic.path
+        # Allow access when:
+        # 1. Official (non-custom) active path — visible to everyone
+        # 2. Custom path owned by this user
+        # 3. Custom path explicitly shared with this user
+        is_official = not path.is_custom and path.is_active
+        is_owner = path.is_custom and path.created_by_id == user.id
+        is_shared = PathSharing.objects.filter(path=path, shared_to=user).exists()
+        if not (is_official or is_owner or is_shared):
+            raise Http404(f"No topic found with id/slug '{pk}'")
+
+    return topic
 
 class TopicProgressUpdateView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        topic = _resolve_topic(pk)
+        topic = _resolve_topic(pk, user=request.user)
         progress, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
         new_status = request.data.get('status')
         if new_status in dict(TopicProgress.STATUS_CHOICES):
@@ -405,7 +480,7 @@ class TopicMaterialUploadView(views.APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, pk):
-        topic = _resolve_topic(pk)
+        topic = _resolve_topic(pk, user=request.user)
         file_obj = request.data.get('file')
         if not file_obj:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -514,8 +589,10 @@ class VerifyMaterialView(views.APIView):
             import json
             result = json.loads(response_content)
             
-            score = result.get('score', 0)
-            feedback = result.get('feedback', '')
+            # H3: Clamp AI-returned score to [0, 100] to prevent injection tricks
+            # where a crafted document causes the model to return score > 100.
+            score = max(0, min(int(result.get('score', 0)), 100))
+            feedback = str(result.get('feedback', ''))[:2000]
             passed = score >= 65
             
             material.ai_status = 'verified' if passed else 'rejected'
@@ -608,22 +685,27 @@ class PomodoroView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        duration = int(request.data.get('duration_minutes', 25))
-        
+        # H3: Cap duration to prevent unbounded XP minting via client-supplied value.
+        # Standard Pomodoro is 25 min; allow up to 120 min for long focus sessions.
+        try:
+            duration = max(1, min(int(request.data.get('duration_minutes', 25)), 120))
+        except (TypeError, ValueError):
+            duration = 25
+
         # Log the session
         from .models import PomodoroSession
         session = PomodoroSession.objects.create(
             user=request.user,
             duration_minutes=duration
         )
-        
+
         # Add to contribution engine (1 min = 1 XP)
         Contribution.objects.create(
             user=request.user,
             action_type='pomodoro_completed',
             points=duration
         )
-        
+
         return Response({
             "message": f"Pomodoro completed! Earned {duration} XP.",
             "session_id": session.id
@@ -751,13 +833,13 @@ class TopicNoteView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         note, _ = TopicNote.objects.get_or_create(user=request.user, topic=topic)
         serializer = TopicNoteSerializer(note)
         return Response(serializer.data)
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         note, created = TopicNote.objects.get_or_create(user=request.user, topic=topic)
         note.content = request.data.get('content', '')
         note.save()
@@ -779,7 +861,7 @@ class TopicQuizView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         difficulty = request.query_params.get('difficulty', 'medium')
         count = int(request.query_params.get('count', '5'))
         quiz = TopicQuiz.objects.filter(user=request.user, topic=topic, difficulty=difficulty).first()
@@ -819,7 +901,7 @@ class TopicFlashcardView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         from .models import Flashcard
         from django.utils import timezone
         
@@ -837,7 +919,7 @@ class TopicFlashcardView(views.APIView):
         })
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         from .models import Flashcard
         
         action = request.data.get('action')
@@ -883,7 +965,7 @@ class GenerateFlashcardsView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         
         try:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
@@ -943,7 +1025,7 @@ class ProjectIdeasView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         try:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
             prompt = f"Generate exactly 3 project ideas for a student learning '{topic.title}'. Return ONLY a JSON array where each object has: 'title' (short project name), 'description' (2-3 sentence description of what to build and what skills it demonstrates)."
@@ -969,7 +1051,7 @@ class ScanRepoView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         repo_url = request.data.get('repo_url', '')
         if not repo_url:
             return Response({'error': 'No repo_url provided'}, status=400)
@@ -1062,13 +1144,13 @@ class NoteDocumentView(views.APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         docs = NoteDocument.objects.filter(user=request.user, topic=topic)
         serializer = NoteDocumentSerializer(docs, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         file_obj = request.data.get('file')
         if not file_obj:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1112,13 +1194,13 @@ class TopicScreenshotView(views.APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         screenshots = TopicScreenshot.objects.filter(user=request.user, topic=topic)
         serializer = TopicScreenshotSerializer(screenshots, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         image = request.data.get('image')
         if not image:
             return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1186,10 +1268,41 @@ class SubmitQuizView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
-        score = request.data.get('score', 0)
-        total = request.data.get('total', 1)
-        percentage = score / total if total > 0 else 0
+        topic = _resolve_topic(topic_id, user=request.user)
+
+        # H3: Server-side grading — never trust the client's score/total.
+        # The client sends the answers it selected; we look up the stored quiz
+        # questions and compare against the server-held correct answers.
+        difficulty = request.data.get('difficulty', 'medium')
+        client_answers = request.data.get('answers')  # list of selected answer strings
+
+        if client_answers is not None:
+            # Preferred path: grade server-side
+            quiz = TopicQuiz.objects.filter(
+                user=request.user, topic=topic, difficulty=difficulty
+            ).first()
+            if not quiz or not quiz.questions:
+                return Response({'error': 'No quiz found for this topic. Generate one first.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            questions = quiz.questions
+            if not isinstance(client_answers, list) or len(client_answers) != len(questions):
+                return Response({'error': 'Answers length does not match quiz length.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            correct = sum(
+                1 for q, a in zip(questions, client_answers)
+                if str(a).strip() == str(q.get('answer', '')).strip()
+            )
+            total = len(questions)
+            percentage = correct / total if total > 0 else 0
+        else:
+            # Legacy path: client sends score/total — clamp to valid range as
+            # minimal protection until the frontend is updated to send answers.
+            try:
+                score = max(0, min(int(request.data.get('score', 0)), 100))
+                total = max(1, min(int(request.data.get('total', 1)), 100))
+            except (TypeError, ValueError):
+                score, total = 0, 1
+            percentage = score / total
 
         if percentage >= 0.8:
             today = timezone.now().date()
@@ -1658,7 +1771,7 @@ class CommitWorkspaceToGitHubView(views.APIView):
         if not topic_slug:
             return Response({'error': 'Topic slug is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        topic = _resolve_topic(topic_slug)
+        topic = _resolve_topic(topic_slug, user=request.user)
         path = topic.path
 
         # Get Note
@@ -2125,10 +2238,14 @@ class AdminUserDetailView(views.APIView):
 
         if 'is_active' in request.data:
             user.is_active = request.data['is_active']
-        
+
+        # H5: Only a superuser may grant/revoke staff status to prevent
+        # any staff member from self-promoting or promoting others.
         if 'is_staff' in request.data:
+            if not request.user.is_superuser:
+                return Response({'error': 'Only a superuser can change staff status.'}, status=status.HTTP_403_FORBIDDEN)
             user.is_staff = request.data['is_staff']
-            
+
         user.save()
         return Response({
             'id': user.id,
@@ -2157,8 +2274,9 @@ class AdminDataExportView(views.APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        if request.user.email != 'guptaanimesh020@gmail.com' and request.user.username != 'theanimesh2005':
-            return Response({'detail': 'Super admin clearance required for data export.'}, status=status.HTTP_403_FORBIDDEN)
+        # H5: Gate on the proper Django superuser flag, not a hardcoded identity.
+        if not request.user.is_superuser:
+            return Response({'detail': 'Superuser clearance required for data export.'}, status=status.HTTP_403_FORBIDDEN)
             
         data = {
             'users': json.loads(serializers.serialize('json', User.objects.all())),
@@ -2193,8 +2311,9 @@ class AdminRequestDetailView(views.APIView):
     permission_classes = [IsAdminUser]
 
     def patch(self, request, pk):
-        if request.user.email != 'guptaanimesh020@gmail.com' and request.user.username != 'theanimesh2005':
-            return Response({'detail': 'Only the main admin can approve requests.'}, status=status.HTTP_403_FORBIDDEN)
+        # H5: Use proper Django superuser flag
+        if not request.user.is_superuser:
+            return Response({'detail': 'Only a superuser can approve admin requests.'}, status=status.HTTP_403_FORBIDDEN)
             
         try:
             req = AdminRequest.objects.get(pk=pk)
@@ -2810,7 +2929,7 @@ class TopicFeynmanView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         entries = TopicFeynman.objects.filter(user=request.user, topic=topic)
         data = []
         for e in entries:
@@ -2826,7 +2945,7 @@ class TopicFeynmanView(views.APIView):
         return Response({'feynman_entries': data})
 
     def post(self, request, topic_id):
-        topic = _resolve_topic(topic_id)
+        topic = _resolve_topic(topic_id, user=request.user)
         concept = request.data.get('concept', '').strip()
         explanation = request.data.get('explanation', '').strip()
         mode = request.data.get('mode', 'ai') # 'ai' or 'manual'

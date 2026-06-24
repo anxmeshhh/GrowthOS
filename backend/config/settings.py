@@ -5,16 +5,22 @@ Django settings for config project.
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-f*b9r^dw-1j4%mniwl&jka*^bfrx^t(cglx=43e2c!v*l4ph6("
+# C5: SECRET_KEY must come from env — no insecure hardcoded default
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured("SECRET_KEY environment variable must be set.")
 
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+# C5: Default to False in production; only True when explicitly set in dev
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
+# C5: Drop wildcard host — enumerate real hosts instead
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # Trust the X-Forwarded-Proto header from Nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -27,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",  # H4: enables JWT rotation blacklist
     "corsheaders",
     "core",
 ]
@@ -67,7 +74,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": os.environ.get("MYSQL_DATABASE", "growthos"),
         "USER": os.environ.get("MYSQL_USER", "root"),
-        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "theanimesh2005"),
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
         "HOST": os.environ.get("MYSQL_HOST", "localhost"),
         "PORT": os.environ.get("MYSQL_PORT", "3306"),
         "OPTIONS": {
@@ -138,6 +145,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # C3: Require authentication by default — views that allow anonymous access
+    # must explicitly set permission_classes = [AllowAny].
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     # Rate limiting — protects against brute force and scraping
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
@@ -151,11 +163,13 @@ REST_FRAMEWORK = {
 }
 
 from datetime import timedelta
+# H4: Short-lived access tokens + blacklist so stolen tokens expire quickly
+# and rotated refresh tokens can't be reused.
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 }
 

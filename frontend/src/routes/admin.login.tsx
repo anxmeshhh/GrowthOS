@@ -22,7 +22,9 @@ function AdminLogin() {
 
     try {
       // First authenticate normally
-      const res = await fetch("http://localhost:8000/api/auth/login/", {
+      // F3: Use the env-driven base URL instead of hardcoded localhost
+      const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+      const res = await fetch(`${apiBase}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
