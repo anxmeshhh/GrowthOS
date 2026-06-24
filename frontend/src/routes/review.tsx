@@ -53,7 +53,7 @@ function GlobalReviewPage() {
   const [flipped, setFlipped] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["global_review"],
     queryFn: async () => {
       const res = await apiFetch("/flashcards/review-queue/");
@@ -91,6 +91,7 @@ function GlobalReviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["global_review"] });
+      queryClient.invalidateQueries({ queryKey: ["today"] });
       queryClient.invalidateQueries({ queryKey: ["heatmap"] });
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
       queryClient.invalidateQueries({ queryKey: ["user_profile"] });
@@ -103,10 +104,10 @@ function GlobalReviewPage() {
   });
 
   useEffect(() => {
-    if (!isLoading && dueCards.length === 0) {
+    if (!isLoading && !isError && dueCards.length === 0) {
       setSessionCompleted(true);
     }
-  }, [dueCards, isLoading]);
+  }, [dueCards, isLoading, isError]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -132,6 +133,27 @@ function GlobalReviewPage() {
       <PageShell>
         <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
           <Zap className="h-8 w-8 animate-pulse text-[#00FF66]" />
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageShell>
+        <div className="flex h-[calc(100vh-6rem)] flex-col items-center justify-center p-6 text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#ef4444]/10 border border-[#ef4444]/20">
+            <Zap size={36} className="text-[#ef4444]" />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0] mb-2">
+            Couldn't load your review queue
+          </h2>
+          <p className="text-sm max-w-md mb-8 leading-relaxed" style={{ color: "#777" }}>
+            Something went wrong reaching the server. Check your connection and try again.
+          </p>
+          <Btn onClick={() => queryClient.invalidateQueries({ queryKey: ["global_review"] })}>
+            Retry
+          </Btn>
         </div>
       </PageShell>
     );

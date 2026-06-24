@@ -92,6 +92,121 @@ function stripGeneratedAttachmentMarkdown(value: string) {
 }
 
 /* ─────────────────────────────────────────────
+   Note resources (links / YouTube embeds)
+   Persisted inside the note content as a hidden HTML-comment fence so they
+   round-trip through the existing /notes/ endpoint with no schema change.
+───────────────────────────────────────────── */
+type NoteResource = { id: string; type: "youtube" | "link"; url: string; title: string };
+
+const RESOURCE_FENCE = /\n*<!--\s*growthos-resources:(\[[\s\S]*?\])\s*-->\s*$/;
+
+function parseYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function parseNoteResources(raw: string): { body: string; resources: NoteResource[] } {
+  const match = raw.match(RESOURCE_FENCE);
+  if (!match) return { body: raw, resources: [] };
+  let resources: NoteResource[] = [];
+  try {
+    const parsed = JSON.parse(match[1]);
+    if (Array.isArray(parsed)) resources = parsed;
+  } catch {
+    /* ignore malformed fence */
+  }
+  return { body: raw.replace(RESOURCE_FENCE, "").trimEnd(), resources };
+}
+
+function serializeNoteResources(body: string, resources: NoteResource[]): string {
+  const clean = body.replace(RESOURCE_FENCE, "").trimEnd();
+  if (!resources.length) return clean;
+  return `${clean}\n\n<!--growthos-resources:${JSON.stringify(resources)}-->`;
+}
+
+function NoteResourceCard({ r, onRemove }: { r: NoteResource; onRemove: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ytId = r.type === "youtube" ? parseYouTubeId(r.url) : null;
+  let domain = r.url;
+  try {
+    domain = new URL(r.url).hostname.replace(/^www\./, "");
+  } catch {
+    /* keep raw */
+  }
+  return (
+    <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden">
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <div
+          className="w-8 h-8 rounded-[6px] flex items-center justify-center shrink-0 border"
+          style={
+            ytId
+              ? { background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.25)" }
+              : { background: "rgba(0,255,102,0.08)", borderColor: "rgba(0,255,102,0.2)" }
+          }
+        >
+          {ytId ? (
+            <Play size={14} className="text-[#ef4444]" />
+          ) : (
+            <ExternalLink size={14} className="text-[#00FF66]" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] text-[#e8e8e8] font-medium truncate">{r.title}</div>
+          <div className="text-xs font-mono text-[#666] truncate">{domain}</div>
+        </div>
+        {ytId && (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="px-2 py-1 rounded-[5px] text-xs font-mono uppercase tracking-wider text-[#888] hover:text-[#fff] hover:bg-white/[0.04] transition-colors flex items-center gap-1 shrink-0"
+          >
+            {open ? "Hide" : "Watch"}
+            <ChevronDown
+              size={12}
+              style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 150ms" }}
+            />
+          </button>
+        )}
+        <a
+          href={r.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-1.5 rounded-[5px] text-[#888] hover:text-[#00FF66] hover:bg-white/[0.04] transition-colors shrink-0"
+          title="Open in new tab"
+        >
+          <ExternalLink size={13} />
+        </a>
+        <button
+          onClick={onRemove}
+          className="p-1.5 rounded-[5px] text-[#888] hover:text-[#ef4444] hover:bg-white/[0.04] transition-colors shrink-0"
+          title="Remove"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
+      {ytId && open && (
+        <div className="px-3 pb-3">
+          <div className="relative w-full rounded-lg overflow-hidden border border-[#1a1a1a]" style={{ aspectRatio: "16 / 9" }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${ytId}`}
+              title={r.title}
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    Mastery Checklist Component
 ───────────────────────────────────────────── */
 function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPending }: any) {
@@ -273,6 +388,7 @@ function TopicWorkspace() {
       queryClient.invalidateQueries({ queryKey: ["heatmap"] });
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
       queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      queryClient.invalidateQueries({ queryKey: ["today"] });
     },
   });
 
@@ -367,7 +483,7 @@ function TopicWorkspace() {
   ];
 
   return (
-    <main className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden bg-[#060606]">
+    <main className="flex flex-col h-[calc(100dvh-120px)] lg:h-screen overflow-hidden bg-[#060606]">
       {/* ── Single unified header ── */}
       <header
         className="shrink-0 border-b border-[#181818] z-20"
@@ -864,19 +980,30 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
   const [noteFile, setNoteFile] = useState<File | null>(null);
   const contentRef = useRef("");
 
+  // Resources (links / YouTube) stored in the note content fence.
+  const [resources, setResources] = useState<NoteResource[]>([]);
+  const resourcesRef = useRef<NoteResource[]>([]);
+  const [showAddResource, setShowAddResource] = useState(false);
+  const [resUrl, setResUrl] = useState("");
+  const [resTitle, setResTitle] = useState("");
+
   const { isLoading } = useQuery({
     queryKey: ["notes", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/notes/`);
       if (!res.ok) return { content: "", documents: [] };
       const json = await res.json();
-      const rawContent = stripGeneratedAttachmentMarkdown(json.content || "");
-      contentRef.current = rawContent;
-      setContent(rawContent);
-      if (rawContent !== (json.content || "")) {
+      const stripped = stripGeneratedAttachmentMarkdown(json.content || "");
+      const { body, resources: parsedRes } = parseNoteResources(stripped);
+      contentRef.current = body;
+      setContent(body);
+      setResources(parsedRes);
+      resourcesRef.current = parsedRes;
+      const normalized = serializeNoteResources(body, parsedRes);
+      if (normalized !== (json.content || "")) {
         await apiFetch(`/topics/${topicId}/notes/`, {
           method: "POST",
-          body: JSON.stringify({ content: rawContent }),
+          body: JSON.stringify({ content: normalized }),
         });
       }
       return json;
@@ -897,12 +1024,42 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       setSaving(true);
       await apiFetch(`/topics/${topicId}/notes/`, {
         method: "POST",
-        body: JSON.stringify({ content: val }),
+        body: JSON.stringify({ content: serializeNoteResources(val, resourcesRef.current) }),
       });
       queryClient.invalidateQueries({ queryKey: ["topic", String(topicId)] });
       setSaving(false);
     },
     [topicId, queryClient],
+  );
+
+  const addResource = useCallback(() => {
+    const url = resUrl.trim();
+    if (!url) return;
+    const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const ytId = parseYouTubeId(normalized);
+    const resource: NoteResource = {
+      id: `r-${Date.now()}`,
+      type: ytId ? "youtube" : "link",
+      url: normalized,
+      title: resTitle.trim() || (ytId ? "YouTube video" : normalized.replace(/^https?:\/\//, "")),
+    };
+    const next = [...resourcesRef.current, resource];
+    resourcesRef.current = next;
+    setResources(next);
+    setResUrl("");
+    setResTitle("");
+    setShowAddResource(false);
+    saveNote(contentRef.current);
+  }, [resUrl, resTitle, saveNote]);
+
+  const removeResource = useCallback(
+    (id: string) => {
+      const next = resourcesRef.current.filter((r) => r.id !== id);
+      resourcesRef.current = next;
+      setResources(next);
+      saveNote(contentRef.current);
+    },
+    [saveNote],
   );
 
   // Debounced auto-save: saves 2 seconds after user stops typing
@@ -974,6 +1131,79 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
           }}
           onBlur={() => saveNote(content)}
         />
+      </div>
+
+      {/* Resources (links / YouTube embeds) */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs uppercase tracking-[0.2em] font-mono text-[#666] font-medium flex items-center gap-1.5">
+            <ExternalLink size={12} />
+            Resources
+          </div>
+          <button
+            onClick={() => setShowAddResource((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-xs font-mono uppercase tracking-wider hover:bg-[#00FF66]/15 transition-colors"
+          >
+            <Plus size={12} /> Add Resource
+          </button>
+        </div>
+
+        {showAddResource && (
+          <div className="mb-3 p-3 rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] space-y-2">
+            <input
+              autoFocus
+              value={resUrl}
+              onChange={(e) => setResUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addResource();
+              }}
+              placeholder="Paste a YouTube or any URL"
+              className="w-full bg-[#080808] border border-[#1a1a1a] rounded-md px-3 py-2 text-sm text-[#e8e8e8] placeholder-[#444] focus:outline-none focus:border-[#333] font-mono"
+            />
+            <input
+              value={resTitle}
+              onChange={(e) => setResTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addResource();
+              }}
+              placeholder="Title (optional)"
+              className="w-full bg-[#080808] border border-[#1a1a1a] rounded-md px-3 py-2 text-sm text-[#e8e8e8] placeholder-[#444] focus:outline-none focus:border-[#333]"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowAddResource(false);
+                  setResUrl("");
+                  setResTitle("");
+                }}
+                className="px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider text-[#888] hover:text-[#fff] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addResource}
+                disabled={!resUrl.trim()}
+                className="px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider bg-[#00FF66] text-black font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#33FF85] transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        )}
+
+        {resources.length > 0 ? (
+          <div className="space-y-2">
+            {resources.map((r) => (
+              <NoteResourceCard key={r.id} r={r} onRemove={() => removeResource(r.id)} />
+            ))}
+          </div>
+        ) : (
+          !showAddResource && (
+            <div className="text-xs text-[#555] font-mono py-3 px-1">
+              No resources yet — embed videos or links instead of pasting raw URLs.
+            </div>
+          )
+        )}
       </div>
 
       {/* Document upload */}

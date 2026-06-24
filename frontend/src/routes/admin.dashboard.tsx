@@ -87,7 +87,7 @@ function AdminDashboard() {
 
   const filteredUsers = users.filter(
     (u: any) =>
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.username?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
