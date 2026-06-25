@@ -96,9 +96,9 @@ const TreeBranch = memo(function TreeBranch({
         className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1.5"
         style={{
           fontSize: "10px",
-          color: isCompleted ? "#4ade80" : "#60a5fa",
+          color: isCompleted ? "#00FF66" : "#60a5fa",
           background: isCompleted ? "#061a0f" : "#0a0f1e",
-          border: `1px solid ${isCompleted ? "#22c55e" : "#3b5bdb"}`,
+          border: `1px solid ${isCompleted ? "#00FF66" : "#3b5bdb"}`,
         }}
       >
         {isCompleted && <CheckCircle2 size={11} strokeWidth={3} />}

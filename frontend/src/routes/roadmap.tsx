@@ -181,7 +181,7 @@ function RoadmapPageInner({
                         {techs.map((tech, k) => (
                           <span
                             key={k}
-                            className="px-3 py-1.5 bg-[#0a1a10] text-[#22c55e] border border-[#22c55e]/35 rounded-lg text-sm font-medium"
+                            className="px-3 py-1.5 bg-[#001a0a] text-[#00FF66] border border-[#00FF66]/35 rounded-lg text-sm font-medium"
                           >
                             {tech}
                           </span>

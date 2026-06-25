@@ -124,14 +124,14 @@ function JobRoadmapComponent() {
 
         {/* Unified Input Area */}
         <div
-          className={`relative w-full h-80 rounded-xl border-2 border-dashed transition-all ${isDragging ? "border-[#22c55e] bg-[#22c55e]/5" : "border-[#1a1a1a] bg-[#0a0a0a]"} flex flex-col mt-8`}
+          className={`relative w-full h-80 rounded-xl border-2 border-dashed transition-all ${isDragging ? "border-[#00FF66] bg-[#00FF66]/5" : "border-[#1a1a1a] bg-[#0a0a0a]"} flex flex-col mt-8`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {file ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/40 rounded-xl z-20 backdrop-blur-sm">
-              <FileText size={48} className="text-[#22c55e] mb-4" />
+              <FileText size={48} className="text-[#00FF66] mb-4" />
               <span className="text-lg font-medium text-[#f0f0f0]">{file.name}</span>
               <span className="text-sm text-[#eee] mt-1">{(file.size / 1024).toFixed(1)} KB</span>
               <button
@@ -155,7 +155,7 @@ function JobRoadmapComponent() {
             <UploadCloud size={18} />
             <span>Drag & Drop a .pdf, .docx, or .txt file, or </span>
             <button
-              className="text-[#22c55e] hover:underline font-medium focus:outline-none"
+              className="text-[#00FF66] hover:underline font-medium focus:outline-none"
               onClick={() => fileInputRef.current?.click()}
             >
               Browse
@@ -176,7 +176,7 @@ function JobRoadmapComponent() {
 
         {isLoading && (
           <div className="mt-8 flex flex-col items-center justify-center p-8 bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl">
-            <Loader2 className="animate-spin text-[#22c55e] mb-4" size={32} />
+            <Loader2 className="animate-spin text-[#00FF66] mb-4" size={32} />
             <p className="text-[#f0f0f0] font-medium animate-pulse">{stages[loadingStage]}</p>
           </div>
         )}
@@ -186,7 +186,7 @@ function JobRoadmapComponent() {
             <button
               onClick={generateRoadmap}
               disabled={(!text.trim() && !file) || isLoading}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#22c55e]/90 text-black font-semibold px-6 py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-[#00FF66] hover:bg-[#00FF66]/90 text-black font-semibold px-6 py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Generate Roadmap
             </button>
@@ -196,7 +196,7 @@ function JobRoadmapComponent() {
         {jobRoadmaps.length > 0 && (
           <div className="mt-16 border-t border-[#1a1a1a] pt-10">
             <h3 className="text-sm uppercase tracking-[0.18em] font-mono text-[#fff] mb-6 flex items-center gap-2">
-              <Briefcase className="text-[#22c55e]" size={16} />
+              <Briefcase className="text-[#00FF66]" size={16} />
               Your Generated Roadmaps
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -205,9 +205,9 @@ function JobRoadmapComponent() {
                   key={p.id}
                   to="/roadmap"
                   search={{ pathSlug: p.slug }}
-                  className="block p-5 rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] hover:border-[#22c55e]/50 hover:bg-[#0a1a10] transition-all group"
+                  className="block p-5 rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] hover:border-[#00FF66]/50 hover:bg-[#0a1a10] transition-all group"
                 >
-                  <h4 className="text-lg font-bold text-[#f0f0f0] group-hover:text-[#22c55e] transition-colors">
+                  <h4 className="text-lg font-bold text-[#f0f0f0] group-hover:text-[#00FF66] transition-colors">
                     {p.title}
                   </h4>
                   <p className="text-xs text-[#888] mt-2 font-mono uppercase tracking-wider">

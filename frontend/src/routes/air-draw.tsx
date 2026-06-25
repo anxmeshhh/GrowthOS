@@ -788,7 +788,7 @@ function AirDrawPage() {
       ctx.fill();
 
       ctx.strokeStyle =
-        icon.type === "line" && connectionModeRef.current ? "#22c55e" : "rgba(255, 255, 255, 0.8)";
+        icon.type === "line" && connectionModeRef.current ? "#00FF66" : "rgba(255, 255, 255, 0.8)";
       ctx.lineWidth = 3;
       ctx.beginPath();
       const cx = icon.x;
@@ -1035,7 +1035,7 @@ function AirDrawPage() {
     if (connectionModeRef.current) {
       ctx.save();
       ctx.scale(-1, 1);
-      ctx.fillStyle = "#22c55e";
+      ctx.fillStyle = "#00FF66";
       ctx.font = "bold 20px sans-serif";
       ctx.textAlign = "center";
       if (selectedShapesForConnectionRef.current.length === 0) {
@@ -1589,7 +1589,7 @@ function AirDrawPage() {
     }
   };
 
-  const COLORS = ["#22c55e", "#ef4444", "#3b82f6", "#eab308", "#a855f7", "#f97316", "#ffffff"];
+  const COLORS = ["#00FF66", "#ef4444", "#3b82f6", "#eab308", "#a855f7", "#f97316", "#ffffff"];
 
   const handleSaveToNotes = async () => {
     if (!saveTitle.trim()) {
@@ -1654,7 +1654,7 @@ function AirDrawPage() {
       <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col w-screen h-screen overflow-hidden">
         {isLoading && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a]">
-            <Loader2 size={40} className="animate-spin text-[#22c55e] mb-4" />
+            <Loader2 size={40} className="animate-spin text-[#00FF66] mb-4" />
             <p className="text-[#eee] font-medium">Loading AI Vision Models...</p>
           </div>
         )}
@@ -1692,7 +1692,7 @@ function AirDrawPage() {
 
           {/* AI Status Badge */}
           <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 z-30">
-            <Sparkles size={14} className="text-[#22c55e]" />
+            <Sparkles size={14} className="text-[#00FF66]" />
             <span className="text-xs font-medium tracking-wide text-white uppercase">
               AI Active
             </span>
@@ -1910,7 +1910,7 @@ function AirDrawPage() {
         />
 
         <div className="flex flex-col h-full bg-[#0a0a0a] text-white p-6 w-full space-y-4 items-center justify-center rounded-2xl border border-[#1a1a1a]">
-          <Sparkles size={40} className="text-[#22c55e] mb-6" />
+          <Sparkles size={40} className="text-[#00FF66] mb-6" />
           <h2 className="text-2xl font-semibold text-white mb-2">Ready to Draw?</h2>
           <p className="text-[#888] text-center max-w-md mb-8 leading-relaxed">
             Air Draw requires access to your webcam to track your hand movements using AI. No video
