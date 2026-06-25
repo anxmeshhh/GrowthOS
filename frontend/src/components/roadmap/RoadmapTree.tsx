@@ -125,7 +125,8 @@ const TreeBranch = memo(function TreeBranch({
               }}
             >
               {MilestoneContent}
-            </Link>
+            </span>
+          </Link>
           <div className="h-px flex-1" style={{ background: "#1a2a40" }} />
         </div>
         {hasChildren && (
