@@ -27,7 +27,7 @@ RUN pip install --upgrade pip && \
 COPY . /app/
 
 # Create non-root user and pre-create volume mount dirs
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser \
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /app appuser \
     && mkdir -p /app/staticfiles /app/media \
     && chown -R appuser:appgroup /app
 
