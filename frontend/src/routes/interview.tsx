@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { PageShell, PageHeader, Card, Btn } from "@/components/growth-ui";
 import {
-  Mic, ChevronRight, CheckCircle2, Circle, Loader2,
+  Mic, MicOff, BookOpen, ChevronRight, CheckCircle2, Circle, Loader2,
   Target, BarChart2, Trophy, AlertCircle, RefreshCw, History,
 } from "lucide-react";
 
@@ -55,10 +55,53 @@ function ActiveInterview({ interview, onFinish }: { interview: any; onFinish: ()
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [finalResult, setFinalResult] = useState<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef<any>(null);
+  const baseAnswerRef = useRef("");
 
   const questions = interview.questions || [];
   const current = questions[currentIdx];
   const answeredIds = new Set(Object.keys(feedback).map(Number));
+
+  function startVoice() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      setVoiceError("Speech recognition not supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+    setVoiceError("");
+    baseAnswerRef.current = answer;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+    rec.onresult = (e: any) => {
+      let finalChunk = "";
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalChunk += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      if (finalChunk) {
+        baseAnswerRef.current += (baseAnswerRef.current ? " " : "") + finalChunk.trim();
+      }
+      setAnswer(baseAnswerRef.current + (interim ? " " + interim : ""));
+    };
+    rec.onend = () => { setIsListening(false); };
+    rec.onerror = (e: any) => {
+      setIsListening(false);
+      if (e.error !== "aborted") setVoiceError("Mic error: " + e.error);
+    };
+    recognitionRef.current = rec;
+    rec.start();
+    setIsListening(true);
+  }
+
+  function stopVoice() {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }
 
   async function submitAnswer() {
     if (!answer.trim() || !current) return;
@@ -184,19 +227,43 @@ function ActiveInterview({ interview, onFinish }: { interview: any; onFinish: ()
             </div>
           ) : (
             <>
-              <textarea
-                value={answer}
-                onChange={e => setAnswer(e.target.value)}
-                placeholder="Type your answer here… Be specific and use technical terminology."
-                style={{
-                  width: "100%", minHeight: 140, background: "#0d0d0d", border: "1px solid #222",
-                  borderRadius: 12, padding: "12px 14px", fontSize: 13, color: "#ccc",
-                  resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box",
-                  lineHeight: 1.6,
-                }}
-                onFocus={e => (e.target.style.borderColor = "#00FF66")}
-                onBlur={e => (e.target.style.borderColor = "#222")}
-              />
+              <div style={{ position: "relative" }}>
+                <textarea
+                  value={answer}
+                  onChange={e => { if (!isListening) setAnswer(e.target.value); }}
+                  placeholder={isListening ? "Listening… speak your answer." : "Type your answer or press the mic to speak."}
+                  style={{
+                    width: "100%", minHeight: 140, background: isListening ? "rgba(0,255,102,0.03)" : "#0d0d0d",
+                    border: `1px solid ${isListening ? "rgba(0,255,102,0.4)" : "#222"}`,
+                    borderRadius: 12, padding: "12px 48px 12px 14px", fontSize: 13, color: "#ccc",
+                    resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                    lineHeight: 1.6, transition: "border-color 0.2s",
+                  }}
+                  onFocus={e => { if (!isListening) e.target.style.borderColor = "#00FF66"; }}
+                  onBlur={e => { if (!isListening) e.target.style.borderColor = "#222"; }}
+                />
+                <button
+                  onClick={isListening ? stopVoice : startVoice}
+                  title={isListening ? "Stop recording" : "Speak your answer"}
+                  style={{
+                    position: "absolute", top: 10, right: 10,
+                    width: 32, height: 32, borderRadius: "50%", border: "none", cursor: "pointer",
+                    background: isListening ? "rgba(239,68,68,0.15)" : "rgba(0,255,102,0.08)",
+                    color: isListening ? "#ef4444" : "#00FF66",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+                </button>
+              </div>
+              {isListening && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", animation: "pulse 1s infinite" }} />
+                  <span style={{ fontSize: 12, color: "#ef4444" }}>Recording… press mic to stop</span>
+                </div>
+              )}
+              {voiceError && <p style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>{voiceError}</p>}
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
                 <Btn onClick={submitAnswer} disabled={!answer.trim() || submitting} variant="solid" tone="green">
                   {submitting ? <Loader2 size={14} className="animate-spin" /> : <><Target size={14} /> Submit Answer</>}
@@ -213,9 +280,10 @@ function ActiveInterview({ interview, onFinish }: { interview: any; onFinish: ()
 
 // ── Setup Panel ───────────────────────────────────────────────────────────────
 function SetupPanel({ onStart }: { onStart: (data: any) => void }) {
-  const [mode, setMode] = useState<"jd" | "custom">("jd");
+  const [mode, setMode] = useState<"jd" | "custom" | "notes">("jd");
   const [customRole, setCustomRole] = useState("");
   const [selectedJd, setSelectedJd] = useState<number | null>(null);
+  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
   const [err, setErr] = useState("");
 
@@ -227,12 +295,36 @@ function SetupPanel({ onStart }: { onStart: (data: any) => void }) {
     },
   });
 
+  const { data: notesTopics } = useQuery({
+    queryKey: ["interview_notes_topics"],
+    queryFn: async () => {
+      const r = await apiFetch("/interview/notes-topics/");
+      return r.ok ? r.json() : [];
+    },
+    enabled: mode === "notes",
+  });
+
+  const MODES = [
+    { id: "jd", label: "Job Description" },
+    { id: "notes", label: "My Notes" },
+    { id: "custom", label: "Custom Role" },
+  ] as const;
+
+  function isStartDisabled() {
+    if (starting) return true;
+    if (mode === "jd") return !selectedJd;
+    if (mode === "notes") return !selectedTopicId;
+    return !customRole.trim();
+  }
+
   async function start() {
     setErr(""); setStarting(true);
     try {
-      const body: any = mode === "jd" && selectedJd
-        ? { jd_id: selectedJd }
-        : { job_title: customRole };
+      let body: any;
+      if (mode === "jd" && selectedJd) body = { jd_id: selectedJd };
+      else if (mode === "notes" && selectedTopicId) body = { topic_id: selectedTopicId };
+      else body = { job_title: customRole };
+
       const r = await apiFetch("/interview/start/", { method: "POST", body: JSON.stringify(body) });
       if (!r.ok) { const e = await r.json(); throw new Error(e.error || "Failed"); }
       const data = await r.json();
@@ -247,19 +339,19 @@ function SetupPanel({ onStart }: { onStart: (data: any) => void }) {
   return (
     <div style={{ maxWidth: 520, margin: "0 auto" }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-        {(["jd", "custom"] as const).map(m => (
-          <button key={m} onClick={() => setMode(m)} style={{
-            flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 600,
-            background: mode === m ? "rgba(0,255,102,0.08)" : "#111",
-            border: `1px solid ${mode === m ? "rgba(0,255,102,0.3)" : "#222"}`,
-            color: mode === m ? "#00FF66" : "#666",
+        {MODES.map(m => (
+          <button key={m.id} onClick={() => setMode(m.id)} style={{
+            flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer", fontSize: 12, fontWeight: 600,
+            background: mode === m.id ? "rgba(0,255,102,0.08)" : "#111",
+            border: `1px solid ${mode === m.id ? "rgba(0,255,102,0.3)" : "#222"}`,
+            color: mode === m.id ? "#00FF66" : "#666",
           }}>
-            {m === "jd" ? "From a Job Description" : "Custom Role"}
+            {m.label}
           </button>
         ))}
       </div>
 
-      {mode === "jd" ? (
+      {mode === "jd" && (
         <div>
           {(jdHistory || []).length === 0 ? (
             <div style={{ padding: "24px", textAlign: "center", color: "#555", fontSize: 13, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12 }}>
@@ -284,7 +376,46 @@ function SetupPanel({ onStart }: { onStart: (data: any) => void }) {
             </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {mode === "notes" && (
+        <div>
+          {!notesTopics ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "#555", fontSize: 13 }}>
+              <Loader2 size={16} className="animate-spin" style={{ margin: "0 auto 8px", display: "block" }} />
+              Loading your notes…
+            </div>
+          ) : (notesTopics as any[]).length === 0 ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "#555", fontSize: 13, background: "#111", border: "1px solid #1e1e1e", borderRadius: 12 }}>
+              No notes found. Open a topic and write some notes first.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
+              {(notesTopics as any[]).map((t: any) => (
+                <button key={t.topic_id} onClick={() => setSelectedTopicId(t.topic_id)} style={{
+                  padding: "12px 16px", borderRadius: 10, cursor: "pointer", textAlign: "left",
+                  background: selectedTopicId === t.topic_id ? "rgba(0,255,102,0.06)" : "#111",
+                  border: `1px solid ${selectedTopicId === t.topic_id ? "rgba(0,255,102,0.25)" : "#1e1e1e"}`,
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <BookOpen size={13} style={{ color: "#555" }} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#ddd" }}>{t.topic_title}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>
+                      {t.path_title} · {t.note_length} chars
+                    </div>
+                  </div>
+                  {selectedTopicId === t.topic_id && <CheckCircle2 size={16} style={{ color: "#00FF66" }} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {mode === "custom" && (
         <input
           value={customRole}
           onChange={e => setCustomRole(e.target.value)}
@@ -299,7 +430,7 @@ function SetupPanel({ onStart }: { onStart: (data: any) => void }) {
 
       <Btn
         onClick={start}
-        disabled={starting || (mode === "jd" ? !selectedJd : !customRole.trim())}
+        disabled={isStartDisabled()}
         variant="solid" tone="green"
         style={{ marginTop: 20, width: "100%", justifyContent: "center", height: 44 }}
       >

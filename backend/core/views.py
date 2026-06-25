@@ -4365,6 +4365,33 @@ def _generate_interview_questions(job_title, required_skills, weak_topics, level
     return questions
 
 
+def _generate_questions_from_notes(topic_title, notes_content):
+    """Generate 5 interview questions grounded in the user's own study notes."""
+    client = groq_client()
+    notes_trimmed = notes_content[:2500].strip()
+    prompt = (
+        f'You are an interviewer. Generate 5 technical interview questions based on the '
+        f'following study notes about "{topic_title}".\n\n'
+        f'STUDY NOTES:\n{notes_trimmed}\n\n'
+        f'Return a JSON object with a single key "questions" containing an array. '
+        f'Each item: {{"id":1,"question":"...","type":"conceptual","skill":"{topic_title}","difficulty":"medium","ideal_keywords":["kw1","kw2"]}}'
+    )
+    resp = client.chat.completions.create(
+        messages=[{'role': 'user', 'content': prompt}],
+        model='llama-3.1-8b-instant',
+        temperature=0.3,
+        max_tokens=2000,
+        response_format={"type": "json_object"},
+    )
+    raw = resp.choices[0].message.content.strip()
+    logger.debug("Groq notes-interview raw: %r", raw[:200])
+    data = json.loads(raw)
+    questions = data.get('questions') or data.get('interview_questions') or list(data.values())[0]
+    if not isinstance(questions, list):
+        raise ValueError(f"Unexpected Groq response shape: {raw[:200]}")
+    return questions
+
+
 def _score_answer(question, answer):
     client = groq_client()
     keywords = ', '.join(question.get('ideal_keywords', []))
@@ -4402,9 +4429,43 @@ class MockInterviewView(views.APIView):
 
     def post(self, request):
         jd_id = request.data.get('jd_id')
+        topic_id = request.data.get('topic_id')
         job_title = (request.data.get('job_title') or '').strip()[:200]
         required_skills = request.data.get('required_skills', [])
 
+        # ── Mode: From My Notes ──────────────────────────────────────────────
+        if topic_id and not jd_id:
+            try:
+                note = TopicNote.objects.select_related('topic').get(
+                    user=request.user, topic_id=topic_id
+                )
+            except TopicNote.DoesNotExist:
+                return Response({'error': 'Notes not found for this topic'}, status=404)
+
+            notes_content = note.content or ''
+            if len(notes_content.strip()) < 50:
+                return Response({'error': 'Notes are too short to generate questions. Add more content first.'}, status=400)
+
+            try:
+                questions = _generate_questions_from_notes(note.topic.title, notes_content)
+            except Exception:
+                logger.exception('Notes-based interview generation failed')
+                return Response({'error': 'AI generation failed. Try again.'}, status=500)
+
+            interview = MockInterview.objects.create(
+                user=request.user,
+                job_title=f"Notes: {note.topic.title}",
+                questions=questions,
+                answers=[],
+            )
+            return Response({
+                'interview_id': interview.id,
+                'job_title': interview.job_title,
+                'questions': questions,
+                'total': len(questions),
+            }, status=201)
+
+        # ── Mode: From JD or Custom Role ─────────────────────────────────────
         jd_obj = None
         if jd_id:
             try:
@@ -4415,7 +4476,7 @@ class MockInterviewView(views.APIView):
                 pass
 
         if not job_title:
-            return Response({'error': 'job_title or jd_id required'}, status=400)
+            return Response({'error': 'job_title, jd_id, or topic_id required'}, status=400)
 
         profile = UserProfile.objects.filter(user=request.user).first()
         level = profile.skill_level if profile else 'intermediate'
@@ -4514,11 +4575,47 @@ class MockInterviewAnswerView(views.APIView):
 
         interview.save()
 
+        if interview.completed_at:
+            try:
+                from .emails import send_interview_summary
+                send_interview_summary(
+                    request.user,
+                    interview.job_title,
+                    interview.overall_score,
+                    interview.interview_readiness_pct,
+                    interview.answers,
+                )
+            except Exception:
+                logger.warning("Failed to send interview summary email", exc_info=True)
+
         response = {**answer_record, 'all_answered': interview.completed_at is not None}
         if interview.completed_at:
             response['overall_score'] = interview.overall_score
             response['interview_readiness_pct'] = interview.interview_readiness_pct
         return Response(response)
+
+
+# ── Interview: list topics with notes ────────────────────────────────────────
+
+class InterviewNotesTopicsView(views.APIView):
+    """GET /api/interview/notes-topics/ — topics the user has non-empty notes for."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notes = (
+            TopicNote.objects
+            .filter(user=request.user)
+            .exclude(content='')
+            .select_related('topic', 'topic__path')
+            .order_by('-updated_at')[:30]
+        )
+        return Response([{
+            'topic_id': n.topic.id,
+            'topic_title': n.topic.title,
+            'path_title': n.topic.path.title,
+            'updated_at': n.updated_at,
+            'note_length': len(n.content),
+        } for n in notes])
 
 
 # ── Career Path Generator (from JD / Resume) ─────────────────────────────────

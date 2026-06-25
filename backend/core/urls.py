@@ -13,7 +13,7 @@ from .views import (
     GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, SearchView, NotificationView,
     JDMappingView, ResumeAnalysisView,
     OnboardingView, DailyMissionView, LearningInsightsView,
-    TopicResourceView, MockInterviewView, MockInterviewAnswerView,
+    TopicResourceView, MockInterviewView, MockInterviewAnswerView, InterviewNotesTopicsView,
     GenerateCareerPathView, StudyRoomView,
 )
 
@@ -127,6 +127,7 @@ urlpatterns = [
     # Mock Interview
     path('interview/', MockInterviewView.as_view(), name='mock_interview_list'),
     path('interview/start/', MockInterviewView.as_view(), name='mock_interview_start'),
+    path('interview/notes-topics/', InterviewNotesTopicsView.as_view(), name='interview_notes_topics'),
     path('interview/<int:interview_id>/answer/', MockInterviewAnswerView.as_view(), name='mock_interview_answer'),
 
     # Career Path Generation
