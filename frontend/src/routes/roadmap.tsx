@@ -151,6 +151,69 @@ function RoadmapPageInner({
   const ringCircumference = 2 * Math.PI * 42;
   const ringOffset = ringCircumference - (completionPct / 100) * ringCircumference;
 
+  function renderPathDescription(text: string) {
+    if (!text) return null;
+
+    return (
+      <div className="mb-10 space-y-6">
+        {text
+          .split("\n\n")
+          .filter(Boolean)
+          .map((block, i) => {
+            const lines = block.split("\n");
+            return (
+              <div key={i} className="space-y-2">
+                {lines.map((line, j) => {
+                  if (line.startsWith("### ")) {
+                    return (
+                      <h3
+                        key={j}
+                        className="text-sm uppercase tracking-[0.18em] font-mono text-[#fff] flex items-center gap-2 mt-6"
+                      >
+                        {line.replace("### ", "")}
+                      </h3>
+                    );
+                  }
+                  if (lines[0] === "### Tech Stack" && j === 1) {
+                    const techs = line.split(", ");
+                    return (
+                      <div key={j} className="flex flex-wrap gap-2 pt-2">
+                        {techs.map((tech, k) => (
+                          <span
+                            key={k}
+                            className="px-3 py-1.5 bg-[#0a1a10] text-[#22c55e] border border-[#22c55e]/35 rounded-lg text-sm font-medium"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  }
+                  const parts = line.split("**");
+                  return (
+                    <div
+                      key={j}
+                      className="text-[#eee] text-sm leading-relaxed p-4 rounded-xl border border-[#1a1a1a] bg-[#0a0a0a]"
+                    >
+                      {parts.map((part, k) =>
+                        k % 2 === 1 ? (
+                          <strong key={k} className="text-[#f0f0f0] font-bold text-base">
+                            {part}
+                          </strong>
+                        ) : (
+                          part
+                        ),
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+      </div>
+    );
+  }
+
   return (
     <PageShell>
       <PageHeader
@@ -158,6 +221,8 @@ function RoadmapPageInner({
         title={activePath.title}
         subtitle={`${completedCount} of ${topics.length} topics completed`}
       />
+
+      {renderPathDescription(activePath.description)}
 
       {/* ── Saved paths rail ──────────────────────────────────────────── */}
       {bookmarked.length > 0 && (

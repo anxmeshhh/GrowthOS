@@ -193,7 +193,9 @@ function GlobalReviewPage() {
             className="flex items-center gap-2 text-[#666] hover:text-[#fff] transition-colors"
           >
             <X size={20} />
-            <span className="text-xs font-mono uppercase tracking-[0.2em] font-medium">End Session</span>
+            <span className="text-xs font-mono uppercase tracking-[0.2em] font-medium">
+              End Session
+            </span>
           </Link>
           <div className="flex items-center gap-4">
             <div className="text-xs font-mono uppercase tracking-[0.2em] font-medium text-[#00FF66] border border-[#00FF66]/20 bg-[#00FF66]/5 px-3 py-1.5 rounded-md shadow-inner">
@@ -231,7 +233,9 @@ function GlobalReviewPage() {
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] font-medium text-[#444] animate-pulse">
                       Press spacebar to reveal
                     </span>
-                  ) : <span />}
+                  ) : (
+                    <span />
+                  )}
                 </div>
               </div>
               {/* Back */}
@@ -259,7 +263,9 @@ function GlobalReviewPage() {
                 className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#ef4444]/20 bg-[#ef4444]/5 hover:bg-[#ef4444]/15 hover:border-[#ef4444]/40 transition-all disabled:opacity-50 shadow-inner"
               >
                 <span className="font-bold text-[#ef4444] text-xl mb-1.5">Again</span>
-                <span className="text-[10px] font-mono text-[#ef4444]/50 tracking-[0.2em] uppercase">&lt; 1m (1)</span>
+                <span className="text-[10px] font-mono text-[#ef4444]/50 tracking-[0.2em] uppercase">
+                  &lt; 1m (1)
+                </span>
               </button>
 
               <button
@@ -271,7 +277,9 @@ function GlobalReviewPage() {
                 className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#f59e0b]/20 bg-[#f59e0b]/5 hover:bg-[#f59e0b]/15 hover:border-[#f59e0b]/40 transition-all disabled:opacity-50 shadow-inner"
               >
                 <span className="font-bold text-[#f59e0b] text-xl mb-1.5">Hard</span>
-                <span className="text-[10px] font-mono text-[#f59e0b]/50 tracking-[0.2em] uppercase">1d (2)</span>
+                <span className="text-[10px] font-mono text-[#f59e0b]/50 tracking-[0.2em] uppercase">
+                  1d (2)
+                </span>
               </button>
 
               <button
@@ -283,7 +291,9 @@ function GlobalReviewPage() {
                 className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#3b82f6]/20 bg-[#3b82f6]/5 hover:bg-[#3b82f6]/15 hover:border-[#3b82f6]/40 transition-all disabled:opacity-50 shadow-inner"
               >
                 <span className="font-bold text-[#3b82f6] text-xl mb-1.5">Good</span>
-                <span className="text-[10px] font-mono text-[#3b82f6]/50 tracking-[0.2em] uppercase">3d (3)</span>
+                <span className="text-[10px] font-mono text-[#3b82f6]/50 tracking-[0.2em] uppercase">
+                  3d (3)
+                </span>
               </button>
 
               <button

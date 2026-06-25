@@ -277,8 +277,9 @@ class VerifyOTPView(views.APIView):
             return Response({'error': 'OTP not requested for this email'}, status=status.HTTP_400_BAD_REQUEST)
 
 import requests
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class GoogleLoginView(views.APIView):
     permission_classes = (AllowAny,)
@@ -725,6 +726,7 @@ class TopicMaterialUploadView(views.APIView):
 
 import PyPDF2
 
+
 class GeneratePathView(views.APIView):
     permission_classes = [IsAuthenticated]
     throttle_scope = 'ai_generation'
@@ -1164,6 +1166,8 @@ class TopicFlashcardView(views.APIView):
         topic = _resolve_topic(topic_id, user=request.user)
         from .models import Flashcard
         from django.utils import timezone
+
+        from .models import Flashcard
         
         cards = Flashcard.objects.filter(user=request.user, topic=topic)
         pending = cards.filter(is_verified=False).values('id', 'front', 'back')
@@ -1304,6 +1308,7 @@ class ProjectIdeasView(views.APIView):
             return Response({'error': 'Something went wrong. Please try again.'}, status=500)
 
 import requests as http_requests
+
 
 class ScanRepoView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1781,8 +1786,9 @@ class GitHubReposView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from .encryption import decrypt_token
         import requests as http_requests
+
+        from .encryption import decrypt_token
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         username = profile.github_username
@@ -1828,8 +1834,9 @@ class PublishGistView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from .encryption import decrypt_token
         import requests as http_requests
+
+        from .encryption import decrypt_token
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         encrypted_token = profile.github_access_token
@@ -1883,8 +1890,9 @@ class CreateGitHubRepoView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from .encryption import decrypt_token
         import requests as http_requests
+
+        from .encryption import decrypt_token
 
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         encrypted_token = profile.github_access_token
@@ -1936,8 +1944,9 @@ class SyncPathToGitHubView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from .encryption import decrypt_token
         import requests as http_requests
+
+        from .encryption import decrypt_token
 
         path_slug = request.data.get('path_slug')
         if not path_slug:
@@ -2026,12 +2035,14 @@ class SyncPathToGitHubView(views.APIView):
 
 import base64
 
+
 class CommitWorkspaceToGitHubView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from .encryption import decrypt_token
         import requests as http_requests
+
+        from .encryption import decrypt_token
 
         topic_slug = request.data.get('topic_slug')
         if not topic_slug:
@@ -2210,7 +2221,6 @@ class PublicPortfolioView(views.APIView):
 
     def get(self, request, username):
         from django.contrib.auth.models import User
-        from rest_framework.permissions import AllowAny
         from django.shortcuts import get_object_or_404
         user = get_object_or_404(User, username=username)
         profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -2322,13 +2332,18 @@ class RequestAdminAccessView(views.APIView):
 
 
 
+import json
+
 # --- ADMIN VIEWS MERGED ---
 import psutil
-from django.core import serializers
-from django.http import HttpResponse
 from django.contrib.auth.models import User
+from django.core import serializers
 from django.db.models import Sum
+from django.http import HttpResponse
+from rest_framework.permissions import IsAdminUser
+
 from .models import AdminRequest
+
 
 class AdminStatsView(views.APIView):
     permission_classes = [IsAdminUser]
@@ -2688,9 +2703,11 @@ class AdminUserDetailView(views.APIView):
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-from .models import AdminRequest
 from django.core import serializers
 from django.http import HttpResponse
+
+from .models import AdminRequest
+
 
 class AdminDataExportView(views.APIView):
     permission_classes = [IsAdminUser]
@@ -2757,7 +2774,9 @@ class AdminRequestDetailView(views.APIView):
 
 # --- CUSTOM PATH VIEWS MERGED ---
 from .helpers import unique_slug, unique_slug_in_memory
-from .serializers import PathSharingSerializer, CustomPathCreateSerializer, PathCloneSerializer
+from .serializers import (CustomPathCreateSerializer, PathCloneSerializer,
+                          PathSharingSerializer)
+
 
 class CustomPathViewSet(viewsets.ModelViewSet):
     """
@@ -2772,7 +2791,7 @@ class CustomPathViewSet(viewsets.ModelViewSet):
         """Return custom paths created by user or shared with user"""
         from django.db.models import Prefetch
         user = self.request.user
-        from .models import TopicProgress, VerifiedProject, TopicMaterial
+        from .models import TopicMaterial, TopicProgress, VerifiedProject
         
         return LearningPath.objects.prefetch_related(
             'topics',
@@ -3472,6 +3491,7 @@ class GlobalReviewQueueView(views.APIView):
 
     def get(self, request):
         from django.utils import timezone
+
         from .models import Flashcard
         
         today = timezone.now().date()
@@ -3555,6 +3575,11 @@ class TodayBriefingView(views.APIView):
         from .models import Flashcard, TopicProgress, LearningPath, Topic, UserProfile
         from django.utils import timezone
 
+        from django.utils import timezone
+
+        from .models import (Flashcard, LearningPath, Topic, TopicProgress,
+                             UserProfile)
+
         today = timezone.now().date()
         
         # 1. Due Cards & Topics
@@ -3612,6 +3637,169 @@ class TodayBriefingView(views.APIView):
             "streak": streak,
             "last_session_topic": last_session_topic
         })
+
+import docx
+
+class JobDescriptionRoadmapView(views.APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        file_obj = request.data.get('file')
+        raw_text = request.data.get('text', '')
+
+        extracted_text = raw_text
+
+        if file_obj:
+            if file_obj.size > 5 * 1024 * 1024:
+                return Response({'error': 'File size exceeds 5MB limit'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            ext = file_obj.name.split('.')[-1].lower()
+            try:
+                if ext == 'txt':
+                    extracted_text += "\n" + file_obj.read().decode('utf-8')
+                elif ext == 'pdf':
+                    reader = PyPDF2.PdfReader(file_obj)
+                    for page in reader.pages:
+                        extracted_text += "\n" + (page.extract_text() or "")
+                elif ext == 'docx':
+                    doc = docx.Document(file_obj)
+                    extracted_text += "\n" + "\n".join([para.text for para in doc.paragraphs])
+                else:
+                    return Response({'error': 'Unsupported file format. Please upload .txt, .pdf, or .docx'}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': f'Failed to parse file: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        extracted_text = extracted_text.strip()
+        if not extracted_text:
+            return Response({'error': 'No content provided for roadmap generation.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Truncate text to avoid token limits
+        extracted_text = extracted_text[:15000]
+
+        try:
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            ai_prompt = f"""Generate a structured learning roadmap to master the skills listed in this Job Description.
+Return EXACTLY a JSON object with this schema:
+{{
+  "title": "Roadmap Title",
+  "company_name": "Name of the Company (or 'Unknown')",
+  "tech_stack": ["Tech1", "Tech2", "Tech3"],
+  "milestones": [
+    {{
+      "title": "Milestone 1 Name",
+      "description": "Short description of what to learn here",
+      "topics": ["Topic A", "Topic B"]
+    }}
+  ],
+  "projects": [
+    {{
+      "title": "Project Name",
+      "description": "Short description of the project"
+    }}
+  ]
+}}
+Job Description:
+{extracted_text}
+
+Generate 3-5 milestones and 1-3 projects. Return ONLY the JSON, nothing else."""
+
+            chat_completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": ai_prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.7,
+            )
+            response_content = chat_completion.choices[0].message.content.strip()
+            
+            import re
+            import json
+            # Extract JSON if markdown wrapped
+            match = re.search(r'\{.*\}', response_content, re.DOTALL)
+            if match:
+                data = json.loads(match.group(0))
+            else:
+                data = json.loads(response_content)
+                
+            from .models import LearningPath, Topic
+            from .helpers import unique_slug
+
+            # Format description
+            description = ""
+            if data.get('company_name') and data['company_name'].lower() != 'unknown':
+                description += f"**Company**: {data['company_name']}\n\n"
+            if data.get('tech_stack'):
+                description += "### Tech Stack\n" + ", ".join(data['tech_stack']) + "\n\n"
+            if data.get('projects'):
+                description += "### Projects to Build\n"
+                for p in data['projects']:
+                    description += f"**{p.get('title', 'Project')}**: {p.get('description', '')}\n\n"
+            
+            # Create Path
+            title = data.get('title', 'Job Roadmap')
+            path_slug = unique_slug(LearningPath, title, fallback='job-roadmap')
+            
+            path = LearningPath.objects.create(
+                title=title,
+                slug=path_slug,
+                description=description.strip(),
+                is_custom=True,
+                created_by=request.user,
+                estimated_weeks=12
+            )
+            
+            # Create Topics
+            order = 0
+            
+            # Add Tech Stack as the first milestone
+            if data.get('tech_stack'):
+                order += 1
+                Topic.objects.create(
+                    path=path,
+                    title="Required Tech Stack",
+                    slug=unique_slug(Topic, "Required Tech Stack", fallback='milestone'),
+                    summary="Core technologies and tools required for this role.",
+                    order=order,
+                    node_kind='milestone',
+                    created_by=request.user
+                )
+                for tech in data['tech_stack']:
+                    order += 1
+                    Topic.objects.create(
+                        path=path,
+                        title=tech,
+                        slug=unique_slug(Topic, tech, fallback='topic'),
+                        order=order,
+                        node_kind='topic',
+                        created_by=request.user
+                    )
+
+            for milestone in data.get('milestones', []):
+                order += 1
+                m_topic = Topic.objects.create(
+                    path=path,
+                    title=milestone.get('title', 'Milestone'),
+                    slug=unique_slug(Topic, milestone.get('title', 'Milestone'), fallback='milestone'),
+                    summary=milestone.get('description', ''),
+                    order=order,
+                    node_kind='milestone',
+                    created_by=request.user
+                )
+                
+                for topic_title in milestone.get('topics', []):
+                    order += 1
+                    Topic.objects.create(
+                        path=path,
+                        title=topic_title,
+                        slug=unique_slug(Topic, topic_title, fallback='topic'),
+                        order=order,
+                        node_kind='topic',
+                        created_by=request.user
+                    )
+                    
+            Contribution.objects.create(user=request.user, action_type='path_generated', points=2)
+            return Response({'slug': path.slug, 'message': 'Roadmap created successfully!'})
+        except Exception as e:
+            return Response({'error': f"AI generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ── Career Intelligence ──────────────────────────────────────────────────────

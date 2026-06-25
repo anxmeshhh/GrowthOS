@@ -18,6 +18,7 @@ import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as JobRoadmapRouteImport } from './routes/job-roadmap'
 import { Route as InterviewRouteImport } from './routes/interview'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DiscoverRouteImport } from './routes/discover'
@@ -26,6 +27,7 @@ import { Route as CustomPathsRouteImport } from './routes/custom-paths'
 import { Route as CommandRouteImport } from './routes/command'
 import { Route as CareerRouteImport } from './routes/career'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
+import { Route as AirDrawRouteImport } from './routes/air-draw'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TopicTopicIdRouteImport } from './routes/topic.$topicId'
 import { Route as PortfolioUsernameRouteImport } from './routes/portfolio.$username'
@@ -80,6 +82,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JobRoadmapRoute = JobRoadmapRouteImport.update({
+  id: '/job-roadmap',
+  path: '/job-roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InterviewRoute = InterviewRouteImport.update({
   id: '/interview',
   path: '/interview',
@@ -118,6 +125,11 @@ const CareerRoute = CareerRouteImport.update({
 const AssessmentsRoute = AssessmentsRouteImport.update({
   id: '/assessments',
   path: '/assessments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AirDrawRoute = AirDrawRouteImport.update({
+  id: '/air-draw',
+  path: '/air-draw',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -163,6 +175,7 @@ const AuthGithubCallbackRoute = AuthGithubCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
   '/career': typeof CareerRoute
   '/command': typeof CommandRoute
@@ -171,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
   '/interview': typeof InterviewRoute
+  '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
@@ -190,6 +204,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
   '/career': typeof CareerRoute
   '/command': typeof CommandRoute
@@ -198,6 +213,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
   '/interview': typeof InterviewRoute
+  '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
@@ -218,6 +234,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
   '/career': typeof CareerRoute
   '/command': typeof CommandRoute
@@ -226,6 +243,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
   '/interview': typeof InterviewRoute
+  '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
@@ -247,6 +265,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/air-draw'
     | '/assessments'
     | '/career'
     | '/command'
@@ -255,6 +274,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/explore'
     | '/interview'
+    | '/job-roadmap'
     | '/login'
     | '/notes'
     | '/profile'
@@ -274,6 +294,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/air-draw'
     | '/assessments'
     | '/career'
     | '/command'
@@ -282,6 +303,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/explore'
     | '/interview'
+    | '/job-roadmap'
     | '/login'
     | '/notes'
     | '/profile'
@@ -301,6 +323,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/air-draw'
     | '/assessments'
     | '/career'
     | '/command'
@@ -309,6 +332,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/explore'
     | '/interview'
+    | '/job-roadmap'
     | '/login'
     | '/notes'
     | '/profile'
@@ -329,6 +353,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AirDrawRoute: typeof AirDrawRoute
   AssessmentsRoute: typeof AssessmentsRoute
   CareerRoute: typeof CareerRoute
   CommandRoute: typeof CommandRoute
@@ -337,6 +362,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRoute
   InterviewRoute: typeof InterviewRoute
+  JobRoadmapRoute: typeof JobRoadmapRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProfileRoute: typeof ProfileRoute
@@ -420,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/job-roadmap': {
+      id: '/job-roadmap'
+      path: '/job-roadmap'
+      fullPath: '/job-roadmap'
+      preLoaderRoute: typeof JobRoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/interview': {
       id: '/interview'
       path: '/interview'
@@ -474,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/assessments'
       fullPath: '/assessments'
       preLoaderRoute: typeof AssessmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/air-draw': {
+      id: '/air-draw'
+      path: '/air-draw'
+      fullPath: '/air-draw'
+      preLoaderRoute: typeof AirDrawRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -537,6 +577,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AirDrawRoute: AirDrawRoute,
   AssessmentsRoute: AssessmentsRoute,
   CareerRoute: CareerRoute,
   CommandRoute: CommandRoute,
@@ -545,6 +586,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRoute,
   InterviewRoute: InterviewRoute,
+  JobRoadmapRoute: JobRoadmapRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProfileRoute: ProfileRoute,

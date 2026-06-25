@@ -244,7 +244,7 @@ function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPen
             ))}
           </div>
         </div>
-        
+
         <button
           onClick={onMarkComplete}
           disabled={isCompleted || isPending}
@@ -257,7 +257,9 @@ function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPen
           }`}
         >
           {isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={14} />}
-          <span>{isCompleted ? "Completed" : isReady ? "Mark Complete" : "Mark Complete Anyway"}</span>
+          <span>
+            {isCompleted ? "Completed" : isReady ? "Mark Complete" : "Mark Complete Anyway"}
+          </span>
         </button>
       </div>
     </div>
@@ -500,7 +502,9 @@ function TopicWorkspace() {
             className="flex items-center gap-1.5 text-[#aaa] hover:text-[#eee] transition-colors shrink-0"
           >
             <ArrowLeft size={14} />
-            <span className="text-sm font-mono tracking-widest uppercase hidden sm:block">Back</span>
+            <span className="text-sm font-mono tracking-widest uppercase hidden sm:block">
+              Back
+            </span>
           </Link>
 
           <div className="w-px h-5 bg-[#1e1e1e]" />
@@ -539,9 +543,13 @@ function TopicWorkspace() {
             </button>
 
             {focusRadioEnabled && (
-              <iframe width="0" height="0"
+              <iframe
+                width="0"
+                height="0"
                 src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=0"
-                frameBorder="0" allow="autoplay" className="hidden"
+                frameBorder="0"
+                allow="autoplay"
+                className="hidden"
               />
             )}
 
@@ -550,7 +558,11 @@ function TopicWorkspace() {
               disabled={commitGitHubMutation.isPending}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#3b5bdb]/40 hover:text-[#60a5fa]"
             >
-              {commitGitHubMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <GitBranch size={12} />}
+              {commitGitHubMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <GitBranch size={12} />
+              )}
               <span className="hidden sm:inline">Commit</span>
             </button>
 
@@ -563,7 +575,11 @@ function TopicWorkspace() {
                   : "border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#00FF66]/40 hover:text-[#00FF66]"
               }`}
             >
-              {markDoneMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+              {markDoneMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={12} />
+              )}
               <span className="hidden sm:inline">{isCompleted ? "Completed" : "Done"}</span>
             </button>
           </div>
@@ -607,7 +623,6 @@ function TopicWorkspace() {
           })}
         </div>
       </header>
-
 
       {/* ── Body ── */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
@@ -812,9 +827,11 @@ function TopicWorkspace() {
             </div>
             <div className="p-6 space-y-6">
               <div className="text-base text-[#d4d4d4] leading-relaxed">
-                This workspace uses a strict <strong className="text-[#e8e8e8]">Spaced Repetition engine</strong>. You must complete phases sequentially to ensure deep understanding before moving forward.
+                This workspace uses a strict{" "}
+                <strong className="text-[#e8e8e8]">Spaced Repetition engine</strong>. You must
+                complete phases sequentially to ensure deep understanding before moving forward.
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="w-8 h-8 rounded-full bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
@@ -822,7 +839,10 @@ function TopicWorkspace() {
                   </div>
                   <div>
                     <h4 className="text-lg font-medium text-[#e8e8e8]">1. Notes</h4>
-                    <p className="text-[#888] text-sm mt-1">Distill the topic using markdown. Attach reference files and screenshots. This unlocks AI flashcard generation.</p>
+                    <p className="text-[#888] text-sm mt-1">
+                      Distill the topic using markdown. Attach reference files and screenshots. This
+                      unlocks AI flashcard generation.
+                    </p>
                   </div>
                 </div>
 
@@ -832,7 +852,10 @@ function TopicWorkspace() {
                   </div>
                   <div>
                     <h4 className="text-lg font-medium text-[#e8e8e8]">2. Flashcards</h4>
-                    <p className="text-[#888] text-sm mt-1">AI generates cards from your notes. You must manually verify each card for quality before they enter your daily review queue.</p>
+                    <p className="text-[#888] text-sm mt-1">
+                      AI generates cards from your notes. You must manually verify each card for
+                      quality before they enter your daily review queue.
+                    </p>
                   </div>
                 </div>
 
@@ -842,7 +865,10 @@ function TopicWorkspace() {
                   </div>
                   <div>
                     <h4 className="text-lg font-medium text-[#e8e8e8]">3. Quiz</h4>
-                    <p className="text-[#888] text-sm mt-1">Prove your retention. You must score 100% on a dynamically generated quiz to unlock the Feynman and Build phases.</p>
+                    <p className="text-[#888] text-sm mt-1">
+                      Prove your retention. You must score 100% on a dynamically generated quiz to
+                      unlock the Feynman and Build phases.
+                    </p>
                   </div>
                 </div>
 
@@ -852,7 +878,10 @@ function TopicWorkspace() {
                   </div>
                   <div>
                     <h4 className="text-lg font-medium text-[#e8e8e8]">4. Feynman & Build</h4>
-                    <p className="text-[#888] text-sm mt-1">Submit a GitHub repo demonstrating your application of the knowledge for AI evaluation and final topic mastery.</p>
+                    <p className="text-[#888] text-sm mt-1">
+                      Submit a GitHub repo demonstrating your application of the knowledge for AI
+                      evaluation and final topic mastery.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1253,7 +1282,9 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             <div className="text-base font-medium text-[#e8e8e8]">
               {noteFile ? noteFile.name : "Upload reference document"}
             </div>
-            <div className="text-sm text-[#666] mt-0.5">Drag & drop or click to browse (PDF, DOCX, images)</div>
+            <div className="text-sm text-[#666] mt-0.5">
+              Drag & drop or click to browse (PDF, DOCX, images)
+            </div>
           </div>
           {noteFile && (
             <button
@@ -1466,10 +1497,15 @@ function QuizTab({ topicId }: { topicId: number }) {
       {/* Questions */}
       <div className="space-y-4">
         {questions.map((q: any, i: number) => (
-          <div key={i} className="rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden shadow-sm">
+          <div
+            key={i}
+            className="rounded-xl border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden shadow-sm"
+          >
             <div className="px-5 py-4 border-b border-[#1a1a1a] flex items-start gap-3">
               <span className="text-sm font-mono text-[#666] mt-0.5 shrink-0">Q{i + 1}</span>
-              <span className="text-[17px] font-medium text-[#e8e8e8] leading-relaxed">{q.question}</span>
+              <span className="text-[17px] font-medium text-[#e8e8e8] leading-relaxed">
+                {q.question}
+              </span>
             </div>
             <div className="p-4 grid grid-cols-1 gap-2">
               {q.options.map((opt: string, j: number) => {
@@ -1537,7 +1573,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   });
 
   const actionMutation = useMutation({
-    mutationFn: async ({ action, payload }: { action: string, payload: any }) => {
+    mutationFn: async ({ action, payload }: { action: string; payload: any }) => {
       const res = await apiFetch(`/topics/${topicId}/flashcards/`, {
         method: "POST",
         body: JSON.stringify({ action, ...payload }),
@@ -1583,11 +1619,14 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
   }, [pendingCards.length]);
 
   const handleVerify = (cardId: number, front: string, back: string, rating: number = 0) => {
-    actionMutation.mutate({ action: 'verify', payload: { card_id: cardId, front, back, quality_rating: rating } });
+    actionMutation.mutate({
+      action: "verify",
+      payload: { card_id: cardId, front, back, quality_rating: rating },
+    });
   };
 
   const handleDelete = (cardId: number) => {
-    actionMutation.mutate({ action: 'delete', payload: { card_id: cardId } });
+    actionMutation.mutate({ action: "delete", payload: { card_id: cardId } });
   };
 
   if (isLoading)
@@ -1676,7 +1715,10 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
               <button
                 onClick={() => {
                   if (c.front && c.back) {
-                    actionMutation.mutate({ action: 'create_manual', payload: { front: c.front, back: c.back } });
+                    actionMutation.mutate({
+                      action: "create_manual",
+                      payload: { front: c.front, back: c.back },
+                    });
                     setDraftCards(draftCards.filter((_, idx) => idx !== i));
                   }
                 }}
@@ -1737,17 +1779,23 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
               <div>
                 <h4 className="text-[#f59e0b] font-semibold mb-1">Human Verification Required</h4>
                 <p className="text-sm text-[#eee]/80">
-                  AI generated these cards. To ensure quality learning, you must manually read, edit (if necessary), and approve each card before it enters your Spaced Repetition queue. 
+                  AI generated these cards. To ensure quality learning, you must manually read, edit (if necessary), and approve each card before it enters your Spaced Repetition queue.
                   <br/><span className="text-[#00FF66] font-mono mt-2 inline-block">+1 XP for every card you verify.</span>
                 </p>
               </div>
             </div>
           </div>
-          
+
           {pendingCards.map((c: any) => {
-             return (
-               <PendingCard key={c.id} card={c} handleVerify={handleVerify} handleDelete={handleDelete} actionMutation={actionMutation} />
-             );
+            return (
+              <PendingCard
+                key={c.id}
+                card={c}
+                handleVerify={handleVerify}
+                handleDelete={handleDelete}
+                actionMutation={actionMutation}
+              />
+            );
           })}
         </div>
       ) : (
@@ -1779,16 +1827,23 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                     style={frontStyle}
                     className="absolute inset-0 rounded-2xl border border-[#1e1e1e] bg-[#0d0d0d] flex flex-col justify-between p-6"
                   >
-                    <div className={`text-[10px] font-mono uppercase tracking-widest ${isDue ? "text-[#f59e0b]" : "text-[#444]"}`}>
+                    <div
+                      className={`text-[10px] font-mono uppercase tracking-widest ${isDue ? "text-[#f59e0b]" : "text-[#444]"}`}
+                    >
                       {isDue ? "⚡ Due now" : "Learned"}
                     </div>
                     <div className="text-[#e8e8e8] text-base font-medium leading-relaxed">
                       {f.front}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">Tap to reveal answer</span>
+                      <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">
+                        Tap to reveal answer
+                      </span>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(f.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(f.id);
+                        }}
                         className="text-[#2a2a2a] hover:text-[#ef4444] transition-colors"
                       >
                         <Trash2 size={13} />
@@ -1802,7 +1857,9 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   >
                     <div className="text-[10px] uppercase font-mono tracking-widest text-[#00FF66]/50">Answer</div>
                     <div className="text-[#d4d4d4] text-base leading-relaxed">{f.back}</div>
-                    <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest">Tap to flip back</div>
+                    <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest">
+                      Tap to flip back
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1823,7 +1880,9 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
     <div className="rounded-xl border border-[#141414] bg-[#090909] overflow-hidden">
       <div className="p-4 space-y-3">
         <div>
-          <label className="text-xs text-[#666] block mb-1.5 font-mono uppercase tracking-[0.2em] font-medium">Question</label>
+          <label className="text-xs text-[#666] block mb-1.5 font-mono uppercase tracking-[0.2em] font-medium">
+            Question
+          </label>
           <input
             type="text"
             value={front}
@@ -1832,7 +1891,9 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
           />
         </div>
         <div>
-          <label className="text-xs text-[#666] block mb-1.5 font-mono uppercase tracking-[0.2em] font-medium">Answer</label>
+          <label className="text-xs text-[#666] block mb-1.5 font-mono uppercase tracking-[0.2em] font-medium">
+            Answer
+          </label>
           <textarea
             value={back}
             onChange={(e) => setBack(e.target.value)}
@@ -1844,8 +1905,8 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
             <button
               onClick={() => setRating(1)}
               className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
-                rating === 1 
-                  ? 'bg-[#00FF66]/20 border-[#00FF66]/40 text-[#00FF66]' 
+                rating === 1
+                  ? 'bg-[#00FF66]/20 border-[#00FF66]/40 text-[#00FF66]'
                   : 'bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]'
               }`}
               title="Good AI Generation"
@@ -1855,9 +1916,9 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
             <button
               onClick={() => setRating(-1)}
               className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
-                rating === -1 
-                  ? 'bg-[#ef4444]/20 border-[#ef4444]/40 text-[#ef4444]' 
-                  : 'bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]'
+                rating === -1
+                  ? "bg-[#ef4444]/20 border-[#ef4444]/40 text-[#ef4444]"
+                  : "bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]"
               }`}
               title="Poor AI Generation"
             >
@@ -1883,7 +1944,6 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
     </div>
   );
 }
-
 
 /* ─────────────────────────────────────────────
    Build Tab

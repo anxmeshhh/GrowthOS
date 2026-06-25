@@ -10,7 +10,7 @@ from .views import (
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
     AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, AdminAnalyticsView, AdminContentView, AdminSettingsView, CustomPathViewSet, PathProgressView,
-    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, SearchView, NotificationView,
+    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, JobDescriptionRoadmapView, SearchView, NotificationView,
     JDMappingView, ResumeAnalysisView,
     OnboardingView, DailyMissionView, LearningInsightsView,
     TopicResourceView, MockInterviewView, MockInterviewAnswerView, InterviewNotesTopicsView,
@@ -42,6 +42,7 @@ urlpatterns = [
     
     # Path Endpoints
     path('paths/generate/', GeneratePathView.as_view(), name='generate_path'),
+    path('job-roadmap/generate/', JobDescriptionRoadmapView.as_view(), name='generate_job_roadmap'),
     
     # Dashboard Endpoints
     path('pomodoro/', PomodoroView.as_view(), name='pomodoro'),
