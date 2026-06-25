@@ -16,6 +16,8 @@ import {
   Activity,
   PanelLeftClose,
   PanelLeftOpen,
+  Crosshair,
+  Zap,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -26,11 +28,10 @@ import { Logo } from "@/components/logo";
 
 const NAV_GROUPS = [
   {
-    label: "Overview",
+    label: "Command",
     items: [
+      { to: "/command", label: "Command Center", icon: Crosshair },
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/profile", label: "Profile", icon: User },
-      { to: "/progress", label: "Progress", icon: TrendingUp },
     ],
   },
   {
@@ -49,11 +50,16 @@ const NAV_GROUPS = [
     items: [
       { to: "/projects", label: "Projects", icon: Github },
       { to: "/career", label: "Career Intel", icon: TrendingUp },
+      { to: "/interview", label: "Mock Interview", icon: Zap },
     ],
   },
   {
-    label: "System",
-    items: [{ to: "/settings", label: "Settings", icon: Settings }],
+    label: "You",
+    items: [
+      { to: "/profile", label: "Profile", icon: User },
+      { to: "/progress", label: "Progress", icon: TrendingUp },
+      { to: "/settings", label: "Settings", icon: Settings },
+    ],
   },
 ] as const;
 
@@ -647,10 +653,10 @@ export function BottomNavBar() {
 
   // Select the 5 most critical routes for mobile
   const mobileNavItems = [
-    { to: "/dashboard", label: "Home", icon: LayoutDashboard },
+    { to: "/command", label: "Mission", icon: Crosshair },
     { to: "/discover", label: "Discover", icon: Compass },
     { to: "/roadmap", label: "Roadmap", icon: Map },
-    { to: "/progress", label: "Progress", icon: TrendingUp },
+    { to: "/review", label: "Review", icon: Activity },
     { to: "/profile", label: "Profile", icon: User },
   ];
 

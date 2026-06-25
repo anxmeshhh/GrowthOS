@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { PageShell, PageHeader, Card, Btn, Badge } from "@/components/growth-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import {
   Briefcase, FileText, Upload, CheckCircle2, XCircle,
-  Clock, Loader2, ChevronDown, ChevronUp, Zap, Target,
+  Clock, Loader2, ChevronDown, ChevronUp, Zap, Target, Map, Mic,
 } from "lucide-react";
 
 export const Route = createFileRoute("/career")({
@@ -81,7 +81,7 @@ function GapReport({ gap, title }: { gap: any; title: string }) {
 
 // ── JD Panel ─────────────────────────────────────────────────────────────────
 
-function JDPanel() {
+function JDPanel({ onAnalyzed }: { onAnalyzed?: (id: number) => void }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState<any>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -106,7 +106,7 @@ function JDPanel() {
       if (!r.ok) { const e = await r.json(); throw new Error(e.error || "Analysis failed"); }
       return r.json();
     },
-    onSuccess: (data) => { setResult(data); qc.invalidateQueries({ queryKey: ["jd_history"] }); },
+    onSuccess: (data) => { setResult(data); qc.invalidateQueries({ queryKey: ["jd_history"] }); onAnalyzed?.(data.id); },
   });
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -292,7 +292,51 @@ function ResumePanel() {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+function GeneratePathButton({ jdId, source }: { jdId?: number; source: "jd" | "resume" }) {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState("");
+  const navigate = useNavigate();
+
+  async function generate() {
+    setLoading(true); setErr("");
+    try {
+      const body: any = { source };
+      if (source === "jd" && jdId) body.jd_id = jdId;
+      const r = await apiFetch("/career/generate-path/", { method: "POST", body: JSON.stringify(body) });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || "Failed");
+      setResult(data);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (result) return (
+    <div style={{ marginTop: 16, padding: "12px 14px", background: "rgba(0,255,102,0.06)", border: "1px solid rgba(0,255,102,0.2)", borderRadius: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "#00FF66", marginBottom: 6 }}>{result.message}</div>
+      <button onClick={() => navigate({ to: "/custom-paths" })} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#a78bfa", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+        <Map size={13} /> Go to My Paths
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      {err && <p style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{err}</p>}
+      <Btn onClick={generate} disabled={loading} variant="outline" size="sm">
+        {loading ? <Loader2 size={13} className="animate-spin" /> : <><Map size={13} /> Generate Custom Roadmap</>}
+      </Btn>
+    </div>
+  );
+}
+
 function CareerPage() {
+  const navigate = useNavigate();
+  const [lastJdId, setLastJdId] = useState<number | undefined>();
+
   return (
     <PageShell>
       <PageHeader
@@ -301,14 +345,27 @@ function CareerPage() {
         subtitle="Paste any job description or upload your resume — GrowthOS maps it to exactly what you need to study."
       />
 
+      {/* Quick actions */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <Btn onClick={() => navigate({ to: "/interview" })} variant="outline" size="sm">
+          <Mic size={13} /> Practice Interview
+        </Btn>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(480px, 1fr))", gap: 24 }}>
-        <JDPanel />
-        <ResumePanel />
+        <div>
+          <JDPanel onAnalyzed={(id) => setLastJdId(id)} />
+          {lastJdId && <GeneratePathButton jdId={lastJdId} source="jd" />}
+        </div>
+        <div>
+          <ResumePanel />
+          <GeneratePathButton source="resume" />
+        </div>
       </div>
 
       <div style={{ marginTop: 24, padding: "16px 20px", background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 12, fontSize: 13, color: "#888" }}>
         <span style={{ color: "#a78bfa", fontWeight: 600 }}>How it works: </span>
-        GrowthOS uses AI to extract required skills from job descriptions and resumes, then cross-references them with your learning progress across all paths. Green = you have it. Orange = in progress. Red = not started yet.
+        GrowthOS uses AI to extract required skills from job descriptions and resumes, then cross-references them with your learning progress. Green = done. Orange = in progress. Red = not started. Hit "Generate Custom Roadmap" to get a personalized learning path built from your gaps.
       </div>
     </PageShell>
   );

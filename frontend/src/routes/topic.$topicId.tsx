@@ -36,6 +36,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/toast-context";
 import { useGrowth } from "@/lib/growth-store";
+import { TopicResources } from "@/components/topic-resources";
+import { StudyRoom } from "@/components/study-room";
 
 /* Optional caption editor shown directly under a pasted screenshot.
    Saves on blur / Enter; leaving it blank is fine (caption is optional). */
@@ -74,7 +76,7 @@ export const Route = createFileRoute("/topic/$topicId")({
   component: TopicWorkspace,
 });
 
-type Tab = "notes" | "flash" | "quiz" | "build" | "feynman";
+type Tab = "notes" | "flash" | "quiz" | "build" | "feynman" | "resources";
 
 /* ─────────────────────────────────────────────
    Utility
@@ -481,6 +483,7 @@ function TopicWorkspace() {
     { id: "quiz", label: "Quiz", icon: <Zap size={16} />, done: checklist.quiz, locked: false },
     { id: "feynman", label: "Feynman", icon: <MessageSquare size={16} />, done: checklist.feynman, locked: false },
     { id: "build", label: "Build", icon: <Hammer size={16} />, done: checklist.project, locked: false },
+    { id: "resources", label: "Resources", icon: <ExternalLink size={16} />, done: false, locked: false },
   ];
 
   return (
@@ -778,6 +781,15 @@ function TopicWorkspace() {
             {tab === "feynman" && <FeynmanTab topicId={topic.id} />}
             {tab === "build" && (
               <BuildTab topic={topic} materials={materials} progress={progress} />
+            )}
+            {tab === "resources" && (
+              <div style={{ maxWidth: 680, margin: "0 auto", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: "#e5e5e5", margin: 0 }}>Learning Resources</h2>
+                  <StudyRoom topicId={String(topic.id)} topicSlug={topic.slug} />
+                </div>
+                <TopicResources topicId={String(topic.id)} />
+              </div>
             )}
           </div>
         </section>

@@ -57,7 +57,8 @@ function NotificationPanel() {
       if (!r.ok) return { notifications: [], unread_count: 0 };
       return r.json();
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 
   const markRead = useMutation({
@@ -88,10 +89,7 @@ function NotificationPanel() {
   return (
     <div style={{ position: "relative" }} ref={panelRef}>
       <button
-        onClick={() => {
-          setOpen(o => !o);
-          if (!open && unread > 0) markRead.mutate({ all: true });
-        }}
+        onClick={() => setOpen(o => !o)}
         style={{
           display: "flex", alignItems: "center", justifyContent: "center",
           width: "38px", height: "38px", borderRadius: "10px",
@@ -169,7 +167,8 @@ function NotificationPanel() {
 // ── Route label map ──────────────────────────────────────────────────────────
 
 const ROUTE_LABELS: Record<string, string> = {
-  "/dashboard": "Command Center",
+  "/command": "Command Center",
+  "/dashboard": "Dashboard",
   "/profile": "Profile",
   "/progress": "Progress",
   "/discover": "Discover",
@@ -181,6 +180,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/projects": "Projects",
   "/settings": "Settings",
   "/career": "Career Intelligence",
+  "/interview": "Mock Interview",
 };
 
 // ── TopHeader ────────────────────────────────────────────────────────────────

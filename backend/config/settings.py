@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 
-load_dotenv()
+load_dotenv(override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -169,9 +169,11 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '600/hour',      # Unauthenticated users: 600 requests/hour
-        'user': '10000/hour',    # Authenticated users: 10000 requests/hour
-        'login': '15/minute',    # Login endpoint: max 15 attempts/minute
+        'anon': '600/hour',
+        'user': '10000/hour',
+        'login': '15/minute',
+        'search': '60/minute',       # Search: 60 queries/min per user
+        'ai_generation': '20/hour',  # AI endpoints: 20/hour to guard API costs
     }
 }
 
@@ -189,12 +191,22 @@ SIMPLE_JWT = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://redis:6379/1"),
+_REDIS_URL = os.environ.get("REDIS_URL", "")
+if _REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _REDIS_URL,
+        }
     }
-}
+else:
+    # Local dev without Redis: use in-process memory cache.
+    # Throttle counts reset on restart but everything else works fine.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
 
 # Upload size protection
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB per file in memory

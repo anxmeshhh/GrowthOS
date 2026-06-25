@@ -1,18 +1,29 @@
 from rest_framework import viewsets, views, generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from django.db.models import Sum, Q, Count
+from django.db import transaction
+from django.db.models import Sum, Q, Count, Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 from groq import Groq
 import requests
+import datetime
+import re
+import json
 import os
 import logging
 
 logger = logging.getLogger("core.views")
+
+def groq_client():
+    """Return a Groq client using the current env key — reads fresh on every call."""
+    key = os.environ.get('GROQ_API_KEY', '')
+    if not key:
+        raise ValueError("GROQ_API_KEY is not set in environment")
+    return Groq(api_key=key)
 
 # ── Admin-editable system settings ──────────────────────────────────────────
 # Known settings with type + default. SiteSetting rows override these.
@@ -44,7 +55,7 @@ def get_setting_int(key, fallback):
     except (TypeError, ValueError):
         return fallback
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting, Notification, JDAnalysis, ResumeAnalysis
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, Flashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting, Notification, JDAnalysis, ResumeAnalysis, DailyMission, TopicResource, MockInterview, StudyRoom, StudyRoomParticipant
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
@@ -106,82 +117,78 @@ def _auto_github_commit(user, topic):
 
 class SearchView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'search'
 
     def get(self, request):
-        q = request.query_params.get('q', '').strip()
+        q = request.query_params.get('q', '').strip()[:100]  # cap at 100 chars
         if len(q) < 2:
+            return Response({'results': []})
+
+        # Strip characters that could cause regex issues
+        q_safe = re.sub(r'[^\w\s\-\.]', '', q)[:80]
+        if not q_safe:
             return Response({'results': []})
 
         user = request.user
 
         paths = LearningPath.objects.filter(
-            Q(title__icontains=q) | Q(description__icontains=q),
-            Q(created_by=user) | Q(is_custom=False) | Q(shared_with_users__shared_to=user)
-        ).distinct().values('id', 'title', 'slug', 'description')[:5]
+            Q(title__icontains=q_safe) | Q(description__icontains=q_safe),
+            Q(created_by=user) | Q(is_custom=False)
+        ).distinct()[:5]
 
         topics = Topic.objects.filter(
-            Q(title__icontains=q) | Q(summary__icontains=q),
-            Q(path__created_by=user) | Q(path__is_custom=False) | Q(path__shared_with_users__shared_to=user)
-        ).distinct().select_related('path').values('id', 'title', 'slug', 'summary', 'path__title', 'path__slug')[:8]
+            Q(title__icontains=q_safe) | Q(summary__icontains=q_safe),
+            Q(path__created_by=user) | Q(path__is_custom=False)
+        ).distinct().select_related('path')[:8]
 
         notes = TopicNote.objects.filter(
-            user=user, content__icontains=q
-        ).select_related('topic', 'topic__path').values(
-            'id', 'topic__id', 'topic__title', 'topic__slug', 'topic__path__slug', 'content'
-        )[:5]
+            user=user
+        ).filter(Q(content__icontains=q_safe)).select_related('topic', 'topic__path')[:5]
 
-        from .models import Flashcard
         cards = Flashcard.objects.filter(
             user=user
-        ).filter(Q(front__icontains=q) | Q(back__icontains=q)).select_related('topic').values(
-            'id', 'front', 'back', 'topic__title', 'topic__slug'
-        )[:5]
+        ).filter(Q(front__icontains=q_safe) | Q(back__icontains=q_safe)).select_related('topic')[:5]
 
         results = []
         for p in paths:
             results.append({
-                'type': 'path',
-                'id': p['id'],
-                'title': p['title'],
-                'subtitle': p['description'][:80] if p['description'] else '',
-                'link': f"/roadmap?path={p['slug']}",
+                'type': 'path', 'id': p.id, 'title': p.title,
+                'subtitle': (p.description or '')[:80],
+                'link': f"/roadmap?path={p.slug}",
             })
         for t in topics:
             results.append({
-                'type': 'topic',
-                'id': t['id'],
-                'title': t['title'],
-                'subtitle': f"in {t['path__title']}",
-                'link': f"/topic/{t['slug']}",
+                'type': 'topic', 'id': t.id, 'title': t.title,
+                'subtitle': f"in {t.path.title}",
+                'link': f"/topic/{t.slug}",
             })
         for n in notes:
-            snippet = n['content']
-            idx = snippet.lower().find(q.lower())
-            snippet = ('...' + snippet[max(0, idx - 30):idx + 60] + '...') if idx >= 0 else snippet[:80]
+            content = n.content or ''
+            idx = content.lower().find(q_safe.lower())
+            snippet = ('…' + content[max(0, idx-30):idx+60] + '…') if idx >= 0 else content[:80]
             results.append({
-                'type': 'note',
-                'id': n['id'],
-                'title': f"Note: {n['topic__title']}",
+                'type': 'note', 'id': n.id,
+                'title': f"Note: {n.topic.title}",
                 'subtitle': snippet,
-                'link': f"/topic/{n['topic__slug']}",
+                'link': f"/topic/{n.topic.slug}",
             })
         for c in cards:
             results.append({
-                'type': 'flashcard',
-                'id': c['id'],
-                'title': c['front'][:80],
-                'subtitle': f"Flashcard in {c['topic__title']}",
-                'link': f"/topic/{c['topic__slug']}",
+                'type': 'flashcard', 'id': c.id,
+                'title': c.front[:80],
+                'subtitle': f"Flashcard in {c.topic.title}",
+                'link': f"/topic/{c.topic.slug}",
             })
 
-        return Response({'results': results, 'query': q})
+        return Response({'results': results, 'query': q_safe, 'total': len(results)})
 
 
 class NotificationView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        notifs = Notification.objects.filter(user=request.user)[:30]
+        # Ordered by -created_at (model Meta guarantees this)
+        notifs = Notification.objects.filter(user=request.user).order_by('-created_at')[:40]
         unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
         data = [
             {
@@ -197,12 +204,18 @@ class NotificationView(views.APIView):
         return Response({'notifications': data, 'unread_count': unread_count})
 
     def post(self, request):
-        """Mark notifications as read. Pass {"ids": [1,2,3]} or {"all": true}."""
+        """Mark notifications as read. {"ids": [1,2,3]} or {"all": true}."""
         if request.data.get('all'):
             Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         else:
             ids = request.data.get('ids', [])
-            Notification.objects.filter(user=request.user, id__in=ids).update(is_read=True)
+            if not isinstance(ids, list):
+                return Response({'error': 'ids must be a list'}, status=400)
+            # Security: only mark notifications that belong to this user
+            valid_ids = [i for i in ids if isinstance(i, int)][:50]
+            Notification.objects.filter(
+                user=request.user, id__in=valid_ids
+            ).update(is_read=True)
         return Response({'status': 'ok'})
 
 
@@ -708,10 +721,7 @@ class TopicMaterialUploadView(views.APIView):
         Contribution.objects.create(user=request.user, action_type='material_uploaded', points=1)
         return Response(TopicMaterialSerializer(material).data, status=status.HTTP_201_CREATED)
 
-import os
 import PyPDF2
-import json
-import re
 
 class GeneratePathView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -722,7 +732,7 @@ class GeneratePathView(views.APIView):
             return Response({'error': 'Prompt is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             ai_prompt = f"""Generate a sequential learning roadmap based on this request: "{prompt}".
 Return EXACTLY a JSON object with this schema:
 {{
@@ -747,7 +757,6 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
             )
             response_content = chat_completion.choices[0].message.content.strip()
             
-            import json, re
             # Extract JSON if markdown wrapped
             match = re.search(r'\{.*\}', response_content, re.DOTALL)
             if match:
@@ -783,7 +792,7 @@ class VerifyMaterialView(views.APIView):
         text = text[:8000]
 
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
@@ -799,13 +808,10 @@ class VerifyMaterialView(views.APIView):
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            if response_content.startswith("```json"):
-                response_content = response_content[7:-3]
-            elif response_content.startswith("```"):
-                response_content = response_content[3:-3]
-            import json
+            response_content = re.sub(r'^```(?:json)?\s*', '', response_content, flags=re.IGNORECASE)
+            response_content = re.sub(r'\s*```$', '', response_content).strip()
             result = json.loads(response_content)
-            
+
             # H3: Clamp AI-returned score to [0, 100] to prevent injection tricks
             # where a crafted document causes the model to return score > 100.
             score = max(0, min(int(result.get('score', 0)), 100))
@@ -957,7 +963,7 @@ class DailyLoginView(views.APIView):
             while True:
                 if Contribution.objects.filter(user=request.user, action_type='daily_login', created_at__date=check).exists():
                     streak += 1
-                    check -= timezone.timedelta(days=1)
+                    check -= datetime.timedelta(days=1)
                 else:
                     break
 
@@ -1050,7 +1056,7 @@ Important Knowledge:
 Your goal is to aggressively motivate the user, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally. If the user asks about their current topic, use the topic context above to give specific, relevant help. If anyone asks who built you or where your code is, proudly tell them about Animesh Gupta and share the GitHub link.
 """
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             
             # Save user message
             ChatMessage.objects.create(user=user, role='user', content=user_message)
@@ -1119,7 +1125,7 @@ class TopicQuizView(views.APIView):
             return Response({'questions': quiz.questions[:count]})
             
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             
             note = TopicNote.objects.filter(user=request.user, topic=topic).first()
             user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else "\n\n(No custom study notes provided)"
@@ -1132,7 +1138,6 @@ class TopicQuizView(views.APIView):
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            import json, re
             match = re.search(r'\[.*\]', response_content, re.DOTALL)
             if match:
                 questions = json.loads(match.group(0))
@@ -1219,7 +1224,7 @@ class GenerateFlashcardsView(views.APIView):
         topic = _resolve_topic(topic_id, user=request.user)
         
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             
             note = TopicNote.objects.filter(user=request.user, topic=topic).first()
             user_notes = f"\n\nUser's Study Notes:\n{note.content}" if note and note.content.strip() else ""
@@ -1233,14 +1238,11 @@ class GenerateFlashcardsView(views.APIView):
             )
             response_content = chat_completion.choices[0].message.content.strip()
             
-            import json, re
             match = re.search(r'\[.*\]', response_content, re.DOTALL)
             if match:
                 raw_cards = json.loads(match.group(0))
             else:
                 raw_cards = json.loads(response_content)
-                
-            from .models import Flashcard
             
             created_cards = []
             for c in raw_cards:
@@ -1279,7 +1281,7 @@ class ProjectIdeasView(views.APIView):
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id, user=request.user)
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             prompt = f"Generate exactly 3 project ideas for a student learning '{topic.title}'. Return ONLY a JSON array where each object has: 'title' (short project name), 'description' (2-3 sentence description of what to build and what skills it demonstrates)."
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
@@ -1287,11 +1289,8 @@ class ProjectIdeasView(views.APIView):
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            if response_content.startswith("```json"):
-                response_content = response_content[7:-3]
-            elif response_content.startswith("```"):
-                response_content = response_content[3:-3]
-            import json
+            response_content = re.sub(r'^```(?:json)?\s*', '', response_content, flags=re.IGNORECASE)
+            response_content = re.sub(r'\s*```$', '', response_content).strip()
             ideas = json.loads(response_content)
             return Response({'ideas': ideas})
         except Exception as e:
@@ -1341,7 +1340,7 @@ class ScanRepoView(views.APIView):
             tree_text = "(Could not fetch file tree)"
 
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             prompt = f"""You are evaluating a student's GitHub project for the topic: '{topic.title}'.
 
 Repository: {repo_url}
@@ -1360,11 +1359,8 @@ Reply with EXACTLY this JSON format:
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
-            if response_content.startswith("```json"):
-                response_content = response_content[7:-3]
-            elif response_content.startswith("```"):
-                response_content = response_content[3:-3]
-            import json
+            response_content = re.sub(r'^```(?:json)?\s*', '', response_content, flags=re.IGNORECASE)
+            response_content = re.sub(r'\s*```$', '', response_content).strip()
             result = json.loads(response_content)
 
             score = result.get('score', 0)
@@ -1570,6 +1566,18 @@ class SubmitQuizView(views.APIView):
                 score, total = 0, 1
             percentage = score / total
 
+        # Always record the score on the quiz object
+        score_pct = round(percentage * 100)
+        quiz_obj = TopicQuiz.objects.filter(
+            user=request.user, topic=topic, difficulty=difficulty
+        ).first()
+        if quiz_obj:
+            quiz_obj.last_score = score_pct
+            quiz_obj.last_attempted_at = timezone.now()
+            if quiz_obj.best_score is None or score_pct > quiz_obj.best_score:
+                quiz_obj.best_score = score_pct
+            quiz_obj.save(update_fields=["last_score", "best_score", "last_attempted_at"])
+
         if percentage >= 0.8:
             today = timezone.now().date()
             xp = 0
@@ -1627,13 +1635,7 @@ class UserProfileView(views.APIView):
         quizzes_passed = Contribution.objects.filter(user=user, action_type='quiz_passed').count()
         
         feynman_mastered = TopicFeynman.objects.filter(user=user, score__gte=80).count()
-        flashcards_mastered = 0
-        user_flashcards = TopicFlashcard.objects.filter(user=user)
-        for tf in user_flashcards:
-            if isinstance(tf.cards, list):
-                for c in tf.cards:
-                    if isinstance(c, dict) and c.get('interval', 0) >= 1:
-                        flashcards_mastered += 1
+        flashcards_mastered = Flashcard.objects.filter(user=user, interval_days__gte=1).count()
         
         # Streak calculation — M4: fetch all login dates in ONE query, then walk
         # back in memory (was one query per day).
@@ -1646,7 +1648,7 @@ class UserProfileView(views.APIView):
         check = today
         while check in login_dates:
             streak += 1
-            check -= timezone.timedelta(days=1)
+            check -= datetime.timedelta(days=1)
 
         # XP breakdown by action type
         xp_breakdown = list(
@@ -1715,7 +1717,6 @@ class UserProfileView(views.APIView):
             badges.append({"id": "broadcaster", "title": "Broadcaster", "icon": "📡", "desc": "Published a public learning path"})
 
         can_revive_streak = False
-        import datetime
         if streak == 0 and total_xp >= 10:
             two_days_ago = today - datetime.timedelta(days=2)
             has_activity_two_days_ago = Contribution.objects.filter(user=user, created_at__date=two_days_ago).exists()
@@ -2161,7 +2162,6 @@ class CommitWorkspaceToGitHubView(views.APIView):
                 print(f"Failed to push document {doc.id}: {e}")
 
         # Push flashcards
-        import json
         flashcards = TopicFlashcard.objects.filter(user=request.user, topic=topic).first()
         if flashcards and flashcards.cards:
             push_to_github(
@@ -2250,7 +2250,6 @@ class ReviveStreakView(views.APIView):
 
     def post(self, request):
         user = request.user
-        import datetime
         from django.utils import timezone
 
         # M3: lock the profile row so two concurrent revives can't both pass the
@@ -2318,8 +2317,6 @@ class RequestAdminAccessView(views.APIView):
 
 # --- ADMIN VIEWS MERGED ---
 import psutil
-import json
-from rest_framework.permissions import IsAdminUser
 from django.core import serializers
 from django.http import HttpResponse
 from django.contrib.auth.models import User
@@ -2571,7 +2568,7 @@ class AdminUserDetailView(views.APIView):
         while True:
             if Contribution.objects.filter(user=user, action_type='daily_login', created_at__date=check).exists():
                 streak += 1
-                check -= timezone.timedelta(days=1)
+                check -= datetime.timedelta(days=1)
             else:
                 break
 
@@ -2686,7 +2683,6 @@ class AdminUserDetailView(views.APIView):
 
 from .models import AdminRequest
 from django.core import serializers
-import json
 from django.http import HttpResponse
 
 class AdminDataExportView(views.APIView):
@@ -3208,10 +3204,7 @@ class PathProgressView(views.APIView):
             }
         })
 
-from django.db import transaction
-from rest_framework import views
-from rest_framework.permissions import IsAdminUser
-from rest_framework.response import Response
+# (transaction, IsAdminUser, views, Response imported at top of file)
 
 
 class AdminRoadmapUploadView(views.APIView):
@@ -3388,7 +3381,7 @@ class TopicFeynmanView(views.APIView):
         
         # AI Mode
         try:
-            client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))
+            client = groq_client()
             
             prompt = f"""
 I am using the Feynman Technique to learn. I am trying to explain the concept of '{concept}' to a 5-year-old.
@@ -3415,7 +3408,6 @@ Return ONLY a JSON object with this exact structure:
             )
             response_content = chat_completion.choices[0].message.content.strip()
             
-            import json, re
             match = re.search(r'\{.*\}', response_content, re.DOTALL)
             if match:
                 ai_resp = json.loads(match.group(0))
@@ -3498,7 +3490,6 @@ class GlobalReviewQueueView(views.APIView):
 
     def post(self, request):
         from django.utils import timezone
-        import datetime
         from .models import Flashcard, Contribution
         
         card_id = request.data.get('card_id')
@@ -3555,7 +3546,6 @@ class TodayBriefingView(views.APIView):
     def get(self, request):
         from .models import Flashcard, TopicProgress, LearningPath, Topic, UserProfile
         from django.utils import timezone
-        import datetime
 
         today = timezone.now().date()
         
@@ -3620,7 +3610,7 @@ class TodayBriefingView(views.APIView):
 
 def _extract_skills_from_text(text, context="job description"):
     """Use Groq to extract structured skills from text."""
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+    client = groq_client()
     prompt = f"""Analyze this {context} and extract structured information.
 Return ONLY valid JSON in this exact format:
 {{
@@ -3641,11 +3631,7 @@ Text:
         max_tokens=800,
     )
     raw = resp.choices[0].message.content.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    return json.loads(raw)
+    return _extract_json(raw, array=False)
 
 
 def _build_gap_report(user, all_skills):
@@ -3677,6 +3663,7 @@ def _build_gap_report(user, all_skills):
 class JDMappingView(views.APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser, JSONParser)
+    throttle_scope = 'ai_generation'
 
     def post(self, request):
         import PyPDF2, io
@@ -3802,3 +3789,928 @@ class ResumeAnalysisView(views.APIView):
             })
         except ResumeAnalysis.DoesNotExist:
             return Response(None)
+
+
+# ── Command Center ────────────────────────────────────────────────────────────
+
+def _compute_job_readiness(user):
+    """
+    Weighted score (0–100):
+      40% topic completion rate
+      30% average quiz score
+      15% flashcard maturity (interval >= 21 days)
+      15% career gap coverage
+    """
+    from django.db.models import Avg
+
+    total = TopicProgress.objects.filter(user=user).count()
+    completed = TopicProgress.objects.filter(user=user, status='completed').count()
+    completion_score = (completed / total * 40) if total else 0
+
+    avg_quiz = TopicQuiz.objects.filter(user=user, best_score__isnull=False).aggregate(Avg('best_score'))['best_score__avg']
+    quiz_score = (avg_quiz / 100 * 30) if avg_quiz else 0
+
+    fc_total = Flashcard.objects.filter(user=user).count()
+    fc_mature = Flashcard.objects.filter(user=user, interval_days__gte=21).count()
+    flashcard_score = (fc_mature / fc_total * 15) if fc_total else 0
+
+    jd = JDAnalysis.objects.filter(user=user).order_by('-created_at').first()
+    if jd:
+        gap = jd.gap_report
+        covered = len(gap.get('completed', [])) + len(gap.get('in_progress', []))
+        total_skills = covered + len(gap.get('not_started', []))
+        career_score = (covered / total_skills * 15) if total_skills else 0
+    else:
+        career_score = 0
+
+    return round(min(100, completion_score + quiz_score + flashcard_score + career_score), 1)
+
+
+def _get_weak_topics(user, limit=3):
+    """Return topics where the user's best quiz score < 65%."""
+    weak = []
+    scored = (
+        TopicQuiz.objects
+        .filter(user=user, best_score__isnull=False, best_score__lt=65)
+        .select_related('topic')
+        .order_by('best_score')[:limit]
+    )
+    for q in scored:
+        if q.topic:
+            weak.append({
+                "topic_id": q.topic.id,
+                "title": q.topic.title,
+                "slug": q.topic.slug,
+                "best_score": q.best_score,
+            })
+    return weak
+
+
+def _estimate_weeks(user, profile):
+    """Estimate weeks to job-ready based on remaining topics and daily hours."""
+    remaining = TopicProgress.objects.filter(
+        user=user, status__in=['locked', 'available']
+    ).count()
+    due_cards = Flashcard.objects.filter(
+        user=user, next_review_date__lte=timezone.now().date()
+    ).count()
+    hours = max(profile.available_hours_per_day, 0.5)
+    # Rough: 2h per topic, 0.5h per 10 cards
+    total_hours = remaining * 2 + (due_cards / 10 * 0.5)
+    return round(total_hours / (hours * 7), 1) if total_hours else None
+
+
+def _build_tasks_for_level(user, profile, due_cards, weak_topics, in_progress_topic, next_topic):
+    """Build ordered task list adapted to skill_level."""
+    level = profile.skill_level
+    tasks = []
+
+    # --- FLASHCARD REVIEW (everyone) ---
+    if due_cards > 0:
+        batch = min(due_cards, 10 if level == 'beginner' else due_cards)
+        tasks.append({
+            "id": "flashcards",
+            "type": "flashcards",
+            "title": f"Review {batch} flashcard{'s' if batch != 1 else ''}",
+            "description": "Keep your memory sharp — spaced repetition at work.",
+            "link": "/review",
+            "duration_min": max(5, batch),
+            "xp": batch,
+            "priority": "high",
+            "completed": False,
+        })
+
+    # --- CURRENT TOPIC (everyone) ---
+    if in_progress_topic:
+        tasks.append({
+            "id": f"topic_{in_progress_topic.slug}",
+            "type": "topic",
+            "title": f"Continue: {in_progress_topic.title}",
+            "description": "Pick up right where you left off.",
+            "link": f"/topic/{in_progress_topic.slug}",
+            "duration_min": 25 if level == 'beginner' else 40,
+            "xp": 10,
+            "priority": "high",
+            "completed": False,
+        })
+    elif next_topic:
+        tasks.append({
+            "id": f"topic_{next_topic.slug}",
+            "type": "topic",
+            "title": f"Start: {next_topic.title}",
+            "description": "New topic unlocked — dive in.",
+            "link": f"/topic/{next_topic.slug}",
+            "duration_min": 30 if level == 'beginner' else 45,
+            "xp": 10,
+            "priority": "high",
+            "completed": False,
+        })
+
+    # Beginners stop here (3 tasks max) — don't overwhelm
+    if level == 'beginner':
+        if weak_topics:
+            t = weak_topics[0]
+            tasks.append({
+                "id": f"quiz_retry_{t['slug']}",
+                "type": "quiz",
+                "title": f"Retry quiz: {t['title']}",
+                "description": f"Your best score was {t['best_score']}%. You can beat it.",
+                "link": f"/topic/{t['slug']}",
+                "duration_min": 10,
+                "xp": 8,
+                "priority": "medium",
+                "completed": False,
+            })
+        return tasks[:3]
+
+    # --- INTERMEDIATE / EXPERT extras ---
+
+    # Weak topic quizzes
+    for t in weak_topics[:2]:
+        tasks.append({
+            "id": f"quiz_retry_{t['slug']}",
+            "type": "quiz",
+            "title": f"Retake quiz: {t['title']}",
+            "description": f"Score was {t['best_score']}% — aim for 80%+.",
+            "link": f"/topic/{t['slug']}",
+            "duration_min": 12,
+            "xp": 8,
+            "priority": "medium",
+            "completed": False,
+        })
+
+    # Career gap task (expert only)
+    if level == 'expert':
+        jd = JDAnalysis.objects.filter(user=user).order_by('-created_at').first()
+        if jd:
+            not_started = jd.gap_report.get('not_started', [])
+            if not_started:
+                skill = not_started[0]
+                tasks.append({
+                    "id": f"career_gap_{skill.get('topic_slug', 'unknown')}",
+                    "type": "career",
+                    "title": f"Close career gap: {skill.get('skill', '')}",
+                    "description": f"Required for {jd.job_title or 'your target role'} — not started yet.",
+                    "link": f"/topic/{skill.get('topic_slug', '')}",
+                    "duration_min": 40,
+                    "xp": 15,
+                    "priority": "high",
+                    "completed": False,
+                })
+
+        # Project / GitHub commit for experts
+        tasks.append({
+            "id": "github_commit",
+            "type": "project",
+            "title": "Commit today's work to GitHub",
+            "description": "Build your public record — consistent commits signal professionalism.",
+            "link": "/projects",
+            "duration_min": 10,
+            "xp": 5,
+            "priority": "low",
+            "completed": False,
+        })
+
+    return tasks[:7]
+
+
+def _generate_focus_message(user, profile, job_pct, weak_topics):
+    """One punchy AI-generated sentence that gives direction without overwhelming."""
+    client = groq_client()
+    name = user.first_name or user.username
+    level = profile.skill_level if profile else 'intermediate'
+    goal = profile.get_learning_goal_display() if profile and profile.learning_goal else 'learning'
+    weak_str = ", ".join(t["title"] for t in weak_topics) if weak_topics else "none"
+
+    prompt = (
+        f"Write ONE motivating sentence (max 25 words) for {name}, a {level}-level developer "
+        f"whose goal is '{goal}'. They are {job_pct}% job-ready. "
+        f"Weak areas: {weak_str}. "
+        f"Be direct, specific, no fluff. No emoji. Just the sentence."
+    )
+    try:
+        resp = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            temperature=0.7,
+            max_tokens=60,
+        )
+        return resp.choices[0].message.content.strip().strip('"')
+    except Exception:
+        return f"Stay consistent, {name} — small daily progress beats occasional sprints."
+
+
+class OnboardingView(views.APIView):
+    """Save user's skill level, goal, target role and daily availability."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        data = request.data
+        valid_levels = ['beginner', 'intermediate', 'expert']
+        valid_goals = ['get_job', 'upskill', 'freelance', 'hobby']
+
+        if data.get('skill_level') in valid_levels:
+            profile.skill_level = data['skill_level']
+        if data.get('learning_goal') in valid_goals:
+            profile.learning_goal = data['learning_goal']
+        if data.get('target_role'):
+            profile.target_role = str(data['target_role'])[:120]
+        if data.get('available_hours_per_day') is not None:
+            profile.available_hours_per_day = max(0.5, min(12, float(data['available_hours_per_day'])))
+        profile.onboarding_completed = True
+        profile.save()
+
+        return Response({
+            "skill_level": profile.skill_level,
+            "learning_goal": profile.learning_goal,
+            "target_role": profile.target_role,
+            "available_hours_per_day": profile.available_hours_per_day,
+        })
+
+    def get(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        return Response({
+            "onboarding_completed": profile.onboarding_completed,
+            "skill_level": profile.skill_level,
+            "learning_goal": profile.learning_goal,
+            "target_role": profile.target_role,
+            "available_hours_per_day": profile.available_hours_per_day,
+        })
+
+
+class DailyMissionView(views.APIView):
+    """
+    GET  — Return today's mission (generate if not yet created today).
+    POST — Mark a task complete: { task_id: "...", xp_earned: N }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.now().date()
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        mission = DailyMission.objects.filter(user=user, date=today).first()
+        if not mission:
+            mission = self._generate(user, profile, today)
+
+        return Response({
+            "date": mission.date,
+            "tasks": mission.tasks,
+            "focus_message": mission.focus_message,
+            "job_readiness_pct": mission.job_readiness_pct,
+            "estimated_weeks_to_ready": mission.estimated_weeks_to_ready,
+            "weak_topics": mission.weak_topics,
+            "total_xp_available": mission.total_xp_available,
+            "skill_level": profile.skill_level,
+            "learning_goal": profile.learning_goal,
+            "target_role": profile.target_role,
+        })
+
+    def post(self, request):
+        """Mark a task as completed and award XP."""
+        today = timezone.now().date()
+        user = request.user
+        task_id = request.data.get("task_id")
+        if not task_id:
+            return Response({"error": "task_id required"}, status=400)
+
+        mission = DailyMission.objects.filter(user=user, date=today).first()
+        if not mission:
+            return Response({"error": "No mission for today"}, status=404)
+
+        tasks = mission.tasks
+        xp_earned = 0
+        for t in tasks:
+            if t["id"] == task_id and not t["completed"]:
+                t["completed"] = True
+                xp_earned = t.get("xp", 0)
+                break
+
+        mission.tasks = tasks
+        mission.save(update_fields=["tasks"])
+
+        if xp_earned:
+            Contribution.objects.create(
+                user=user,
+                action_type='mission_task',
+                points=xp_earned,
+            )
+
+        completed_count = sum(1 for t in tasks if t["completed"])
+        all_done = completed_count == len(tasks)
+
+        return Response({
+            "completed_count": completed_count,
+            "total": len(tasks),
+            "all_done": all_done,
+            "xp_earned": xp_earned,
+        })
+
+    def _generate(self, user, profile, today):
+        due_cards = Flashcard.objects.filter(
+            user=user, next_review_date__lte=today
+        ).count()
+        weak_topics = _get_weak_topics(user)
+
+        in_progress_prog = (
+            TopicProgress.objects.filter(user=user, status='in_progress')
+            .select_related('topic').first()
+        )
+        in_progress_topic = in_progress_prog.topic if in_progress_prog else None
+
+        next_prog = (
+            TopicProgress.objects.filter(user=user, status='available')
+            .select_related('topic').first()
+        )
+        next_topic = next_prog.topic if next_prog else None
+
+        tasks = _build_tasks_for_level(
+            user, profile, due_cards, weak_topics, in_progress_topic, next_topic
+        )
+        job_pct = _compute_job_readiness(user)
+        weeks = _estimate_weeks(user, profile)
+        focus = _generate_focus_message(user, profile, job_pct, weak_topics)
+        total_xp = sum(t.get("xp", 0) for t in tasks)
+
+        return DailyMission.objects.create(
+            user=user,
+            date=today,
+            tasks=tasks,
+            focus_message=focus,
+            job_readiness_pct=job_pct,
+            estimated_weeks_to_ready=weeks,
+            weak_topics=weak_topics,
+            total_xp_available=total_xp,
+        )
+
+
+class LearningInsightsView(views.APIView):
+    """Personal learning analytics — velocity, strengths, weaknesses, history."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.db.models import Avg, Count
+        user = request.user
+        today = timezone.now().date()
+        thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
+        seven_days_ago = timezone.now() - datetime.timedelta(days=7)
+
+        # Completion velocity (topics/week over last 30 days)
+        recent_completions = TopicProgress.objects.filter(
+            user=user, status='completed', completed_at__gte=thirty_days_ago
+        ).count()
+        velocity = round(recent_completions / 4.3, 1)  # per week
+
+        # Total stats
+        total_topics = TopicProgress.objects.filter(user=user).count()
+        completed_total = TopicProgress.objects.filter(user=user, status='completed').count()
+        completed_this_week = TopicProgress.objects.filter(
+            user=user, status='completed', completed_at__gte=seven_days_ago
+        ).count()
+
+        # Quiz performance
+        quiz_stats = TopicQuiz.objects.filter(user=user, best_score__isnull=False).aggregate(
+            avg=Avg('best_score'), count=Count('id')
+        )
+
+        # Strong topics (best quiz scores)
+        strong = (
+            TopicQuiz.objects.filter(user=user, best_score__gte=80)
+            .select_related('topic')
+            .order_by('-best_score')[:5]
+        )
+        strong_list = [{"title": q.topic.title, "score": q.best_score} for q in strong if q.topic]
+
+        # Weak topics
+        weak_list = _get_weak_topics(user, limit=5)
+
+        # Flashcard stats
+        fc_total = Flashcard.objects.filter(user=user).count()
+        fc_due = Flashcard.objects.filter(user=user, next_review_date__lte=today).count()
+        fc_mature = Flashcard.objects.filter(user=user, interval_days__gte=21).count()
+
+        # XP this week
+        weekly_xp = (
+            Contribution.objects.filter(user=user, created_at__gte=seven_days_ago)
+            .aggregate(Sum('points'))['points__sum'] or 0
+        )
+
+        # Job readiness
+        job_pct = _compute_job_readiness(user)
+
+        # Mission history (last 7 days)
+        missions = DailyMission.objects.filter(user=user).order_by('-date')[:7]
+        mission_history = []
+        for m in missions:
+            done = sum(1 for t in m.tasks if t.get("completed"))
+            mission_history.append({
+                "date": m.date,
+                "tasks_done": done,
+                "tasks_total": len(m.tasks),
+                "xp_available": m.total_xp_available,
+            })
+
+        return Response({
+            "job_readiness_pct": job_pct,
+            "velocity_topics_per_week": velocity,
+            "topics": {
+                "total": total_topics,
+                "completed": completed_total,
+                "completed_this_week": completed_this_week,
+                "completion_pct": round(completed_total / total_topics * 100, 1) if total_topics else 0,
+            },
+            "quizzes": {
+                "avg_score": round(quiz_stats['avg'] or 0, 1),
+                "total_taken": quiz_stats['count'],
+            },
+            "flashcards": {
+                "total": fc_total,
+                "due_today": fc_due,
+                "mature": fc_mature,
+                "mastery_pct": round(fc_mature / fc_total * 100, 1) if fc_total else 0,
+            },
+            "weekly_xp": weekly_xp,
+            "strong_topics": strong_list,
+            "weak_topics": weak_list,
+            "mission_history": mission_history,
+        })
+
+
+# ── Topic Resource Library ────────────────────────────────────────────────────
+
+import urllib.parse as _urlparse
+
+def _is_safe_url(url: str) -> bool:
+    """Block private/internal URLs (SSRF protection)."""
+    try:
+        p = _urlparse.urlparse(url)
+        if p.scheme not in ('http', 'https'):
+            return False
+        host = p.hostname or ''
+        blocked = ('localhost', '127.0.0.1', '0.0.0.0', '::1')
+        if host in blocked or host.startswith('192.168.') or host.startswith('10.') or host.startswith('172.'):
+            return False
+        return True
+    except Exception:
+        return False
+
+
+class TopicResourceView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, topic_id):
+        topic = _resolve_topic(topic_id, user=request.user)
+        resources = TopicResource.objects.filter(topic=topic).select_related('added_by')
+        return Response([{
+            'id': r.id,
+            'title': r.title,
+            'url': r.url,
+            'type': r.type,
+            'description': r.description,
+            'upvotes': r.upvotes,
+            'is_verified': r.is_verified,
+            'added_by': r.added_by.username if r.added_by else None,
+            'created_at': r.created_at,
+        } for r in resources])
+
+    def post(self, request, topic_id):
+        topic = _resolve_topic(topic_id, user=request.user)
+        url = (request.data.get('url') or '').strip()
+        title = (request.data.get('title') or '').strip()[:200]
+        rtype = request.data.get('type', 'article')
+        description = (request.data.get('description') or '').strip()[:300]
+
+        if not url or not title:
+            return Response({'error': 'title and url are required'}, status=400)
+        if not _is_safe_url(url):
+            return Response({'error': 'Invalid or unsafe URL'}, status=400)
+        valid_types = ['doc', 'video', 'article', 'tool', 'course', 'practice']
+        if rtype not in valid_types:
+            rtype = 'article'
+
+        r = TopicResource.objects.create(
+            topic=topic, added_by=request.user,
+            title=title, url=url, type=rtype, description=description,
+        )
+        return Response({'id': r.id, 'title': r.title}, status=201)
+
+    def patch(self, request, topic_id):
+        """Upvote a resource: { resource_id: N }"""
+        resource_id = request.data.get('resource_id')
+        topic = _resolve_topic(topic_id, user=request.user)
+        try:
+            r = TopicResource.objects.get(id=resource_id, topic=topic)
+        except TopicResource.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
+        r.upvotes += 1
+        r.save(update_fields=['upvotes'])
+        return Response({'upvotes': r.upvotes})
+
+
+# ── Mock Interview Mode ───────────────────────────────────────────────────────
+
+def _extract_json(raw, array=True):
+    """
+    Robustly extract the first valid JSON array (array=True) or object (array=False)
+    from a Groq response that may contain preamble text or trailing notes.
+    Uses raw_decode so it stops exactly at the end of the JSON value.
+    """
+    if not raw:
+        raise ValueError("Groq returned empty content — check API key and quota")
+
+    decoder = json.JSONDecoder()
+    start_char = '[' if array else '{'
+    idx = raw.find(start_char)
+    if idx != -1:
+        try:
+            result, _ = decoder.raw_decode(raw, idx)
+            return result
+        except json.JSONDecodeError as e:
+            logger.warning("raw_decode failed at idx=%d: %s | raw[:200]=%r", idx, e, raw[:200])
+
+    # Fallback: strip fences and parse whole string
+    cleaned = re.sub(r'^```(?:json)?\s*', '', raw, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\s*```$', '', cleaned).strip()
+    if not cleaned:
+        raise ValueError(f"Could not extract JSON from Groq response: {raw[:200]!r}")
+    return json.loads(cleaned)
+
+
+def _generate_interview_questions(job_title, required_skills, weak_topics, level='intermediate'):
+    client = groq_client()
+    skills_str = ', '.join((required_skills or [])[:8]) or job_title
+
+    prompt = (
+        f'Generate 5 technical interview questions for a {level}-level {job_title} role. '
+        f'Skills: {skills_str}. '
+        f'Return a JSON object with a single key "questions" containing an array. '
+        f'Each item: {{"id":1,"question":"...","type":"conceptual","skill":"...","difficulty":"medium","ideal_keywords":["kw1","kw2"]}}'
+    )
+
+    resp = client.chat.completions.create(
+        messages=[{'role': 'user', 'content': prompt}],
+        model='llama-3.1-8b-instant',
+        temperature=0.3,
+        max_tokens=2000,
+        response_format={"type": "json_object"},
+    )
+    raw = resp.choices[0].message.content.strip()
+    logger.debug("Groq interview raw: %r", raw[:200])
+    data = json.loads(raw)
+    questions = data.get('questions') or data.get('interview_questions') or list(data.values())[0]
+    if not isinstance(questions, list):
+        raise ValueError(f"Unexpected Groq response shape: {raw[:200]}")
+    return questions
+
+
+def _score_answer(question, answer):
+    client = groq_client()
+    keywords = ', '.join(question.get('ideal_keywords', []))
+    prompt = f"""Score this interview answer strictly.
+
+Question: {question['question']}
+Skill tested: {question.get('skill', '')}
+Ideal keywords to cover: {keywords}
+Candidate's answer: {answer[:600]}
+
+Return ONLY valid JSON:
+{{
+  "score": <0-100 integer>,
+  "feedback": "<2 sentences: what was good + what was missing>",
+  "missed_keywords": ["keyword1", "keyword2"]
+}}"""
+
+    resp = client.chat.completions.create(
+        messages=[{'role': 'user', 'content': prompt}],
+        model='llama-3.1-8b-instant',
+        temperature=0.2,
+        max_tokens=300,
+        response_format={"type": "json_object"},
+    )
+    return json.loads(resp.choices[0].message.content)
+
+
+class MockInterviewView(views.APIView):
+    """
+    POST /api/interview/start/  — generate questions from JD or custom role
+    GET  /api/interview/        — list past interviews
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
+
+    def post(self, request):
+        jd_id = request.data.get('jd_id')
+        job_title = (request.data.get('job_title') or '').strip()[:200]
+        required_skills = request.data.get('required_skills', [])
+
+        jd_obj = None
+        if jd_id:
+            try:
+                jd_obj = JDAnalysis.objects.get(id=jd_id, user=request.user)
+                job_title = job_title or jd_obj.job_title
+                required_skills = required_skills or jd_obj.extracted_skills
+            except JDAnalysis.DoesNotExist:
+                pass
+
+        if not job_title:
+            return Response({'error': 'job_title or jd_id required'}, status=400)
+
+        profile = UserProfile.objects.filter(user=request.user).first()
+        level = profile.skill_level if profile else 'intermediate'
+        weak_topics = _get_weak_topics(request.user, limit=3)
+
+        try:
+            questions = _generate_interview_questions(
+                job_title, required_skills, weak_topics, level
+            )
+        except Exception:
+            logger.exception('Interview question generation failed')
+            return Response({'error': 'AI generation failed. Try again.'}, status=500)
+
+        interview = MockInterview.objects.create(
+            user=request.user,
+            jd_analysis=jd_obj,
+            job_title=job_title,
+            questions=questions,
+            answers=[],
+        )
+        return Response({
+            'interview_id': interview.id,
+            'job_title': interview.job_title,
+            'questions': questions,
+            'total': len(questions),
+        }, status=201)
+
+    def get(self, request):
+        interviews = MockInterview.objects.filter(user=request.user)[:10]
+        return Response([{
+            'id': i.id,
+            'job_title': i.job_title,
+            'overall_score': i.overall_score,
+            'interview_readiness_pct': i.interview_readiness_pct,
+            'questions_count': len(i.questions),
+            'answers_count': len(i.answers),
+            'created_at': i.created_at,
+            'completed_at': i.completed_at,
+        } for i in interviews])
+
+
+class MockInterviewAnswerView(views.APIView):
+    """POST /api/interview/{id}/answer/ — submit one answer and get scored."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, interview_id):
+        try:
+            interview = MockInterview.objects.get(id=interview_id, user=request.user)
+        except MockInterview.DoesNotExist:
+            return Response({'error': 'Interview not found'}, status=404)
+
+        if interview.completed_at:
+            return Response({'error': 'Interview already completed'}, status=400)
+
+        question_id = request.data.get('question_id')
+        answer_text = (request.data.get('answer') or '').strip()[:2000]
+
+        if not answer_text:
+            return Response({'error': 'answer is required'}, status=400)
+
+        # Find the question
+        questions = interview.questions
+        question = next((q for q in questions if q.get('id') == question_id), None)
+        if not question:
+            return Response({'error': 'Question not found'}, status=404)
+
+        # Check not already answered
+        answers = interview.answers
+        if any(a.get('question_id') == question_id for a in answers):
+            return Response({'error': 'Already answered'}, status=400)
+
+        try:
+            scored = _score_answer(question, answer_text)
+        except Exception:
+            logger.exception('Answer scoring failed')
+            return Response({'error': 'Scoring failed. Try again.'}, status=500)
+
+        answer_record = {
+            'question_id': question_id,
+            'answer': answer_text,
+            'score': scored.get('score', 0),
+            'feedback': scored.get('feedback', ''),
+            'missed_keywords': scored.get('missed_keywords', []),
+        }
+        answers.append(answer_record)
+        interview.answers = answers
+
+        # If all questions answered, compute final score
+        if len(answers) >= len(questions):
+            scores = [a['score'] for a in answers]
+            avg = sum(scores) / len(scores) if scores else 0
+            interview.overall_score = round(avg, 1)
+            # Map to readiness: 80+ = 100%, 0 = 20%
+            interview.interview_readiness_pct = round(min(100, 20 + avg * 0.8), 1)
+            interview.completed_at = timezone.now()
+
+        interview.save()
+
+        response = {**answer_record, 'all_answered': interview.completed_at is not None}
+        if interview.completed_at:
+            response['overall_score'] = interview.overall_score
+            response['interview_readiness_pct'] = interview.interview_readiness_pct
+        return Response(response)
+
+
+# ── Career Path Generator (from JD / Resume) ─────────────────────────────────
+
+class GenerateCareerPathView(views.APIView):
+    """Generate a custom learning path tailored to a JD or resume gap report."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        source = request.data.get('source', 'jd')  # 'jd' or 'resume'
+        jd_id = request.data.get('jd_id')
+
+        if source == 'jd' and jd_id:
+            try:
+                jd = JDAnalysis.objects.get(id=jd_id, user=request.user)
+            except JDAnalysis.DoesNotExist:
+                return Response({'error': 'JD analysis not found'}, status=404)
+            skills = jd.extracted_skills
+            role = jd.job_title or 'Developer'
+            gap = jd.gap_report
+        elif source == 'resume':
+            try:
+                resume = ResumeAnalysis.objects.get(user=request.user)
+                skills = resume.extracted_skills
+                role = f"{resume.experience_level} Developer" if resume.experience_level else 'Developer'
+                gap = resume.gap_report
+            except ResumeAnalysis.DoesNotExist:
+                return Response({'error': 'No resume analysis found. Analyze your resume first.'}, status=404)
+        else:
+            return Response({'error': 'source must be jd or resume, with a valid id'}, status=400)
+
+        # Build topic list from gap: not_started first, then in_progress
+        priority_slugs = (
+            [t.get('topic_slug') for t in gap.get('not_started', []) if t.get('topic_slug')] +
+            [t.get('topic_slug') for t in gap.get('in_progress', []) if t.get('topic_slug')]
+        )[:20]
+
+        topics = list(Topic.objects.filter(slug__in=priority_slugs).select_related('path'))
+        if len(topics) < 3:
+            # Fallback: search topics by skill names
+            for skill in (skills or [])[:10]:
+                qs = Topic.objects.filter(title__icontains=skill).exclude(slug__in=[t.slug for t in topics])[:2]
+                topics.extend(list(qs))
+
+        if not topics:
+            return Response({'error': 'No matching topics found. Complete a JD or resume analysis first.'}, status=400)
+
+        # Create or return existing custom path for this role
+        path_title = f"Career Path: {role}"
+        existing = LearningPath.objects.filter(
+            title=path_title, created_by=request.user, is_custom=True
+        ).first()
+        if existing:
+            return Response({
+                'path_slug': existing.slug,
+                'path_title': existing.title,
+                'topic_count': existing.topics.count(),
+                'message': 'Your career path already exists. Head to My Paths.',
+            })
+
+        from django.utils.text import slugify
+        import uuid
+        slug = slugify(path_title)[:48] + '-' + str(uuid.uuid4())[:8]
+
+        path = LearningPath.objects.create(
+            title=path_title,
+            description=f"AI-generated path to close your skill gaps for {role}. Based on your {'job description' if source == 'jd' else 'resume'} analysis.",
+            slug=slug,
+            created_by=request.user,
+            is_custom=True,
+            visibility='private',
+        )
+
+        # Clone the relevant topics into this path
+        for i, orig_topic in enumerate(topics[:15]):
+            Topic.objects.create(
+                path=path,
+                title=orig_topic.title,
+                slug=slugify(orig_topic.title)[:48] + '-' + str(uuid.uuid4())[:6],
+                summary=orig_topic.summary,
+                order=i,
+                node_kind='topic',
+            )
+
+        return Response({
+            'path_slug': path.slug,
+            'path_title': path.title,
+            'topic_count': path.topics.count(),
+            'message': f'Career path created with {path.topics.count()} topics. Go to My Paths to start.',
+        }, status=201)
+
+
+# ── Study Rooms (polling-based presence) ─────────────────────────────────────
+
+class StudyRoomView(views.APIView):
+    """
+    GET  /api/rooms/?topic_id=  — list active rooms for a topic
+    POST /api/rooms/            — create or join a room
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        topic_id = request.query_params.get('topic_id')
+        if not topic_id:
+            return Response({'error': 'topic_id required'}, status=400)
+
+        topic = _resolve_topic(topic_id, user=request.user)
+        # Expire stale participants (no ping in 2 min)
+        stale_cutoff = timezone.now() - datetime.timedelta(minutes=2)
+        StudyRoomParticipant.objects.filter(last_ping__lt=stale_cutoff, is_active=True).update(is_active=False)
+
+        rooms = StudyRoom.objects.filter(topic=topic, is_active=True).prefetch_related(
+            'participants', 'participants__user'
+        )
+
+        result = []
+        for room in rooms:
+            active_parts = room.participants.filter(is_active=True)
+            if not active_parts.exists():
+                room.is_active = False
+                room.save(update_fields=['is_active'])
+                continue
+            result.append({
+                'id': room.id,
+                'name': room.name or f"Room #{room.id}",
+                'pomodoro_end': room.pomodoro_end,
+                'participant_count': active_parts.count(),
+                'participants': [
+                    {'username': p.user.username, 'joined_at': p.joined_at}
+                    for p in active_parts[:8]
+                ],
+                'created_at': room.created_at,
+            })
+        return Response({'rooms': result, 'topic': topic.title})
+
+    def post(self, request):
+        action = request.data.get('action', 'join')  # join | leave | ping | create
+
+        if action == 'create':
+            topic_id = request.data.get('topic_id')
+            topic = _resolve_topic(topic_id, user=request.user)
+            duration_min = min(int(request.data.get('duration_min', 25)), 60)
+            pomodoro_end = timezone.now() + datetime.timedelta(minutes=duration_min)
+            room = StudyRoom.objects.create(
+                topic=topic,
+                created_by=request.user,
+                pomodoro_end=pomodoro_end,
+            )
+            StudyRoomParticipant.objects.create(room=room, user=request.user, is_active=True)
+            return Response({
+                'room_id': room.id,
+                'pomodoro_end': room.pomodoro_end,
+                'message': 'Room created. Share the topic URL for others to join.',
+            }, status=201)
+
+        room_id = request.data.get('room_id')
+        try:
+            room = StudyRoom.objects.get(id=room_id, is_active=True)
+        except StudyRoom.DoesNotExist:
+            return Response({'error': 'Room not found or no longer active'}, status=404)
+
+        if action == 'join':
+            part, created = StudyRoomParticipant.objects.update_or_create(
+                room=room, user=request.user,
+                defaults={'is_active': True},
+            )
+            active_count = room.participants.filter(is_active=True).count()
+            _notify(
+                room.created_by,
+                'general',
+                f"{request.user.username} joined your study room for {room.topic.title}",
+                f"/topic/{room.topic.slug}",
+            )
+            return Response({'joined': True, 'participant_count': active_count})
+
+        elif action == 'leave':
+            StudyRoomParticipant.objects.filter(room=room, user=request.user).update(is_active=False)
+            if not room.participants.filter(is_active=True).exists():
+                room.is_active = False
+                room.save(update_fields=['is_active'])
+            return Response({'left': True})
+
+        elif action == 'ping':
+            # Heartbeat to keep presence alive
+            StudyRoomParticipant.objects.filter(
+                room=room, user=request.user
+            ).update(is_active=True)
+            active_count = room.participants.filter(is_active=True).count()
+            return Response({
+                'alive': True,
+                'participant_count': active_count,
+                'pomodoro_end': room.pomodoro_end,
+            })
+
+        return Response({'error': 'Unknown action'}, status=400)

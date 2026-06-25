@@ -11,7 +11,10 @@ from .views import (
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
     AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, AdminAnalyticsView, AdminContentView, AdminSettingsView, CustomPathViewSet, PathProgressView,
     GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, SearchView, NotificationView,
-    JDMappingView, ResumeAnalysisView
+    JDMappingView, ResumeAnalysisView,
+    OnboardingView, DailyMissionView, LearningInsightsView,
+    TopicResourceView, MockInterviewView, MockInterviewAnswerView,
+    GenerateCareerPathView, StudyRoomView,
 )
 
 # Strict throttle for login endpoint — max 5 attempts per minute per IP
@@ -112,6 +115,25 @@ urlpatterns = [
     # Career Intelligence
     path('career/jd/', JDMappingView.as_view(), name='jd_mapping'),
     path('career/resume/', ResumeAnalysisView.as_view(), name='resume_analysis'),
+
+    # Command Center
+    path('onboarding/', OnboardingView.as_view(), name='onboarding'),
+    path('mission/today/', DailyMissionView.as_view(), name='daily_mission'),
+    path('analytics/insights/', LearningInsightsView.as_view(), name='learning_insights'),
+
+    # Topic Resources
+    path('topics/<str:topic_id>/resources/', TopicResourceView.as_view(), name='topic_resources'),
+
+    # Mock Interview
+    path('interview/', MockInterviewView.as_view(), name='mock_interview_list'),
+    path('interview/start/', MockInterviewView.as_view(), name='mock_interview_start'),
+    path('interview/<int:interview_id>/answer/', MockInterviewAnswerView.as_view(), name='mock_interview_answer'),
+
+    # Career Path Generation
+    path('career/generate-path/', GenerateCareerPathView.as_view(), name='career_generate_path'),
+
+    # Study Rooms
+    path('rooms/', StudyRoomView.as_view(), name='study_rooms'),
 
     # Router covers /paths/ and /bookmarks/
     path('', include(router.urls)),
