@@ -87,7 +87,9 @@ DATABASES = {
         "PORT": os.environ.get("MYSQL_PORT", "3306"),
         "OPTIONS": {
             "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
+        "CONN_MAX_AGE": 60,
     }
 }
 
@@ -186,6 +188,13 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://redis:6379/1"),
+    }
+}
 
 # Upload size protection
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB per file in memory

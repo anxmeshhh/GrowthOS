@@ -1,4 +1,11 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: growthos_redis
+    restart: unless-stopped
+    networks:
+      - growthos_network
+
   db:
     image: mysql:8.0
     container_name: growthos_db
@@ -28,7 +35,7 @@ services:
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2"
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 4 --worker-class gthread --timeout 30 --max-requests 1000 --max-requests-jitter 100"
     ports:
       - "127.0.0.1:8005:8000"
     volumes:
@@ -57,9 +64,12 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - REDIS_URL=redis://redis:6379/1
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - growthos_network
     restart: unless-stopped
