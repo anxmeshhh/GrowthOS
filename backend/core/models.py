@@ -351,6 +351,12 @@ class PomodoroSession(models.Model):
 
     class Meta:
         ordering = ['-completed_at']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(duration_minutes__gte=1) & models.Q(duration_minutes__lte=1440),
+                name='pomosession_duration_range',
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.duration_minutes}m ({self.completed_at.strftime('%Y-%m-%d')})"

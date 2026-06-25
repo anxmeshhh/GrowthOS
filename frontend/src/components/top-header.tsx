@@ -57,8 +57,8 @@ function NotificationPanel() {
       if (!r.ok) return { notifications: [], unread_count: 0 };
       return r.json();
     },
-    refetchInterval: 30000,
-    staleTime: 20000,
+    refetchInterval: 15000,
+    staleTime: 10000,
   });
 
   const markRead = useMutation({

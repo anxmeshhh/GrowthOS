@@ -22,21 +22,21 @@ def _base(content_html, preview_text=""):
 <style>
   body{{margin:0;padding:0;background:#0f0f0f;font-family:'Segoe UI',Arial,sans-serif;color:#e5e5e5}}
   .wrap{{max-width:560px;margin:32px auto;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden}}
-  .header{{background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:28px 32px}}
-  .header h1{{margin:0;font-size:22px;color:#fff;letter-spacing:-0.3px}}
-  .header p{{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.7)}}
+  .header{{background:linear-gradient(135deg,#0a0a0a,#111);border-bottom:2px solid #00FF66;padding:28px 32px}}
+  .header h1{{margin:0;font-size:22px;color:#00FF66;letter-spacing:-0.3px;font-weight:800}}
+  .header p{{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.5)}}
   .body{{padding:28px 32px}}
   .stat-row{{display:flex;gap:12px;margin:20px 0}}
-  .stat{{flex:1;background:#242424;border:1px solid #2f2f2f;border-radius:8px;padding:16px;text-align:center}}
-  .stat .num{{font-size:28px;font-weight:700;color:#a78bfa}}
-  .stat .lbl{{font-size:12px;color:#888;margin-top:2px}}
+  .stat{{flex:1;background:#161616;border:1px solid #222;border-radius:8px;padding:16px;text-align:center}}
+  .stat .num{{font-size:28px;font-weight:700;color:#00FF66}}
+  .stat .lbl{{font-size:12px;color:#666;margin-top:2px}}
   .section{{margin:20px 0}}
-  .section-title{{font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}}
-  .item{{background:#242424;border:1px solid #2f2f2f;border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:14px;color:#ccc}}
+  .section-title{{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}}
+  .item{{background:#161616;border:1px solid #222;border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:14px;color:#ccc}}
   .item strong{{color:#e5e5e5}}
-  .cta{{display:block;margin:24px 0 4px;padding:14px 24px;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;text-align:center;font-weight:600;font-size:15px}}
-  .footer{{padding:20px 32px;border-top:1px solid #222;font-size:12px;color:#555;text-align:center}}
-  .badge{{display:inline-block;background:#7c3aed22;border:1px solid #7c3aed55;color:#a78bfa;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600}}
+  .cta{{display:block;margin:24px 0 4px;padding:14px 24px;background:#00FF66;color:#0a0a0a;text-decoration:none;border-radius:8px;text-align:center;font-weight:700;font-size:15px}}
+  .footer{{padding:20px 32px;border-top:1px solid #1a1a1a;font-size:12px;color:#555;text-align:center}}
+  .badge{{display:inline-block;background:rgba(0,255,102,0.08);border:1px solid rgba(0,255,102,0.25);color:#00FF66;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600}}
 </style>
 </head>
 <body>
@@ -195,6 +195,33 @@ def send_interview_summary(user, job_title, overall_score, readiness_pct, answer
     _send(
         subject=f"Mock Interview Results — {overall_score}% on {job_title}",
         body_html=_base(content, f"Your interview results for {job_title}"),
+        body_text=plain,
+        to_email=user.email,
+    )
+
+
+def send_inactive_nudge(user, days_away):
+    name = user.first_name or user.username
+    content = f"""
+    <p style="font-size:16px;margin-top:0">Hey <strong>{name}</strong>, we miss you.</p>
+    <p style="color:#888;font-size:14px">
+      It's been <strong>{days_away} days</strong> since you last opened GrowthOS. Your flashcards
+      are piling up and your streak is waiting to restart.
+    </p>
+    <p style="color:#888;font-size:14px">
+      Even 10 minutes of review today will keep your momentum going.
+      You've already put in the hard work — don't let it fade.
+    </p>
+    <a class="cta" href="https://growth-os.tech/dashboard">Pick up where you left off</a>
+    """
+    plain = (
+        f"Hey {name}! You haven't been on GrowthOS in {days_away} days.\n"
+        "Your flashcards are building up — come back and keep your momentum.\n\n"
+        "Open GrowthOS: https://growth-os.tech/dashboard"
+    )
+    _send(
+        subject=f"You haven't studied in {days_away} days — come back",
+        body_html=_base(content, f"{days_away} days away from GrowthOS"),
         body_text=plain,
         to_email=user.email,
     )

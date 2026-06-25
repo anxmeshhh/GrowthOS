@@ -120,11 +120,11 @@ class SearchView(views.APIView):
     throttle_scope = 'search'
 
     def get(self, request):
-        q = request.query_params.get('q', '').strip()[:100]  # cap at 100 chars
+        q = request.query_params.get('q', '').strip()[:100]
+        limit = min(int(request.query_params.get('limit', 10)), 50)
         if len(q) < 2:
             return Response({'results': []})
 
-        # Strip characters that could cause regex issues
         q_safe = re.sub(r'[^\w\s\-\.]', '', q)[:80]
         if not q_safe:
             return Response({'results': []})
@@ -134,20 +134,20 @@ class SearchView(views.APIView):
         paths = LearningPath.objects.filter(
             Q(title__icontains=q_safe) | Q(description__icontains=q_safe),
             Q(created_by=user) | Q(is_custom=False)
-        ).distinct()[:5]
+        ).distinct()[:limit]
 
         topics = Topic.objects.filter(
             Q(title__icontains=q_safe) | Q(summary__icontains=q_safe),
             Q(path__created_by=user) | Q(path__is_custom=False)
-        ).distinct().select_related('path')[:8]
+        ).distinct().select_related('path')[:limit * 2]
 
         notes = TopicNote.objects.filter(
             user=user
-        ).filter(Q(content__icontains=q_safe)).select_related('topic', 'topic__path')[:5]
+        ).filter(Q(content__icontains=q_safe)).select_related('topic', 'topic__path')[:limit]
 
         cards = Flashcard.objects.filter(
             user=user
-        ).filter(Q(front__icontains=q_safe) | Q(back__icontains=q_safe)).select_related('topic')[:5]
+        ).filter(Q(front__icontains=q_safe) | Q(back__icontains=q_safe)).select_related('topic')[:limit]
 
         results = []
         for p in paths:
@@ -221,7 +221,8 @@ class NotificationView(views.APIView):
 
 class SendOTPView(views.APIView):
     permission_classes = (AllowAny,)
-    
+    throttle_scope = 'login'
+
     def post(self, request):
         email = request.data.get('email')
         if not email:
@@ -252,7 +253,8 @@ class SendOTPView(views.APIView):
 
 class VerifyOTPView(views.APIView):
     permission_classes = (AllowAny,)
-    
+    throttle_scope = 'login'
+
     def post(self, request):
         email = request.data.get('email')
         otp = request.data.get('otp')
@@ -725,6 +727,7 @@ import PyPDF2
 
 class GeneratePathView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
 
     def post(self, request):
         prompt = request.data.get('prompt', '')
@@ -992,6 +995,7 @@ class DailyLoginView(views.APIView):
 
 class ChatAssistantView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
 
     def get(self, request):
         messages = ChatMessage.objects.filter(user=request.user).order_by('-created_at')[:50]
@@ -1219,6 +1223,7 @@ class TopicFlashcardView(views.APIView):
 
 class GenerateFlashcardsView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
 
     def post(self, request, topic_id):
         topic = _resolve_topic(topic_id, user=request.user)
@@ -1277,6 +1282,7 @@ class GenerateFlashcardsView(views.APIView):
 
 class ProjectIdeasView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
 
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id, user=request.user)
@@ -1301,6 +1307,7 @@ import requests as http_requests
 
 class ScanRepoView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
 
     def post(self, request, topic_id):
         topic = _resolve_topic(topic_id, user=request.user)
@@ -3339,6 +3346,7 @@ class AdminRoadmapUploadView(views.APIView):
 
 class TopicFeynmanView(views.APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = 'ai_generation'
 
     def get(self, request, topic_id):
         topic = _resolve_topic(topic_id, user=request.user)
@@ -3634,6 +3642,41 @@ Text:
     return _extract_json(raw, array=False)
 
 
+def _compute_match_pct(gap_report):
+    completed = len(gap_report.get('completed', []))
+    in_prog = len(gap_report.get('in_progress', []))
+    not_started = len(gap_report.get('not_started', []))
+    total = completed + in_prog + not_started
+    return round((completed / total * 100) if total else 0, 1)
+
+
+def _estimate_jd_weeks(gap_report, hours_per_day=1.0):
+    not_started = len(gap_report.get('not_started', []))
+    in_prog = len(gap_report.get('in_progress', []))
+    hours = max(hours_per_day, 0.5)
+    total_hours = not_started * 3 + in_prog * 1.5
+    return round(total_hours / (hours * 7), 1) if total_hours > 0 else 0
+
+
+def _score_resume_quality(text):
+    """Use Groq to rate a resume 0-100 with actionable tips."""
+    client = groq_client()
+    prompt = (
+        f'Score this resume for a tech role on a scale of 0-100 and give 3 short improvement tips.\n\n'
+        f'Resume (first 2000 chars):\n{text[:2000]}\n\n'
+        f'Return ONLY valid JSON:\n'
+        f'{{"score": <0-100 integer>, "tips": ["<tip1>", "<tip2>", "<tip3>"]}}'
+    )
+    resp = client.chat.completions.create(
+        messages=[{'role': 'user', 'content': prompt}],
+        model='llama-3.1-8b-instant',
+        temperature=0.2,
+        max_tokens=300,
+        response_format={"type": "json_object"},
+    )
+    return json.loads(resp.choices[0].message.content)
+
+
 def _build_gap_report(user, all_skills):
     """Cross-reference extracted skills with GrowthOS topics and user progress."""
     gap = {"matched": [], "in_progress": [], "not_started": [], "completed": []}
@@ -3693,6 +3736,11 @@ class JDMappingView(views.APIView):
         ))
         gap_report = _build_gap_report(request.user, all_skills)
 
+        profile = UserProfile.objects.filter(user=request.user).first()
+        match_pct = _compute_match_pct(gap_report)
+        weeks_to_ready = _estimate_jd_weeks(gap_report, profile.available_hours_per_day if profile else 1.0)
+        action_items = gap_report.get('not_started', [])[:5]
+
         analysis = JDAnalysis.objects.create(
             user=request.user,
             raw_text=text[:5000],
@@ -3712,6 +3760,10 @@ class JDMappingView(views.APIView):
             "preferred_skills": extracted.get("preferred_skills", []),
             "technologies": extracted.get("technologies", []),
             "gap_report": gap_report,
+            "match_pct": match_pct,
+            "weeks_to_ready": weeks_to_ready,
+            "action_items": action_items,
+            "created_at": analysis.created_at,
         })
 
     def get(self, request):
@@ -3723,13 +3775,16 @@ class JDMappingView(views.APIView):
             "experience_level": a.experience_level,
             "extracted_skills": a.extracted_skills,
             "gap_report": a.gap_report,
+            "match_pct": _compute_match_pct(a.gap_report),
+            "action_items": a.gap_report.get('not_started', [])[:5],
             "created_at": a.created_at,
         } for a in analyses])
 
 
 class ResumeAnalysisView(views.APIView):
     permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    throttle_scope = 'ai_generation'
 
     def post(self, request):
         import PyPDF2, io
@@ -3759,6 +3814,16 @@ class ResumeAnalysisView(views.APIView):
         ))
         gap_report = _build_gap_report(request.user, all_skills)
 
+        resume_quality = {"score": 0, "tips": []}
+        try:
+            resume_quality = _score_resume_quality(text)
+        except Exception:
+            logger.warning("Resume quality scoring failed", exc_info=True)
+
+        match_pct = _compute_match_pct(gap_report)
+        profile = UserProfile.objects.filter(user=request.user).first()
+        weeks_to_ready = _estimate_jd_weeks(gap_report, profile.available_hours_per_day if profile else 1.0)
+
         analysis, _ = ResumeAnalysis.objects.update_or_create(
             user=request.user,
             defaults={
@@ -3776,6 +3841,11 @@ class ResumeAnalysisView(views.APIView):
             "experience_level": analysis.experience_level,
             "extracted_skills": all_skills,
             "gap_report": gap_report,
+            "resume_score": resume_quality.get("score", 0),
+            "resume_tips": resume_quality.get("tips", []),
+            "match_pct": match_pct,
+            "weeks_to_ready": weeks_to_ready,
+            "analyzed_at": analysis.analyzed_at,
         })
 
     def get(self, request):

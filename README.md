@@ -1,262 +1,619 @@
 # GrowthOS
 
-[![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/anxmeshhh/GrowthOS)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+> **An intelligent, full-stack learning operating system** — built for engineers who want to grow deliberately, not randomly.
 
-**The execution layer for self-taught developers.**
-
-> **We are Open Source!** 🎉 Check out our [Contributing Guide](CONTRIBUTING.md) to see how you can run GrowthOS locally and build with us!
+GrowthOS combines spaced repetition, AI-powered mock interviews, GitHub portfolio analysis, career gap mapping, and deep note-taking into a single unified platform. It is not a course platform. It is not a flashcard app. It is the system that runs your entire growth journey — tracking what you know, what you don't, how fast you're learning, and what to do next.
 
 ---
 
-## Overview
+## Table of Contents
 
-GrowthOS is a learning operating system that helps self-taught developers stop wandering through scattered tutorials, notes, bookmarks, and unfinished plans. It provides a clear path, daily missions, proof-based progress, long-term review mechanisms, and career-ready evidence of completed work.
-
-## Problem Statement
-
-Self-taught developers rarely fail due to a lack of resources; they fail because the learning process is fundamentally fragmented:
-- Notes are scattered across different apps (Notion, Apple Notes, physical notebooks).
-- Tutorials pile up without a sequenced curriculum.
-- Consuming content (watching videos) gives a false sense of progress.
-- There is no central hub to say: "What should I study today?"
-- Learning is disconnected from career evidence (GitHub commits, portfolios).
-
-## Solution
-
-GrowthOS unifies the entire learning loop into one cohesive "Command Center". It enforces a **Proof over Progress** philosophy: you cannot advance to the next topic until you have written notes, passed an AI-generated quiz, successfully explained the concept using the Feynman technique, and built a verifiable project.
+1. [Project Overview & Mission](#1-project-overview--mission)
+2. [Core Engines & Mechanics](#2-core-engines--mechanics)
+3. [System Architecture](#3-system-architecture)
+4. [Security, Auth & Hardening](#4-security-auth--hardening)
+5. [UI/UX & Design Philosophy](#5-uiux--design-philosophy)
+6. [Deployment & Infrastructure](#6-deployment--infrastructure)
+7. [Local Setup & Developer Onboarding](#7-local-setup--developer-onboarding)
 
 ---
 
-## Key Features
+## 1. Project Overview & Mission
 
-- **Dynamic Learning Paths**: Support for structured roadmaps (e.g., Backend Developer) and AI-generated custom paths.
-- **Topic Workspaces**: A dedicated study space per topic containing curated resources, markdown notes, code snippets, and file attachments.
-- **AI Assessment Engine**: Uses Groq/Gemini to dynamically generate quizzes, grade Feynman technique explanations, and evaluate uploaded project code.
-- **Spaced Repetition (SRS)**: Built-in flashcard system that automatically generates cards from your notes and schedules them based on an ease-factor algorithm.
-- **Gamification & Habit Tracking**: Daily missions, Pomodoro timers, activity heatmaps, and streak tracking (with "Streak Revives").
-- **GitHub & Portfolio Integration**: Seamlessly connect your GitHub account to automatically create repositories, scan commits for proof of work, and generate a public portfolio.
-- **Admin Command Center**: A comprehensive admin panel for user management, roadmap uploading (JSON), and platform analytics.
+### What Is GrowthOS?
 
----
+Most developers learn reactively — they watch tutorials when stuck, read docs when broken, and grind LeetCode when an interview is a week away. GrowthOS flips this. It is a **proactive learning operating system** that maps your current skill state, identifies your weakest gaps, generates content to fill them, tests your retention with spaced repetition, and measures your interview readiness — all in one place.
 
-## System Architecture
+### Who It's For
 
-GrowthOS follows a modern decoupled architecture:
-1. **Client**: A high-performance Single Page Application (SPA) built with React and Vite. It uses TanStack Router for type-safe routing and TanStack Query for caching and API state management.
-2. **API Server**: A robust Django REST Framework backend handling business logic, database transactions, and authentication.
-3. **AI Layer**: An abstraction layer integrating with Groq, Google Gemini, and NVIDIA APIs to process natural language, generate quizzes, and evaluate code.
-4. **Third-Party Integrations**: OAuth providers (Google/GitHub) and the GitHub API for workspace synchronization.
+- Self-taught developers preparing for job switches
+- Engineers doing structured upskilling alongside a full-time job
+- CS students bridging the gap between academic knowledge and industry expectations
 
----
+### Core Feature Surface
 
-## Technology Stack
-
-### Frontend
-- **Framework**: React 19 + Vite
-- **Routing & State**: TanStack Router, TanStack Query
-- **Styling**: Tailwind CSS v4, Radix UI Primitives
-- **Visuals**: Recharts (Heatmaps/Stats), Lucide React (Icons)
-- **Forms**: React Hook Form, Zod
-
-### Backend
-- **Framework**: Python 3.10+, Django 5, Django REST Framework
-- **Authentication**: SimpleJWT, Google/GitHub OAuth, SMTP (Email OTP)
-- **Database**: MySQL 8.0 (Production), SQLite (Local)
-
-### AI & Integrations
-- **AI Providers**: Groq API, Google Gemini, NVIDIA API
-- **External APIs**: GitHub API (Commits, Gists, Repos)
-
-### Infrastructure
-- **Containerization**: Docker & Docker Compose
-- **Server**: Gunicorn
+| Module | What It Does |
+|---|---|
+| **Roadmaps & Paths** | Structured learning paths across 30+ tech topics (DSA, System Design, DevOps, etc.) — each with topics, notes, flashcards, and Feynman explainers |
+| **Spaced Repetition** | SM-2 algorithm drives a daily flashcard review queue — cards resurface at the optimal forgetting-curve interval |
+| **Mock Interviews** | AI-generated questions from a job description, from your own notes, or from a custom prompt — voice input supported, scored per answer, interview summary emailed |
+| **Career Intel** | Paste a JD, get a match-% ring, weeks-to-ready estimate, skill matrix (Mastered / In Progress / Gap), and prioritized action plan with direct study links |
+| **Resume AI** | Upload resume PDF → AI scores it 0–100 with specific tips → cross-maps it against JD skills → shows match % |
+| **GitHub Scanner** | OAuth-connected repo scanner — identifies tech stack, estimates complexity, generates project summaries for your portfolio |
+| **Notes & Feynman** | Rich per-topic notes with AI Feynman explainer that forces you to explain a concept back in plain language |
+| **Pomodoro Timer** | Built-in study timer with session logging and duration constraints (1–1440 min, DB-enforced) |
+| **Assessments** | Auto-generated quizzes on topic content, tracked in progress stats |
+| **Command Center** | Keyboard-first global command palette for instant navigation across the entire platform |
+| **Progress Dashboard** | XP system, streak tracking, GitHub-style activity heatmap, and rolling quiz averages |
+| **Email Notifications** | Automated emails: daily motivation, streak warnings, 3-day inactivity nudge, weekly progress recap, interview summary |
 
 ---
 
-## Project Structure
+## 2. Core Engines & Mechanics
 
-```text
-GrowthOS/
-├── backend/                 # Django backend
-│   ├── config/              # Django core settings & urls
-│   ├── core/                # Main application logic (Models, Views)
-│   ├── manage.py            # Django CLI
-│   └── requirements.txt     # Python dependencies
-├── frontend/                # React frontend
-│   ├── src/                 
-│   │   ├── components/      # Reusable UI components (growth-ui)
-│   │   ├── routes/          # TanStack Router page components
-│   │   ├── lib/             # API client and utilities
-│   │   └── styles.css       # Global Tailwind styles
-│   ├── package.json         # Node dependencies
-│   └── vite.config.ts       # Vite configuration
-├── docker-compose.production.yml # Deployment config
-├── .env.prod.example        # Production environment template
-├── CONTRIBUTING.md          # Open source contribution guide
-└── README.md                # Project documentation
+### 2.1 Spaced Repetition — SM-2 Algorithm
+
+The `Flashcard` model implements a faithful SM-2 adaptation:
+
+```
+new_interval = old_interval × ease_factor   (if score >= 3)
+new_interval = 1                            (if score < 3, card resets)
+ease_factor  = ease_factor + (0.1 - (5-score) × (0.08 + (5-score) × 0.02))
+```
+
+**Key fields on `Flashcard`:**
+- `ease_factor` — starts at 2.5, adjusts per answer quality (1–5 scale)
+- `interval_days` — current review gap in days
+- `next_review_date` — the date this card will surface again
+- `repetitions` — how many successful reviews have occurred
+
+The review queue endpoint returns only cards where `next_review_date <= today`, ordered by oldest-due-first. After each answer the client POSTs a quality score (1–5) and the backend recalculates + saves the new interval. A card you know well naturally disappears for weeks; a card you keep failing surfaces every day.
+
+**Why SM-2 over newer algorithms (FSRS)?** SM-2 is deterministic, well-understood, and has 30 years of real-world validation. FSRS requires more data per card and is harder to debug — SM-2 is the right choice for v1.
+
+### 2.2 AI Question Generation — Groq + llama-3.1-8b-instant
+
+All AI calls go through the Groq API. The model is `llama-3.1-8b-instant` — chosen for sub-2s latency and free-tier accessibility while producing coherent technical content.
+
+**Three interview question generation modes:**
+
+**Mode 1 — From JD:** The JD text is trimmed to 3,000 chars, and the prompt instructs the model to extract implied technical requirements and generate behavioral + technical questions a real interviewer would ask for that role.
+
+**Mode 2 — From Notes:** The user's `TopicNote` content (trimmed to 2,500 chars) is sent with a prompt grounding the questions strictly in what the user has written — questions reflect their actual knowledge base, not a generic syllabus.
+
+**Mode 3 — Custom:** Free-form topic string, no context injection, pure topic-driven generation.
+
+**Answer scoring:** Each submitted answer is re-evaluated by the LLM against the original question. The response JSON includes `score` (0–10), `feedback` (string), and `model_answer` (what a great answer looks like). These three fields drive the per-card breakdown in the interview summary email.
+
+**Rate protection:** All AI views share `throttle_scope = 'ai_generation'` — 20 requests/hour. This prevents runaway Groq billing.
+
+### 2.3 Career Gap Mapping — JD → Skill Matrix
+
+When a user pastes a JD:
+
+1. The full JD text + user's existing topic/flashcard state are sent to Groq
+2. The model returns a structured `gap_report`: a list of skills each tagged `not_started`, `in_progress`, or `mastered`
+3. Three backend helpers process this:
+   - `_compute_match_pct(gap_report)` — `(mastered + in_progress×0.5) / total × 100`
+   - `_estimate_jd_weeks(gap_report)` — `(not_started×3h + in_progress×1.5h) / (hours_per_day × 7)`
+   - The top 5 `not_started` skills become the `action_items` array with direct `topic_slug` links
+
+The result is stored in the `JDMapping` model and returned on GET for history. The frontend renders a `ScoreRing` SVG, a `SkillMatrix` (3 columns), an `ActionPlan` (numbered study links), and a `WeeksBadge`.
+
+### 2.4 Resume Analysis — PDF → Score → Cross-Map
+
+`ResumeAnalysisView` uses `PyPDF2` to extract text from the uploaded PDF. Two AI calls fire:
+
+1. **`_score_resume_quality(text)`** — asks Groq to rate resume quality 0–100 and return 3 specific improvement tips
+2. The same gap-report pipeline as JD mapping runs, using the resume's extracted skills as the "current state" input
+
+This gives users a career-readiness double view: how strong is your resume *as a document*, and how well does it actually map to what the job needs.
+
+### 2.5 GitHub Portfolio Scanner
+
+Uses GitHub OAuth (token stored encrypted with Fernet) to list user repos, fetch `README.md` and `package.json`/`requirements.txt` per repo, and send the combined text to Groq for stack detection + project summary generation. The `FERNET_KEY` environment variable holds the AES-128-CBC key used by `cryptography.fernet.Fernet` to encrypt/decrypt the access token before DB storage.
+
+### 2.6 Notification System — 4 Scheduled Jobs
+
+| Job | Schedule | Trigger | Email type |
+|---|---|---|---|
+| `send_daily_emails` | 08:00 daily | All active users | Morning motivation briefing |
+| `send_streak_warnings` | 20:00 daily | Users at risk of losing streak | Streak alert |
+| `send_inactive_nudge` | 10:00 daily | Users absent exactly N days (default 3) | Re-engagement nudge |
+| `send_weekly_summary` | 09:00 Sunday | All users with any activity this week | XP recap + due cards |
+
+The inactive nudge logic is precise: it checks that the user *was* active on `(today - N days)` AND has *not* been active since. This avoids double-nudging users who returned on day 2 of their gap.
+
+After every completed mock interview, `send_interview_summary()` fires synchronously (wrapped in `try/except` so a mail failure never crashes the response).
+
+---
+
+## 3. System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          Client Browser                             │
+│   React 19 + TypeScript + TanStack Router (file-based routing)      │
+│   TanStack Query v5 (server state) · Tailwind CSS v4 · Radix UI     │
+│   Recharts · XYFlow (roadmap graph) · Web Speech API (voice input)  │
+└────────────────────────┬────────────────────────────────────────────┘
+                         │ HTTPS / REST JSON
+                         ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       Nginx (reverse proxy)                         │
+│   Static SPA assets served directly · /api/* proxied to Django      │
+│   HSTS · gzip · rate-limit at infra level                           │
+└───────────┬─────────────────────────────────┬───────────────────────┘
+            │                                 │
+            ▼                                 ▼
+┌───────────────────────┐       ┌─────────────────────────────────────┐
+│  Django 5 + DRF       │       │  Groq API (external)                │
+│  Gunicorn 3w × 4t     │──────▶│  llama-3.1-8b-instant               │
+│  JWT SimpleJWT        │       │  Question gen · Answer scoring       │
+│  Custom throttling    │       │  Skill extraction · Resume scoring   │
+│  OTP auth · OAuth     │       └─────────────────────────────────────┘
+└───┬───────────┬───────┘
+    │           │
+    ▼           ▼
+┌──────────┐  ┌─────────────────────────────────────────────────────┐
+│  MySQL   │  │  Redis (django-redis)                               │
+│  8.0     │  │  Cache backend · JWT token blacklist (rotation)     │
+│  InnoDB  │  │  Session storage · throttle counters                │
+└──────────┘  └─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  Scheduler Container (same Dockerfile, different entrypoint)        │
+│  cron -f · loads /etc/cron.d/growthos from /app/crontab            │
+│  4 Django management commands run on UTC schedule                   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.1 Frontend Architecture
+
+**File-based routing** via `@tanstack/react-router` — route files in `src/routes/` are auto-discovered and `routeTree.gen.ts` is generated by the Vite plugin. No manual route registration.
+
+**Server state management** via TanStack Query v5:
+- `staleTime` set per-query based on how stale data can be (notifications: 10s, user profile: 60s)
+- `refetchInterval` for polling (notifications: 15s)
+- `invalidateQueries` after mutations to refresh stale caches
+
+**Component layers:**
+- `__root.tsx` — Layout shell, auth guard, sidebar, top header, Toaster
+- `src/components/` — Shared: `growth-sidebar.tsx`, `top-header.tsx`, `search-modal.tsx`, `pomodoro-timer.tsx`, `floating-chat.tsx`, `onboarding-modal.tsx`, `study-room.tsx`, `tutorial-overlay.tsx`
+- `src/routes/` — 20+ page-level components (one per route)
+
+### 3.2 Backend Architecture
+
+**Django app structure:** Single `core` app contains all models, views, serializers, URLs, emails, and management commands. Deliberate monolith — avoids premature service boundaries for a v1 project.
+
+**URL namespacing:** All API endpoints under `/api/` prefix. Grouped:
+- `/api/auth/` — login, register, OTP, JWT refresh, OAuth
+- `/api/topics/`, `/api/paths/`, `/api/roadmaps/` — learning content
+- `/api/flashcards/`, `/api/review/` — spaced repetition
+- `/api/interview/` — mock interview, scoring, notes-topics
+- `/api/career/` — JD mapping, resume analysis
+- `/api/github/` — repo scan, portfolio
+- `/api/search/` — global search with `?limit=` param (max 50)
+- `/api/notifications/`, `/api/progress/` — activity tracking
+
+### 3.3 Data Models (Key)
+
+| Model | Purpose | Key Fields |
+|---|---|---|
+| `User` | Django built-in + email verified flag | `is_email_verified`, `otp`, `otp_created_at` |
+| `UserProfile` | XP, streak, preferences | `xp`, `streak`, `last_active_date`, `github_token_encrypted` |
+| `LearningPath` | A roadmap (e.g., "Backend Engineer") | `title`, `slug`, `topics[]` |
+| `Topic` | A single concept node | `title`, `slug`, `path`, `order`, `status` |
+| `TopicNote` | Freeform user notes per topic | `content`, `updated_at` |
+| `Flashcard` | SM-2 card | `front`, `back`, `ease_factor`, `interval_days`, `next_review_date`, `repetitions` |
+| `MockInterview` | Interview session | `job_title`, `questions[]`, `overall_score`, `readiness_pct` |
+| `MockInterviewAnswer` | Per-question answer | `question`, `answer`, `score`, `feedback`, `model_answer` |
+| `JDMapping` | JD analysis result | `jd_text`, `gap_report`, `match_pct`, `weeks_to_ready`, `action_items` |
+| `ResumeAnalysis` | Resume scan result | `extracted_text`, `resume_score`, `resume_tips`, `match_pct` |
+| `PomodoroSession` | Completed timer session | `duration_minutes`, `completed_at` (constrained: 1–1440 min) |
+| `Notification` | In-app alert | `type`, `message`, `is_read`, `created_at` |
+
+---
+
+## 4. Security, Auth & Hardening
+
+### 4.1 Authentication Flow
+
+```
+┌──────────┐   POST /api/auth/register/     ┌──────────────┐
+│  Client  │ ───────────────────────────▶   │   Django     │
+│          │   { email, password, name }     │              │
+│          │ ◀───────────────────────────   │  Creates     │
+│          │   { message: "OTP sent" }       │  User +      │
+│          │                                 │  sends OTP   │
+│          │   POST /api/auth/verify-otp/    │  via email   │
+│          │ ───────────────────────────▶   │              │
+│          │   { email, otp }                │  Validates   │
+│          │ ◀───────────────────────────   │  OTP (5min   │
+│          │   { access, refresh }           │  expiry)     │
+└──────────┘                                 └──────────────┘
+```
+
+**OTP generation:** `secrets.choice(string.digits)` — cryptographically secure PRNG, not `random.randint()`. OTPs are 6 digits, expire after 5 minutes, and are single-use (cleared after verification).
+
+**JWT tokens:**
+- Access token: 15-minute lifetime
+- Refresh token: 30-day lifetime
+- Rotation enabled: every refresh call issues a new refresh token
+- Blacklist enabled: old refresh tokens are invalidated after rotation (stored in Redis)
+
+**OAuth flows:**
+- Google: `@react-oauth/google` on frontend, token verified server-side with Google's tokeninfo endpoint
+- GitHub: Authorization Code flow, `code` exchanged for access token, token Fernet-encrypted before DB storage
+
+### 4.2 Rate Throttling
+
+```python
+DEFAULT_THROTTLE_RATES = {
+    'anon':          '600/hour',
+    'user':          '10000/hour',
+    'login':         '5/minute',     # SendOTPView, VerifyOTPView
+    'ai_generation': '20/hour',      # All Groq API views
+    'search':        '100/minute',
+}
+```
+
+Views protected by `ai_generation` scope: `GeneratePathView`, `ChatAssistantView`, `GenerateFlashcardsView`, `ProjectIdeasView`, `TopicFeynmanView`, `ScanRepoView`, `ResumeAnalysisView`, `MockInterviewView` (8 views total).
+
+### 4.3 Production Security Headers
+
+```python
+SECURE_HSTS_SECONDS = 31536000          # 1 year HSTS
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+```
+
+### 4.4 CORS
+
+`CORS_ALLOWED_ORIGINS` is an environment variable — no wildcard in production. Defaults to `https://growth-os.tech,https://www.growth-os.tech`. API responses include `Vary: Origin` for correct caching behavior.
+
+### 4.5 Database-Level Constraints
+
+The `PomodoroSession` model has a `CheckConstraint` enforced at MySQL level:
+
+```python
+constraints = [
+    models.CheckConstraint(
+        check=Q(duration_minutes__gte=1) & Q(duration_minutes__lte=1440),
+        name='pomosession_duration_range',
+    )
+]
+```
+
+Even if the app layer is bypassed (direct DB insert), the constraint holds.
+
+### 4.6 Encryption at Rest
+
+GitHub OAuth access tokens are never stored in plaintext. Before INSERT:
+```python
+f = Fernet(settings.FERNET_KEY.encode())
+encrypted = f.encrypt(token.encode()).decode()
+```
+
+Fernet uses AES-128-CBC with PKCS7 padding + HMAC-SHA256 for authentication. The key must be URL-safe base64 encoded and exactly 32 bytes decoded.
+
+### 4.7 Input Validation
+
+- Search `?limit=` param: `min(int(request.query_params.get('limit', 10)), 50)` — server-enforced cap
+- Note content for interview generation: minimum 50 characters enforced before Groq call
+- All serializers validate required fields; DRF returns 400 with field-level errors on bad input
+- PDF text extraction validated for minimum content before resume scoring
+
+---
+
+## 5. UI/UX & Design Philosophy
+
+### 5.1 Dark Forge Design System
+
+GrowthOS uses a custom design system called **Dark Forge** — a minimal, high-contrast palette optimized for long study sessions:
+
+| Token | Value | Usage |
+|---|---|---|
+| Background | `#030303` | Page background — near-black, not pure black |
+| Card surface | `#0a0a0a` / `#111111` | All card/panel backgrounds |
+| Accent | `#00FF66` | Interactive highlights, rings, CTAs, active states |
+| Text primary | `#ffffff` | Headings, labels |
+| Text muted | `#888888` | Secondary text, descriptions |
+| Border | `rgba(255,255,255,0.08)` | Subtle card borders |
+| Danger | `#ef4444` | Errors, streak warnings |
+| Warning | `#f59e0b` | Amber tips, moderate scores |
+
+No purple. No heavy gradients. Every email template uses the same palette — `#00FF66` border on header, black-text-on-green CTA buttons, stat numbers in green.
+
+### 5.2 Key UI Patterns
+
+**Score Rings:** SVG `circle` with `stroke-dasharray` + `stroke-dashoffset` animated via CSS. Used in Career Intel (match %), Resume (quality score), and Interview result. Color thresholds: green ≥70, amber ≥40, red <40.
+
+**Skill Matrix:** 3-column responsive grid (Mastered / In Progress / Gap). Each item has a "Study →" button that navigates directly to `/topic/${slug}`. Zero friction from insight to action.
+
+**Tab-strip History:** JD history shown as horizontal pills at the top of the Career panel — click any pill to restore that analysis instantly without a round trip (data already in cache from the list query).
+
+**Voice Input:** Browser-native `SpeechRecognition` / `webkitSpeechRecognition` API. Runs entirely client-side — no audio leaves the browser, no backend involvement. `continuous: true` + `interimResults: true` streams live transcription into the answer textarea. A pulsing red dot signals active recording.
+
+**Command Center:** `cmdk`-powered global search palette (`Cmd+K` / `Ctrl+K`). Searches topics, paths, roadmaps, and navigates instantly. Results hit `GET /api/search/?q=...&limit=10`.
+
+**Onboarding Modal:** Multi-step first-run flow using `driver.js` for spotlight-style tooltips walking new users through the sidebar sections.
+
+**Pomodoro Timer:** Floating persistent widget — survives page navigation. Sessions auto-log to the backend on completion with duration, topic context, and timestamp.
+
+### 5.3 Frontend Routing
+
+TanStack Router with file-based routing — route file name maps 1:1 to URL:
+
+```
+src/routes/
+├── index.tsx               → /
+├── dashboard.tsx           → /dashboard
+├── topic.$topicId.tsx      → /topic/:topicId
+├── career.tsx              → /career
+├── interview.tsx           → /interview
+├── paths.create.tsx        → /paths/create
+├── portfolio.$username.tsx → /portfolio/:username
+└── admin.dashboard.tsx     → /admin/dashboard
+```
+
+`routeTree.gen.ts` is auto-generated by the Vite plugin on every `dev` or `build` — never edit it manually.
+
+---
+
+## 6. Deployment & Infrastructure
+
+### 6.1 Container Architecture
+
+Five Docker containers defined in `docker-compose.production.yml`:
+
+```
+┌─────────────────┐  ┌──────────────────────┐
+│   growthos_db   │  │   growthos_redis      │
+│   MySQL 8.0     │  │   Redis 7 Alpine      │
+│   Persistent    │  │   Cache + blacklist   │
+│   volume        │  └──────────────────────┘
+└────────┬────────┘           │
+         │                    │
+         ▼                    ▼
+┌─────────────────────────────────────────────┐
+│             growthos_backend                │
+│   Python 3.12 slim · Gunicorn 3w×4t        │
+│   Runs: migrate → collectstatic → serve    │
+│   Port: 127.0.0.1:8005 (local-only)        │
+│   Volumes: static_volume, media_volume     │
+└──────────────┬──────────────────────────────┘
+               │
+               ├── (same image, different entrypoint)
+               ▼
+┌─────────────────────────────────────────────┐
+│            growthos_scheduler               │
+│   entrypoint: []                           │
+│   Copies /app/crontab → /etc/cron.d/       │
+│   Runs: cron -f (foreground)               │
+│   4 jobs: daily/streak/nudge/weekly        │
+└─────────────────────────────────────────────┘
+               │
+               ├── (depends_on: backend)
+               ▼
+┌─────────────────────────────────────────────┐
+│            growthos_frontend                │
+│   Nginx Alpine · Serves built SPA          │
+│   Port: 127.0.0.1:3005 (local-only)        │
+│   Build args: VITE_API_BASE_URL baked in   │
+└─────────────────────────────────────────────┘
+```
+
+**Entrypoint pattern:** `entrypoint.sh` runs as root, fixes volume mount ownership, then drops privileges to `appuser` using `su-exec`. This solves the "static files owned by root" problem common in Docker + volume setups.
+
+**Gunicorn config:** `--workers 3 --threads 4 --worker-class gthread` = 12 concurrent request slots. `--max-requests 1000 --max-requests-jitter 100` recycles workers to prevent memory leaks.
+
+### 6.2 Nginx Reverse Proxy (Host Level)
+
+Nginx on the VPS host (not containerized) handles:
+- TLS termination (Let's Encrypt via Certbot)
+- Proxying `api.growth-os.tech` → `127.0.0.1:8005`
+- Proxying `growth-os.tech` → `127.0.0.1:3005`
+- HSTS headers, gzip compression
+
+### 6.3 Environment Variables
+
+All secrets live in `.env.prod` on the VPS — never committed to git. See `.env.prod.example` for the full template.
+
+| Variable | Description |
+|---|---|
+| `SECRET_KEY` | Django secret — `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| `MYSQL_PASSWORD` | App user DB password |
+| `MYSQL_ROOT_PASSWORD` | MySQL root password |
+| `GROQ_API_KEY` | Groq API key for all AI features |
+| `FERNET_KEY` | AES key — `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
+| `SMTP_HOST/PORT/USER/PASS/FROM` | Email credentials (Gmail App Password recommended) |
+| `GOOGLE_CLIENT_ID/SECRET` | Google OAuth credentials |
+| `GITHUB_CLIENT_ID/SECRET` | GitHub OAuth credentials |
+| `VITE_GOOGLE_CLIENT_ID` | Public Google client ID baked into frontend SPA at build time |
+| `VITE_GITHUB_CLIENT_ID` | Public GitHub client ID baked into frontend SPA at build time |
+
+### 6.4 Cron Schedule (UTC)
+
+```
+0 8  * * *  send_daily_emails       # 08:00 UTC daily — motivation briefing
+0 20 * * *  send_streak_warnings    # 20:00 UTC daily — streak at risk
+0 10 * * *  send_inactive_nudge     # 10:00 UTC daily — 3-day inactive users
+0 9  * * 0  send_weekly_summary     # 09:00 UTC Sunday — weekly XP recap
+```
+
+### 6.5 Deploy Commands
+
+```bash
+# First-time deploy
+git clone https://github.com/anxmeshhh/GrowthOS.git && cd GrowthOS
+cp .env.prod.example .env.prod   # fill in all values
+docker compose --env-file .env.prod -f docker-compose.production.yml up -d --build
+
+# Re-deploy after code changes
+git pull origin main
+docker compose --env-file .env.prod -f docker-compose.production.yml up -d --build --no-deps backend scheduler frontend
+
+# Health checks
+docker compose -f docker-compose.production.yml ps
+docker exec growthos_backend python manage.py migrate --check
+docker logs growthos_backend --tail 50
+docker logs growthos_scheduler --tail 20
+
+# DB backup
+docker exec growthos_db mysqldump -u root -p growthos_prod > backup_$(date +%Y%m%d).sql
 ```
 
 ---
 
-## Database Design
-
-The database is built around three core pillars: Content, Assessment, and User State.
-
-### Major Entities:
-- **User & Identity**: `User`, `UserProfile`, `OTPVerification`, `AdminRequest`
-- **Curriculum**: `LearningPath`, `Topic`, `Bookmark`, `PathSharing`
-- **Study Materials**: `TopicNote`, `TopicMaterial`, `NoteDocument`, `TopicScreenshot`
-- **Assessments**: `TopicProgress`, `TopicQuiz`, `TopicFlashcard`, `Flashcard` (handles SRS scheduling), `TopicFeynman`
-- **Proof & Activity**: `VerifiedProject`, `PomodoroSession`, `Contribution`, `ChatMessage`
-
----
-
-## Authentication & Security
-
-- **JWT Authorization**: All secured endpoints require stateless JSON Web Tokens.
-- **Multiple Login Methods**: Support for Email OTP (One Time Password), Google OAuth, and GitHub OAuth.
-- **Role-Based Access**: Specialized `/api/admin/` routes protected by staff-level verification via the `AdminRequest` approval flow.
-- **Environment Isolation**: Absolute separation of local and production environment variables.
-
----
-
-## Installation Guide
+## 7. Local Setup & Developer Onboarding
 
 ### Prerequisites
-- Node.js (v18+)
-- Python (v3.10+)
-- MySQL (Optional for local, defaults to SQLite)
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/anxmeshhh/GrowthOS.git
-cd GrowthOS
-```
+- Python 3.12+
+- Node.js 20+
+- MySQL 8.0
+- Redis 7
 
-### 2. Backend Setup
+### Backend Setup
+
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Or `venv\Scripts\activate` on Windows
+source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env              # edit with your local MySQL/Redis creds
 python manage.py migrate
+python manage.py seed_json_roadmaps   # load sample roadmap data
 python manage.py runserver
+# API at http://localhost:8000/api/
 ```
 
-### 3. Frontend Setup
+### Frontend Setup
+
 ```bash
-cd ../frontend
+cd frontend
 npm install
 npm run dev
+# App at http://localhost:5173/
 ```
 
----
-
-## Configuration
-
-You must configure environment variables to enable full functionality.
-Create a `.env` file in the `backend/` directory (Refer to `.env.prod.example`):
+### Local `.env` for Backend
 
 ```env
-# Database (Local uses SQLite if omitted)
-MYSQL_DATABASE=growthos
-MYSQL_USER=growthos_user
-MYSQL_PASSWORD=secure_password
-
-# Authentication
-DJANGO_SECRET_KEY=your_secret_key
-JWT_SECRET=your_jwt_secret
-FERNET_KEY=your_fernet_key
-
-# External Providers
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-GOOGLE_CLIENT_ID=your_google_id
-GITHUB_CLIENT_ID=your_github_id
-GITHUB_CLIENT_SECRET=your_github_secret
-
-# AI APIs
-GEMINI_API_KEY=your_gemini_key
-GROQ_API_KEY=your_groq_key
-NVIDIA_API_KEY=your_nvidia_key
+DEBUG=True
+SECRET_KEY=any-random-string-for-local
+MYSQL_DATABASE=growthos_dev
+MYSQL_USER=root
+MYSQL_PASSWORD=your_local_mysql_password
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+GROQ_API_KEY=gsk_your_actual_key
+FERNET_KEY=<output of Fernet.generate_key().decode()>
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@gmail.com
+SMTP_PASS=your_gmail_app_password
+SMTP_FROM=GrowthOS <your@gmail.com>
+REDIS_URL=redis://127.0.0.1:6379/1
 ```
 
-Create a `.env` in the `frontend/` directory:
-```env
-VITE_API_BASE_URL=http://localhost:8000/api
-VITE_GOOGLE_CLIENT_ID=your_google_client_id
-VITE_GITHUB_CLIENT_ID=your_github_client_id
-```
-
----
-
-## API Documentation
-
-The backend exposes a comprehensive RESTful API under `/api/`.
-
-### Core Endpoints:
-- **Auth**: `/auth/login/`, `/auth/register/`, `/auth/google/`, `/auth/github/`, `/auth/verify-otp/`
-- **Dashboard**: `/dashboard/`, `/heatmap/`, `/activity/`, `/pomodoro/`, `/today/`
-- **Paths & Topics**: `/paths/`, `/custom-paths/`, `/topics/<id>/`
-- **Study Workspaces**: `/topics/<id>/notes/`, `/topics/<id>/quiz/`, `/topics/<id>/feynman/`, `/topics/<id>/flashcards/`
-- **GitHub Integration**: `/github/repos/`, `/github/path/sync/`, `/github/workspace/commit/`
-- **Admin**: `/admin/stats/`, `/admin/users/`, `/admin/roadmaps/`
-
----
-
-## Workflows
-
-### User Workflow
-1. **Onboarding**: User creates an account, connects GitHub, and selects/generates a Learning Path.
-2. **Daily Routine**: The user reviews the Dashboard heatmap and starts their Pomodoro timer.
-3. **Consumption**: User reads/watches curated resources for the current topic.
-4. **Distillation**: User writes markdown notes and attaches screenshots.
-5. **Assessment**: User takes the AI-generated Quiz and performs a Feynman technique explanation.
-6. **Proof**: User builds a mini-project and the system automatically commits their workspace to GitHub.
-7. **Progression**: The topic is marked as mastered, updating the trajectory timeline and unlocking the next concept.
-
-### Admin Workflow
-1. **Access**: Admins navigate to the command center via a secure toggle.
-2. **User Management**: Monitor user activity, approve admin requests, and export platform data.
-3. **Curriculum Management**: Upload structured Roadmap JSON files to instantly populate new core paths.
-
----
-
-## Deployment
-
-GrowthOS includes a production-ready Docker Compose configuration.
+### Key Management Commands
 
 ```bash
-# 1. Create your .env.prod file on your server
-cp .env.prod.example .env.prod
-nano .env.prod
-
-# 2. Build and spin up the containers
-docker compose --env-file .env.prod -f docker-compose.production.yml up -d --build
-
-# 3. Collect static files for Django
-docker exec -it growthos_backend python manage.py collectstatic --noinput
+python manage.py send_daily_emails
+python manage.py send_streak_warnings
+python manage.py send_inactive_nudge --days 3
+python manage.py send_weekly_summary
+python manage.py analyze_pdfs          # import PDF roadmaps (needs GEMINI_API_KEY)
+python manage.py seed_db               # seed demo database
 ```
 
+### Project Structure
+
+```
+GrowthOS/
+├── backend/
+│   ├── config/              # Django project: settings, WSGI, ASGI, root URLs
+│   ├── core/                # Main app — all models, views, URLs, emails
+│   │   ├── models.py        # 25+ data models
+│   │   ├── views.py         # 50+ API views
+│   │   ├── urls.py          # URL routing
+│   │   ├── serializers.py   # DRF serializers
+│   │   ├── emails.py        # HTML email templates + send functions
+│   │   ├── admin.py         # Django admin
+│   │   ├── migrations/      # 36 migrations
+│   │   └── management/
+│   │       └── commands/    # 10 custom management commands
+│   ├── crontab              # Cron schedule (loaded by scheduler container)
+│   ├── entrypoint.sh        # Docker entrypoint (root → appuser drop)
+│   ├── Dockerfile.prod      # Production image
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── routes/          # 20+ page components (file-based routing)
+│   │   ├── components/      # Shared UI components
+│   │   ├── routeTree.gen.ts # Auto-generated by Vite plugin — never edit
+│   │   └── main.tsx
+│   ├── Dockerfile.prod      # Nginx + built SPA
+│   └── package.json
+├── docker-compose.production.yml
+├── .env.prod.example
+└── README.md
+```
+
+### Adding New Features
+
+**New API endpoint:**
+1. Add/update model in `core/models.py`
+2. `python manage.py makemigrations && python manage.py migrate`
+3. Create view in `core/views.py` with appropriate `throttle_scope`
+4. Add URL in `core/urls.py`
+5. Add serializer in `core/serializers.py`
+
+**New frontend route:**
+1. Create `src/routes/your-route.tsx`
+2. `npm run dev` — Vite plugin auto-regenerates `routeTree.gen.ts`
+3. Add sidebar link in `src/components/growth-sidebar.tsx`
+
+**New scheduled job:**
+1. Create `core/management/commands/your_command.py`
+2. Add cron line to `backend/crontab`
+3. Add email function to `core/emails.py` if needed
+
 ---
 
-## Known Limitations & Future Scope
+## Tech Stack Summary
 
-- **Partially Implemented**: The NVIDIA API layer is currently configured but primarily delegates to Groq/Gemini for heavy lifting.
-- **Calendar Integration**: Google Calendar sync for scheduling study sessions is planned but not fully integrated.
-- **Mobile Responsiveness**: The frontend works on mobile, but the UI is heavily optimized for desktop "Command Center" usage.
-- **Future Scope**: 
-  - Advanced whiteboard editor for architectural drawings.
-  - Social/Community features (Public leaderboards).
-  - Resume PDF export generated directly from verified project proofs.
+| Layer | Technology |
+|---|---|
+| Frontend framework | React 19 + TypeScript |
+| Routing | TanStack Router (file-based) |
+| Server state | TanStack Query v5 |
+| Build tool | Vite 7 |
+| UI components | Radix UI + custom Dark Forge tokens |
+| Styling | Tailwind CSS v4 |
+| Data visualization | Recharts, XYFlow, react-activity-calendar |
+| Backend framework | Django 5 + Django REST Framework |
+| WSGI server | Gunicorn (gthread worker) |
+| Database | MySQL 8.0 (InnoDB) |
+| Cache / blacklist | Redis 7 |
+| AI / LLM | Groq API (llama-3.1-8b-instant) |
+| Auth | JWT (SimpleJWT) + Google OAuth + GitHub OAuth + OTP |
+| Encryption | cryptography (Fernet / AES-128-CBC) |
+| PDF parsing | PyPDF2 |
+| Email | SMTP (Gmail App Password) |
+| Containerization | Docker + Docker Compose |
+| Web server | Nginx (host) + Nginx Alpine (frontend container) |
+| Voice input | Web Speech API (browser-native) |
+| Spaced repetition | SM-2 algorithm (custom implementation) |
 
 ---
 
-## Contributing
-
-We welcome contributions from the community! Please read our [Contributing Guide](CONTRIBUTING.md) to understand our branching strategy, local setup process, and code style guidelines.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+*Built by Animesh — a full-stack educational operating system for deliberate developers.*

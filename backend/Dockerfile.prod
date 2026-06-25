@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-# Install system dependencies + su-exec for privilege drop
+# Install system dependencies + gosu for privilege drop
 RUN apt-get update && apt-get install -y \
     build-essential \
     default-libmysqlclient-dev \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     pkgconf \
     python3-dev \
-    su-exec \
+    gosu \
     cron \
     && rm -rf /var/lib/apt/lists/*
 
