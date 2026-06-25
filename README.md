@@ -46,6 +46,7 @@ Most developers learn reactively — they watch tutorials when stuck, read docs 
 | **Command Center** | Keyboard-first global command palette for instant navigation across the entire platform |
 | **Progress Dashboard** | XP system, streak tracking, GitHub-style activity heatmap, and rolling quiz averages |
 | **Email Notifications** | Automated emails: daily motivation, streak warnings, 3-day inactivity nudge, weekly progress recap, interview summary |
+| **Air Draw** | Interactive hand-tracking whiteboard with shape detection, drag-and-drop elements, and PDF export |
 
 ---
 
