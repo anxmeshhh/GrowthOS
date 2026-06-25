@@ -34,7 +34,7 @@ function formatAIText(text: string) {
       return (
         <code
           key={i}
-          className="bg-white/10 text-[#22c55e] px-1.5 py-0.5 rounded text-[13px] font-mono border border-white/5"
+          className="bg-white/10 text-[#00FF66] px-1.5 py-0.5 rounded text-[13px] font-mono border border-white/5"
         >
           {part.slice(1, -1)}
         </code>
@@ -148,17 +148,18 @@ export function FloatingChat() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-[9000] flex h-14 w-14 items-center justify-center rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300 hover:scale-105 hover:bg-black hover:border-[#22c55e]/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.3)] active:scale-95 group"
+          aria-label="Open assistant"
+          className="fixed bottom-[76px] right-4 lg:bottom-6 lg:right-6 z-[9000] flex h-14 w-14 items-center justify-center rounded-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#00FF66] shadow-lg shadow-black/40 transition-all duration-200 hover:scale-105 hover:border-[#00FF66]/50 active:scale-95 group"
         >
           <Bot size={24} className="transition-transform group-hover:scale-110" />
-          <div className="absolute top-0 right-0 w-3 h-3 bg-[#22c55e] rounded-full border-2 border-[#030303] shadow-[0_0_8px_#22c55e] animate-pulse" />
+          <div className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-[#00FF66] rounded-full border-2 border-[#0a0a0a]" />
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-[9000] flex w-[360px] sm:w-[400px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#030303]/95 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] h-[520px] max-h-[85vh]"
+          className="fixed bottom-[76px] right-4 left-4 sm:left-auto lg:bottom-6 lg:right-6 z-[9000] flex w-auto sm:w-[400px] flex-col overflow-hidden rounded-2xl border border-[#1a1a1a] bg-[#030303]/95 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] h-[520px] max-h-[75vh]"
           style={{ animation: "slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)" }}
         >
           <style>{`@keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
@@ -166,17 +167,17 @@ export function FloatingChat() {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-950/30 border border-[#22c55e]/20">
-                <Sparkles size={16} className="text-[#22c55e]" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-950/30 border border-[#00FF66]/20">
+                <Sparkles size={16} className="text-[#00FF66]" />
               </div>
               <div>
                 <h3 className="text-[15px] font-semibold text-gray-100 tracking-wide">
                   GrowthOS Mentor
                 </h3>
-                <div className="flex items-center gap-1.5 text-xs font-mono tracking-widest uppercase text-[#22c55e]">
+                <div className="flex items-center gap-1.5 text-xs font-mono tracking-widest uppercase text-[#00FF66]">
                   <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-75"></span>
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#22c55e]"></span>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00FF66] opacity-75"></span>
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00FF66]"></span>
                   </span>
                   Online
                 </div>
@@ -209,7 +210,7 @@ export function FloatingChat() {
                   className={`max-w-[85%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed shadow-sm ${
                     msg.role === "user"
                       ? "bg-white/[0.05] border border-white/10 text-gray-200 rounded-br-sm"
-                      : "bg-black/40 border border-[#22c55e]/20 text-gray-300 rounded-bl-sm shadow-[0_0_15px_rgba(34,197,94,0.05)]"
+                      : "bg-black/40 border border-[#00FF66]/20 text-gray-300 rounded-bl-sm shadow-[0_0_15px_rgba(0,255,102,0.05)]"
                   }`}
                 >
                   {msg.role === "ai" ? formatAIText(msg.content) : msg.content}
@@ -218,7 +219,7 @@ export function FloatingChat() {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-black/40 border border-[#22c55e]/20 text-[#22c55e] rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.05)]">
+                <div className="bg-black/40 border border-[#00FF66]/20 text-[#00FF66] rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,102,0.05)]">
                   <Loader2 size={14} className="animate-spin" />
                   <span className="text-[14px] text-gray-300">Processing...</span>
                 </div>
@@ -234,7 +235,7 @@ export function FloatingChat() {
                 <button
                   key={chip.label}
                   onClick={() => handleSend(chip.msg)}
-                  className="shrink-0 px-3 py-1.5 rounded-md border border-white/5 bg-white/[0.02] text-[10px] font-mono uppercase tracking-widest text-gray-400 hover:bg-[#22c55e]/10 hover:border-[#22c55e]/30 hover:text-[#22c55e] transition-all"
+                  className="shrink-0 px-3 py-1.5 rounded-md border border-white/5 bg-white/[0.02] text-[10px] font-mono uppercase tracking-widest text-gray-400 hover:bg-[#00FF66]/10 hover:border-[#00FF66]/30 hover:text-[#00FF66] transition-all"
                 >
                   {chip.label}
                 </button>
@@ -252,12 +253,12 @@ export function FloatingChat() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask me anything..."
-                className="w-full rounded-xl border border-white/10 bg-black/50 py-3 pl-4 pr-12 text-[14px] text-gray-200 placeholder-gray-600 focus:border-[#22c55e]/50 focus:outline-none focus:ring-1 focus:ring-[#22c55e]/50 transition-all shadow-inner"
+                className="w-full rounded-xl border border-white/10 bg-black/50 py-3 pl-4 pr-12 text-[14px] text-gray-200 placeholder-gray-600 focus:border-[#00FF66]/50 focus:outline-none focus:ring-1 focus:ring-[#00FF66]/50 transition-all shadow-inner"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isLoading}
-                className="absolute right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-[#22c55e] text-black disabled:opacity-30 disabled:bg-white/10 disabled:text-white transition-all hover:bg-[#16a34a]"
+                className="absolute right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-[#00FF66] text-black disabled:opacity-30 disabled:bg-white/10 disabled:text-white transition-all hover:bg-[#00CC52]"
               >
                 <Send size={14} />
               </button>

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-import random
+import secrets
 import string
 
 class AdminRequest(models.Model):
@@ -18,6 +18,18 @@ class AdminRequest(models.Model):
         return f"{self.user.username} - {self.status}"
 
 class UserProfile(models.Model):
+    SKILL_LEVELS = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('expert', 'Expert'),
+    ]
+    LEARNING_GOALS = [
+        ('get_job', 'Get a dev job'),
+        ('upskill', 'Upskill at current job'),
+        ('freelance', 'Start freelancing'),
+        ('hobby', 'Learn for fun'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     selected_path = models.ForeignKey('LearningPath', on_delete=models.SET_NULL, null=True, blank=True)
     selected_title = models.CharField(max_length=100, default='Novice')
@@ -26,6 +38,13 @@ class UserProfile(models.Model):
     github_username = models.CharField(max_length=100, blank=True, default='')
     github_access_token = models.TextField(blank=True, default='')
     streak_revive_used_at = models.DateTimeField(null=True, blank=True)
+
+    # Personalisation — collected at onboarding
+    skill_level = models.CharField(max_length=20, choices=SKILL_LEVELS, default='beginner')
+    learning_goal = models.CharField(max_length=20, choices=LEARNING_GOALS, default='get_job')
+    target_role = models.CharField(max_length=120, blank=True, default='')
+    available_hours_per_day = models.FloatField(default=1.0)
+    onboarding_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
@@ -37,7 +56,8 @@ class OTPVerification(models.Model):
     is_verified = models.BooleanField(default=False)
 
     def generate_otp(self):
-        self.otp = ''.join(random.choices(string.digits, k=6))
+        # M8: Use secrets module for cryptographically secure OTP generation
+        self.otp = ''.join(secrets.choice(string.digits) for _ in range(6))
         self.created_at = timezone.now()
         self.is_verified = False
         self.save()
@@ -145,6 +165,15 @@ class TopicMaterial(models.Model):
     ai_feedback = models.TextField(blank=True, null=True)
     ai_score = models.IntegerField(default=0)
 
+    class Meta:
+        # M1: Enforce score is always in [0, 100] at the DB level
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(ai_score__gte=0) & models.Q(ai_score__lte=100),
+                name='topicmaterial_ai_score_range',
+            ),
+        ]
+
     def __str__(self):
         return f"{self.user.username} - {self.topic.title} ({self.ai_status})"
 
@@ -161,6 +190,14 @@ class TopicProgress(models.Model):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        # M2: Prevent duplicate progress rows under concurrent requests
+        unique_together = ('user', 'topic')
+        # M1: Indexed for hot query pattern: filter by user+status
+        indexes = [
+            models.Index(fields=['user', 'status'], name='topicprogress_user_status_idx'),
+        ]
+
     def __str__(self):
         return f"{self.user.username} - {self.topic.title} ({self.status})"
 
@@ -172,6 +209,18 @@ class Contribution(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        # M1: Hot query pattern — daily dedup check: filter(user, action_type, created_at__date)
+        indexes = [
+            models.Index(fields=['user', 'action_type', 'created_at'], name='contrib_user_action_date'),
+        ]
+        # M1: Score sanity gate — points must be non-negative, EXCEPT the
+        # 'streak_revived' spend which legitimately records a -10 XP cost.
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(points__gte=0) | models.Q(action_type='streak_revived'),
+                name='contribution_points_non_negative',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at} - {self.action_type}"
@@ -231,6 +280,9 @@ class TopicQuiz(models.Model):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='quizzes')
     difficulty = models.CharField(max_length=20, default='medium')
     questions = models.JSONField(default=list)
+    last_score = models.IntegerField(null=True, blank=True)
+    best_score = models.IntegerField(null=True, blank=True)
+    last_attempted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -264,6 +316,13 @@ class VerifiedProject(models.Model):
     class Meta:
         unique_together = ('user', 'topic')
         ordering = ['-verified_at']
+        # M1: Enforce score is always in [0, 100] at the DB level
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(ai_score__gte=0) & models.Q(ai_score__lte=100),
+                name='verifiedproject_ai_score_range',
+            ),
+        ]
 
     def __str__(self):
         return f"Project by {self.user.username} for {self.topic.title}"
@@ -292,6 +351,12 @@ class PomodoroSession(models.Model):
 
     class Meta:
         ordering = ['-completed_at']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(duration_minutes__gte=1) & models.Q(duration_minutes__lte=1440),
+                name='pomosession_duration_range',
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.duration_minutes}m ({self.completed_at.strftime('%Y-%m-%d')})"
@@ -317,3 +382,174 @@ class Flashcard(models.Model):
 
     def __str__(self):
         return f"Flashcard for {self.topic.title}: {self.front[:20]}..."
+
+
+class SiteSetting(models.Model):
+    """Admin-editable key/value system settings (one row per key)."""
+    key = models.CharField(max_length=100, unique=True, db_index=True)
+    value = models.CharField(max_length=500, blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key} = {self.value}"
+
+
+class JDAnalysis(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jd_analyses')
+    raw_text = models.TextField()
+    job_title = models.CharField(max_length=200, blank=True)
+    company = models.CharField(max_length=200, blank=True)
+    extracted_skills = models.JSONField(default=list)
+    experience_level = models.CharField(max_length=20, blank=True)
+    gap_report = models.JSONField(default=dict)
+    generated_path = models.ForeignKey('LearningPath', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} — {self.job_title or 'JD Analysis'}"
+
+
+class ResumeAnalysis(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resume_analysis')
+    file = models.FileField(upload_to='resumes/', null=True, blank=True)
+    raw_text = models.TextField(blank=True)
+    extracted_skills = models.JSONField(default=list)
+    experience_level = models.CharField(max_length=20, blank=True)
+    years_of_experience = models.FloatField(default=0)
+    gap_report = models.JSONField(default=dict)
+    analyzed_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} — Resume"
+
+
+class DailyMission(models.Model):
+    """AI-generated daily learning mission. One per user per day."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_missions')
+    date = models.DateField()
+    tasks = models.JSONField(default=list)
+    focus_message = models.TextField(blank=True)
+    job_readiness_pct = models.FloatField(default=0)
+    estimated_weeks_to_ready = models.FloatField(null=True, blank=True)
+    weak_topics = models.JSONField(default=list)
+    total_xp_available = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'date']
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.username} — Mission {self.date}"
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('topic_complete', 'Topic Complete'),
+        ('streak_milestone', 'Streak Milestone'),
+        ('flashcards_due', 'Flashcards Due'),
+        ('path_shared', 'Path Shared'),
+        ('quiz_ready', 'Quiz Ready'),
+        ('general', 'General'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='general')
+    message = models.CharField(max_length=300)
+    link = models.CharField(max_length=200, blank=True, default='')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read', 'created_at'], name='notif_user_read_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} — {self.type}: {self.message[:50]}"
+
+
+class TopicResource(models.Model):
+    RESOURCE_TYPES = [
+        ('doc', 'Documentation'),
+        ('video', 'Video'),
+        ('article', 'Article'),
+        ('tool', 'Tool'),
+        ('course', 'Course'),
+        ('practice', 'Practice'),
+    ]
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='resources')
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='added_resources')
+    title = models.CharField(max_length=200)
+    url = models.URLField(max_length=500)
+    type = models.CharField(max_length=20, choices=RESOURCE_TYPES, default='article')
+    description = models.CharField(max_length=300, blank=True)
+    upvotes = models.IntegerField(default=0)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_verified', '-upvotes', '-created_at']
+        indexes = [
+            models.Index(fields=['topic', 'type'], name='resource_topic_type_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.topic.title} — {self.title}"
+
+
+class MockInterview(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mock_interviews')
+    jd_analysis = models.ForeignKey(JDAnalysis, on_delete=models.SET_NULL, null=True, blank=True)
+    job_title = models.CharField(max_length=200, blank=True)
+    questions = models.JSONField(default=list)
+    answers = models.JSONField(default=list)
+    overall_score = models.FloatField(null=True, blank=True)
+    interview_readiness_pct = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} — Interview {self.job_title or ''} ({self.created_at.date()})"
+
+
+class StudyRoom(models.Model):
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='study_rooms')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_rooms')
+    name = models.CharField(max_length=100, blank=True)
+    is_active = models.BooleanField(default=True)
+    pomodoro_end = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['topic', 'is_active'], name='room_topic_active_idx'),
+        ]
+
+    def __str__(self):
+        return f"Room: {self.topic.title} ({self.created_by.username})"
+
+
+class StudyRoomParticipant(models.Model):
+    room = models.ForeignKey(StudyRoom, on_delete=models.CASCADE, related_name='participants')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_sessions')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    last_ping = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ['room', 'user']
+        indexes = [
+            models.Index(fields=['room', 'is_active'], name='participant_room_active_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} in {self.room}"

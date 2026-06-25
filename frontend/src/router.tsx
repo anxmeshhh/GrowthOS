@@ -8,6 +8,10 @@ export const getRouter = () => {
       queries: {
         refetchOnWindowFocus: false,
         retry: 1,
+        // Treat data as fresh for 5 min so revisiting a page doesn't refetch
+        // (and flash a loading state) on every SPA navigation.
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
       },
     },
   });
@@ -16,7 +20,10 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    // Preload route code + data on link hover/focus for instant transitions.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 80,
+    defaultPreloadStaleTime: 5 * 60 * 1000,
   });
 
   return router;

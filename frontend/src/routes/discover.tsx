@@ -75,7 +75,7 @@ function DiscoverPage() {
       <div className="max-w-5xl mx-auto px-6 py-14">
         {/* Header */}
         <div className="mb-12">
-          <p className="text-sm font-semibold tracking-[0.14em] uppercase text-[#22c55e] mb-3">
+          <p className="text-sm font-semibold tracking-[0.14em] uppercase text-[#00FF66] mb-3">
             Discover
           </p>
           <h1 className="text-[35px] font-semibold tracking-tight text-[#f0f0f0] leading-tight mb-2">
@@ -199,13 +199,13 @@ function PathCard({
       <div className="flex items-start gap-3">
         <div
           className={`w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 ${
-            isCustom ? "bg-[rgba(139,92,246,0.08)]" : "bg-[rgba(34,197,94,0.08)]"
+            isCustom ? "bg-[rgba(139,92,246,0.08)]" : "bg-[rgba(0,255,102,0.08)]"
           }`}
         >
           {isCustom ? (
             <Pencil size={16} className="text-[#a78bfa]" />
           ) : (
-            <Compass size={16} className="text-[#22c55e]" />
+            <Compass size={16} className="text-[#00FF66]" />
           )}
         </div>
 
@@ -222,7 +222,7 @@ function PathCard({
               className={`text-sm font-semibold tracking-[0.07em] uppercase px-2 py-0.5 rounded-[5px] ${
                 isCustom
                   ? "bg-[rgba(139,92,246,0.1)] text-[#a78bfa]"
-                  : "bg-[rgba(34,197,94,0.08)] text-[#22c55e]"
+                  : "bg-[rgba(0,255,102,0.08)] text-[#00FF66]"
               }`}
             >
               {isCustom ? "Custom" : "System"}
@@ -244,7 +244,7 @@ function PathCard({
             title={path.is_bookmarked ? "Remove bookmark" : "Bookmark path"}
             className={`w-8 h-8 rounded-[8px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${
               path.is_bookmarked
-                ? "bg-[#22c55e] border-[#22c55e]"
+                ? "bg-[#00FF66] border-[#00FF66]"
                 : "bg-transparent border-[#1e1e1e] hover:border-[#2e2e2e] hover:bg-[#161616]"
             }`}
           >
@@ -267,7 +267,7 @@ function PathCard({
             </span>
             <span
               className={`text-sm font-semibold font-mono ${
-                isCustom ? "text-[#a78bfa]" : "text-[#22c55e]"
+                isCustom ? "text-[#a78bfa]" : "text-[#00FF66]"
               }`}
             >
               {progress} / {topicCount}
@@ -278,7 +278,7 @@ function PathCard({
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${progressPct}%`,
-                background: isCustom ? "#a78bfa" : "#22c55e",
+                background: isCustom ? "#a78bfa" : "#00FF66",
               }}
             />
           </div>

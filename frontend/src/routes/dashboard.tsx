@@ -278,7 +278,7 @@ function DashboardPage() {
       {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-[5px] border border-[#1e1e1e] bg-[#060606] text-[#e0e0e0] text-sm font-mono tracking-wide shadow-xl flex items-center gap-2.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_6px_#22c55e]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_6px_#00FF66]" />
           {toast}
         </div>
       )}
@@ -287,7 +287,7 @@ function DashboardPage() {
         {/* ── Page header ── */}
         <div className="flex items-center justify-between mb-5 pb-4 border-b border-[#0e0e0e]">
           <div className="flex items-center gap-2.5">
-            <Hexagon className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
+            <Hexagon className="w-4 h-4 text-[#00FF66]" strokeWidth={1.5} />
             <div>
               <p className="text-xs uppercase tracking-[0.25em] font-mono text-[#eee] leading-none mb-1">
                 GrowthOS
@@ -323,7 +323,7 @@ function DashboardPage() {
                 </optgroup>
               </select>
               {/* Custom chevron */}
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#22c55e]/40" />
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#00FF66]/40" />
             </div>
           )}
         </div>
@@ -338,7 +338,7 @@ function DashboardPage() {
                 style={{
                   width: 300,
                   height: 300,
-                  background: "#22c55e",
+                  background: "#00FF66",
                   opacity: 0.05,
                   top: -100,
                   right: -50,
@@ -346,7 +346,7 @@ function DashboardPage() {
               />
               <div className="relative z-10">
                 <SectionLabel>
-                  <Brain size={12} className="text-[#22c55e]" /> Today's Briefing
+                  <Brain size={12} className="text-[#00FF66]" /> Today's Briefing
                 </SectionLabel>
                 <div className="mt-4">
                   {briefing.fading_topics?.length > 0 ? (
@@ -357,7 +357,7 @@ function DashboardPage() {
                     </div>
                   ) : briefing.due_cards > 0 ? (
                     <div className="text-[17px] text-[#eee] font-medium leading-snug">
-                      You have <span className="text-[#22c55e]">{briefing.due_cards}</span>{" "}
+                      You have <span className="text-[#00FF66]">{briefing.due_cards}</span>{" "}
                       flashcards due across {briefing.due_topics?.length || 0} topics. Clear your
                       review debt to maintain retention.
                     </div>
@@ -447,7 +447,7 @@ function DashboardPage() {
                   style={{
                     width: 400,
                     height: 400,
-                    background: "#22c55e",
+                    background: "#00FF66",
                     opacity: 0.05,
                     top: -80,
                     right: -80,
@@ -456,7 +456,7 @@ function DashboardPage() {
 
                 <div className="relative z-10">
                   <SectionLabel>
-                    <Sparkles size={9} className="text-[#22c55e]" /> Active Protocol
+                    <Sparkles size={9} className="text-[#00FF66]" /> Active Protocol
                   </SectionLabel>
                   <p className="mt-3 text-xs font-mono text-[#fff] tracking-[0.2em] uppercase">
                     {ap?.title}
@@ -474,7 +474,7 @@ function DashboardPage() {
                         key={i}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-mono uppercase tracking-[0.15em] transition-colors ${
                           s.d
-                            ? "bg-[#0c1a0f] border border-[#162213] text-[#22c55e]"
+                            ? "bg-[#0c1a0f] border border-[#162213] text-[#00FF66]"
                             : "text-[#eee]"
                         }`}
                       >
@@ -614,8 +614,8 @@ function DashboardPage() {
                 className="h-full rounded-full transition-all duration-1000"
                 style={{
                   width: `${cpct}%`,
-                  background: "#22c55e",
-                  boxShadow: cpct > 0 ? "0 0 8px #22c55e40" : "none",
+                  background: "#00FF66",
+                  boxShadow: cpct > 0 ? "0 0 8px #00FF6640" : "none",
                 }}
               />
             </div>
@@ -636,18 +636,18 @@ function DashboardPage() {
                       <div
                         className="flex flex-col rounded-[6px] overflow-hidden shrink-0 transition-all duration-300"
                         style={{
-                          border: `1px solid ${g.allDone ? "#22c55e90" : "#3a3a3a"}`,
+                          border: `1px solid ${g.allDone ? "#00FF6690" : "#3a3a3a"}`,
                           background: g.allDone ? "#051505" : "#0c0c0c",
                           minWidth: Math.max(160, groupTotal * 44 + 32),
                           maxWidth: 360,
-                          boxShadow: g.allDone ? "0 0 18px #22c55e25" : "0 0 10px #00000060",
+                          boxShadow: g.allDone ? "0 0 18px #00FF6625" : "0 0 10px #00000060",
                         }}
                       >
                         {/* Milestone header */}
                         <div
                           className="flex items-center gap-2 px-3 py-2 shrink-0"
                           style={{
-                            borderBottom: `1px solid ${g.allDone ? "#22c55e60" : "#2a2a2a"}`,
+                            borderBottom: `1px solid ${g.allDone ? "#00FF6660" : "#2a2a2a"}`,
                             background: g.allDone ? "#072007" : "#121212",
                           }}
                         >
@@ -655,22 +655,22 @@ function DashboardPage() {
                             <CheckCircle2
                               size={12}
                               strokeWidth={2.5}
-                              className="text-[#22c55e] shrink-0"
+                              className="text-[#00FF66] shrink-0"
                             />
                           ) : (
                             <Circle size={12} strokeWidth={2} className="text-[#60a5fa] shrink-0" />
                           )}
                           <span
                             className="text-xs font-mono font-semibold uppercase tracking-[0.15em] truncate"
-                            style={{ color: g.allDone ? "#4ade80" : "#93c5fd" }}
+                            style={{ color: g.allDone ? "#00FF66" : "#93c5fd" }}
                           >
                             {milestoneLabel}
                           </span>
                           <span
                             className="ml-auto text-xs font-mono shrink-0 px-1.5 py-0.5 rounded-sm"
                             style={{
-                              color: g.allDone ? "#22c55e" : "#888",
-                              background: g.allDone ? "#22c55e15" : "#1a1a1a",
+                              color: g.allDone ? "#00FF66" : "#888",
+                              background: g.allDone ? "#00FF6615" : "#1a1a1a",
                             }}
                           >
                             {groupDone}/{groupTotal}
@@ -694,7 +694,7 @@ function DashboardPage() {
                                 className="flex items-center gap-2 px-2 py-[5px] rounded-[3px] no-underline transition-all duration-150 group/item"
                                 style={{
                                   background: a ? "#0c1a0f" : "transparent",
-                                  border: a ? "1px solid #22c55e35" : "1px solid transparent",
+                                  border: a ? "1px solid #00FF6635" : "1px solid transparent",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!a)
@@ -711,7 +711,7 @@ function DashboardPage() {
                                     <CheckCircle2
                                       size={11}
                                       strokeWidth={2.5}
-                                      className="text-[#22c55e]"
+                                      className="text-[#00FF66]"
                                     />
                                   ) : ip ? (
                                     <span className="w-[8px] h-[8px] rounded-full bg-[#f59e0b] animate-pulse" />
@@ -722,13 +722,13 @@ function DashboardPage() {
                                 <span
                                   className="text-sm font-mono leading-tight truncate flex-1"
                                   style={{
-                                    color: d ? "#4ade80" : a ? "#ffffff" : "#b5b5b5",
+                                    color: d ? "#00FF66" : a ? "#ffffff" : "#b5b5b5",
                                   }}
                                 >
                                   {t.title}
                                 </span>
                                 {a && (
-                                  <span className="text-[7px] font-mono uppercase tracking-wider text-[#22c55e] shrink-0 opacity-90">
+                                  <span className="text-[7px] font-mono uppercase tracking-wider text-[#00FF66] shrink-0 opacity-90">
                                     active
                                   </span>
                                 )}
@@ -743,10 +743,10 @@ function DashboardPage() {
                             className="h-full transition-all duration-700"
                             style={{
                               width: `${groupPct}%`,
-                              background: g.allDone ? "#22c55e" : "#5b8def",
+                              background: g.allDone ? "#00FF66" : "#5b8def",
                               boxShadow:
                                 groupPct > 0
-                                  ? `0 0 8px ${g.allDone ? "#22c55e70" : "#5b8def70"}`
+                                  ? `0 0 8px ${g.allDone ? "#00FF6670" : "#5b8def70"}`
                                   : "none",
                             }}
                           />
@@ -763,7 +763,7 @@ function DashboardPage() {
                             className="connector-arrow"
                             style={{
                               filter: g.allDone
-                                ? "drop-shadow(0 0 6px #22c55ecc) drop-shadow(0 0 12px #22c55e60)"
+                                ? "drop-shadow(0 0 6px #00FF66cc) drop-shadow(0 0 12px #00FF6660)"
                                 : "drop-shadow(0 0 3px #ffffff30)",
                             }}
                           >
@@ -772,7 +772,7 @@ function DashboardPage() {
                               y1="8"
                               x2="34"
                               y2="8"
-                              stroke={g.allDone ? "#4ade80" : "#9ca3af"}
+                              stroke={g.allDone ? "#00FF66" : "#9ca3af"}
                               strokeWidth="2.5"
                               strokeLinecap="round"
                               className={
@@ -781,7 +781,7 @@ function DashboardPage() {
                             />
                             <polygon
                               points="32,2.5 44,8 32,13.5"
-                              fill={g.allDone ? "#4ade80" : "#9ca3af"}
+                              fill={g.allDone ? "#00FF66" : "#9ca3af"}
                             />
                           </svg>
                         </div>
@@ -809,7 +809,7 @@ function DashboardPage() {
                     <li key={a.id} className="flex items-start gap-3 py-2.5">
                       <div
                         className={`mt-[5px] w-[5px] h-[5px] rounded-full shrink-0 ${
-                          i === 0 ? "bg-[#22c55e] shadow-[0_0_6px_#22c55e55]" : "bg-[#1a1a1a]"
+                          i === 0 ? "bg-[#00FF66] shadow-[0_0_6px_#00FF6655]" : "bg-[#1a1a1a]"
                         }`}
                       />
                       <div className="min-w-0 flex-1">
@@ -823,7 +823,7 @@ function DashboardPage() {
                         <p className="text-xs font-mono text-[#eee] mt-0.5">{timeAgo(a.date)}</p>
                       </div>
                       {i === 0 && (
-                        <span className="shrink-0 text-xs font-mono text-[#22c55e]/60 uppercase tracking-wider mt-0.5">
+                        <span className="shrink-0 text-xs font-mono text-[#00FF66]/60 uppercase tracking-wider mt-0.5">
                           new
                         </span>
                       )}
@@ -850,25 +850,30 @@ function DashboardPage() {
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
-              <div className="min-w-[680px]">
+              <div className="min-w-[720px]">
                 {hl ? (
-                  <div className="h-[90px] bg-[#0a0a0a] rounded-[3px] animate-pulse" />
+                  <div className="h-[130px] bg-[#0a0a0a] rounded-[3px] animate-pulse" />
                 ) : (
                   <ActivityCalendar
                     data={hd}
                     theme={{
-                      light: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                      dark: ["#0e0e0e", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      light: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      dark: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
                     }}
                     colorScheme="dark"
                     blockSize={11}
-                    blockMargin={4}
-                    fontSize={10}
+                    blockRadius={2}
+                    blockMargin={2}
+                    fontSize={11}
+                    weekStart={0}
+                    showWeekdayLabels
+                    showColorLegend={false}
+                    showTotalCount={false}
                     labels={{ totalCount: "{{count}} contributions in the last year" }}
                     style={{
                       fontFamily:
                         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                      color: "#333",
+                      color: "#7d8590",
                     }}
                   />
                 )}
@@ -903,7 +908,7 @@ function DashboardPage() {
 
         /* Hero panel gets a slightly brighter top line */
         .dash-panel--accent::before {
-          background: linear-gradient(90deg, transparent 0%, #22c55e18 40%, #22c55e18 60%, transparent 100%);
+          background: linear-gradient(90deg, transparent 0%, #00FF6618 40%, #00FF6618 60%, transparent 100%);
         }
 
         /* ── CTA button ── */
@@ -913,9 +918,9 @@ function DashboardPage() {
           gap: 6px;
           padding: 9px 18px;
           border-radius: 4px;
-          border: 1px solid #22c55e30;
+          border: 1px solid #00FF6630;
           background: #0c1a0f;
-          color: #22c55e;
+          color: #00FF66;
           font-size: 11px;
           font-family: ui-monospace, monospace;
           font-weight: 600;
@@ -926,9 +931,9 @@ function DashboardPage() {
         }
 
         .engage-btn:hover {
-          border-color: #22c55e60;
+          border-color: #00FF6660;
           background: #0f2016;
-          box-shadow: 0 0 16px #22c55e18;
+          box-shadow: 0 0 16px #00FF6618;
         }
 
         /* ── Subway rail nodes ── */
@@ -944,8 +949,8 @@ function DashboardPage() {
         }
 
         .node-done {
-          background: #22c55e;
-          box-shadow: 0 0 10px rgba(34,197,94,0.35);
+          background: #00FF66;
+          box-shadow: 0 0 10px rgba(0,255,102,0.35);
         }
 
         .node-active {
@@ -992,8 +997,8 @@ function DashboardPage() {
           width: 5px;
           height: 5px;
           border-radius: 50%;
-          background: #22c55e;
-          box-shadow: 0 0 6px #22c55e80;
+          background: #00FF66;
+          box-shadow: 0 0 6px #00FF6680;
         }
 
         /* ── Scrollbar ── 3px, matches progress page ── */

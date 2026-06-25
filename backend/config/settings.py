@@ -5,19 +5,33 @@ Django settings for config project.
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
-load_dotenv()
+load_dotenv(override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-f*b9r^dw-1j4%mniwl&jka*^bfrx^t(cglx=43e2c!v*l4ph6("
+# C5: SECRET_KEY must come from env — no insecure hardcoded default
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured("SECRET_KEY environment variable must be set.")
 
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+# C5: Default to False in production; only True when explicitly set in dev
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
+# C5: Drop wildcard host — enumerate real hosts instead
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # Trust the X-Forwarded-Proto header from Nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# HSTS + secure cookies (enable once SSL/certbot is confirmed live)
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -27,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",  # H4: enables JWT rotation blacklist
     "corsheaders",
     "core",
 ]
@@ -67,12 +82,14 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": os.environ.get("MYSQL_DATABASE", "growthos"),
         "USER": os.environ.get("MYSQL_USER", "root"),
-        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "theanimesh2005"),
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
         "HOST": os.environ.get("MYSQL_HOST", "localhost"),
         "PORT": os.environ.get("MYSQL_PORT", "3306"),
         "OPTIONS": {
             "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
+        "CONN_MAX_AGE": 60,
     }
 }
 
@@ -93,17 +110,20 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CORS Configuration
+# CORS Configuration — localhost origins only allowed in dev
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8080",
     "https://growth-os.tech",
     "https://www.growth-os.tech",
 ]
+if DEBUG:
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+    ]
 
 prod_origins = os.environ.get("CORS_ALLOWED_ORIGINS")
 if prod_origins:
@@ -138,29 +158,55 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # C3: Require authentication by default — views that allow anonymous access
+    # must explicitly set permission_classes = [AllowAny].
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     # Rate limiting — protects against brute force and scraping
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '600/hour',      # Unauthenticated users: 600 requests/hour
-        'user': '10000/hour',    # Authenticated users: 10000 requests/hour
-        'login': '15/minute',    # Login endpoint: max 15 attempts/minute
+        'anon': '600/hour',
+        'user': '10000/hour',
+        'login': '15/minute',
+        'search': '60/minute',       # Search: 60 queries/min per user
+        'ai_generation': '20/hour',  # AI endpoints: 20/hour to guard API costs
     }
 }
 
 from datetime import timedelta
+# H4: Short-lived access tokens + blacklist so stolen tokens expire quickly
+# and rotated refresh tokens can't be reused.
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+_REDIS_URL = os.environ.get("REDIS_URL", "")
+if _REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _REDIS_URL,
+        }
+    }
+else:
+    # Local dev without Redis: use in-process memory cache.
+    # Throttle counts reset on restart but everything else works fine.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
 
 # Upload size protection
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB per file in memory
@@ -192,6 +238,13 @@ LOGGING = {
     },
     'loggers': {
         'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # M5: ensure handled-exception logs (logger = getLogger("core.views"))
+        # actually reach the container's stdout.
+        'core': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,

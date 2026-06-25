@@ -19,10 +19,13 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as JobRoadmapRouteImport } from './routes/job-roadmap'
+import { Route as InterviewRouteImport } from './routes/interview'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomPathsRouteImport } from './routes/custom-paths'
+import { Route as CommandRouteImport } from './routes/command'
+import { Route as CareerRouteImport } from './routes/career'
 import { Route as AssessmentsRouteImport } from './routes/assessments'
 import { Route as AirDrawRouteImport } from './routes/air-draw'
 import { Route as IndexRouteImport } from './routes/index'
@@ -84,6 +87,11 @@ const JobRoadmapRoute = JobRoadmapRouteImport.update({
   path: '/job-roadmap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InterviewRoute = InterviewRouteImport.update({
+  id: '/interview',
+  path: '/interview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -102,6 +110,16 @@ const DashboardRoute = DashboardRouteImport.update({
 const CustomPathsRoute = CustomPathsRouteImport.update({
   id: '/custom-paths',
   path: '/custom-paths',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandRoute = CommandRouteImport.update({
+  id: '/command',
+  path: '/command',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CareerRoute = CareerRouteImport.update({
+  id: '/career',
+  path: '/career',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssessmentsRoute = AssessmentsRouteImport.update({
@@ -159,10 +177,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
+  '/career': typeof CareerRoute
+  '/command': typeof CommandRoute
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
+  '/interview': typeof InterviewRoute
   '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
@@ -185,10 +206,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
+  '/career': typeof CareerRoute
+  '/command': typeof CommandRoute
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
+  '/interview': typeof InterviewRoute
   '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
@@ -212,10 +236,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/air-draw': typeof AirDrawRoute
   '/assessments': typeof AssessmentsRoute
+  '/career': typeof CareerRoute
+  '/command': typeof CommandRoute
   '/custom-paths': typeof CustomPathsRoute
   '/dashboard': typeof DashboardRoute
   '/discover': typeof DiscoverRoute
   '/explore': typeof ExploreRoute
+  '/interview': typeof InterviewRoute
   '/job-roadmap': typeof JobRoadmapRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
@@ -240,10 +267,13 @@ export interface FileRouteTypes {
     | '/'
     | '/air-draw'
     | '/assessments'
+    | '/career'
+    | '/command'
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/explore'
+    | '/interview'
     | '/job-roadmap'
     | '/login'
     | '/notes'
@@ -266,10 +296,13 @@ export interface FileRouteTypes {
     | '/'
     | '/air-draw'
     | '/assessments'
+    | '/career'
+    | '/command'
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/explore'
+    | '/interview'
     | '/job-roadmap'
     | '/login'
     | '/notes'
@@ -292,10 +325,13 @@ export interface FileRouteTypes {
     | '/'
     | '/air-draw'
     | '/assessments'
+    | '/career'
+    | '/command'
     | '/custom-paths'
     | '/dashboard'
     | '/discover'
     | '/explore'
+    | '/interview'
     | '/job-roadmap'
     | '/login'
     | '/notes'
@@ -319,10 +355,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AirDrawRoute: typeof AirDrawRoute
   AssessmentsRoute: typeof AssessmentsRoute
+  CareerRoute: typeof CareerRoute
+  CommandRoute: typeof CommandRoute
   CustomPathsRoute: typeof CustomPathsRoute
   DashboardRoute: typeof DashboardRoute
   DiscoverRoute: typeof DiscoverRoute
   ExploreRoute: typeof ExploreRoute
+  InterviewRoute: typeof InterviewRoute
   JobRoadmapRoute: typeof JobRoadmapRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
@@ -414,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobRoadmapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interview': {
+      id: '/interview'
+      path: '/interview'
+      fullPath: '/interview'
+      preLoaderRoute: typeof InterviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -440,6 +486,20 @@ declare module '@tanstack/react-router' {
       path: '/custom-paths'
       fullPath: '/custom-paths'
       preLoaderRoute: typeof CustomPathsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/command': {
+      id: '/command'
+      path: '/command'
+      fullPath: '/command'
+      preLoaderRoute: typeof CommandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/career': {
+      id: '/career'
+      path: '/career'
+      fullPath: '/career'
+      preLoaderRoute: typeof CareerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assessments': {
@@ -519,10 +579,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AirDrawRoute: AirDrawRoute,
   AssessmentsRoute: AssessmentsRoute,
+  CareerRoute: CareerRoute,
+  CommandRoute: CommandRoute,
   CustomPathsRoute: CustomPathsRoute,
   DashboardRoute: DashboardRoute,
   DiscoverRoute: DiscoverRoute,
   ExploreRoute: ExploreRoute,
+  InterviewRoute: InterviewRoute,
   JobRoadmapRoute: JobRoadmapRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,

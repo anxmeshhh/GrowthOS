@@ -102,7 +102,7 @@ function DarkInput({
       className={`w-full px-3 py-2 rounded-md text-lg font-mono outline-none transition-colors ${className}`}
       style={{ background: "#0a0a0a", border: "1px solid #1e2e1e", color: "#c4c4c4" }}
       onFocus={(e) => {
-        (e.target as HTMLElement).style.borderColor = "#22c55e";
+        (e.target as HTMLElement).style.borderColor = "#00FF66";
       }}
       onBlur={(e) => {
         (e.target as HTMLElement).style.borderColor = "#1e2e1e";
@@ -474,7 +474,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
       <DialogTrigger asChild>
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-md text-lg font-mono transition-colors"
-          style={{ background: "#0f1a0f", border: "1px solid #22c55e", color: "#22c55e" }}
+          style={{ background: "#0f1a0f", border: "1px solid #00FF66", color: "#00FF66" }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "#162a16";
           }}
@@ -524,10 +524,10 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
           {success && (
             <div
               className="flex items-center gap-2 px-3 py-2 rounded-md"
-              style={{ background: "#071a0f", border: "1px solid #22c55e" }}
+              style={{ background: "#071a0f", border: "1px solid #00FF66" }}
             >
-              <CheckCircle2 size={12} style={{ color: "#22c55e" }} />
-              <span className="text-sm font-mono" style={{ color: "#22c55e" }}>
+              <CheckCircle2 size={12} style={{ color: "#00FF66" }} />
+              <span className="text-sm font-mono" style={{ color: "#00FF66" }}>
                 Path created!
               </span>
             </div>
@@ -597,7 +597,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               className="block text-sm font-mono uppercase tracking-wider"
               style={{ color: "#3a5a3a" }}
             >
-              Path title <span style={{ color: "#22c55e" }}>*</span>
+              Path title <span style={{ color: "#00FF66" }}>*</span>
             </label>
             <DarkInput value={title} onChange={setTitle} placeholder="e.g. Backend Engineering" />
 
@@ -644,7 +644,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
                   id="syncGitHub"
                   checked={syncGitHub}
                   onChange={(e) => setSyncGitHub(e.target.checked)}
-                  className="accent-[#22c55e] w-4 h-4 cursor-pointer"
+                  className="accent-[#00FF66] w-4 h-4 cursor-pointer"
                 />
                 <label
                   htmlFor="syncGitHub"
@@ -779,7 +779,7 @@ export function CustomPathBuilder({ onCreated }: { onCreated?: () => void }) {
               onClick={handleSubmit}
               disabled={!canSubmit}
               className="flex items-center gap-1.5 px-5 py-1.5 rounded-md text-lg font-mono transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: "#0f1a0f", border: "1px solid #22c55e", color: "#22c55e" }}
+              style={{ background: "#0f1a0f", border: "1px solid #00FF66", color: "#00FF66" }}
               onMouseEnter={(e) => {
                 if (canSubmit) (e.currentTarget as HTMLElement).style.background = "#162a16";
               }}

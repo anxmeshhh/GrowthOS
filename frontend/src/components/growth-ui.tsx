@@ -58,7 +58,7 @@ export function StatCard({
     <Card className="p-4">
       <div className="text-sm uppercase tracking-[0.15em] text-[#fff]">{label}</div>
       <div
-        className={`mt-2 text-2xl font-semibold tracking-tight ${accent ? "text-[#22c55e]" : "text-[#e0e0e0]"}`}
+        className={`mt-2 text-2xl font-semibold tracking-tight ${accent ? "text-[#00FF66]" : "text-[#e0e0e0]"}`}
       >
         {value}
       </div>
@@ -67,7 +67,7 @@ export function StatCard({
   );
 }
 
-export function Progress({ value, color = "#22c55e" }: { value: number; color?: string }) {
+export function Progress({ value, color = "#00FF66" }: { value: number; color?: string }) {
   return (
     <div className="h-1 w-full bg-[#1a1a1a] rounded-full overflow-hidden">
       <div
@@ -89,7 +89,7 @@ export function Badge({
 }) {
   const map: Record<string, string> = {
     muted: "bg-[#151515] text-[#eee] border-[#1a1a1a]",
-    green: "bg-[#0d1a0d] text-[#22c55e] border-[#22c55e]/20",
+    green: "bg-[#0d1a0d] text-[#00FF66] border-[#00FF66]/20",
     amber: "bg-[#1a140a] text-[#f59e0b] border-[#f59e0b]/20",
     red: "bg-[#1a0a0a] text-[#ef4444] border-[#ef4444]/20",
     blue: "bg-[#0a121a] text-[#3b82f6] border-[#3b82f6]/20",
@@ -118,7 +118,7 @@ export function Btn({
   const sizes = size === "sm" ? "h-7 px-2.5 text-lg" : "h-9 px-4 text-lg";
   let look = "";
   if (variant === "solid") {
-    if (tone === "green") look = "bg-[#22c55e] text-[#0a0a0a] hover:bg-[#16a34a] font-medium";
+    if (tone === "green") look = "bg-[#00FF66] text-[#0a0a0a] hover:bg-[#00CC52] font-medium";
     else if (tone === "red") look = "bg-[#ef4444] text-white hover:bg-[#dc2626]";
     else look = "bg-[#1a1a1a] text-[#e0e0e0] hover:bg-[#222] border border-[#222]";
   } else if (variant === "outline") {
@@ -139,7 +139,7 @@ export function Btn({
 export function StepDot({ done }: { done: boolean }) {
   return (
     <span
-      className={`inline-block h-2 w-2 rounded-full ${done ? "bg-[#22c55e]" : "bg-[#252525]"}`}
+      className={`inline-block h-2 w-2 rounded-full ${done ? "bg-[#00FF66]" : "bg-[#252525]"}`}
     />
   );
 }

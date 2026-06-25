@@ -164,7 +164,7 @@ function ProjectsPage() {
                   type="text"
                   value={repoName}
                   onChange={(e) => setRepoName(e.target.value)}
-                  className="w-full bg-[#111] border border-[#252525] rounded-md px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#22c55e]"
+                  className="w-full bg-[#111] border border-[#252525] rounded-md px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#00FF66]"
                   placeholder="e.g. awesome-project"
                 />
               </div>
@@ -176,7 +176,7 @@ function ProjectsPage() {
                   type="text"
                   value={repoDesc}
                   onChange={(e) => setRepoDesc(e.target.value)}
-                  className="w-full bg-[#111] border border-[#252525] rounded-md px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#22c55e]"
+                  className="w-full bg-[#111] border border-[#252525] rounded-md px-3 py-2 text-sm text-[#eee] focus:outline-none focus:border-[#00FF66]"
                   placeholder="Short description..."
                 />
               </div>
@@ -186,7 +186,7 @@ function ProjectsPage() {
                   id="repoPrivate"
                   checked={repoPrivate}
                   onChange={(e) => setRepoPrivate(e.target.checked)}
-                  className="accent-[#22c55e]"
+                  className="accent-[#00FF66]"
                 />
                 <label htmlFor="repoPrivate" className="text-sm text-[#aaa] cursor-pointer">
                   Make this repository private
@@ -239,12 +239,12 @@ function ProjectsPage() {
             {portfolio.map((proj: any) => (
               <Card
                 key={proj.id}
-                className="p-5 border-[#22c55e33] bg-[#0f140f] hover:border-[#22c55e66] transition-colors"
+                className="p-5 border-[#00FF6633] bg-[#0f140f] hover:border-[#00FF6666] transition-colors"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <ShieldCheck size={16} className="text-[#22c55e] shrink-0" />
-                    <h3 className="font-semibold tracking-tight text-[#4ade80] truncate">
+                    <ShieldCheck size={16} className="text-[#00FF66] shrink-0" />
+                    <h3 className="font-semibold tracking-tight text-[#00FF66] truncate">
                       {proj.repo_name}
                     </h3>
                   </div>
@@ -266,7 +266,7 @@ function ProjectsPage() {
                     <Btn
                       variant="ghost"
                       size="sm"
-                      className="text-[#22c55e] hover:text-[#4ade80] hover:bg-[#22c55e1a]"
+                      className="text-[#00FF66] hover:text-[#00FF66] hover:bg-[#00FF661a]"
                     >
                       <ExternalLink size={12} className="mr-2" /> View Repo
                     </Btn>

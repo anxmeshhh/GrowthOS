@@ -36,13 +36,47 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/toast-context";
 import { useGrowth } from "@/lib/growth-store";
+import { TopicResources } from "@/components/topic-resources";
+import { StudyRoom } from "@/components/study-room";
+
+/* Optional caption editor shown directly under a pasted screenshot.
+   Saves on blur / Enter; leaving it blank is fine (caption is optional). */
+function ScreenshotCaption({
+  initial,
+  onSave,
+}: {
+  initial?: string;
+  onSave: (caption: string) => void;
+}) {
+  const [val, setVal] = useState(initial || "");
+  useEffect(() => {
+    setVal(initial || "");
+  }, [initial]);
+  return (
+    <input
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      onBlur={() => {
+        const next = val.trim();
+        if (next !== (initial || "")) onSave(next);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+      }}
+      placeholder="Add a caption (optional)"
+      maxLength={255}
+      className="w-full bg-transparent px-2.5 py-1.5 text-[11px] text-[#cbd5d1] outline-none border-t border-[#1a1a1a] placeholder:text-[#555]"
+    />
+  );
+}
 
 export const Route = createFileRoute("/topic/$topicId")({
   head: () => ({ meta: [{ title: `Workspace — GrowthOS` }] }),
   component: TopicWorkspace,
 });
 
-type Tab = "notes" | "flash" | "quiz" | "build" | "feynman";
+type Tab = "notes" | "flash" | "quiz" | "build" | "feynman" | "resources";
 
 /* ─────────────────────────────────────────────
    Utility
@@ -57,6 +91,121 @@ function stripGeneratedAttachmentMarkdown(value: string) {
       return !/\/media\/(note_documents|screenshots)\//.test(match[1]);
     })
     .join("\n\n");
+}
+
+/* ─────────────────────────────────────────────
+   Note resources (links / YouTube embeds)
+   Persisted inside the note content as a hidden HTML-comment fence so they
+   round-trip through the existing /notes/ endpoint with no schema change.
+───────────────────────────────────────────── */
+type NoteResource = { id: string; type: "youtube" | "link"; url: string; title: string };
+
+const RESOURCE_FENCE = /\n*<!--\s*growthos-resources:(\[[\s\S]*?\])\s*-->\s*$/;
+
+function parseYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function parseNoteResources(raw: string): { body: string; resources: NoteResource[] } {
+  const match = raw.match(RESOURCE_FENCE);
+  if (!match) return { body: raw, resources: [] };
+  let resources: NoteResource[] = [];
+  try {
+    const parsed = JSON.parse(match[1]);
+    if (Array.isArray(parsed)) resources = parsed;
+  } catch {
+    /* ignore malformed fence */
+  }
+  return { body: raw.replace(RESOURCE_FENCE, "").trimEnd(), resources };
+}
+
+function serializeNoteResources(body: string, resources: NoteResource[]): string {
+  const clean = body.replace(RESOURCE_FENCE, "").trimEnd();
+  if (!resources.length) return clean;
+  return `${clean}\n\n<!--growthos-resources:${JSON.stringify(resources)}-->`;
+}
+
+function NoteResourceCard({ r, onRemove }: { r: NoteResource; onRemove: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ytId = r.type === "youtube" ? parseYouTubeId(r.url) : null;
+  let domain = r.url;
+  try {
+    domain = new URL(r.url).hostname.replace(/^www\./, "");
+  } catch {
+    /* keep raw */
+  }
+  return (
+    <div className="rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden">
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <div
+          className="w-8 h-8 rounded-[6px] flex items-center justify-center shrink-0 border"
+          style={
+            ytId
+              ? { background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.25)" }
+              : { background: "rgba(0,255,102,0.08)", borderColor: "rgba(0,255,102,0.2)" }
+          }
+        >
+          {ytId ? (
+            <Play size={14} className="text-[#ef4444]" />
+          ) : (
+            <ExternalLink size={14} className="text-[#00FF66]" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] text-[#e8e8e8] font-medium truncate">{r.title}</div>
+          <div className="text-xs font-mono text-[#666] truncate">{domain}</div>
+        </div>
+        {ytId && (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="px-2 py-1 rounded-[5px] text-xs font-mono uppercase tracking-wider text-[#888] hover:text-[#fff] hover:bg-white/[0.04] transition-colors flex items-center gap-1 shrink-0"
+          >
+            {open ? "Hide" : "Watch"}
+            <ChevronDown
+              size={12}
+              style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 150ms" }}
+            />
+          </button>
+        )}
+        <a
+          href={r.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-1.5 rounded-[5px] text-[#888] hover:text-[#00FF66] hover:bg-white/[0.04] transition-colors shrink-0"
+          title="Open in new tab"
+        >
+          <ExternalLink size={13} />
+        </a>
+        <button
+          onClick={onRemove}
+          className="p-1.5 rounded-[5px] text-[#888] hover:text-[#ef4444] hover:bg-white/[0.04] transition-colors shrink-0"
+          title="Remove"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
+      {ytId && open && (
+        <div className="px-3 pb-3">
+          <div className="relative w-full rounded-lg overflow-hidden border border-[#1a1a1a]" style={{ aspectRatio: "16 / 9" }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${ytId}`}
+              title={r.title}
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ─────────────────────────────────────────────
@@ -80,7 +229,7 @@ function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPen
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="text-xs uppercase tracking-[0.15em] font-mono text-[#fff] flex items-center gap-2 mb-1.5">
-            <CheckCircle2 size={12} className="text-[#22c55e]" />
+            <CheckCircle2 size={12} className="text-[#00FF66]" />
             Mastery Criteria
             <span className="bg-[#1e1e1e] text-[#eee] px-1.5 py-0.5 rounded text-[9px] border border-[#2a2a2a]">
               {metCount}/{reqCount} Core Met
@@ -88,10 +237,7 @@ function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPen
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             {criteria.map((c, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-1.5 text-xs font-mono ${c.done ? "text-[#22c55e]" : "text-[#666]"}`}
-              >
+              <div key={i} className={`flex items-center gap-1.5 text-xs font-mono ${c.done ? "text-[#00FF66]" : "text-[#666]"}`}>
                 {c.done ? <CheckCircle2 size={11} /> : <Circle size={11} />}
                 {c.label}
               </div>
@@ -104,10 +250,10 @@ function MasteryChecklist({ topic, checklist, onMarkComplete, isCompleted, isPen
           disabled={isCompleted || isPending}
           className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${
             isCompleted
-              ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
+              ? "border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] cursor-default"
               : isReady
-                ? "border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e] hover:bg-[#22c55e]/20"
-                : "border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20"
+              ? "border-[#00FF66] bg-[#00FF66]/10 text-[#00FF66] hover:bg-[#00FF66]/20"
+              : "border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b]/20"
           }`}
         >
           {isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={14} />}
@@ -201,6 +347,7 @@ function TopicWorkspace() {
     },
     onSuccess: (data) => {
       refetchScreenshots();
+      queryClient.invalidateQueries({ queryKey: ["all-screenshots"] });
       window.dispatchEvent(new CustomEvent("screenshot_uploaded", { detail: data }));
     },
   });
@@ -211,6 +358,21 @@ function TopicWorkspace() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
+    },
+    onSuccess: () => refetchScreenshots(),
+  });
+
+  const updateCaptionMutation = useMutation({
+    mutationFn: async ({ id, caption }: { id: number; caption: string }) => {
+      const formData = new FormData();
+      formData.append("id", String(id));
+      formData.append("caption", caption);
+      const res = await apiFetch(`/topics/${topicId}/screenshots/`, {
+        method: "PATCH",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Caption update failed");
+      return res.json();
     },
     onSuccess: () => refetchScreenshots(),
   });
@@ -231,6 +393,7 @@ function TopicWorkspace() {
       queryClient.invalidateQueries({ queryKey: ["heatmap"] });
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
       queryClient.invalidateQueries({ queryKey: ["user_profile"] });
+      queryClient.invalidateQueries({ queryKey: ["today"] });
     },
   });
 
@@ -286,7 +449,7 @@ function TopicWorkspace() {
       <PageShell>
         <div className="flex items-center justify-center h-full">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 size={24} className="animate-spin text-[#22c55e]" />
+            <Loader2 size={24} className="animate-spin text-[#00FF66]" />
             <span className="text-lg font-mono text-[#fff] tracking-widest uppercase">
               Loading workspace
             </span>
@@ -314,52 +477,19 @@ function TopicWorkspace() {
   };
 
   const checklist = data.mastery_checklist || {};
-  const isFlashUnlocked = checklist.notes;
-  const isQuizUnlocked = isFlashUnlocked && checklist.flashcards;
-  const isFeynmanUnlocked = isQuizUnlocked && checklist.quiz;
-  const isBuildUnlocked = isFeynmanUnlocked && checklist.feynman;
-
-  const TABS: { id: Tab; label: string; icon: React.ReactNode; done: boolean; locked: boolean }[] =
-    [
-      {
-        id: "notes",
-        label: "Notes",
-        icon: <BookOpen size={16} />,
-        done: checklist.notes,
-        locked: false,
-      },
-      {
-        id: "flash",
-        label: "Flashcards",
-        icon: <Layers size={16} />,
-        done: checklist.flashcards,
-        locked: !isFlashUnlocked,
-      },
-      {
-        id: "quiz",
-        label: "Quiz",
-        icon: <Zap size={16} />,
-        done: checklist.quiz,
-        locked: !isQuizUnlocked,
-      },
-      {
-        id: "feynman",
-        label: "Feynman",
-        icon: <MessageSquare size={16} />,
-        done: checklist.feynman,
-        locked: !isFeynmanUnlocked,
-      },
-      {
-        id: "build",
-        label: "Build",
-        icon: <Hammer size={16} />,
-        done: checklist.project,
-        locked: !isBuildUnlocked,
-      },
-    ];
+  // Free exploration: every module is accessible. The checklist still tracks
+  // completion (shown as checkmarks), but nothing is gated behind prerequisites.
+  const TABS: { id: Tab; label: string; icon: React.ReactNode; done: boolean; locked: boolean }[] = [
+    { id: "notes", label: "Notes", icon: <BookOpen size={16} />, done: checklist.notes, locked: false },
+    { id: "flash", label: "Flashcards", icon: <Layers size={16} />, done: checklist.flashcards, locked: false },
+    { id: "quiz", label: "Quiz", icon: <Zap size={16} />, done: checklist.quiz, locked: false },
+    { id: "feynman", label: "Feynman", icon: <MessageSquare size={16} />, done: checklist.feynman, locked: false },
+    { id: "build", label: "Build", icon: <Hammer size={16} />, done: checklist.project, locked: false },
+    { id: "resources", label: "Resources", icon: <ExternalLink size={16} />, done: false, locked: false },
+  ];
 
   return (
-    <main className="flex flex-col h-[calc(100dvh-3rem)] lg:h-screen overflow-hidden bg-[#060606]">
+    <main className="flex flex-col h-[calc(100dvh-120px)] lg:h-screen overflow-hidden bg-[#060606]">
       {/* ── Single unified header ── */}
       <header
         className="shrink-0 border-b border-[#181818] z-20"
@@ -385,7 +515,7 @@ function TopicWorkspace() {
                 {topic.title}
                 <button
                   onClick={() => setShowWorkflowModal(true)}
-                  className="text-[#666] hover:text-[#22c55e] transition-colors ml-1"
+                  className="text-[#666] hover:text-[#00FF66] transition-colors ml-1"
                   title="How this workspace works"
                 >
                   <Info size={18} />
@@ -441,8 +571,8 @@ function TopicWorkspace() {
               disabled={isCompleted || markDoneMutation.isPending}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${
                 isCompleted
-                  ? "border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] cursor-default"
-                  : "border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#22c55e]/40 hover:text-[#22c55e]"
+                  ? "border-[#00FF66]/30 bg-[#00FF66]/10 text-[#00FF66] cursor-default"
+                  : "border-[#2a2a2a] bg-[#111] text-[#aaa] hover:border-[#00FF66]/40 hover:text-[#00FF66]"
               }`}
             >
               {markDoneMutation.isPending ? (
@@ -479,13 +609,15 @@ function TopicWorkspace() {
                   t.locked
                     ? "opacity-30 cursor-not-allowed border-transparent text-[#555]"
                     : isActive
-                      ? "border-[#22c55e] text-[#22c55e]"
+                      ? "border-[#00FF66] text-[#00FF66]"
                       : "border-transparent text-[#666] hover:text-[#ccc]"
                 }`}
               >
                 {t.icon}
                 <span>{t.label}</span>
-                {t.done && <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] ml-0.5" />}
+                {t.done && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] ml-0.5" />
+                )}
               </button>
             );
           })}
@@ -499,7 +631,7 @@ function TopicWorkspace() {
           ref={pasteZoneRef}
           className={`flex flex-col lg:w-[42%] xl:w-[38%] border-b lg:border-b-0 lg:border-r border-[#131313] bg-[#060606]
                       max-h-[38vh] lg:max-h-none lg:h-full overflow-hidden transition-colors
-                      ${isDragging ? "border-[#22c55e]/30 bg-[#22c55e]/[0.03]" : ""}`}
+                      ${isDragging ? "border-[#00FF66]/30 bg-[#00FF66]/[0.03]" : ""}`}
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -515,8 +647,8 @@ function TopicWorkspace() {
           <div className="shrink-0 px-5 pt-4 pb-3 border-b border-[#131313]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-[#22c55e]/10 flex items-center justify-center">
-                  <ImageIcon size={12} className="text-[#22c55e]" />
+                <div className="w-6 h-6 rounded-md bg-[#00FF66]/10 flex items-center justify-center">
+                  <ImageIcon size={12} className="text-[#00FF66]" />
                 </div>
                 <div>
                   <div className="text-lg font-semibold text-[#d0d0d0] leading-none">
@@ -528,7 +660,7 @@ function TopicWorkspace() {
                 </div>
               </div>
               {uploadScreenshotMutation.isPending && (
-                <div className="flex items-center gap-1.5 text-sm text-[#22c55e] font-mono">
+                <div className="flex items-center gap-1.5 text-sm text-[#00FF66] font-mono">
                   <Loader2 size={10} className="animate-spin" />
                   Uploading
                 </div>
@@ -539,7 +671,7 @@ function TopicWorkspace() {
             <div
               className={`mt-3 border border-dashed rounded-lg py-2.5 px-3 flex items-center gap-2.5 cursor-pointer
                           transition-all hover:border-[#2a2a2a] hover:bg-[#0d0d0d]
-                          ${isDragging ? "border-[#22c55e]/40 bg-[#22c55e]/5" : "border-[#1e1e1e]"}`}
+                          ${isDragging ? "border-[#00FF66]/40 bg-[#00FF66]/5" : "border-[#1e1e1e]"}`}
               onClick={() => document.getElementById("screenshotUpload")?.click()}
             >
               <input
@@ -579,37 +711,45 @@ function TopicWorkspace() {
                 {screenshots.map((ss: any) => (
                   <div
                     key={ss.id}
-                    className="group relative rounded-lg overflow-hidden border border-[#1a1a1a] bg-[#0d0d0d] hover:border-[#2a2a2a] transition-all cursor-pointer"
-                    onClick={() => setLightboxImg(ss.image_url || ss.image)}
+                    className="group relative rounded-lg overflow-hidden border border-[#1a1a1a] bg-[#0d0d0d] hover:border-[#2a2a2a] transition-all"
                   >
-                    <img
-                      src={ss.image_url || ss.image}
-                      alt={ss.caption || "Screenshot"}
-                      className="w-full aspect-video object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                        <Maximize2 size={13} className="text-white/80" />
-                      </div>
-                    </div>
-                    <button
-                      className="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/70 text-[#eee] hover:text-[#ef4444] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteScreenshotMutation.mutate(ss.id);
-                      }}
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => setLightboxImg(ss.image_url || ss.image)}
                     >
-                      <Trash2 size={10} />
-                    </button>
-                    <div className="absolute bottom-0 inset-x-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent">
-                      <div className="text-xs font-mono text-[#eee]">
-                        {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                      <img
+                        src={ss.image_url || ss.image}
+                        alt={ss.caption || "Screenshot"}
+                        className="w-full aspect-video object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                          <Maximize2 size={13} className="text-white/80" />
+                        </div>
+                      </div>
+                      <button
+                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded bg-black/70 text-[#eee] hover:text-[#ef4444] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteScreenshotMutation.mutate(ss.id);
+                        }}
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                      <div className="absolute bottom-0 inset-x-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                        <div className="text-xs font-mono text-[#eee]">
+                          {new Date(ss.uploaded_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </div>
                       </div>
                     </div>
+                    <ScreenshotCaption
+                      initial={ss.caption}
+                      onSave={(caption) => updateCaptionMutation.mutate({ id: ss.id, caption })}
+                    />
                   </div>
                 ))}
               </div>
@@ -657,6 +797,15 @@ function TopicWorkspace() {
             {tab === "build" && (
               <BuildTab topic={topic} materials={materials} progress={progress} />
             )}
+            {tab === "resources" && (
+              <div style={{ maxWidth: 680, margin: "0 auto", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: "#e5e5e5", margin: 0 }}>Learning Resources</h2>
+                  <StudyRoom topicId={String(topic.id)} topicSlug={topic.slug} />
+                </div>
+                <TopicResources topicId={String(topic.id)} />
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -666,7 +815,7 @@ function TopicWorkspace() {
           <div className="w-full max-w-lg bg-[#0a0a0a] border border-[#1e1e1e] rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-5 border-b border-[#1e1e1e] flex items-center justify-between">
               <h3 className="text-xl font-semibold text-[#f0f0f0] flex items-center gap-2">
-                <Info size={18} className="text-[#22c55e]" />
+                <Info size={18} className="text-[#00FF66]" />
                 Mastery Workflow
               </h3>
               <button
@@ -686,7 +835,7 @@ function TopicWorkspace() {
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="w-8 h-8 rounded-full bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
-                    <BookOpen size={14} className="text-[#22c55e]" />
+                    <BookOpen size={14} className="text-[#00FF66]" />
                   </div>
                   <div>
                     <h4 className="text-lg font-medium text-[#e8e8e8]">1. Notes</h4>
@@ -777,7 +926,7 @@ function TopicWorkspace() {
                     onFocus={() => setRepoDropdownOpen(true)}
                     onBlur={() => setTimeout(() => setRepoDropdownOpen(false), 200)}
                     placeholder="e.g. growthos-my-path"
-                    className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#666] focus:outline-none focus:border-[#22c55e]/50 font-mono text-sm transition-colors pr-10"
+                    className="w-full bg-[#060606] border border-[#1a1a1a] rounded-lg px-3 py-2.5 text-[#d0d0d0] placeholder-[#666] focus:outline-none focus:border-[#00FF66]/50 font-mono text-sm transition-colors pr-10"
                   />
                   <div className="absolute right-3 top-3 pointer-events-none">
                     <ChevronDown size={16} className="text-[#555]" />
@@ -824,19 +973,19 @@ function TopicWorkspace() {
                 <label className="text-sm text-[#888] font-medium">Assets to Commit</label>
                 <div className="bg-[#050505] border border-[#1a1a1a] rounded-xl p-3 space-y-2.5 text-sm text-[#bbb]">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Markdown Notes
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Markdown Notes
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Screenshots & Images
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Screenshots & Images
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Flashcard JSON
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Flashcard JSON
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Quizzes JSON
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Quizzes JSON
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#22c55e]" /> Uploaded Documents
+                    <CheckCircle2 size={14} className="text-[#00FF66]" /> Uploaded Documents
                   </div>
                 </div>
               </div>
@@ -873,19 +1022,30 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
   const [noteFile, setNoteFile] = useState<File | null>(null);
   const contentRef = useRef("");
 
+  // Resources (links / YouTube) stored in the note content fence.
+  const [resources, setResources] = useState<NoteResource[]>([]);
+  const resourcesRef = useRef<NoteResource[]>([]);
+  const [showAddResource, setShowAddResource] = useState(false);
+  const [resUrl, setResUrl] = useState("");
+  const [resTitle, setResTitle] = useState("");
+
   const { isLoading } = useQuery({
     queryKey: ["notes", topicId],
     queryFn: async () => {
       const res = await apiFetch(`/topics/${topicId}/notes/`);
       if (!res.ok) return { content: "", documents: [] };
       const json = await res.json();
-      const rawContent = stripGeneratedAttachmentMarkdown(json.content || "");
-      contentRef.current = rawContent;
-      setContent(rawContent);
-      if (rawContent !== (json.content || "")) {
+      const stripped = stripGeneratedAttachmentMarkdown(json.content || "");
+      const { body, resources: parsedRes } = parseNoteResources(stripped);
+      contentRef.current = body;
+      setContent(body);
+      setResources(parsedRes);
+      resourcesRef.current = parsedRes;
+      const normalized = serializeNoteResources(body, parsedRes);
+      if (normalized !== (json.content || "")) {
         await apiFetch(`/topics/${topicId}/notes/`, {
           method: "POST",
-          body: JSON.stringify({ content: rawContent }),
+          body: JSON.stringify({ content: normalized }),
         });
       }
       return json;
@@ -906,12 +1066,43 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
       setSaving(true);
       await apiFetch(`/topics/${topicId}/notes/`, {
         method: "POST",
-        body: JSON.stringify({ content: val }),
+        body: JSON.stringify({ content: serializeNoteResources(val, resourcesRef.current) }),
       });
       queryClient.invalidateQueries({ queryKey: ["topic", String(topicId)] });
+      queryClient.invalidateQueries({ queryKey: ["all-notes"] });
       setSaving(false);
     },
     [topicId, queryClient],
+  );
+
+  const addResource = useCallback(() => {
+    const url = resUrl.trim();
+    if (!url) return;
+    const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const ytId = parseYouTubeId(normalized);
+    const resource: NoteResource = {
+      id: `r-${Date.now()}`,
+      type: ytId ? "youtube" : "link",
+      url: normalized,
+      title: resTitle.trim() || (ytId ? "YouTube video" : normalized.replace(/^https?:\/\//, "")),
+    };
+    const next = [...resourcesRef.current, resource];
+    resourcesRef.current = next;
+    setResources(next);
+    setResUrl("");
+    setResTitle("");
+    setShowAddResource(false);
+    saveNote(contentRef.current);
+  }, [resUrl, resTitle, saveNote]);
+
+  const removeResource = useCallback(
+    (id: string) => {
+      const next = resourcesRef.current.filter((r) => r.id !== id);
+      resourcesRef.current = next;
+      setResources(next);
+      saveNote(contentRef.current);
+    },
+    [saveNote],
   );
 
   // Debounced auto-save: saves 2 seconds after user stops typing
@@ -948,6 +1139,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     onSuccess: () => {
       setNoteFile(null);
       refetchDocs();
+      queryClient.invalidateQueries({ queryKey: ["all-note-documents"] });
     },
   });
 
@@ -967,7 +1159,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
             Markdown Notes
           </label>
           <span
-            className={`text-xs uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#22c55e]/60"}`}
+            className={`text-xs uppercase tracking-widest font-mono transition-colors ${saving ? "text-[#f59e0b]" : "text-[#00FF66]/60"}`}
           >
             {saving ? "Saving…" : "Saved"}
           </span>
@@ -983,6 +1175,79 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
           }}
           onBlur={() => saveNote(content)}
         />
+      </div>
+
+      {/* Resources (links / YouTube embeds) */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs uppercase tracking-[0.2em] font-mono text-[#666] font-medium flex items-center gap-1.5">
+            <ExternalLink size={12} />
+            Resources
+          </div>
+          <button
+            onClick={() => setShowAddResource((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-xs font-mono uppercase tracking-wider hover:bg-[#00FF66]/15 transition-colors"
+          >
+            <Plus size={12} /> Add Resource
+          </button>
+        </div>
+
+        {showAddResource && (
+          <div className="mb-3 p-3 rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] space-y-2">
+            <input
+              autoFocus
+              value={resUrl}
+              onChange={(e) => setResUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addResource();
+              }}
+              placeholder="Paste a YouTube or any URL"
+              className="w-full bg-[#080808] border border-[#1a1a1a] rounded-md px-3 py-2 text-sm text-[#e8e8e8] placeholder-[#444] focus:outline-none focus:border-[#333] font-mono"
+            />
+            <input
+              value={resTitle}
+              onChange={(e) => setResTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addResource();
+              }}
+              placeholder="Title (optional)"
+              className="w-full bg-[#080808] border border-[#1a1a1a] rounded-md px-3 py-2 text-sm text-[#e8e8e8] placeholder-[#444] focus:outline-none focus:border-[#333]"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowAddResource(false);
+                  setResUrl("");
+                  setResTitle("");
+                }}
+                className="px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider text-[#888] hover:text-[#fff] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addResource}
+                disabled={!resUrl.trim()}
+                className="px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider bg-[#00FF66] text-black font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#33FF85] transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        )}
+
+        {resources.length > 0 ? (
+          <div className="space-y-2">
+            {resources.map((r) => (
+              <NoteResourceCard key={r.id} r={r} onRemove={() => removeResource(r.id)} />
+            ))}
+          </div>
+        ) : (
+          !showAddResource && (
+            <div className="text-xs text-[#555] font-mono py-3 px-1">
+              No resources yet — embed videos or links instead of pasting raw URLs.
+            </div>
+          )
+        )}
       </div>
 
       {/* Document upload */}
@@ -1023,7 +1288,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
           </div>
           {noteFile && (
             <button
-              className="ml-auto px-3 py-1.5 rounded-md bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
+              className="ml-auto px-3 py-1.5 rounded-md bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-lg font-medium hover:bg-[#00FF66]/15 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 uploadDocMutation.mutate(noteFile);
@@ -1053,7 +1318,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
                 className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#141414] bg-[#0a0a0a] hover:border-[#1e1e1e] transition-colors"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <FileText size={13} className="shrink-0 text-[#22c55e]/60" />
+                  <FileText size={13} className="shrink-0 text-[#00FF66]/60" />
                   <span className="text-lg text-[#eee] truncate">
                     {doc.filename || doc.file?.split("/").pop() || `Document #${doc.id}`}
                   </span>
@@ -1142,7 +1407,7 @@ function QuizTab({ topicId }: { topicId: number }) {
   };
 
   const DIFF_STYLES = {
-    easy: { active: "border-[#22c55e]/40 bg-[#22c55e]/8 text-[#22c55e]", dot: "bg-[#22c55e]" },
+    easy: { active: "border-[#00FF66]/40 bg-[#00FF66]/8 text-[#00FF66]", dot: "bg-[#00FF66]" },
     medium: { active: "border-[#f59e0b]/40 bg-[#f59e0b]/8 text-[#f59e0b]", dot: "bg-[#f59e0b]" },
     hard: { active: "border-[#ef4444]/40 bg-[#ef4444]/8 text-[#ef4444]", dot: "bg-[#ef4444]" },
   };
@@ -1202,7 +1467,7 @@ function QuizTab({ topicId }: { topicId: number }) {
         <div
           className={`rounded-xl border p-4 flex items-center justify-between ${
             score === questions.length
-              ? "border-[#22c55e]/20 bg-[#22c55e]/5"
+              ? "border-[#00FF66]/20 bg-[#00FF66]/5"
               : "border-[#f59e0b]/20 bg-[#f59e0b]/5"
           }`}
         >
@@ -1212,7 +1477,7 @@ function QuizTab({ topicId }: { topicId: number }) {
               <span className="text-xl text-[#888] font-normal">/{questions.length}</span>
             </div>
             <div
-              className={`text-lg mt-1 font-medium ${score === questions.length ? "text-[#22c55e]" : "text-[#f59e0b]"}`}
+              className={`text-lg mt-1 font-medium ${score === questions.length ? "text-[#00FF66]" : "text-[#f59e0b]"}`}
             >
               {score === questions.length ? "Perfect score!" : "Review your notes and try again"}
             </div>
@@ -1252,7 +1517,7 @@ function QuizTab({ topicId }: { topicId: number }) {
                     key={j}
                     className={`w-full text-left px-4 py-3.5 rounded-xl text-[16px] transition-all border leading-relaxed ${
                       isCorrect
-                        ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"
+                        ? "border-[#00FF66]/40 bg-[#00FF66]/10 text-[#00FF66]"
                         : isWrong
                           ? "border-[#ef4444]/40 bg-[#ef4444]/10 text-[#ef4444]"
                           : isSelected
@@ -1278,8 +1543,8 @@ function QuizTab({ topicId }: { topicId: number }) {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || Object.keys(answers).length < questions.length}
-          className="w-full py-2.5 rounded-xl bg-[#22c55e] text-[#030f05] text-lg font-semibold
-                     hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="w-full py-2.5 rounded-xl bg-[#00FF66] text-[#030f05] text-lg font-semibold
+                     hover:bg-[#00CC52] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           {isSubmitting
             ? "Submitting…"
@@ -1458,7 +1723,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   }
                 }}
                 disabled={!c.front || !c.back || actionMutation.isPending}
-                className="w-full py-2.5 rounded-lg bg-[#22c55e] text-[#030f05] text-lg font-semibold hover:bg-[#16a34a] disabled:opacity-40 transition-all mt-4"
+                className="w-full py-2.5 rounded-lg bg-[#00FF66] text-[#030f05] text-lg font-semibold hover:bg-[#00CC52] disabled:opacity-40 transition-all mt-4"
               >
                 Save & Add
               </button>
@@ -1500,7 +1765,7 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                 setDraftCards([{ front: "", back: "" }]);
                 setIsEditing(true);
               }}
-              className="px-4 py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-lg font-medium hover:bg-[#22c55e]/15 transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-lg font-medium hover:bg-[#00FF66]/15 transition-colors"
             >
               Create manually
             </button>
@@ -1514,13 +1779,8 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
               <div>
                 <h4 className="text-[#f59e0b] font-semibold mb-1">Human Verification Required</h4>
                 <p className="text-sm text-[#eee]/80">
-                  AI generated these cards. To ensure quality learning, you must manually read, edit
-                  (if necessary), and approve each card before it enters your Spaced Repetition
-                  queue.
-                  <br />
-                  <span className="text-[#22c55e] font-mono mt-2 inline-block">
-                    +1 XP for every card you verify.
-                  </span>
+                  AI generated these cards. To ensure quality learning, you must manually read, edit (if necessary), and approve each card before it enters your Spaced Repetition queue.
+                  <br/><span className="text-[#00FF66] font-mono mt-2 inline-block">+1 XP for every card you verify.</span>
                 </p>
               </div>
             </div>
@@ -1593,11 +1853,9 @@ function FlashcardsTab({ topicId }: { topicId: number }) {
                   {/* Back */}
                   <div
                     style={backStyle}
-                    className="absolute inset-0 rounded-2xl border border-[#22c55e]/15 bg-[#080f08] flex flex-col justify-between p-6"
+                    className="absolute inset-0 rounded-2xl border border-[#00FF66]/15 bg-[#080f08] flex flex-col justify-between p-6"
                   >
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#22c55e]/50">
-                      Answer
-                    </div>
+                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#00FF66]/50">Answer</div>
                     <div className="text-[#d4d4d4] text-base leading-relaxed">{f.back}</div>
                     <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest">
                       Tap to flip back
@@ -1648,8 +1906,8 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
               onClick={() => setRating(1)}
               className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
                 rating === 1
-                  ? "bg-[#22c55e]/20 border-[#22c55e]/40 text-[#22c55e]"
-                  : "bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]"
+                  ? 'bg-[#00FF66]/20 border-[#00FF66]/40 text-[#00FF66]'
+                  : 'bg-[#111] border-[#1e1e1e] text-[#666] hover:text-[#fff] hover:border-[#2a2a2a]'
               }`}
               title="Good AI Generation"
             >
@@ -1670,7 +1928,7 @@ function PendingCard({ card, handleVerify, handleDelete, actionMutation }: any) 
           <button
             onClick={() => handleVerify(card.id, front, back, rating)}
             disabled={actionMutation.isPending}
-            className="flex-1 max-w-[220px] py-2 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 text-sm font-medium hover:bg-[#22c55e]/20 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 max-w-[220px] py-2 rounded-lg bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 text-sm font-medium hover:bg-[#00FF66]/20 transition-colors flex items-center justify-center gap-2"
           >
             <CheckCircle2 size={16} /> Approve (+1 XP)
           </button>
@@ -1737,11 +1995,11 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
   if (progress?.status === "completed") {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-14 h-14 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center mb-4">
-          <CheckCircle2 size={22} className="text-[#22c55e]" />
+        <div className="w-14 h-14 rounded-full bg-[#00FF66]/10 border border-[#00FF66]/20 flex items-center justify-center mb-4">
+          <CheckCircle2 size={22} className="text-[#00FF66]" />
         </div>
         <div className="text-lg font-semibold text-[#e8e8e8]">Topic Verified</div>
-        <div className="text-lg text-[#22c55e]/70 mt-1">Your proof of work was accepted</div>
+        <div className="text-lg text-[#00FF66]/70 mt-1">Your proof of work was accepted</div>
       </div>
     );
   }
@@ -1754,7 +2012,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
           {[
             {
               mode: "ai" as const,
-              accent: "#22c55e",
+              accent: "#00FF66",
               label: "AI Project Ideas",
               desc: "Get tailored project suggestions. Pick one and build it.",
               tag: "Guided",
@@ -1824,7 +2082,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                   className="p-4 rounded-xl border border-[#141414] bg-[#090909] hover:border-[#1e1e1e] transition-colors"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="text-sm font-mono text-[#22c55e]/60 mt-0.5 shrink-0 tabular-nums">
+                    <span className="text-sm font-mono text-[#00FF66]/60 mt-0.5 shrink-0 tabular-nums">
                       0{i + 1}
                     </span>
                     <div>
@@ -1883,8 +2141,8 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
               <button
                 onClick={() => scanRepoMutation.mutate(repoUrl)}
                 disabled={!repoUrl || scanRepoMutation.isPending}
-                className="px-5 py-3 rounded-xl bg-[#22c55e] text-[#030f05] text-base font-semibold
-                           hover:bg-[#16a34a] disabled:opacity-30 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                className="px-5 py-3 rounded-xl bg-[#00FF66] text-[#030f05] text-base font-semibold
+                           hover:bg-[#00CC52] disabled:opacity-30 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
                 {scanRepoMutation.isPending ? (
                   <span className="flex items-center gap-1.5">
@@ -1898,17 +2156,17 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
 
             {scanResult && (
               <div
-                className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#22c55e]/20 bg-[#22c55e]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}
+                className={`rounded-lg border p-3 ${scanResult.passed ? "border-[#00FF66]/20 bg-[#00FF66]/5" : "border-[#ef4444]/20 bg-[#ef4444]/5"}`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span
-                    className={`text-lg font-semibold ${scanResult.passed ? "text-[#22c55e]" : "text-[#ef4444]"}`}
+                    className={`text-lg font-semibold ${scanResult.passed ? "text-[#00FF66]" : "text-[#ef4444]"}`}
                   >
                     {scanResult.passed ? "✓ Approved" : "✗ Needs work"}
                   </span>
                   {scanResult.score !== undefined && (
                     <span
-                      className={`text-sm font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                      className={`text-sm font-mono px-2 py-0.5 rounded ${scanResult.passed ? "text-[#00FF66] bg-[#00FF66]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
                     >
                       {scanResult.score}/100
                     </span>
@@ -1943,7 +2201,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                     <div className="flex items-center gap-2">
                       {m.ai_score > 0 && (
                         <span
-                          className={`text-xs font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#22c55e] bg-[#22c55e]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
+                          className={`text-xs font-mono px-1.5 py-0.5 rounded ${m.ai_status === "verified" ? "text-[#00FF66] bg-[#00FF66]/10" : "text-[#ef4444] bg-[#ef4444]/10"}`}
                         >
                           {m.ai_score}/100
                         </span>
@@ -1951,7 +2209,7 @@ function BuildTab({ topic, materials, progress }: { topic: any; materials: any[]
                       <span
                         className={`text-xs font-mono px-1.5 py-0.5 rounded capitalize ${
                           m.ai_status === "verified"
-                            ? "text-[#22c55e] bg-[#22c55e]/10"
+                            ? "text-[#00FF66] bg-[#00FF66]/10"
                             : m.ai_status === "rejected"
                               ? "text-[#ef4444] bg-[#ef4444]/10"
                               : "text-[#f59e0b] bg-[#f59e0b]/10"
@@ -2084,7 +2342,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
             </button>
             <button
               onClick={() => setViewMode("manual")}
-              className={`px-4 py-2 text-sm font-semibold uppercase tracking-widest border-b-2 transition-colors ${viewMode === "manual" ? "border-[#22c55e] text-[#22c55e]" : "border-transparent text-[#888] hover:text-[#aaa]"}`}
+              className={`px-4 py-2 text-sm font-semibold uppercase tracking-widest border-b-2 transition-colors ${viewMode === "manual" ? "border-[#00FF66] text-[#00FF66]" : "border-transparent text-[#888] hover:text-[#aaa]"}`}
             >
               Self-Grade (Manual)
             </button>
@@ -2110,7 +2368,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
             <button
               onClick={() => submitMutation.mutate(viewMode)}
               disabled={!concept || !explanation || submitMutation.isPending}
-              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === "ai" ? "bg-[#a855f7] hover:bg-[#9333ea]" : "bg-[#22c55e] hover:bg-[#16a34a]"}`}
+              className={`px-5 py-2.5 rounded-lg font-semibold text-[#000] flex items-center gap-2 transition-opacity disabled:opacity-50 ${viewMode === "ai" ? "bg-[#a855f7] hover:bg-[#9333ea]" : "bg-[#00FF66] hover:bg-[#00CC52]"}`}
             >
               {submitMutation.isPending ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -2168,7 +2426,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-semibold text-[#fff]">{e.concept}</span>
                     {e.is_self_graded ? (
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20">
                         MANUAL
                       </span>
                     ) : (
@@ -2178,7 +2436,7 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
                     )}
                   </div>
                   <div
-                    className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#22c55e]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}
+                    className={`text-lg font-mono font-bold ${e.score >= 80 ? "text-[#00FF66]" : e.score >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}
                   >
                     {e.score}/100
                   </div>
@@ -2195,8 +2453,8 @@ function FeynmanTab({ topicId }: { topicId: number | string }) {
 
                   {e.is_self_graded
                     ? e.feedback && (
-                        <div className="bg-[#111] border border-[#22c55e]/20 rounded-lg p-4">
-                          <div className="text-xs uppercase font-mono tracking-widest text-[#22c55e] mb-2">
+                        <div className="bg-[#111] border border-[#00FF66]/20 rounded-lg p-4">
+                          <div className="text-xs uppercase font-mono tracking-widest text-[#00FF66] mb-2">
                             Self-Reflection
                           </div>
                           <div className="text-[#eee] text-sm">{e.feedback}</div>

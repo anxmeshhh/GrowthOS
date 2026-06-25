@@ -67,6 +67,7 @@ export function PomodoroTimer() {
           queryClient.invalidateQueries({ queryKey: ["heatmap"] });
           queryClient.invalidateQueries({ queryKey: ["user_profile"] });
           queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+          queryClient.invalidateQueries({ queryKey: ["today"] });
         });
 
         // Switch to break
@@ -103,13 +104,13 @@ export function PomodoroTimer() {
       ref={containerRef}
       style={{
         position: "fixed",
-        zIndex: 40,
+        zIndex: 8999,
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-end",
         gap: "12px",
       }}
-      className="bottom-6 right-[96px] sm:bottom-8 sm:right-[104px]"
+      className="bottom-[76px] right-[84px] lg:bottom-6 lg:right-[92px]"
     >
       {/* Widget Panel */}
       {isOpen && (
@@ -159,8 +160,8 @@ export function PomodoroTimer() {
                   padding: "4px 8px",
                   borderRadius: "4px",
                   fontWeight: 600,
-                  background: mode === "focus" ? "rgba(34,197,94,0.15)" : "transparent",
-                  color: mode === "focus" ? "#22c55e" : "#888",
+                  background: mode === "focus" ? "rgba(0,255,102,0.15)" : "transparent",
+                  color: mode === "focus" ? "#00FF66" : "#888",
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -197,10 +198,10 @@ export function PomodoroTimer() {
                 fontWeight: 800,
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                 letterSpacing: "-0.05em",
-                color: mode === "focus" ? "#22c55e" : "#3b82f6",
+                color: mode === "focus" ? "#00FF66" : "#3b82f6",
                 textShadow:
                   mode === "focus"
-                    ? "0 0 20px rgba(34,197,94,0.3)"
+                    ? "0 0 20px rgba(0,255,102,0.3)"
                     : "0 0 20px rgba(59,130,246,0.3)",
                 lineHeight: 1,
               }}
@@ -223,7 +224,7 @@ export function PomodoroTimer() {
                 style={{
                   height: "100%",
                   width: `${progress}%`,
-                  background: mode === "focus" ? "#22c55e" : "#3b82f6",
+                  background: mode === "focus" ? "#00FF66" : "#3b82f6",
                   transition: "width 1s linear",
                 }}
               />
@@ -241,7 +242,7 @@ export function PomodoroTimer() {
                 background: isActive
                   ? "rgba(255,255,255,0.1)"
                   : mode === "focus"
-                    ? "#22c55e"
+                    ? "#00FF66"
                     : "#3b82f6",
                 color: isActive ? "#fff" : mode === "focus" ? "#000" : "#fff",
                 border: "none",
@@ -252,7 +253,7 @@ export function PomodoroTimer() {
                 boxShadow: isActive
                   ? "none"
                   : mode === "focus"
-                    ? "0 4px 16px rgba(34,197,94,0.4)"
+                    ? "0 4px 16px rgba(0,255,102,0.4)"
                     : "0 4px 16px rgba(59,130,246,0.4)",
                 transition: "all 150ms ease",
               }}
@@ -294,7 +295,7 @@ export function PomodoroTimer() {
           width: "56px",
           height: "56px",
           borderRadius: "50%",
-          background: isActive ? (mode === "focus" ? "#22c55e" : "#3b82f6") : "rgba(20,20,20,0.9)",
+          background: isActive ? (mode === "focus" ? "#00FF66" : "#3b82f6") : "rgba(20,20,20,0.9)",
           backdropFilter: "blur(8px)",
           border: isActive ? "none" : "1px solid rgba(255,255,255,0.1)",
           color: isActive ? (mode === "focus" ? "#000" : "#fff") : "#fff",
@@ -304,7 +305,7 @@ export function PomodoroTimer() {
           cursor: "pointer",
           boxShadow: isActive
             ? mode === "focus"
-              ? "0 4px 20px rgba(34,197,94,0.4)"
+              ? "0 4px 20px rgba(0,255,102,0.4)"
               : "0 4px 20px rgba(59,130,246,0.4)"
             : "0 8px 32px rgba(0,0,0,0.5)",
           transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
@@ -321,7 +322,7 @@ export function PomodoroTimer() {
               position: "absolute",
               inset: "-4px",
               borderRadius: "50%",
-              border: `2px solid ${mode === "focus" ? "#22c55e" : "#3b82f6"}`,
+              border: `2px solid ${mode === "focus" ? "#00FF66" : "#3b82f6"}`,
               opacity: 0.5,
               animation: "pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1)",
             }}

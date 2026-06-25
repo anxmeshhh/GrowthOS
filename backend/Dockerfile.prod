@@ -1,13 +1,11 @@
 FROM python:3.12-slim
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies + gosu for privilege drop
 RUN apt-get update && apt-get install -y \
     build-essential \
     default-libmysqlclient-dev \
@@ -15,18 +13,26 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     pkgconf \
     python3-dev \
+    gosu \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
 COPY requirements.txt /app/
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-RUN pip install gunicorn mysqlclient
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install gunicorn mysqlclient
 
 # Copy project
 COPY . /app/
 
-# Collect static files
-# RUN python manage.py collectstatic --noinput
+# Create non-root user and pre-create volume mount dirs
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /app appuser \
+    && mkdir -p /app/staticfiles /app/media \
+    && chown -R appuser:appgroup /app
+
+# Entrypoint runs as root, fixes volume permissions, then drops to appuser
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 EXPOSE 8000

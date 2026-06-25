@@ -1,25 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { apiFetch } from "@/lib/api-client";
-import { PageShell, PageHeader, Card } from "@/components/growth-ui";
+import { PageShell } from "@/components/growth-ui";
 import {
   User,
-  Calendar,
-  Shield,
-  Award,
-  Flame,
-  BookOpen,
-  ClipboardCheck,
   Trophy,
   Star,
-  TrendingUp,
+  Flame,
   Zap,
-  Play,
-  Share2,
-  Check,
+  Award,
+  TrendingUp,
+  BookOpen,
+  ClipboardCheck,
   MessageSquare,
   Layers,
+  CalendarDays,
+  Play,
+  Activity,
+  BarChart2,
 } from "lucide-react";
 import { ActivityCalendar } from "react-activity-calendar";
 import { useAppTutorial } from "@/components/tutorial-overlay";
@@ -29,7 +27,9 @@ export const Route = createFileRoute("/profile")({
   component: ProfilePage,
 });
 
-/* ── helpers ──────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Helpers                                                                    */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 function getLevelInfo(xp: number) {
   const tiers = [
@@ -52,11 +52,74 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-function Skel({ className = "" }: { className?: string }) {
-  return <div className={`rounded-md bg-[#161616] animate-pulse ${className}`} />;
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Shared primitives (identical vocabulary to progress.tsx)                  */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs uppercase tracking-[0.2em] font-mono text-[#fff] flex items-center gap-1.5">
+      {children}
+    </p>
+  );
 }
 
-/* ── page ─────────────────────────────────────────────────────────────── */
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`progress-card ${className}`}>{children}</div>;
+}
+
+function CardHeader({ left, right }: { left: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2 border-b border-[#0f0f0f] bg-[#080808] shrink-0">
+      <div>{left}</div>
+      {right && <div>{right}</div>}
+    </div>
+  );
+}
+
+function StatCard({
+  children,
+  accent,
+  accentBg,
+  accentBorder,
+  center = false,
+}: {
+  children: React.ReactNode;
+  accent: string;
+  accentBg: string;
+  accentBorder: string;
+  center?: boolean;
+}) {
+  return (
+    <div
+      className={`stat-card ${center ? "center" : ""}`}
+      style={{ background: accentBg, borderColor: accentBorder }}
+    >
+      <div
+        className="pointer-events-none absolute rounded-full blur-3xl"
+        style={{
+          width: 120,
+          height: 120,
+          background: accent,
+          opacity: 0.05,
+          top: center ? "50%" : -32,
+          left: center ? "50%" : "auto",
+          right: center ? "auto" : -32,
+          transform: center ? "translate(-50%, -50%)" : "none",
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+function Skel({ className = "" }: { className?: string }) {
+  return <div className={`rounded-md bg-[#111] animate-pulse ${className}`} />;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Page                                                                       */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 function ProfilePage() {
   const { data: profile, isLoading: pLoading } = useQuery({
@@ -69,15 +132,6 @@ function ProfilePage() {
   });
 
   const { startTutorial } = useAppTutorial();
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = () => {
-    if (profile?.username) {
-      navigator.clipboard.writeText(`${window.location.origin}/portfolio/${profile.username}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const { data: heatmap = [], isLoading: hLoading } = useQuery({
     queryKey: ["heatmap"],
@@ -103,426 +157,430 @@ function ProfilePage() {
   const xp = profile?.total_xp ?? 0;
   const { level, title: lvl, next } = getLevelInfo(xp);
   const pct = next > 0 ? Math.min(100, Math.round((xp / next) * 100)) : 100;
+  const username = profile?.username || "—";
+  const initials = username.slice(0, 2).toUpperCase();
+  const lvlTitle = profile?.selected_title || lvl;
   const joined = profile
     ? new Date(profile.date_joined).toLocaleDateString("en-US", { month: "short", year: "numeric" })
     : "—";
   const today = new Date().toISOString().split("T")[0];
   const hd = heatmap.length > 0 ? heatmap : [{ date: today, count: 0, level: 0 }];
 
+  const quickStats = [
+    { icon: <Flame size={14} className="text-[#f59e0b]" />, label: "Streak", value: profile?.streak ?? 0 },
+    { icon: <BookOpen size={14} className="text-[#3b82f6]" />, label: "Notes", value: profile?.notes_written ?? 0 },
+    { icon: <ClipboardCheck size={14} className="text-[#00FF66]" />, label: "Quizzes", value: profile?.quizzes_passed ?? 0 },
+    { icon: <MessageSquare size={14} className="text-[#a855f7]" />, label: "Concepts", value: profile?.feynman_mastered ?? 0 },
+    { icon: <Layers size={14} className="text-[#60a5fa]" />, label: "Cards", value: profile?.flashcards_mastered ?? 0 },
+  ];
+
   return (
     <PageShell>
-      <PageHeader
-        kicker="Your Identity"
-        title="Developer Profile"
-        subtitle="Track your progress, achievements, and contributions across the GrowthOS ecosystem."
-      />
+      <div className="p-5 lg:p-6 space-y-3 max-w-screen-xl mx-auto">
+        {/* ── Page header ── */}
+        <div className="flex flex-wrap items-end justify-between gap-3 pb-1 border-b border-[#0e0e0e]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] font-mono text-[#eee] mb-1.5">
+              Developer Profile
+            </p>
+            <h1 className="text-[18px] font-semibold tracking-tight text-[#efefef] leading-none">
+              {pLoading ? "…" : username}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-mono text-[#fff] uppercase tracking-[0.2em]">
+              <Trophy size={10} className="text-[#a855f7]" />
+              {lvlTitle}
+            </span>
+            <button
+              onClick={startTutorial}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[5px] border border-[#141414] bg-[#080808] hover:bg-[#0c0c0c] hover:border-[#1e1e1e] text-xs font-mono uppercase tracking-wider text-[#eee] transition-colors"
+            >
+              <Play size={11} className="text-[#00FF66]" />
+              Replay Tutorial
+            </button>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
-        {/* ── [A] Identity card (Left Column, Span 4) ─────────────────────────────────────────── */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <Card className="flex flex-col overflow-hidden shadow-2xl shadow-green-900/5 ring-1 ring-white/5">
-            {/* Avatar + name */}
-            <div className="px-6 pt-10 pb-8 flex flex-col items-center text-center border-b border-white/5 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-[#22c55e]/10 to-transparent opacity-50" />
-
-              <div className="relative mb-6">
-                <div className="absolute -inset-1 bg-gradient-to-tr from-[#22c55e] to-transparent rounded-full blur opacity-30 animate-pulse" />
-                <div className="relative h-24 w-24 rounded-full border-2 border-[#22c55e]/30 bg-[#0a0a0a] flex items-center justify-center shadow-xl shadow-green-900/20">
-                  <User size={40} className="text-[#22c55e]" strokeWidth={1.5} />
+        {/* ── Top stats row ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Identity / Level */}
+          <StatCard accent="#00FF66" accentBg="#040d07" accentBorder="#0d1f0e">
+            <SectionLabel>
+              <Zap size={9} className="text-[#00FF66]" /> Identity
+            </SectionLabel>
+            <div className="mt-3 flex items-center gap-3">
+              <div
+                className="w-11 h-11 rounded-[6px] border border-[#0d1f0e] bg-[#00FF66]/10 flex items-center justify-center shrink-0 font-mono text-sm font-bold text-[#00FF66] tracking-wider"
+              >
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[15px] font-semibold text-[#efefef] truncate leading-tight">
+                  {pLoading ? "…" : username}
+                </div>
+                <div className="text-xs font-mono text-[#eee] mt-0.5">
+                  Level {level} — {lvl}
                 </div>
               </div>
-
-              <h1 className="text-2xl font-bold tracking-tight text-[#f5f5f5] mb-2 relative z-10">
-                {pLoading ? <Skel className="h-8 w-40 mx-auto" /> : profile?.username}
-              </h1>
-
-              <div className="flex flex-wrap justify-center items-center gap-2 mt-3 relative z-10">
-                <PillBadge icon={<Calendar size={12} />} label={joined} />
-                <PillBadge
-                  icon={<Shield size={12} className="text-[#22c55e]" />}
-                  label={`Level ${level}`}
-                  accent
-                />
-              </div>
-
-              <div className="flex items-center gap-3 mt-6 relative z-10">
-                <button
-                  onClick={handleShare}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 border border-[#3b82f6]/20 text-sm font-medium text-[#3b82f6] transition-all cursor-pointer"
-                >
-                  {copied ? <Check size={14} /> : <Share2 size={14} />}
-                  {copied ? "Copied!" : "Share Portfolio"}
-                </button>
-                <button
-                  onClick={startTutorial}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#111] hover:bg-[#1a1a1a] border border-white/10 text-sm font-medium text-gray-300 transition-all cursor-pointer"
-                >
-                  <Play size={14} className="text-[#22c55e]" />
-                  Replay Tutorial
-                </button>
-              </div>
             </div>
-
-            {/* XP progress */}
-            <div className="px-6 py-6 border-b border-white/5 bg-white/[0.01]">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-gray-400">{lvl}</span>
-                <span className="text-sm font-mono text-gray-300">
-                  {pLoading ? "—" : `${xp} / ${next} XP`}
+            <div className="mt-4 space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-xs font-mono text-[#fff] uppercase tracking-wider">
+                  {pct}% to next tier
                 </span>
+                <span className="text-xs font-mono text-[#00FF66]/70">{xp} XP</span>
               </div>
-              <div className="h-2 bg-black/50 rounded-full overflow-hidden ring-1 ring-white/5 inset-ring">
+              <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#16a34a] to-[#22c55e] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                  className="h-full rounded-full bg-[#00FF66] transition-all duration-700"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <p className="text-xs font-mono text-gray-500 mt-2 text-right">{pct}% to next tier</p>
             </div>
+          </StatCard>
 
-            {/* Quick stats 2×2 */}
-            <div className="grid grid-cols-2 divide-x divide-y divide-white/5 bg-white/[0.02]">
-              <StatCell
-                icon={<Flame size={16} className="text-orange-500" />}
-                label="Streak"
-                value={pLoading ? "—" : `${profile.streak} Days`}
-              />
-              <StatCell
-                icon={<Trophy size={16} className="text-yellow-500" />}
-                label="Points"
-                value={pLoading ? "—" : String(xp)}
-              />
-              <StatCell
-                icon={<BookOpen size={16} className="text-blue-500" />}
-                label="Notes"
-                value={pLoading ? "—" : String(profile.notes_written)}
-              />
-              <StatCell
-                icon={<ClipboardCheck size={16} className="text-[#22c55e]" />}
-                label="Quizzes"
-                value={pLoading ? "—" : String(profile.quizzes_passed)}
-              />
-              <StatCell
-                icon={<MessageSquare size={16} className="text-[#a855f7]" />}
-                label="Concepts"
-                value={pLoading ? "—" : String(profile.feynman_mastered || 0)}
-              />
-              <StatCell
-                icon={<Layers size={16} className="text-[#60a5fa]" />}
-                label="Cards"
-                value={pLoading ? "—" : String(profile.flashcards_mastered || 0)}
-              />
+          {/* Streak */}
+          <StatCard accent="#f59e0b" accentBg="#0d0b04" accentBorder="#201505" center>
+            <SectionLabel>
+              <Flame size={9} className="text-[#f59e0b]" /> Day Streak
+            </SectionLabel>
+            <div
+              className={`text-[37px] font-mono font-semibold tabular-nums mt-3 leading-none ${
+                (profile?.streak ?? 0) > 0 ? "text-[#f59e0b]" : "text-[#eee]"
+              }`}
+            >
+              {pLoading ? "—" : (profile?.streak ?? 0)}
             </div>
-          </Card>
+            <div className="text-xs font-mono text-[#eee] uppercase tracking-[0.2em] mt-1.5">
+              Member since {joined}
+            </div>
+          </StatCard>
 
-          {/* ── [C] XP Breakdown ─────────────────────────────────────────── */}
-          <Card className="flex flex-col min-h-[300px]">
+          {/* Total XP */}
+          <StatCard accent="#a855f7" accentBg="#0d0914" accentBorder="#1e1638">
+            <SectionLabel>
+              <Star size={9} className="text-[#a855f7]" /> Total XP Earned
+            </SectionLabel>
+            <div className="mt-3 flex items-baseline gap-1.5">
+              <span className="text-[29px] font-semibold tracking-tight tabular-nums text-[#a855f7] leading-none">
+                {pLoading ? "—" : xp.toLocaleString()}
+              </span>
+              <span className="text-sm text-[#fff] font-mono">XP</span>
+            </div>
+            <div className="text-xs font-mono text-[#eee] mt-1">Lifetime contribution points</div>
+          </StatCard>
+        </div>
+
+        {/* ── Quick stats strip ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <BarChart2 size={9} className="text-[#00FF66]" /> Stats
+              </SectionLabel>
+            }
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-[#0f0f0f]">
+            {quickStats.map((s) => (
+              <div key={s.label} className="flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-9 h-9 rounded-[6px] bg-[#080808] border border-[#141414] flex items-center justify-center mb-2.5">
+                  {s.icon}
+                </div>
+                <p className="text-xs font-mono uppercase tracking-widest text-[#888] mb-1">{s.label}</p>
+                <p className="text-lg font-semibold tabular-nums text-[#efefef] leading-none">
+                  {pLoading ? "—" : s.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* ── XP Breakdown + Recent Activity ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* XP Breakdown */}
+          <Card>
             <CardHeader
-              icon={<TrendingUp size={14} className="text-[#22c55e]" />}
-              title="XP Breakdown"
+              left={
+                <SectionLabel>
+                  <TrendingUp size={9} className="text-[#00FF66]" /> XP Breakdown
+                </SectionLabel>
+              }
             />
-            <div className="flex-1 p-6 space-y-5 max-h-[350px] overflow-y-auto scrollbar-thin pr-4">
+            <div className="p-4 space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar">
               {pLoading ? (
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <Skel key={i} className="h-10 w-full" />
+                    <Skel key={i} className="h-8 w-full" />
                   ))}
                 </div>
               ) : profile?.xp_breakdown?.length > 0 ? (
-                profile.xp_breakdown.map((item: any, idx: number) => {
-                  const max = profile.xp_breakdown[0].total;
-                  const w = Math.round((item.total / max) * 100);
+                profile.xp_breakdown.map((item: any, i: number) => {
+                  const maxXp = profile.xp_breakdown[0].total;
+                  const w = Math.round((item.total / maxXp) * 100);
                   const label = item.action_type
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c: string) => c.toUpperCase());
+                  const opacity = i === 0 ? 1 : i === 1 ? 0.65 : i === 2 ? 0.45 : 0.28;
                   return (
-                    <BreakdownRow
-                      key={item.action_type}
-                      label={label}
-                      total={item.total}
-                      count={item.count}
-                      width={w}
-                      rank={idx}
-                    />
+                    <div key={item.action_type}>
+                      <div className="flex justify-between items-baseline mb-1.5">
+                        <span className="text-sm font-mono text-[#fff] uppercase tracking-wider">
+                          {label}
+                        </span>
+                        <span className="text-sm font-mono tabular-nums text-[#fff]">
+                          {item.total.toLocaleString()} · {item.count}×
+                        </span>
+                      </div>
+                      <div className="h-[2px] w-full bg-[#111] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${w}%`, background: `rgba(0,255,102,${opacity})` }}
+                        />
+                      </div>
+                    </div>
                   );
                 })
               ) : (
-                <EmptyState label="No data yet" />
+                <div className="py-10 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
+                  No XP data yet
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader
+              left={
+                <SectionLabel>
+                  <Activity size={9} className="text-[#00FF66]" /> Recent Activity
+                </SectionLabel>
+              }
+              right={
+                activity.length > 0 ? (
+                  <span className="text-xs font-mono text-[#00FF66] uppercase tracking-[0.15em]">
+                    {activity.length} events
+                  </span>
+                ) : undefined
+              }
+            />
+            <div className="p-2.5 space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar">
+              {activity.length > 0 ? (
+                activity.slice(0, 10).map((a: any, i: number) => (
+                  <div
+                    key={a.id}
+                    className="flex items-start gap-3 p-2.5 rounded-[5px] border border-[#111] bg-[#080808]"
+                  >
+                    <div
+                      className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
+                        i === 0 ? "bg-[#00FF66]" : "bg-[#333]"
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-[13px] leading-snug truncate ${
+                          i === 0 ? "text-[#eee]" : "text-[#999]"
+                        }`}
+                      >
+                        {a.label}
+                      </p>
+                      <p className="text-xs font-mono text-[#888] mt-0.5">{timeAgo(a.date)}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-10 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
+                  No activity yet
+                </div>
               )}
             </div>
           </Card>
         </div>
 
-        {/* ── Right Column (Span 8) ────────────────────────────────────────────────── */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-          {/* ── [D] Heatmap ───────────────────────────────────────────────── */}
-          <Card className="flex flex-col overflow-hidden">
-            <CardHeader
-              icon={<Zap size={14} className="text-[#22c55e]" />}
-              title="Contribution Heatmap"
-            >
-              <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">
-                {pLoading ? "—" : `${xp} total XP`}
+        {/* ── Achievements ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <Award size={9} className="text-[#00FF66]" /> Achievements
+              </SectionLabel>
+            }
+            right={
+              !pLoading && profile?.badges ? (
+                <span className="text-xs font-mono text-[#f59e0b] uppercase tracking-[0.15em]">
+                  {profile.badges.length} earned
+                </span>
+              ) : undefined
+            }
+          />
+          <div className="p-2.5">
+            {pLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skel key={i} className="h-14 w-full" />
+                ))}
+              </div>
+            ) : profile?.badges?.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                {profile.badges.map((b: any) => (
+                  <div
+                    key={b.id}
+                    className="flex items-center gap-3 p-3 rounded-[5px] border border-[#141414] bg-[#080808]"
+                  >
+                    <div className="w-9 h-9 rounded-[6px] bg-[#00FF66]/10 border border-[#0d1f0e] flex items-center justify-center shrink-0">
+                      <Award size={16} className="text-[#00FF66]" strokeWidth={1.5} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-medium text-[#eee] truncate">{b.title}</p>
+                      <p className="text-xs font-mono text-[#888] line-clamp-1 mt-0.5">{b.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
+                No badges yet
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Activity Heatmap ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <CalendarDays size={9} className="text-[#00FF66]" /> Contribution Heatmap
+              </SectionLabel>
+            }
+            right={
+              <span className="text-xs font-mono text-[#fff] uppercase tracking-[0.15em]">
+                {pLoading ? "—" : `${xp.toLocaleString()} XP`}
               </span>
-            </CardHeader>
-            <div className="p-6 overflow-x-auto custom-scrollbar flex items-center justify-center">
+            }
+          />
+          <div className="p-4 overflow-x-auto custom-scrollbar">
+            <div className="min-w-[720px]">
               {hLoading ? (
-                <Skel className="h-[140px] w-full" />
+                <Skel className="h-[130px] w-full" />
               ) : (
                 <ActivityCalendar
                   data={hd}
                   theme={{
-                    light: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                    dark: ["#111", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                    light: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                    dark: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
                   }}
                   colorScheme="dark"
+                  blockSize={11}
+                  blockRadius={2}
+                  blockMargin={2}
+                  fontSize={11}
+                  weekStart={0}
+                  showWeekdayLabels
+                  showColorLegend={false}
+                  showTotalCount={false}
                   labels={{ totalCount: "{{count}} contributions this year" }}
-                  style={{ fontSize: "12px", margin: "0 auto" }}
+                  style={{
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                    color: "#7d8590",
+                  }}
                 />
               )}
             </div>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-            {/* ── [E] Recent Activity ───────────────────────────────────────── */}
-            <Card className="flex flex-col">
-              <CardHeader
-                icon={<Flame size={14} className="text-[#22c55e]" />}
-                title="Recent Activity"
-              >
-                {activity.length > 0 && (
-                  <span className="block w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e] animate-pulse" />
-                )}
-              </CardHeader>
-              <div className="flex-1 p-4 max-h-[350px] overflow-y-auto scrollbar-thin pr-4">
-                {activity.length > 0 ? (
-                  <ul className="space-y-2">
-                    {activity.slice(0, 8).map((a: any, i: number) => (
-                      <li
-                        key={a.id}
-                        className="flex items-start gap-4 p-3 rounded-lg hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5"
-                      >
-                        <div
-                          className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${
-                            i === 0
-                              ? "bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.6)]"
-                              : "bg-gray-700"
-                          }`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={`text-sm font-medium leading-snug truncate ${
-                              i === 0 ? "text-gray-200" : "text-gray-400"
-                            }`}
-                          >
-                            {a.label}
-                          </p>
-                          <p className="text-xs font-mono text-gray-500 mt-1">{timeAgo(a.date)}</p>
-                        </div>
-                        {i === 0 && (
-                          <span className="shrink-0 text-[10px] font-mono text-[#22c55e] uppercase tracking-wider px-2 py-1 bg-green-900/20 rounded border border-green-900/30">
-                            new
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <EmptyState label="No activity yet" />
-                )}
-              </div>
-            </Card>
-
-            {/* ── [B] Badges ────────────────────────────────────────────────── */}
-            <Card className="flex flex-col">
-              <CardHeader
-                icon={<Award size={14} className="text-[#22c55e]" />}
-                title="Achievements"
-              >
-                {!pLoading && profile?.badges && (
-                  <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">
-                    {profile.badges.length} earned
-                  </span>
-                )}
-              </CardHeader>
-              <div className="flex-1 p-4">
-                {pLoading ? (
-                  <div className="grid grid-cols-1 gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skel key={i} className="h-16 w-full" />
-                    ))}
-                  </div>
-                ) : profile?.badges?.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-3">
-                    {profile.badges.map((b: any) => (
-                      <BadgeCard key={b.id} title={b.title} desc={b.desc} />
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState label="No badges yet" />
-                )}
-              </div>
-            </Card>
           </div>
+        </Card>
 
-          {/* ── [F] Completed Roadmaps ────────────────────────────────────── */}
-          <Card className="flex flex-col">
-            <CardHeader
-              icon={<Star size={14} className="text-[#22c55e]" />}
-              title="Completed Roadmaps"
-            >
-              {!pLoading && profile?.completed_paths?.length > 0 && (
-                <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">
+        {/* ── Completed Roadmaps ── */}
+        <Card>
+          <CardHeader
+            left={
+              <SectionLabel>
+                <Star size={9} className="text-[#00FF66]" /> Completed Roadmaps
+              </SectionLabel>
+            }
+            right={
+              !pLoading && profile?.completed_paths?.length > 0 ? (
+                <span className="text-xs font-mono text-[#00FF66] uppercase tracking-[0.15em]">
                   {profile.completed_paths.length} done
                 </span>
-              )}
-            </CardHeader>
-
-            <div className="p-6 max-h-[350px] overflow-y-auto scrollbar-thin pr-4">
-              {pLoading ? (
-                <div className="flex flex-wrap gap-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skel key={i} className="h-10 w-32" />
-                  ))}
-                </div>
-              ) : profile?.completed_paths?.length > 0 ? (
-                <div className="flex flex-wrap gap-3">
-                  {profile.completed_paths.map((p: any) => (
-                    <Link
-                      key={p.id}
-                      to="/roadmap"
-                      search={{ pathSlug: p.slug }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-green-900/30 bg-green-950/20 text-sm font-medium text-[#22c55e] shadow-sm hover:bg-green-950/40 hover:scale-105 transition-all cursor-pointer"
-                    >
-                      <Award size={14} /> {p.title}
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex justify-center items-center py-6 text-sm text-gray-500 font-mono">
-                  No roadmaps completed yet — keep building
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
+              ) : undefined
+            }
+          />
+          <div className="p-4">
+            {pLoading ? (
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skel key={i} className="h-9 w-32" />
+                ))}
+              </div>
+            ) : profile?.completed_paths?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {profile.completed_paths.map((p: any) => (
+                  <Link
+                    key={p.id}
+                    to="/roadmap"
+                    search={{ pathSlug: p.slug }}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[5px] border border-[#0d1f0e] bg-[#00FF66]/10 text-[13px] font-medium text-[#00FF66] hover:bg-[#00FF66]/15 transition-colors"
+                  >
+                    <Award size={13} /> {p.title}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-sm text-[#fff] font-mono uppercase tracking-widest">
+                No roadmaps completed yet — keep building
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
+
+      {/* ── styles (identical to progress.tsx) ─────────────────────────────── */}
+      <style>{`
+        .progress-card {
+          border: 1px solid #131313;
+          border-radius: 6px;
+          background: #060606;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+        }
+        .progress-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+        }
+        .stat-card {
+          border-radius: 6px;
+          padding: 18px 20px;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          overflow: hidden;
+          border: 1px solid;
+        }
+        .stat-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, #1c1c1c 30%, #1c1c1c 70%, transparent 100%);
+          pointer-events: none;
+        }
+        .stat-card.center {
+          align-items: center;
+          text-align: center;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; height: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #222; }
+      `}</style>
     </PageShell>
-  );
-}
-
-/* ── sub-components ───────────────────────────────────────────────────── */
-
-function CardHeader({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/[0.02]">
-      <div className="flex items-center gap-3">
-        {icon}
-        <span className="text-sm font-semibold tracking-wide text-gray-200 uppercase">{title}</span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function PillBadge({
-  icon,
-  label,
-  accent = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  accent?: boolean;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-mono uppercase tracking-wider ${accent ? "border-[#22c55e]/20 text-[#22c55e] bg-green-950/20" : "border-white/10 text-gray-400 bg-white/5"}`}
-    >
-      {icon}
-      {label}
-    </span>
-  );
-}
-
-function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center p-5 text-center hover:bg-white/[0.02] transition-colors">
-      <div className="w-10 h-10 rounded-full bg-black/50 border border-white/5 flex items-center justify-center mb-3 shadow-inner">
-        {icon}
-      </div>
-      <p className="text-xs font-mono uppercase tracking-widest text-gray-500 mb-1">{label}</p>
-      <p className="text-xl font-bold tabular-nums text-gray-100 leading-none">{value}</p>
-    </div>
-  );
-}
-
-function BadgeCard({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="flex items-center gap-4 p-3 rounded-xl border border-white/5 bg-black/40 hover:bg-white/[0.02] hover:border-white/10 transition-all group">
-      <div className="w-12 h-12 rounded-lg bg-green-950/30 border border-green-900/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-        <Award size={20} className="text-[#22c55e]" strokeWidth={1.5} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-gray-200 truncate">{title}</p>
-        <p className="text-xs text-gray-500 line-clamp-2 mt-0.5 leading-snug">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-function BreakdownRow({
-  label,
-  total,
-  count,
-  width,
-  rank,
-}: {
-  label: string;
-  total: number;
-  count: number;
-  width: number;
-  rank: number;
-}) {
-  const opacity = rank === 0 ? 1 : rank === 1 ? 0.75 : rank === 2 ? 0.5 : 0.3;
-  return (
-    <div className="group">
-      <div className="flex justify-between items-baseline mb-2">
-        <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
-          {label}
-        </span>
-        <span className="font-mono text-xs text-gray-500">
-          {total} XP <span className="opacity-50 mx-1">·</span> {count}×
-        </span>
-      </div>
-      <div className="h-2 bg-black/50 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-1000"
-          style={{
-            width: `${width}%`,
-            background: `rgba(34,197,94,${opacity})`,
-            boxShadow: rank === 0 ? "0 0 10px rgba(34,197,94,0.4)" : "none",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ label }: { label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-40 text-center space-y-3">
-      <div className="w-12 h-12 rounded-full border border-dashed border-white/10 flex items-center justify-center text-gray-600">
-        <TrendingUp size={20} />
-      </div>
-      <span className="text-sm font-mono text-gray-500 uppercase tracking-widest">{label}</span>
-    </div>
   );
 }

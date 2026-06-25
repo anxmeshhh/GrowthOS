@@ -53,7 +53,7 @@ function GlobalReviewPage() {
   const [flipped, setFlipped] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["global_review"],
     queryFn: async () => {
       const res = await apiFetch("/flashcards/review-queue/");
@@ -91,6 +91,7 @@ function GlobalReviewPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["global_review"] });
+      queryClient.invalidateQueries({ queryKey: ["today"] });
       queryClient.invalidateQueries({ queryKey: ["heatmap"] });
       queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
       queryClient.invalidateQueries({ queryKey: ["user_profile"] });
@@ -103,10 +104,10 @@ function GlobalReviewPage() {
   });
 
   useEffect(() => {
-    if (!isLoading && dueCards.length === 0) {
+    if (!isLoading && !isError && dueCards.length === 0) {
       setSessionCompleted(true);
     }
-  }, [dueCards, isLoading]);
+  }, [dueCards, isLoading, isError]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -131,7 +132,28 @@ function GlobalReviewPage() {
     return (
       <PageShell>
         <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
-          <Zap className="h-8 w-8 animate-pulse text-[#22c55e]" />
+          <Zap className="h-8 w-8 animate-pulse text-[#00FF66]" />
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageShell>
+        <div className="flex h-[calc(100vh-6rem)] flex-col items-center justify-center p-6 text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#ef4444]/10 border border-[#ef4444]/20">
+            <Zap size={36} className="text-[#ef4444]" />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-[#f0f0f0] mb-2">
+            Couldn't load your review queue
+          </h2>
+          <p className="text-sm max-w-md mb-8 leading-relaxed" style={{ color: "#777" }}>
+            Something went wrong reaching the server. Check your connection and try again.
+          </p>
+          <Btn onClick={() => queryClient.invalidateQueries({ queryKey: ["global_review"] })}>
+            Retry
+          </Btn>
         </div>
       </PageShell>
     );
@@ -141,8 +163,8 @@ function GlobalReviewPage() {
     return (
       <PageShell>
         <div className="flex h-[calc(100vh-6rem)] flex-col items-center justify-center p-6 text-center">
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20">
-            <CheckCircle2 size={40} className="text-[#22c55e]" />
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#00FF66]/10 border border-[#00FF66]/20">
+            <CheckCircle2 size={40} className="text-[#00FF66]" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-[#f0f0f0] mb-2">
             You're all caught up!
@@ -176,7 +198,7 @@ function GlobalReviewPage() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="text-xs font-mono uppercase tracking-[0.2em] font-medium text-[#22c55e] border border-[#22c55e]/20 bg-[#22c55e]/5 px-3 py-1.5 rounded-md shadow-inner">
+            <div className="text-xs font-mono uppercase tracking-[0.2em] font-medium text-[#00FF66] border border-[#00FF66]/20 bg-[#00FF66]/5 px-3 py-1.5 rounded-md shadow-inner">
               {dueCards.length} Due
             </div>
           </div>
@@ -217,8 +239,8 @@ function GlobalReviewPage() {
                 </div>
               </div>
               {/* Back */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border border-[#22c55e]/20 bg-[#080f08] flex flex-col justify-between p-8 sm:p-12 shadow-2xl overflow-y-auto">
-                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#22c55e]/60 shrink-0">
+              <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border border-[#00FF66]/20 bg-[#080f08] flex flex-col justify-between p-8 sm:p-12 shadow-2xl overflow-y-auto">
+                <div className="text-xs uppercase font-mono tracking-[0.2em] font-medium text-[#00FF66]/60 shrink-0">
                   Answer
                 </div>
                 <div className="text-xl sm:text-3xl font-medium text-[#d4d4d4] leading-relaxed my-auto py-8">
@@ -280,12 +302,10 @@ function GlobalReviewPage() {
                   submitGradeMutation.mutate({ quality: "easy" });
                 }}
                 disabled={submitGradeMutation.isPending}
-                className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#22c55e]/20 bg-[#22c55e]/5 hover:bg-[#22c55e]/15 hover:border-[#22c55e]/40 transition-all disabled:opacity-50 shadow-inner"
+                className="flex flex-col items-center justify-center py-5 rounded-2xl border border-[#00FF66]/20 bg-[#00FF66]/5 hover:bg-[#00FF66]/15 hover:border-[#00FF66]/40 transition-all disabled:opacity-50 shadow-inner"
               >
-                <span className="font-bold text-[#22c55e] text-xl mb-1.5">Easy</span>
-                <span className="text-[10px] font-mono text-[#22c55e]/50 tracking-[0.2em] uppercase">
-                  4d (4)
-                </span>
+                <span className="font-bold text-[#00FF66] text-xl mb-1.5">Easy</span>
+                <span className="text-[10px] font-mono text-[#00FF66]/50 tracking-[0.2em] uppercase">4d (4)</span>
               </button>
             </div>
           )}

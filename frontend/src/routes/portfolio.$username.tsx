@@ -7,7 +7,7 @@ export const Route = createFileRoute("/portfolio/$username")({
   component: PortfolioPage,
 });
 
-const API_BASE = "http://127.0.0.1:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 function PortfolioPage() {
   const { username } = Route.useParams();
@@ -97,7 +97,7 @@ function PortfolioPage() {
           {/* Main Content - Projects */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className="text-[#22c55e]" size={24} />
+              <ShieldCheck className="text-[#00FF66]" size={24} />
               <h2 className="text-2xl font-semibold text-[#fff]">Verified Projects</h2>
             </div>
 
@@ -131,7 +131,7 @@ function PortfolioPage() {
                         <div className="text-sm text-[#666] mb-1">
                           {new Date(proj.verified_at).toLocaleDateString()}
                         </div>
-                        <Badge className="bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20 font-bold px-3 py-1 text-sm">
+                        <Badge className="bg-[#00FF66]/10 text-[#00FF66] border-[#00FF66]/20 font-bold px-3 py-1 text-sm">
                           {proj.ai_score}/100 Score
                         </Badge>
                       </div>

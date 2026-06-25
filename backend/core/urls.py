@@ -9,8 +9,12 @@ from .views import (
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView, TopicFeynmanView,
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
-    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView,
-    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, JobDescriptionRoadmapView
+    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, AdminAnalyticsView, AdminContentView, AdminSettingsView, CustomPathViewSet, PathProgressView,
+    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, JobDescriptionRoadmapView, SearchView, NotificationView,
+    JDMappingView, ResumeAnalysisView,
+    OnboardingView, DailyMissionView, LearningInsightsView,
+    TopicResourceView, MockInterviewView, MockInterviewAnswerView, InterviewNotesTopicsView,
+    GenerateCareerPathView, StudyRoomView,
 )
 
 # Strict throttle for login endpoint — max 5 attempts per minute per IP
@@ -91,6 +95,9 @@ urlpatterns = [
     
     # Admin Dashboard
     path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
+    path('admin/analytics/', AdminAnalyticsView.as_view(), name='admin_analytics'),
+    path('admin/content/', AdminContentView.as_view(), name='admin_content'),
+    path('admin/settings/', AdminSettingsView.as_view(), name='admin_settings'),
     path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
     path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
     path('admin/export-data/', AdminDataExportView.as_view(), name='admin_export_data'),
@@ -100,6 +107,36 @@ urlpatterns = [
     path('admin/requests/', AdminRequestListView.as_view(), name='admin_requests'),
     path('admin/requests/<int:pk>/', AdminRequestDetailView.as_view(), name='admin_request_detail'),
     
+    # Search
+    path('search/', SearchView.as_view(), name='search'),
+
+    # Notifications
+    path('notifications/', NotificationView.as_view(), name='notifications'),
+
+    # Career Intelligence
+    path('career/jd/', JDMappingView.as_view(), name='jd_mapping'),
+    path('career/resume/', ResumeAnalysisView.as_view(), name='resume_analysis'),
+
+    # Command Center
+    path('onboarding/', OnboardingView.as_view(), name='onboarding'),
+    path('mission/today/', DailyMissionView.as_view(), name='daily_mission'),
+    path('analytics/insights/', LearningInsightsView.as_view(), name='learning_insights'),
+
+    # Topic Resources
+    path('topics/<str:topic_id>/resources/', TopicResourceView.as_view(), name='topic_resources'),
+
+    # Mock Interview
+    path('interview/', MockInterviewView.as_view(), name='mock_interview_list'),
+    path('interview/start/', MockInterviewView.as_view(), name='mock_interview_start'),
+    path('interview/notes-topics/', InterviewNotesTopicsView.as_view(), name='interview_notes_topics'),
+    path('interview/<int:interview_id>/answer/', MockInterviewAnswerView.as_view(), name='mock_interview_answer'),
+
+    # Career Path Generation
+    path('career/generate-path/', GenerateCareerPathView.as_view(), name='career_generate_path'),
+
+    # Study Rooms
+    path('rooms/', StudyRoomView.as_view(), name='study_rooms'),
+
     # Router covers /paths/ and /bookmarks/
     path('', include(router.urls)),
 ]

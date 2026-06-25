@@ -79,10 +79,10 @@ function resolveStyles(kind: NodeKind, status: string): S {
   return {
     bg: isCompleted ? "#0c1a07" : "#0f120a",
     bgHov: "#151f0e",
-    border: isCompleted ? "#22c55e" : "#2a3a1e",
+    border: isCompleted ? "#00FF66" : "#2a3a1e",
     bdStyle: "solid",
-    text: isCompleted ? "#4ade80" : "#a8c078",
-    dot: isCompleted ? "#22c55e" : "#4a6a2a",
+    text: isCompleted ? "#00FF66" : "#a8c078",
+    dot: isCompleted ? "#00FF66" : "#4a6a2a",
     opacity: "1",
   };
 }
@@ -182,7 +182,7 @@ export const RoadmapNode = memo(function RoadmapNode({
           {data.label}
         </span>
         {isCompleted && data.aiScore !== undefined && (
-          <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-[#162a16] border border-[#22c55e]/30 text-[#4ade80] ml-2 shrink-0 flex items-center shadow-sm">
+          <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-[#162a16] border border-[#00FF66]/30 text-[#00FF66] ml-2 shrink-0 flex items-center shadow-sm">
             ★ {data.aiScore}
           </span>
         )}

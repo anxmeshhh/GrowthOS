@@ -25,7 +25,7 @@ export function Logo({ className = "", size = 32 }: { className?: string; size?:
       />
       <defs>
         <linearGradient id="logo_grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#4ADE80" />
+          <stop stopColor="#00FF66" />
           <stop offset="1" stopColor="#16A34A" />
         </linearGradient>
       </defs>

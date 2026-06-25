@@ -128,7 +128,7 @@ function AssessmentsPage() {
         <StatCard label="Total Topics" value={<span className="font-mono">{totalAll}</span>} />
         <StatCard
           label="Completed"
-          value={<span className="font-mono text-[#22c55e]">{completedTopics.length}</span>}
+          value={<span className="font-mono text-[#00FF66]">{completedTopics.length}</span>}
           accent
         />
         <StatCard
@@ -158,8 +158,8 @@ function AssessmentsPage() {
                 onClick={() => togglePath(path.slug)}
                 className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-[#111] transition-colors"
               >
-                <div className="w-8 h-8 rounded-lg bg-[#22c55e]/10 flex items-center justify-center shrink-0">
-                  <MapIcon size={16} className="text-[#22c55e]" />
+                <div className="w-8 h-8 rounded-lg bg-[#00FF66]/10 flex items-center justify-center shrink-0">
+                  <MapIcon size={16} className="text-[#00FF66]" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-lg font-semibold text-[#f0f0f0]">{path.title}</div>
@@ -261,7 +261,7 @@ function AssessmentsPage() {
                                       className="flex-1 ml-5 flex items-center gap-2 px-3 py-[6px] rounded text-left no-underline transition-colors duration-100"
                                       style={{
                                         background: isCompleted ? "#0c1a07" : "#0f120a",
-                                        border: `1px solid ${isCompleted ? "#22c55e33" : "#2a3a1e"}`,
+                                        border: `1px solid ${isCompleted ? "#00FF6633" : "#2a3a1e"}`,
                                       }}
                                       onMouseEnter={(e) => {
                                         (e.currentTarget as HTMLElement).style.background =
@@ -276,7 +276,7 @@ function AssessmentsPage() {
                                         {isCompleted ? (
                                           <CheckCircle2
                                             size={12}
-                                            className="text-[#22c55e]"
+                                            className="text-[#00FF66]"
                                             strokeWidth={2.5}
                                           />
                                         ) : isInProgress ? (
@@ -289,7 +289,7 @@ function AssessmentsPage() {
                                         className="flex-1 font-mono font-medium leading-snug"
                                         style={{
                                           fontSize: "12px",
-                                          color: isCompleted ? "#4ade80" : "#a8c078",
+                                          color: isCompleted ? "#00FF66" : "#a8c078",
                                         }}
                                       >
                                         {child.label}
@@ -320,7 +320,7 @@ function AssessmentsPage() {
                               {isCompleted ? (
                                 <CheckCircle2
                                   size={12}
-                                  className="text-[#22c55e]"
+                                  className="text-[#00FF66]"
                                   strokeWidth={2.5}
                                 />
                               ) : (
@@ -331,7 +331,7 @@ function AssessmentsPage() {
                               className="font-mono font-medium"
                               style={{
                                 fontSize: "12px",
-                                color: isCompleted ? "#4ade80" : "#a8c078",
+                                color: isCompleted ? "#00FF66" : "#a8c078",
                               }}
                             >
                               {t.title}

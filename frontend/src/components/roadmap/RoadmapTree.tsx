@@ -46,7 +46,7 @@ const SectionHeader = memo(function SectionHeader({
         className="font-mono font-semibold tracking-wide flex items-center gap-1.5"
         style={{
           fontSize: "11px",
-          color: node.data.status === "completed" ? "#22c55e" : "#60a5fa",
+          color: node.data.status === "completed" ? "#00FF66" : "#60a5fa",
         }}
       >
         {node.data.status === "completed" && <CheckCircle2 size={12} strokeWidth={2.5} />}
@@ -110,17 +110,22 @@ const TreeBranch = memo(function TreeBranch({
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-px flex-1" style={{ background: "#1a2a40" }} />
-          {disableLinks ? (
-            <div className="no-underline">{MilestoneContent}</div>
-          ) : (
-            <Link
-              to="/topic/$topicId"
-              params={{ topicId: node.data.topicId }}
-              className="no-underline"
+          <Link
+            to="/topic/$topicId"
+            params={{ topicId: node.data.topicId }}
+            className="no-underline"
+          >
+            <span
+              className="font-mono font-bold tracking-widest uppercase px-3 py-1 rounded-full flex items-center gap-1.5"
+              style={{
+                fontSize: "10px",
+                color: isCompleted ? "#00FF66" : "#60a5fa",
+                background: isCompleted ? "#061a0f" : "#0a0f1e",
+                border: `1px solid ${isCompleted ? "#00FF66" : "#3b5bdb"}`,
+              }}
             >
               {MilestoneContent}
             </Link>
-          )}
           <div className="h-px flex-1" style={{ background: "#1a2a40" }} />
         </div>
         {hasChildren && (
@@ -290,7 +295,7 @@ export function RoadmapTree({ topics = [], disableLinks }: RoadmapTreeProps) {
         <LegendItem kind="milestone" label="Milestone" />
         <LegendItem kind="optional" label="Optional" />
         <div className="ml-auto flex items-center gap-1.5">
-          <CheckCircle2 size={12} style={{ color: "#22c55e" }} strokeWidth={2} />
+          <CheckCircle2 size={12} style={{ color: "#00FF66" }} strokeWidth={2} />
           <span style={{ fontSize: "10px", color: "#444", fontFamily: "monospace" }}>
             completed
           </span>

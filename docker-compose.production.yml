@@ -1,6 +1,11 @@
-version: '3.8'
-
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: growthos_redis
+    restart: unless-stopped
+    networks:
+      - growthos_network
+
   db:
     image: mysql:8.0
     container_name: growthos_db
@@ -13,6 +18,12 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - growthos_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     restart: unless-stopped
 
   backend:
@@ -20,7 +31,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     container_name: growthos_backend
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2
+    # Apply DB migrations and gather static files on every deploy, then serve.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 4 --worker-class gthread --timeout 30 --max-requests 1000 --max-requests-jitter 100"
     ports:
       - "127.0.0.1:8005:8000"
     volumes:
@@ -28,7 +43,7 @@ services:
       - media_volume:/app/media
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
-      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - SECRET_KEY=${SECRET_KEY}
       - DEBUG=False
       - ALLOWED_HOSTS=growth-os.tech,www.growth-os.tech,api.growth-os.tech
       - MYSQL_DATABASE=${MYSQL_DATABASE:-growthos}
@@ -38,17 +53,60 @@ services:
       - MYSQL_PORT=3306
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - FERNET_KEY=${FERNET_KEY}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://growth-os.tech,https://www.growth-os.tech}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - REDIS_URL=redis://redis:6379/1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - growthos_network
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: growthos_scheduler
+    entrypoint: []
+    command: >
+      sh -c "cp /app/crontab /etc/cron.d/growthos && chmod 0644 /etc/cron.d/growthos && cron -f"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=False
+      - ALLOWED_HOSTS=growth-os.tech,www.growth-os.tech,api.growth-os.tech
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-growthos}
+      - MYSQL_USER=${MYSQL_USER:-growthos_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - growthos_network
     restart: unless-stopped
@@ -64,6 +122,8 @@ services:
     container_name: growthos_frontend
     ports:
       - "127.0.0.1:3005:80"
+    depends_on:
+      - backend
     networks:
       - growthos_network
     restart: unless-stopped
