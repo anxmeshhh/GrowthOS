@@ -210,6 +210,13 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        # M5: ensure handled-exception logs (logger = getLogger("core.views"))
+        # actually reach the container's stdout.
+        'core': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
 

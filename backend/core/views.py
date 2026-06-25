@@ -10,8 +10,41 @@ from django.conf import settings
 from groq import Groq
 import requests
 import os
+import logging
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman
+logger = logging.getLogger("core.views")
+
+# ── Admin-editable system settings ──────────────────────────────────────────
+# Known settings with type + default. SiteSetting rows override these.
+SETTINGS_SCHEMA = [
+    {"key": "registration_open", "type": "bool", "default": "true",
+     "label": "Allow new sign-ups", "help": "When off, new account registration is blocked."},
+    {"key": "maintenance_mode", "type": "bool", "default": "false",
+     "label": "Maintenance mode", "help": "When on, sign-ups and AI path generation are paused."},
+    {"key": "pomodoro_max_minutes", "type": "int", "default": "120",
+     "label": "Max Pomodoro minutes", "help": "Upper bound on a focus session (caps XP minting)."},
+]
+_SETTINGS_DEFAULTS = {s["key"]: s["default"] for s in SETTINGS_SCHEMA}
+
+
+def get_setting(key):
+    row = SiteSetting.objects.filter(key=key).first()
+    if row is not None:
+        return row.value
+    return _SETTINGS_DEFAULTS.get(key)
+
+
+def get_setting_bool(key):
+    return str(get_setting(key)).strip().lower() in ("1", "true", "yes", "on")
+
+
+def get_setting_int(key, fallback):
+    try:
+        return int(get_setting(key))
+    except (TypeError, ValueError):
+        return fallback
+
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
@@ -48,7 +81,8 @@ class SendOTPView(views.APIView):
                     fail_silently=False,
                 )
             except Exception as e:
-                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                logger.exception("Handled error returning a generic response to the client")
+                return Response({'error': 'Something went wrong. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response({'message': 'OTP sent successfully'})
 
@@ -314,6 +348,12 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
+        # System settings gate: respect registration_open / maintenance_mode.
+        if not get_setting_bool('registration_open') or get_setting_bool('maintenance_mode'):
+            return Response(
+                {'error': 'New registrations are currently closed.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         email = request.data.get('email')
         # Enforce OTP verification before allowing registration
         try:
@@ -484,7 +524,22 @@ class TopicMaterialUploadView(views.APIView):
         file_obj = request.data.get('file')
         if not file_obj:
             return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
+        # M6: validate size + extension before storing / PyPDF2 parsing.
+        MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+        if getattr(file_obj, 'size', 0) > MAX_SIZE:
+            return Response(
+                {'error': 'File too large. Maximum allowed size is 10 MB.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        allowed_ext = ('.pdf', '.docx', '.pptx', '.txt', '.md')
+        name = (getattr(file_obj, 'name', '') or '').lower()
+        if not name.endswith(allowed_ext):
+            return Response(
+                {'error': 'Invalid file type. Allowed: PDF, DOCX, PPTX, TXT, MD.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         material = TopicMaterial.objects.create(
             user=request.user,
             topic=topic,
@@ -543,7 +598,8 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
             Contribution.objects.create(user=request.user, action_type='path_generated', points=2)
             return Response(data)
         except Exception as e:
-            return Response({'error': f"AI generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': "AI generation failed. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class VerifyMaterialView(views.APIView):
@@ -560,7 +616,8 @@ class VerifyMaterialView(views.APIView):
                 for page in reader.pages:
                     text += page.extract_text() + "\n"
         except Exception as e:
-            return Response({'error': f"Failed to read file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': "Failed to read file. Please ensure it is a valid document."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Truncate text to avoid token limits
         text = text[:8000]
@@ -620,7 +677,8 @@ class VerifyMaterialView(views.APIView):
                 award_topic_completion_xp(request.user, material.topic, progress, score)
                 
         except Exception as e:
-            return Response({'error': f"AI Verification failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': "AI verification failed. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'material': TopicMaterialSerializer(material).data,
@@ -686,11 +744,12 @@ class PomodoroView(views.APIView):
 
     def post(self, request):
         # H3: Cap duration to prevent unbounded XP minting via client-supplied value.
-        # Standard Pomodoro is 25 min; allow up to 120 min for long focus sessions.
+        # Cap is admin-configurable via the 'pomodoro_max_minutes' setting (default 120).
+        max_minutes = get_setting_int('pomodoro_max_minutes', 120)
         try:
-            duration = max(1, min(int(request.data.get('duration_minutes', 25)), 120))
+            duration = max(1, min(int(request.data.get('duration_minutes', 25)), max_minutes))
         except (TypeError, ValueError):
-            duration = 25
+            duration = min(25, max_minutes)
 
         # Log the session
         from .models import PomodoroSession
@@ -716,17 +775,22 @@ class DailyLoginView(views.APIView):
 
     def post(self, request):
         today = timezone.now().date()
-        has_logged_in = Contribution.objects.filter(
-            user=request.user, 
-            action_type='daily_login',
-            created_at__date=today
-        ).exists()
-
         bonus_messages = []
-        if not has_logged_in:
+        # M3: serialize concurrent daily-login requests for this user with a row
+        # lock so two requests can't both pass the "already?" check and double-award.
+        with transaction.atomic():
+            User.objects.select_for_update().get(pk=request.user.pk)
+            has_logged_in = Contribution.objects.filter(
+                user=request.user,
+                action_type='daily_login',
+                created_at__date=today
+            ).exists()
+            if has_logged_in:
+                return Response({"status": "already_awarded", "message": "Already claimed today."})
+
             Contribution.objects.create(user=request.user, action_type='daily_login', points=1)
             bonus_messages.append({"type": "daily_login", "points": 1, "message": "Daily login bonus awarded!"})
-            
+
             # Calculate current streak for milestone check
             streak = 0
             check = today
@@ -736,20 +800,18 @@ class DailyLoginView(views.APIView):
                     check -= timezone.timedelta(days=1)
                 else:
                     break
-            
+
             # Award streak milestones (7, 14, 30 days)
             for milestone in [7, 14, 30]:
                 if streak == milestone:
-                    already = Contribution.objects.filter(
-                        user=request.user, action_type='streak_milestone', points=milestone
-                    ).exists()
-                    if not already:
-                        Contribution.objects.create(user=request.user, action_type='streak_milestone', points=1)
+                    _, created = Contribution.objects.get_or_create(
+                        user=request.user, action_type=f'streak_milestone_{milestone}',
+                        defaults={'points': 1},
+                    )
+                    if created:
                         bonus_messages.append({"type": "streak_milestone", "points": 1, "message": f"🔥 {milestone}-day streak milestone!"})
-            
-            return Response({"status": "awarded", "bonuses": bonus_messages})
-        
-        return Response({"status": "already_awarded", "message": "Already claimed today."})
+
+        return Response({"status": "awarded", "bonuses": bonus_messages})
 
 class ChatAssistantView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -827,7 +889,8 @@ Your goal is to aggressively motivate the user, answer their technical questions
 
             return Response({"reply": reply})
         except Exception as e:
-            return Response({'error': f"AI Chat failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': "AI chat failed. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TopicNoteView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -895,7 +958,8 @@ class TopicQuizView(views.APIView):
             )
             return Response({'questions': questions[:count]})
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': 'Something went wrong. Please try again.'}, status=500)
 
 class TopicFlashcardView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1019,7 +1083,8 @@ class GenerateFlashcardsView(views.APIView):
                 
             return Response({'flashcards': list(unverified_cards)})
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': 'Something went wrong. Please try again.'}, status=500)
 
 class ProjectIdeasView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1043,7 +1108,8 @@ class ProjectIdeasView(views.APIView):
             ideas = json.loads(response_content)
             return Response({'ideas': ideas})
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': 'Something went wrong. Please try again.'}, status=500)
 
 import requests as http_requests
 
@@ -1137,7 +1203,8 @@ Reply with EXACTLY this JSON format:
             result['passed'] = passed # override the AI's "passed" with our 65 rule
             return Response(result)
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': 'Something went wrong. Please try again.'}, status=500)
 
 class NoteDocumentView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1318,38 +1385,37 @@ class SubmitQuizView(views.APIView):
 
         if percentage >= 0.8:
             today = timezone.now().date()
-            # To enforce once per topic per day without a topic field, we could use a specific action_type
-            # But the requirement implies we award 'quiz_passed'. We will let it award for now or assume they aren't spamming.
-            # Let's just award it if it's not the same topic. Actually we'll just award it.
-            # Let's count how many quiz_passed today
-            today_quizzes = Contribution.objects.filter(
-                user=request.user,
-                action_type='quiz_passed',
-                created_at__date=today
-            ).count()
-            
-            # For simplicity, we just award it, ignoring the "once per topic" comment if it conflicts.
-            # Or we can just award it once per topic by changing action_type to 'quiz_passed_{topic.id}' and checking that,
-            # but then we also need to log a 'quiz_passed' for the stats. We can log both!
-            topic_awarded = Contribution.objects.filter(
-                user=request.user,
-                action_type=f'quiz_passed_{topic.id}',
-                created_at__date=today
-            ).exists()
-            
             xp = 0
-            if not topic_awarded:
-                Contribution.objects.create(user=request.user, action_type=f'quiz_passed_{topic.id}', points=0)
-                Contribution.objects.create(user=request.user, action_type='quiz_passed', points=1)
-                xp = 1
-                today_quizzes += 1
-                
-                if today_quizzes == 3:
-                    Contribution.objects.create(user=request.user, action_type='quiz_chain', points=1)
-                    xp += 1
+            # M3: serialize per-user so concurrent submissions of the same topic
+            # can't both pass the "already awarded today" check. The dated per-topic
+            # key makes the award idempotent (once per topic per day).
+            with transaction.atomic():
+                User.objects.select_for_update().get(pk=request.user.pk)
+                # Stable per-topic marker (once ever) — used by compute_topic_mastery.
+                Contribution.objects.get_or_create(
+                    user=request.user, action_type=f'quiz_passed_{topic.id}', defaults={'points': 0},
+                )
+                # Dated key gates the +1 XP stat award to once per topic per day.
+                daily_key = f'quiz_passed_{topic.id}_{today.isoformat()}'
+                _, created = Contribution.objects.get_or_create(
+                    user=request.user, action_type=daily_key, defaults={'points': 0},
+                )
+                if created:
+                    Contribution.objects.create(user=request.user, action_type='quiz_passed', points=1)
+                    xp = 1
+                    today_quizzes = Contribution.objects.filter(
+                        user=request.user, action_type='quiz_passed', created_at__date=today
+                    ).count()
+                    if today_quizzes == 3:
+                        _, chain_created = Contribution.objects.get_or_create(
+                            user=request.user, action_type=f'quiz_chain_{today.isoformat()}',
+                            defaults={'points': 1},
+                        )
+                        if chain_created:
+                            xp += 1
 
             return Response({"status": "passed", "xp_earned": xp})
-        
+
         return Response({"status": "failed", "xp_earned": 0})
 
 class UserProfileView(views.APIView):
@@ -1382,16 +1448,18 @@ class UserProfileView(views.APIView):
                     if isinstance(c, dict) and c.get('interval', 0) >= 1:
                         flashcards_mastered += 1
         
-        # Streak calculation
+        # Streak calculation — M4: fetch all login dates in ONE query, then walk
+        # back in memory (was one query per day).
         today = timezone.now().date()
+        login_dates = set(
+            Contribution.objects.filter(user=user, action_type='daily_login')
+            .values_list('created_at__date', flat=True)
+        )
         streak = 0
         check = today
-        while True:
-            if Contribution.objects.filter(user=user, action_type='daily_login', created_at__date=check).exists():
-                streak += 1
-                check -= timezone.timedelta(days=1)
-            else:
-                break
+        while check in login_dates:
+            streak += 1
+            check -= timezone.timedelta(days=1)
 
         # XP breakdown by action type
         xp_breakdown = list(
@@ -1406,24 +1474,11 @@ class UserProfileView(views.APIView):
         paths = set(tp.topic.path for tp in completed_topics_qs if tp.topic.path)
         path_list = [{"id": p.id, "title": p.title, "slug": p.slug} for p in paths]
 
-        # Mastery Distribution
-        from .serializers import compute_topic_mastery
-        mastery_distribution = {
-            'needs_review': 0, # 0-39
-            'familiar': 0,     # 40-69
-            'proficient': 0,   # 70-89
-            'mastered': 0      # 90-100
-        }
-        for tp in completed_topics_qs:
-            score = compute_topic_mastery(user, tp.topic)
-            if score >= 90:
-                mastery_distribution['mastered'] += 1
-            elif score >= 70:
-                mastery_distribution['proficient'] += 1
-            elif score >= 40:
-                mastery_distribution['familiar'] += 1
-            else:
-                mastery_distribution['needs_review'] += 1
+        # Mastery Distribution — M4: batched (one set of queries for all topics)
+        from .serializers import compute_mastery_distribution
+        mastery_distribution = compute_mastery_distribution(
+            user, [tp.topic for tp in completed_topics_qs]
+        )
 
         # Achievement badges
         from .helpers import get_user_badges
@@ -1571,7 +1626,8 @@ class GitHubReposView(views.APIView):
             } for r in repos]
             return Response({"repos": data})
         except Exception as e:
-            return Response({"repos": [], "message": f"Failed to fetch: {str(e)}"})
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({"repos": [], "message": "Failed to fetch repositories."})
 
 class PublishGistView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1625,7 +1681,8 @@ class PublishGistView(views.APIView):
             else:
                 return Response({"error": f"GitHub API error: {resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": f"Failed to publish gist: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({"error": "Failed to publish gist. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreateGitHubRepoView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1677,7 +1734,8 @@ class CreateGitHubRepoView(views.APIView):
             else:
                 return Response({"error": f"GitHub API error: {resp.text}"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": f"Failed to create repository: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({"error": "Failed to create repository. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SyncPathToGitHubView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -1768,7 +1826,8 @@ class SyncPathToGitHubView(views.APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error": f"Failed to sync to GitHub: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({"error": "Failed to sync to GitHub. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 import base64
 
@@ -2004,32 +2063,31 @@ class ReviveStreakView(views.APIView):
 
     def post(self, request):
         user = request.user
-        total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
-        if total_xp < 10:
-            return Response({'error': 'Not enough XP to revive streak (need 10 XP)'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        profile, _ = UserProfile.objects.get_or_create(user=user)
-        
-        # Check if used recently
-        if profile.streak_revive_used_at:
-            from django.utils import timezone
-            import datetime
-            if timezone.now() - profile.streak_revive_used_at < datetime.timedelta(days=7):
-                return Response({'error': 'Can only revive streak once every 7 days'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Deduct 10 XP
         import datetime
         from django.utils import timezone
-        
-        c = Contribution(user=user, action_type='streak_revived', points=-10)
-        c.save()
-        # Override created_at to yesterday
-        c.created_at = timezone.now() - datetime.timedelta(days=1)
-        c.save()
-        
-        profile.streak_revive_used_at = timezone.now()
-        profile.save()
-        
+
+        # M3: lock the profile row so two concurrent revives can't both pass the
+        # cooldown check and double-deduct.
+        with transaction.atomic():
+            profile, _ = UserProfile.objects.select_for_update().get_or_create(user=user)
+
+            total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
+            if total_xp < 10:
+                return Response({'error': 'Not enough XP to revive streak (need 10 XP)'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if profile.streak_revive_used_at and \
+                    timezone.now() - profile.streak_revive_used_at < datetime.timedelta(days=7):
+                return Response({'error': 'Can only revive streak once every 7 days'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Deduct 10 XP (recorded as a contribution dated yesterday to bridge the gap)
+            c = Contribution(user=user, action_type='streak_revived', points=-10)
+            c.save()
+            c.created_at = timezone.now() - datetime.timedelta(days=1)
+            c.save(update_fields=['created_at'])
+
+            profile.streak_revive_used_at = timezone.now()
+            profile.save(update_fields=['streak_revive_used_at'])
+
         return Response({'status': 'Streak revived successfully!', 'xp_deducted': 10})
 
 class ResetProgressView(views.APIView):
@@ -2109,24 +2167,186 @@ class AdminStatsView(views.APIView):
             }
         })
 
+
+class AdminAnalyticsView(views.APIView):
+    """Read-only engagement / learning analytics for the admin console."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        from django.db.models.functions import TruncDate
+        now = timezone.now()
+        start_14 = (now - datetime.timedelta(days=13)).date()
+        start_30 = now - datetime.timedelta(days=30)
+
+        # Daily signups (last 14 days)
+        signup_rows = (
+            User.objects.filter(date_joined__date__gte=start_14)
+            .annotate(d=TruncDate('date_joined'))
+            .values('d').annotate(c=Count('id'))
+        )
+        signup_map = {r['d'].isoformat(): r['c'] for r in signup_rows if r['d']}
+
+        # Daily activity (contributions, last 14 days)
+        contrib_rows = (
+            Contribution.objects.filter(created_at__date__gte=start_14)
+            .annotate(d=TruncDate('created_at'))
+            .values('d').annotate(c=Count('id'))
+        )
+        contrib_map = {r['d'].isoformat(): r['c'] for r in contrib_rows if r['d']}
+
+        signup_series, contrib_series = [], []
+        for i in range(14):
+            key = (start_14 + datetime.timedelta(days=i)).isoformat()
+            signup_series.append({'date': key, 'count': signup_map.get(key, 0)})
+            contrib_series.append({'date': key, 'count': contrib_map.get(key, 0)})
+
+        # Completions
+        total_completions = TopicProgress.objects.filter(status='completed').count()
+        completions_30d = TopicProgress.objects.filter(
+            status='completed', completed_at__gte=start_30
+        ).count()
+
+        # Action breakdown
+        action_breakdown = [
+            {'action': r['action_type'], 'count': r['c'], 'points': r['pts'] or 0}
+            for r in (
+                Contribution.objects.values('action_type')
+                .annotate(c=Count('id'), pts=Sum('points'))
+                .order_by('-c')[:8]
+            )
+        ]
+
+        # Top paths by distinct learners
+        top_paths = [
+            {
+                'id': p.id, 'title': p.title, 'slug': p.slug, 'is_custom': p.is_custom,
+                'topic_count': p.topic_count, 'learner_count': p.learner_count,
+            }
+            for p in (
+                LearningPath.objects.annotate(
+                    topic_count=Count('topics', distinct=True),
+                    learner_count=Count('topics__progress__user', distinct=True),
+                ).order_by('-learner_count')[:6]
+            )
+        ]
+
+        # XP leaderboard (single grouped query, not per-user)
+        leaderboard = [
+            {'id': r['user__id'], 'username': r['user__username'], 'xp': r['xp'] or 0}
+            for r in (
+                Contribution.objects.values('user__id', 'user__username')
+                .annotate(xp=Sum('points')).order_by('-xp')[:8]
+            )
+        ]
+
+        return Response({
+            'signups_30d': User.objects.filter(date_joined__gte=start_30).count(),
+            'active_users': Contribution.objects.values('user').distinct().count(),
+            'total_completions': total_completions,
+            'completions_30d': completions_30d,
+            'signup_series': signup_series,
+            'contrib_series': contrib_series,
+            'action_breakdown': action_breakdown,
+            'top_paths': top_paths,
+            'leaderboard': leaderboard,
+        })
+
+
+class AdminContentView(views.APIView):
+    """List all learning paths (standard + custom) and delete them."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        paths = (
+            LearningPath.objects.select_related('created_by').annotate(
+                topic_count=Count('topics', distinct=True),
+                learner_count=Count('topics__progress__user', distinct=True),
+            ).order_by('-is_custom', 'title')
+        )
+        data = [{
+            'id': p.id,
+            'title': p.title,
+            'slug': p.slug,
+            'is_custom': p.is_custom,
+            'is_active': p.is_active,
+            'visibility': p.visibility,
+            'created_by': p.created_by.username if p.created_by else None,
+            'topic_count': p.topic_count,
+            'learner_count': p.learner_count,
+        } for p in paths]
+        return Response(data)
+
+    def delete(self, request):
+        path_id = request.query_params.get('id')
+        if not path_id:
+            return Response({'error': 'No path id provided'}, status=status.HTTP_400_BAD_REQUEST)
+        path = get_object_or_404(LearningPath, id=path_id)
+        title = path.title
+        path.delete()
+        return Response({'status': 'deleted', 'title': title})
+
+
+class AdminSettingsView(views.APIView):
+    """Read and update admin-editable system settings (persisted in SiteSetting)."""
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        return Response({
+            'settings': [
+                {
+                    'key': s['key'],
+                    'type': s['type'],
+                    'label': s['label'],
+                    'help': s['help'],
+                    'value': get_setting(s['key']),
+                }
+                for s in SETTINGS_SCHEMA
+            ]
+        })
+
+    def patch(self, request):
+        updates = request.data.get('settings') or request.data
+        known = {s['key']: s for s in SETTINGS_SCHEMA}
+        applied = {}
+        for key, raw in (updates.items() if isinstance(updates, dict) else []):
+            if key not in known:
+                continue
+            spec = known[key]
+            if spec['type'] == 'bool':
+                value = 'true' if str(raw).strip().lower() in ('1', 'true', 'yes', 'on') else 'false'
+            elif spec['type'] == 'int':
+                try:
+                    value = str(int(raw))
+                except (TypeError, ValueError):
+                    continue
+            else:
+                value = str(raw)[:500]
+            SiteSetting.objects.update_or_create(key=key, defaults={'value': value})
+            applied[key] = value
+        return Response({'status': 'updated', 'applied': applied})
+
+
 class AdminUserListView(views.APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        users = User.objects.select_related('profile').all().order_by('-date_joined')
-        data = []
-        for user in users:
-            # Dynamically calculate total XP from contributions
-            total_xp = Contribution.objects.filter(user=user).aggregate(Sum('points'))['points__sum'] or 0
-            data.append({
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'is_active': user.is_active,
-                'is_staff': user.is_staff,
-                'date_joined': user.date_joined,
-                'total_xp': total_xp,
-            })
+        # M4: aggregate XP for every user in a single query instead of one
+        # Sum() per user (was N+1).
+        from django.db.models.functions import Coalesce
+        users = (
+            User.objects.select_related('profile')
+            .annotate(total_xp=Coalesce(Sum('contributions__points'), 0))
+            .order_by('-date_joined')
+        )
+        data = [{
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'is_active': user.is_active,
+            'is_staff': user.is_staff,
+            'date_joined': user.date_joined,
+            'total_xp': user.total_xp,
+        } for user in users]
         return Response(data)
 
 class AdminUserDetailView(views.APIView):
@@ -2586,7 +2806,7 @@ class CustomPathViewSet(viewsets.ModelViewSet):
         
         except Exception as e:
             return Response(
-                {'detail': f'Error cloning path: {str(e)}'},
+                {'detail': 'Error cloning path. Please try again.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -3042,7 +3262,8 @@ Return ONLY a JSON object with this exact structure:
                 'is_self_graded': False
             })
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            logger.exception("Handled error returning a generic response to the client")
+            return Response({'error': 'Something went wrong. Please try again.'}, status=500)
 
 class AdminRoadmapListView(views.APIView):
     permission_classes = [IsAdminUser]

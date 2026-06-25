@@ -1,41 +1,51 @@
+from django.db import transaction
 from django.utils import timezone
 from .models import Contribution, TopicProgress, Topic
 
 def award_topic_completion_xp(user, topic, progress, score):
-    if progress.status != 'completed':
-        progress.status = 'completed'
-        progress.completed_at = timezone.now()
-        progress.save()
-        Contribution.objects.create(user=user, action_type='topic_verified', points=1)
+    # M3: serialize concurrent completions of the same topic by locking the
+    # progress row inside a transaction, and make every once-only award
+    # idempotent via get_or_create — so a double request can't double-award.
+    with transaction.atomic():
+        progress = TopicProgress.objects.select_for_update().get(pk=progress.pk)
 
-        # Milestone XP
-        completed_count = TopicProgress.objects.filter(user=user, status='completed').count()
-        milestones = {5: 25, 10: 50, 25: 100, 50: 250}
-        if completed_count in milestones:
-            action = f'milestone_{completed_count}_topics'
-            if not Contribution.objects.filter(user=user, action_type=action).exists():
-                Contribution.objects.create(user=user, action_type=action, points=1)
-        
-        # Speed Bonus
-        if progress.started_at:
-            delta = progress.completed_at - progress.started_at
-            if delta.total_seconds() <= 48 * 3600:
-                Contribution.objects.create(user=user, action_type=f'speed_bonus_{topic.id}', points=1)
-        
-        # Path Completion
-        path_topics_count = Topic.objects.filter(path=topic.path).count()
-        completed_path_topics = TopicProgress.objects.filter(
-            user=user, topic__path=topic.path, status='completed'
-        ).count()
-        
-        if path_topics_count > 0 and path_topics_count == completed_path_topics:
-            if not Contribution.objects.filter(user=user, action_type=f'path_completed_{topic.path.id}').exists():
-                Contribution.objects.create(user=user, action_type=f'path_completed_{topic.path.id}', points=1)
+        if progress.status != 'completed':
+            progress.status = 'completed'
+            progress.completed_at = timezone.now()
+            progress.save(update_fields=['status', 'completed_at'])
+            Contribution.objects.create(user=user, action_type='topic_verified', points=1)
 
-    if score >= 90:
-        action = f'perfect_score_{topic.id}'
-        if not Contribution.objects.filter(user=user, action_type=action).exists():
-            Contribution.objects.create(user=user, action_type=action, points=1)
+            # Milestone XP
+            completed_count = TopicProgress.objects.filter(user=user, status='completed').count()
+            milestones = {5: 25, 10: 50, 25: 100, 50: 250}
+            if completed_count in milestones:
+                Contribution.objects.get_or_create(
+                    user=user, action_type=f'milestone_{completed_count}_topics',
+                    defaults={'points': 1},
+                )
+
+            # Speed Bonus
+            if progress.started_at:
+                delta = progress.completed_at - progress.started_at
+                if delta.total_seconds() <= 48 * 3600:
+                    Contribution.objects.get_or_create(
+                        user=user, action_type=f'speed_bonus_{topic.id}', defaults={'points': 1},
+                    )
+
+            # Path Completion
+            path_topics_count = Topic.objects.filter(path=topic.path).count()
+            completed_path_topics = TopicProgress.objects.filter(
+                user=user, topic__path=topic.path, status='completed'
+            ).count()
+            if path_topics_count > 0 and path_topics_count == completed_path_topics:
+                Contribution.objects.get_or_create(
+                    user=user, action_type=f'path_completed_{topic.path.id}', defaults={'points': 1},
+                )
+
+        if score >= 90:
+            Contribution.objects.get_or_create(
+                user=user, action_type=f'perfect_score_{topic.id}', defaults={'points': 1},
+            )
 
 def get_user_badges(user):
     from .models import Contribution, TopicProgress, TopicNote, LearningPath, VerifiedProject
@@ -46,16 +56,17 @@ def get_user_badges(user):
     notes_written = TopicNote.objects.filter(user=user).exclude(content='').count()
     quizzes_passed = Contribution.objects.filter(user=user, action_type='quiz_passed').count()
     
-    # Streak calculation
+    # Streak calculation — single query, walk back in memory (was N+1).
     today = timezone.now().date()
+    login_dates = set(
+        Contribution.objects.filter(user=user, action_type='daily_login')
+        .values_list('created_at__date', flat=True)
+    )
     streak = 0
     check = today
-    while True:
-        if Contribution.objects.filter(user=user, action_type='daily_login', created_at__date=check).exists():
-            streak += 1
-            check -= timezone.timedelta(days=1)
-        else:
-            break
+    while check in login_dates:
+        streak += 1
+        check -= timezone.timedelta(days=1)
 
     # Completed paths
     completed_topics_qs = TopicProgress.objects.filter(user=user, status='completed').select_related('topic__path')

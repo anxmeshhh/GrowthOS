@@ -194,9 +194,13 @@ class Contribution(models.Model):
         indexes = [
             models.Index(fields=['user', 'action_type', 'created_at'], name='contrib_user_action_date'),
         ]
-        # M1: Score sanity gate — points should not be negative
+        # M1: Score sanity gate — points must be non-negative, EXCEPT the
+        # 'streak_revived' spend which legitimately records a -10 XP cost.
         constraints = [
-            models.CheckConstraint(check=models.Q(points__gte=0), name='contribution_points_non_negative'),
+            models.CheckConstraint(
+                check=models.Q(points__gte=0) | models.Q(action_type='streak_revived'),
+                name='contribution_points_non_negative',
+            ),
         ]
 
     def __str__(self):
@@ -350,3 +354,13 @@ class Flashcard(models.Model):
 
     def __str__(self):
         return f"Flashcard for {self.topic.title}: {self.front[:20]}..."
+
+
+class SiteSetting(models.Model):
+    """Admin-editable key/value system settings (one row per key)."""
+    key = models.CharField(max_length=100, unique=True, db_index=True)
+    value = models.CharField(max_length=500, blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.key} = {self.value}"

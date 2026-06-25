@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useState, useRef, useCallback } from "react";
 import { useToast } from "@/components/toast-context";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, getAuthToken } from "@/lib/api-client";
 import {
   ShieldAlert,
   Map,
@@ -25,6 +25,12 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/admin/roadmap")({
+  // H5: redirect unauthenticated visitors; server enforces is_staff on /admin/*.
+  beforeLoad: () => {
+    if (typeof window !== "undefined" && !getAuthToken()) {
+      throw redirect({ to: "/admin/login" });
+    }
+  },
   component: AdminRoadmapManager,
 });
 

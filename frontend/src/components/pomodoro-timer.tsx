@@ -67,6 +67,7 @@ export function PomodoroTimer() {
           queryClient.invalidateQueries({ queryKey: ["heatmap"] });
           queryClient.invalidateQueries({ queryKey: ["user_profile"] });
           queryClient.invalidateQueries({ queryKey: ["recent_activity"] });
+          queryClient.invalidateQueries({ queryKey: ["today"] });
         });
 
         // Switch to break

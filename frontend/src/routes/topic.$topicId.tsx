@@ -343,6 +343,7 @@ function TopicWorkspace() {
     },
     onSuccess: (data) => {
       refetchScreenshots();
+      queryClient.invalidateQueries({ queryKey: ["all-screenshots"] });
       window.dispatchEvent(new CustomEvent("screenshot_uploaded", { detail: data }));
     },
   });
@@ -1027,6 +1028,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
         body: JSON.stringify({ content: serializeNoteResources(val, resourcesRef.current) }),
       });
       queryClient.invalidateQueries({ queryKey: ["topic", String(topicId)] });
+      queryClient.invalidateQueries({ queryKey: ["all-notes"] });
       setSaving(false);
     },
     [topicId, queryClient],
@@ -1096,6 +1098,7 @@ function StudyNotesTab({ topicId }: { topicId: number | string }) {
     onSuccess: () => {
       setNoteFile(null);
       refetchDocs();
+      queryClient.invalidateQueries({ queryKey: ["all-note-documents"] });
     },
   });
 

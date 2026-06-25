@@ -9,7 +9,7 @@ from .views import (
     ProjectIdeasView, ScanRepoView, NoteDocumentView, TopicScreenshotView, TopicFeynmanView,
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
-    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, CustomPathViewSet, PathProgressView,
+    AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, AdminAnalyticsView, AdminContentView, AdminSettingsView, CustomPathViewSet, PathProgressView,
     GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView
 )
 
@@ -90,6 +90,9 @@ urlpatterns = [
     
     # Admin Dashboard
     path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
+    path('admin/analytics/', AdminAnalyticsView.as_view(), name='admin_analytics'),
+    path('admin/content/', AdminContentView.as_view(), name='admin_content'),
+    path('admin/settings/', AdminSettingsView.as_view(), name='admin_settings'),
     path('admin/users/', AdminUserListView.as_view(), name='admin_users'),
     path('admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin_user_detail'),
     path('admin/export-data/', AdminDataExportView.as_view(), name='admin_export_data'),

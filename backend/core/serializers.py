@@ -119,8 +119,75 @@ def compute_topic_mastery(user, topic):
     if progress and final < 10:
         # give at least 10 points if they marked it complete
         final = 10
-        
+
     return max(0, min(100, final))
+
+
+def compute_mastery_distribution(user, topics):
+    """Batched equivalent of calling compute_topic_mastery() per topic — prefetches
+    all signals in a handful of queries instead of ~4 per topic (M4)."""
+    from .models import TopicFeynman, Flashcard, TopicProgress, Contribution
+    from django.db.models import Avg, Count, Q
+    from django.utils import timezone
+
+    dist = {'needs_review': 0, 'familiar': 0, 'proficient': 0, 'mastered': 0}
+    topic_ids = [t.id for t in topics]
+    if not topic_ids:
+        return dist
+
+    now = timezone.now()
+    today = now.date()
+
+    quiz_actions = set(
+        Contribution.objects.filter(
+            user=user, action_type__in=[f'quiz_passed_{tid}' for tid in topic_ids]
+        ).values_list('action_type', flat=True)
+    )
+    feynman_avgs = {
+        r['topic']: (r['avg'] or 0)
+        for r in TopicFeynman.objects.filter(user=user, topic_id__in=topic_ids)
+        .values('topic').annotate(avg=Avg('score'))
+    }
+    card_total, card_not_due = {}, {}
+    for r in (
+        Flashcard.objects.filter(user=user, topic_id__in=topic_ids)
+        .values('topic_id')
+        .annotate(total=Count('id'), not_due=Count('id', filter=Q(next_review_date__gt=today)))
+    ):
+        card_total[r['topic_id']] = r['total']
+        card_not_due[r['topic_id']] = r['not_due']
+    completed_at = {
+        r['topic_id']: r['completed_at']
+        for r in TopicProgress.objects.filter(
+            user=user, topic_id__in=topic_ids, status='completed'
+        ).values('topic_id', 'completed_at')
+    }
+
+    for tid in topic_ids:
+        quiz_avg = 100 if f'quiz_passed_{tid}' in quiz_actions else 0
+        feynman_avg = feynman_avgs.get(tid, 0)
+        total = card_total.get(tid, 0)
+        retention = (card_not_due.get(tid, 0) / total * 100) if total > 0 else 0
+        raw = (quiz_avg * 0.4) + (feynman_avg * 0.3) + (retention * 0.2)
+        decay = 0
+        cat = completed_at.get(tid)
+        if cat:
+            days_since = (now - cat).days
+            if days_since > 7:
+                decay = (days_since - 7) * 2
+        final = round(raw - decay)
+        if cat and final < 10:
+            final = 10
+        final = max(0, min(100, final))
+        if final >= 90:
+            dist['mastered'] += 1
+        elif final >= 70:
+            dist['proficient'] += 1
+        elif final >= 40:
+            dist['familiar'] += 1
+        else:
+            dist['needs_review'] += 1
+    return dist
 
 
         

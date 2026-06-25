@@ -850,9 +850,9 @@ function DashboardPage() {
             </div>
 
             <div className="overflow-x-auto custom-scrollbar">
-              <div className="min-w-[680px]">
+              <div className="min-w-[720px]">
                 {hl ? (
-                  <div className="h-[90px] bg-[#0a0a0a] rounded-[3px] animate-pulse" />
+                  <div className="h-[130px] bg-[#0a0a0a] rounded-[3px] animate-pulse" />
                 ) : (
                   <ActivityCalendar
                     data={hd}
@@ -863,15 +863,17 @@ function DashboardPage() {
                     colorScheme="dark"
                     blockSize={11}
                     blockRadius={2}
-                    blockMargin={3}
-                    fontSize={10}
+                    blockMargin={2}
+                    fontSize={11}
+                    weekStart={0}
+                    showWeekdayLabels
                     showColorLegend={false}
                     showTotalCount={false}
                     labels={{ totalCount: "{{count}} contributions in the last year" }}
                     style={{
                       fontFamily:
                         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                      color: "#333",
+                      color: "#7d8590",
                     }}
                   />
                 )}
