@@ -1,0 +1,11 @@
+# GrowthOS scheduled emails (all times UTC)
+# Format: minute hour day month weekday user command
+
+# Daily briefing — 8:00 AM every day
+0 8 * * * root cd /app && python manage.py send_daily_emails >> /proc/1/fd/1 2>&1
+
+# Streak warning — 8:00 PM every day
+0 20 * * * root cd /app && python manage.py send_streak_warnings >> /proc/1/fd/1 2>&1
+
+# AI motivation email — Mon/Wed/Fri at 9:00 AM
+0 9 * * 1,3,5 root cd /app && python manage.py send_motivation_email >> /proc/1/fd/1 2>&1

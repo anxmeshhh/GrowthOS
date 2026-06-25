@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { GrowthProvider } from "../lib/growth-store";
 import { Sidebar, BottomNavBar, MobileTopBar } from "../components/growth-sidebar";
+import { TopHeader } from "../components/top-header";
 import { PomodoroTimer } from "../components/pomodoro-timer";
 
 function NotFoundComponent() {
@@ -180,6 +181,7 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
       {!isAuthRoute && <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />}
       {!isAuthRoute && <MobileTopBar />}
       <div className={`flex-1 min-w-0 flex flex-col ${isAuthRoute ? "" : "pt-14 lg:pt-0"}`}>
+        {!isAuthRoute && <TopHeader />}
         {children}
       </div>
       {!isAuthRoute && <FloatingChat />}

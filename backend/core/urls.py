@@ -10,7 +10,8 @@ from .views import (
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
     AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, AdminAnalyticsView, AdminContentView, AdminSettingsView, CustomPathViewSet, PathProgressView,
-    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, SearchView, NotificationView
+    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, SearchView, NotificationView,
+    JDMappingView, ResumeAnalysisView
 )
 
 # Strict throttle for login endpoint — max 5 attempts per minute per IP
@@ -107,6 +108,10 @@ urlpatterns = [
 
     # Notifications
     path('notifications/', NotificationView.as_view(), name='notifications'),
+
+    # Career Intelligence
+    path('career/jd/', JDMappingView.as_view(), name='jd_mapping'),
+    path('career/resume/', ResumeAnalysisView.as_view(), name='resume_analysis'),
 
     # Router covers /paths/ and /bookmarks/
     path('', include(router.urls)),

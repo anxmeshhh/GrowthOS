@@ -2,7 +2,7 @@ from rest_framework import viewsets, views, generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Sum, Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -44,7 +44,7 @@ def get_setting_int(key, fallback):
     except (TypeError, ValueError):
         return fallback
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting, Notification
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting, Notification, JDAnalysis, ResumeAnalysis
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
@@ -63,6 +63,45 @@ def _notify(user, type, message, link=''):
         Notification.objects.create(user=user, type=type, message=message, link=link)
     except Exception:
         logger.exception("Failed to create notification for user %s", user.id)
+
+
+def _auto_github_commit(user, topic):
+    """Auto-commit a learning summary to user's GitHub repo when a topic is completed."""
+    try:
+        from .encryption import decrypt_token
+        import base64
+        profile = UserProfile.objects.filter(user=user).first()
+        if not profile or not profile.github_access_token or not profile.github_username:
+            return
+
+        token = decrypt_token(profile.github_access_token)
+        if not token:
+            return
+
+        path = topic.path
+        repo_name = path.github_repo_name or f"growthos-{path.slug}"
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+        owner = profile.github_username
+
+        # Build commit content
+        content = f"# ✅ {topic.title}\n\n**Path:** {path.title}\n**Completed:** {timezone.now().strftime('%Y-%m-%d')}\n\n{topic.summary or ''}\n"
+        encoded = base64.b64encode(content.encode()).decode()
+        file_path = f"topics/{topic.slug}.md"
+        api_base = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{file_path}"
+
+        # Check if file exists to get its SHA (needed for update)
+        existing = requests.get(api_base, headers=headers, timeout=8)
+        body = {"message": f"✅ Completed: {topic.title}", "content": encoded}
+        if existing.status_code == 200:
+            body["sha"] = existing.json().get("sha", "")
+
+        requests.put(api_base, json=body, headers=headers, timeout=10)
+        logger.info("Auto-committed topic %s for user %s", topic.title, user.username)
+    except Exception:
+        logger.exception("Auto GitHub commit failed for user %s topic %s", user.id, topic.id)
 
 
 class SearchView(views.APIView):
@@ -632,6 +671,7 @@ class TopicProgressUpdateView(views.APIView):
                     f'You completed "{topic.title}"! Keep the momentum going.',
                     f'/topic/{topic.slug}',
                 )
+                _auto_github_commit(request.user, topic)
             progress.save()
         return Response(TopicProgressSerializer(progress).data)
 
@@ -3574,3 +3614,191 @@ class TodayBriefingView(views.APIView):
             "streak": streak,
             "last_session_topic": last_session_topic
         })
+
+
+# ── Career Intelligence ──────────────────────────────────────────────────────
+
+def _extract_skills_from_text(text, context="job description"):
+    """Use Groq to extract structured skills from text."""
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+    prompt = f"""Analyze this {context} and extract structured information.
+Return ONLY valid JSON in this exact format:
+{{
+  "job_title": "extracted job title or empty string",
+  "company": "extracted company name or empty string",
+  "experience_level": "junior/mid/senior/lead",
+  "required_skills": ["skill1", "skill2"],
+  "preferred_skills": ["skill1", "skill2"],
+  "technologies": ["tech1", "tech2"]
+}}
+
+Text:
+{text[:4000]}"""
+    resp = client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.1-8b-instant",
+        temperature=0.2,
+        max_tokens=800,
+    )
+    raw = resp.choices[0].message.content.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    return json.loads(raw)
+
+
+def _build_gap_report(user, all_skills):
+    """Cross-reference extracted skills with GrowthOS topics and user progress."""
+    gap = {"matched": [], "in_progress": [], "not_started": [], "completed": []}
+    for skill in all_skills:
+        topics = Topic.objects.filter(title__icontains=skill).select_related('path')[:2]
+        for topic in topics:
+            prog = TopicProgress.objects.filter(user=user, topic=topic).first()
+            status = prog.status if prog else "not_started"
+            entry = {
+                "skill": skill,
+                "topic_id": topic.id,
+                "topic_title": topic.title,
+                "path_title": topic.path.title,
+                "topic_slug": topic.slug,
+                "status": status,
+            }
+            if status == "completed":
+                gap["completed"].append(entry)
+            elif status in ("in_progress", "available"):
+                gap["in_progress"].append(entry)
+            else:
+                gap["not_started"].append(entry)
+                gap["matched"].append(entry)
+    return gap
+
+
+class JDMappingView(views.APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def post(self, request):
+        import PyPDF2, io
+        text = request.data.get("text", "")
+
+        # Accept PDF upload
+        file_obj = request.FILES.get("file")
+        if file_obj and not text:
+            try:
+                reader = PyPDF2.PdfReader(io.BytesIO(file_obj.read()))
+                text = " ".join(p.extract_text() or "" for p in reader.pages)
+            except Exception:
+                return Response({"error": "Could not read PDF."}, status=400)
+
+        if not text or len(text.strip()) < 50:
+            return Response({"error": "Please provide a job description (text or PDF)."}, status=400)
+
+        try:
+            extracted = _extract_skills_from_text(text, "job description")
+        except Exception:
+            logger.exception("JD skill extraction failed")
+            return Response({"error": "AI analysis failed. Please try again."}, status=500)
+
+        all_skills = list(set(
+            extracted.get("required_skills", []) +
+            extracted.get("technologies", [])
+        ))
+        gap_report = _build_gap_report(request.user, all_skills)
+
+        analysis = JDAnalysis.objects.create(
+            user=request.user,
+            raw_text=text[:5000],
+            job_title=extracted.get("job_title", ""),
+            company=extracted.get("company", ""),
+            extracted_skills=all_skills,
+            experience_level=extracted.get("experience_level", ""),
+            gap_report=gap_report,
+        )
+
+        return Response({
+            "id": analysis.id,
+            "job_title": analysis.job_title,
+            "company": analysis.company,
+            "experience_level": analysis.experience_level,
+            "required_skills": extracted.get("required_skills", []),
+            "preferred_skills": extracted.get("preferred_skills", []),
+            "technologies": extracted.get("technologies", []),
+            "gap_report": gap_report,
+        })
+
+    def get(self, request):
+        analyses = JDAnalysis.objects.filter(user=request.user)[:10]
+        return Response([{
+            "id": a.id,
+            "job_title": a.job_title,
+            "company": a.company,
+            "experience_level": a.experience_level,
+            "extracted_skills": a.extracted_skills,
+            "gap_report": a.gap_report,
+            "created_at": a.created_at,
+        } for a in analyses])
+
+
+class ResumeAnalysisView(views.APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        import PyPDF2, io
+        text = request.data.get("text", "")
+        file_obj = request.FILES.get("file")
+
+        if file_obj and not text:
+            try:
+                reader = PyPDF2.PdfReader(io.BytesIO(file_obj.read()))
+                text = " ".join(p.extract_text() or "" for p in reader.pages)
+            except Exception:
+                return Response({"error": "Could not read resume PDF."}, status=400)
+
+        if not text or len(text.strip()) < 50:
+            return Response({"error": "Please upload your resume or paste its content."}, status=400)
+
+        try:
+            extracted = _extract_skills_from_text(text, "resume/CV")
+        except Exception:
+            logger.exception("Resume skill extraction failed")
+            return Response({"error": "AI analysis failed. Please try again."}, status=500)
+
+        all_skills = list(set(
+            extracted.get("required_skills", []) +
+            extracted.get("technologies", []) +
+            extracted.get("preferred_skills", [])
+        ))
+        gap_report = _build_gap_report(request.user, all_skills)
+
+        analysis, _ = ResumeAnalysis.objects.update_or_create(
+            user=request.user,
+            defaults={
+                "raw_text": text[:5000],
+                "extracted_skills": all_skills,
+                "experience_level": extracted.get("experience_level", ""),
+                "gap_report": gap_report,
+            }
+        )
+        if file_obj:
+            analysis.file = file_obj
+            analysis.save(update_fields=["file"])
+
+        return Response({
+            "experience_level": analysis.experience_level,
+            "extracted_skills": all_skills,
+            "gap_report": gap_report,
+        })
+
+    def get(self, request):
+        try:
+            a = ResumeAnalysis.objects.get(user=request.user)
+            return Response({
+                "experience_level": a.experience_level,
+                "extracted_skills": a.extracted_skills,
+                "gap_report": a.gap_report,
+                "analyzed_at": a.analyzed_at,
+            })
+        except ResumeAnalysis.DoesNotExist:
+            return Response(None)

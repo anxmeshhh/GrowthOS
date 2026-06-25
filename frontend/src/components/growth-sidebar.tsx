@@ -16,14 +16,11 @@ import {
   Activity,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { Logo } from "@/components/logo";
-import { SearchModal, useSearchModal } from "@/components/search-modal";
-import { NotificationBell } from "@/components/notification-bell";
 
 // ─── Nav definition ─────────────────────────────────────────────────────────
 
@@ -49,7 +46,10 @@ const NAV_GROUPS = [
   },
   {
     label: "Build",
-    items: [{ to: "/projects", label: "Projects", icon: Github }],
+    items: [
+      { to: "/projects", label: "Projects", icon: Github },
+      { to: "/career", label: "Career Intel", icon: TrendingUp },
+    ],
   },
   {
     label: "System",
@@ -391,143 +391,32 @@ function SidebarInner({
   collapsed?: boolean;
   onToggle?: () => void;
 }) {
-  const { open: searchOpen, setOpen: setSearchOpen } = useSearchModal();
-
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
-
       {/* Header */}
       <div style={{ padding: collapsed ? "20px 8px 16px" : "24px 20px 20px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: collapsed ? "center" : "space-between",
-            gap: "12px",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: "12px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-            {/* Logo tile */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "32px",
-                height: "32px",
-                borderRadius: "10px",
-                background: "rgba(0,255,102,0.1)",
-                border: "1px solid rgba(0,255,102,0.25)",
-                flexShrink: 0,
-              }}
-            >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "10px", background: "rgba(0,255,102,0.1)", border: "1px solid rgba(0,255,102,0.25)", flexShrink: 0 }}>
               <Logo size={18} />
             </div>
             {!collapsed && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0px", minWidth: 0 }}>
-                <span
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    letterSpacing: "-0.03em",
-                    color: "#ffffff",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  GrowthOS
-                </span>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    fontFamily: "ui-monospace, monospace",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.15em",
-                    color: "rgba(255,255,255,0.3)",
-                    fontWeight: 600,
-                    marginTop: "2px",
-                  }}
-                >
-                  Command Center
-                </span>
+              <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                <span style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.03em", color: "#ffffff", lineHeight: 1.1 }}>GrowthOS</span>
+                <span style={{ fontSize: "10px", fontFamily: "ui-monospace, monospace", textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.3)", fontWeight: 600, marginTop: "2px" }}>Command Center</span>
               </div>
             )}
           </div>
-
-          {/* Action buttons (search + notifications + collapse) */}
-          {!collapsed && (
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-              <button
-                onClick={() => setSearchOpen(true)}
-                aria-label="Search (Ctrl+K)"
-                title="Search (Ctrl+K)"
-                className="sidebar-toggle"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: "30px", height: "30px", borderRadius: "8px",
-                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease",
-                }}
-              >
-                <Search size={14} />
-              </button>
-              <NotificationBell />
-              {onToggle && (
-                <button
-                  onClick={onToggle}
-                  aria-label="Collapse sidebar"
-                  title="Collapse sidebar"
-                  className="sidebar-toggle"
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    width: "30px", height: "30px", borderRadius: "8px",
-                    background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
-                    color: "rgba(255,255,255,0.45)", cursor: "pointer", flexShrink: 0,
-                    transition: "all 150ms ease",
-                  }}
-                >
-                  <PanelLeftClose size={16} />
-                </button>
-              )}
-            </div>
+          {onToggle && !collapsed && (
+            <button onClick={onToggle} aria-label="Collapse sidebar" className="sidebar-toggle" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "30px", height: "30px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", cursor: "pointer", flexShrink: 0, transition: "all 150ms ease" }}>
+              <PanelLeftClose size={16} />
+            </button>
           )}
         </div>
-
-        {/* Collapsed state: stack search, notif, expand */}
-        {collapsed && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
-            <button
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search"
-              title="Search (Ctrl+K)"
-              className="sidebar-toggle"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: "100%", height: "30px", borderRadius: "8px",
-                background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease",
-              }}
-            >
-              <Search size={14} />
-            </button>
-            <NotificationBell collapsed />
-            {onToggle && (
-              <button
-                onClick={onToggle}
-                aria-label="Expand sidebar"
-                title="Expand sidebar"
-                className="sidebar-toggle"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: "100%", height: "30px", borderRadius: "8px",
-                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease",
-                }}
-              >
-                <PanelLeftOpen size={16} />
-              </button>
-            )}
-          </div>
+        {onToggle && collapsed && (
+          <button onClick={onToggle} aria-label="Expand sidebar" className="sidebar-toggle" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "30px", marginTop: "12px", borderRadius: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease" }}>
+            <PanelLeftOpen size={16} />
+          </button>
         )}
       </div>
 

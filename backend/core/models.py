@@ -366,6 +366,38 @@ class SiteSetting(models.Model):
         return f"{self.key} = {self.value}"
 
 
+class JDAnalysis(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jd_analyses')
+    raw_text = models.TextField()
+    job_title = models.CharField(max_length=200, blank=True)
+    company = models.CharField(max_length=200, blank=True)
+    extracted_skills = models.JSONField(default=list)
+    experience_level = models.CharField(max_length=20, blank=True)
+    gap_report = models.JSONField(default=dict)
+    generated_path = models.ForeignKey('LearningPath', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} — {self.job_title or 'JD Analysis'}"
+
+
+class ResumeAnalysis(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resume_analysis')
+    file = models.FileField(upload_to='resumes/', null=True, blank=True)
+    raw_text = models.TextField(blank=True)
+    extracted_skills = models.JSONField(default=list)
+    experience_level = models.CharField(max_length=20, blank=True)
+    years_of_experience = models.FloatField(default=0)
+    gap_report = models.JSONField(default=dict)
+    analyzed_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} — Resume"
+
+
 class Notification(models.Model):
     TYPE_CHOICES = [
         ('topic_complete', 'Topic Complete'),

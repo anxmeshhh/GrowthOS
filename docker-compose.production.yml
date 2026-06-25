@@ -74,6 +74,43 @@ services:
       - growthos_network
     restart: unless-stopped
 
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: growthos_scheduler
+    entrypoint: []
+    command: >
+      sh -c "cp /app/crontab /etc/cron.d/growthos && chmod 0644 /etc/cron.d/growthos && cron -f"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=False
+      - ALLOWED_HOSTS=growth-os.tech,www.growth-os.tech,api.growth-os.tech
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-growthos}
+      - MYSQL_USER=${MYSQL_USER:-growthos_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - growthos_network
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

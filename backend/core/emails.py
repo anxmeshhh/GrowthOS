@@ -139,6 +139,20 @@ def send_streak_warning(user, streak):
     )
 
 
+def send_motivation_email(user, subject, headline, body_html_inner, plain_body):
+    content = f"""
+    <p style="font-size:20px;font-weight:700;margin-top:0;color:#e5e5e5">{headline}</p>
+    {body_html_inner}
+    <a class="cta" href="https://growth-os.tech/dashboard">Open GrowthOS</a>
+    """
+    _send(
+        subject=subject,
+        body_html=_base(content, headline),
+        body_text=plain_body,
+        to_email=user.email,
+    )
+
+
 def send_milestone_email(user, milestone_days):
     name = user.first_name or user.username
 
