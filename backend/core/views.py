@@ -44,7 +44,7 @@ def get_setting_int(key, fallback):
     except (TypeError, ValueError):
         return fallback
 
-from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting
+from .models import LearningPath, Topic, Contribution, Bookmark, TopicProgress, TopicMaterial, TopicNote, NoteDocument, ChatMessage, UserProfile, TopicQuiz, TopicFlashcard, VerifiedProject, PathSharing, TopicScreenshot, OTPVerification, TopicFeynman, SiteSetting, Notification
 from .serializers import (
     LearningPathSerializer, TopicSerializer, ContributionSerializer, 
     RegisterSerializer, UserSerializer, BookmarkSerializer, 
@@ -54,6 +54,118 @@ from .serializers import (
 )
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q
+
+
+def _notify(user, type, message, link=''):
+    """Create an in-app notification. Silently skips on error."""
+    try:
+        Notification.objects.create(user=user, type=type, message=message, link=link)
+    except Exception:
+        logger.exception("Failed to create notification for user %s", user.id)
+
+
+class SearchView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        q = request.query_params.get('q', '').strip()
+        if len(q) < 2:
+            return Response({'results': []})
+
+        user = request.user
+
+        paths = LearningPath.objects.filter(
+            Q(title__icontains=q) | Q(description__icontains=q),
+            Q(created_by=user) | Q(is_custom=False) | Q(shared_with_users__shared_to=user)
+        ).distinct().values('id', 'title', 'slug', 'description')[:5]
+
+        topics = Topic.objects.filter(
+            Q(title__icontains=q) | Q(summary__icontains=q),
+            Q(path__created_by=user) | Q(path__is_custom=False) | Q(path__shared_with_users__shared_to=user)
+        ).distinct().select_related('path').values('id', 'title', 'slug', 'summary', 'path__title', 'path__slug')[:8]
+
+        notes = TopicNote.objects.filter(
+            user=user, content__icontains=q
+        ).select_related('topic', 'topic__path').values(
+            'id', 'topic__id', 'topic__title', 'topic__slug', 'topic__path__slug', 'content'
+        )[:5]
+
+        from .models import Flashcard
+        cards = Flashcard.objects.filter(
+            user=user
+        ).filter(Q(front__icontains=q) | Q(back__icontains=q)).select_related('topic').values(
+            'id', 'front', 'back', 'topic__title', 'topic__slug'
+        )[:5]
+
+        results = []
+        for p in paths:
+            results.append({
+                'type': 'path',
+                'id': p['id'],
+                'title': p['title'],
+                'subtitle': p['description'][:80] if p['description'] else '',
+                'link': f"/roadmap?path={p['slug']}",
+            })
+        for t in topics:
+            results.append({
+                'type': 'topic',
+                'id': t['id'],
+                'title': t['title'],
+                'subtitle': f"in {t['path__title']}",
+                'link': f"/topic/{t['slug']}",
+            })
+        for n in notes:
+            snippet = n['content']
+            idx = snippet.lower().find(q.lower())
+            snippet = ('...' + snippet[max(0, idx - 30):idx + 60] + '...') if idx >= 0 else snippet[:80]
+            results.append({
+                'type': 'note',
+                'id': n['id'],
+                'title': f"Note: {n['topic__title']}",
+                'subtitle': snippet,
+                'link': f"/topic/{n['topic__slug']}",
+            })
+        for c in cards:
+            results.append({
+                'type': 'flashcard',
+                'id': c['id'],
+                'title': c['front'][:80],
+                'subtitle': f"Flashcard in {c['topic__title']}",
+                'link': f"/topic/{c['topic__slug']}",
+            })
+
+        return Response({'results': results, 'query': q})
+
+
+class NotificationView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notifs = Notification.objects.filter(user=request.user)[:30]
+        unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+        data = [
+            {
+                'id': n.id,
+                'type': n.type,
+                'message': n.message,
+                'link': n.link,
+                'is_read': n.is_read,
+                'created_at': n.created_at,
+            }
+            for n in notifs
+        ]
+        return Response({'notifications': data, 'unread_count': unread_count})
+
+    def post(self, request):
+        """Mark notifications as read. Pass {"ids": [1,2,3]} or {"all": true}."""
+        if request.data.get('all'):
+            Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        else:
+            ids = request.data.get('ids', [])
+            Notification.objects.filter(user=request.user, id__in=ids).update(is_read=True)
+        return Response({'status': 'ok'})
+
 
 class SendOTPView(views.APIView):
     permission_classes = (AllowAny,)
@@ -512,6 +624,14 @@ class TopicProgressUpdateView(views.APIView):
             progress.status = new_status
             if new_status == 'in_progress' and not progress.started_at:
                 progress.started_at = timezone.now()
+            if new_status == 'completed' and not progress.completed_at:
+                progress.completed_at = timezone.now()
+                _notify(
+                    request.user,
+                    'topic_complete',
+                    f'You completed "{topic.title}"! Keep the momentum going.',
+                    f'/topic/{topic.slug}',
+                )
             progress.save()
         return Response(TopicProgressSerializer(progress).data)
 
@@ -810,6 +930,17 @@ class DailyLoginView(views.APIView):
                     )
                     if created:
                         bonus_messages.append({"type": "streak_milestone", "points": 1, "message": f"🔥 {milestone}-day streak milestone!"})
+                        _notify(
+                            request.user,
+                            'streak_milestone',
+                            f'🔥 {milestone}-day streak! You\'re on fire.',
+                            '/dashboard',
+                        )
+                        try:
+                            from .emails import send_milestone_email
+                            send_milestone_email(request.user, milestone)
+                        except Exception:
+                            logger.exception("Failed to send milestone email for user %s", request.user.email)
 
         return Response({"status": "awarded", "bonuses": bonus_messages})
 
@@ -829,6 +960,7 @@ class ChatAssistantView(views.APIView):
     def post(self, request):
         user = request.user
         user_message = request.data.get('message', '')
+        topic_id = request.data.get('topic_id')
         if not user_message:
             return Response({'error': 'Message is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -846,21 +978,36 @@ class ChatAssistantView(views.APIView):
         if bookmark:
             active_path = bookmark.path.title
 
-        recent_acts = Contribution.objects.filter(user=user).order_by('-created_at')[:3]
-        recent_activity_str = ", ".join([f"{a.action_type}" for a in recent_acts]) or "None"
+        completed_count = TopicProgress.objects.filter(user=user, status='completed').count()
+        in_progress_count = TopicProgress.objects.filter(user=user, status='in_progress').count()
+
+        profile = UserProfile.objects.filter(user=user).first()
+        streak = profile.current_streak if profile else 0
+
+        # Topic-specific context if user is on a topic page
+        topic_context = ""
+        if topic_id:
+            try:
+                topic = Topic.objects.select_related('path').get(id=topic_id)
+                topic_progress = TopicProgress.objects.filter(user=user, topic=topic).first()
+                topic_status = topic_progress.status if topic_progress else 'not started'
+                topic_context = f"\nCurrent Topic: \"{topic.title}\" (in {topic.path.title}) — status: {topic_status}"
+                if topic.summary:
+                    topic_context += f"\nTopic summary: {topic.summary[:300]}"
+            except Topic.DoesNotExist:
+                pass
 
         system_prompt = f"""You are GrowthOS, an elite AI mentor for '{user.username}'.
 User Context:
-- Level: {level}
-- Total XP: {total_xp}
+- Level: {level} | Total XP: {total_xp} | Streak: {streak} days
 - Active Path: {active_path}
-- Recent Activity: {recent_activity_str}
+- Topics completed: {completed_count} | In progress: {in_progress_count}{topic_context}
 
 Important Knowledge:
 - You were built and created by Animesh Gupta.
 - The open-source GitHub repository for this entire system is located at: https://github.com/anxmeshhh/GrowthOS
 
-Your goal is to aggressively motivate the user, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally. If anyone asks who built you or where your code is, proudly tell them about Animesh Gupta and share the GitHub link.
+Your goal is to aggressively motivate the user, answer their technical questions concisely, and push them to earn more XP. Keep responses short and punchy. Address them by name occasionally. If the user asks about their current topic, use the topic context above to give specific, relevant help. If anyone asks who built you or where your code is, proudly tell them about Animesh Gupta and share the GitHub link.
 """
         try:
             client = Groq(api_key=os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", ""))

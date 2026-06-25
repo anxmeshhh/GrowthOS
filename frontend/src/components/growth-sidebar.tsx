@@ -16,11 +16,14 @@ import {
   Activity,
   PanelLeftClose,
   PanelLeftOpen,
+  Search,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { Logo } from "@/components/logo";
+import { SearchModal, useSearchModal } from "@/components/search-modal";
+import { NotificationBell } from "@/components/notification-bell";
 
 // ─── Nav definition ─────────────────────────────────────────────────────────
 
@@ -388,8 +391,12 @@ function SidebarInner({
   collapsed?: boolean;
   onToggle?: () => void;
 }) {
+  const { open: searchOpen, setOpen: setSearchOpen } = useSearchModal();
+
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+
       {/* Header */}
       <div style={{ padding: collapsed ? "20px 8px 16px" : "24px 20px 20px" }}>
         <div
@@ -447,57 +454,80 @@ function SidebarInner({
             )}
           </div>
 
-          {/* Collapse toggle (desktop) */}
-          {onToggle && !collapsed && (
-            <button
-              onClick={onToggle}
-              aria-label="Collapse sidebar"
-              title="Collapse sidebar"
-              className="sidebar-toggle"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "30px",
-                height: "30px",
-                borderRadius: "8px",
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.45)",
-                cursor: "pointer",
-                flexShrink: 0,
-                transition: "all 150ms ease",
-              }}
-            >
-              <PanelLeftClose size={16} />
-            </button>
+          {/* Action buttons (search + notifications + collapse) */}
+          {!collapsed && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+              <button
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search (Ctrl+K)"
+                title="Search (Ctrl+K)"
+                className="sidebar-toggle"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: "30px", height: "30px", borderRadius: "8px",
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease",
+                }}
+              >
+                <Search size={14} />
+              </button>
+              <NotificationBell />
+              {onToggle && (
+                <button
+                  onClick={onToggle}
+                  aria-label="Collapse sidebar"
+                  title="Collapse sidebar"
+                  className="sidebar-toggle"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: "30px", height: "30px", borderRadius: "8px",
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                    color: "rgba(255,255,255,0.45)", cursor: "pointer", flexShrink: 0,
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  <PanelLeftClose size={16} />
+                </button>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Expand toggle when collapsed (full-width, below logo) */}
-        {onToggle && collapsed && (
-          <button
-            onClick={onToggle}
-            aria-label="Expand sidebar"
-            title="Expand sidebar"
-            className="sidebar-toggle"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              height: "30px",
-              marginTop: "12px",
-              borderRadius: "8px",
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.45)",
-              cursor: "pointer",
-              transition: "all 150ms ease",
-            }}
-          >
-            <PanelLeftOpen size={16} />
-          </button>
+        {/* Collapsed state: stack search, notif, expand */}
+        {collapsed && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+              title="Search (Ctrl+K)"
+              className="sidebar-toggle"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%", height: "30px", borderRadius: "8px",
+                background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease",
+              }}
+            >
+              <Search size={14} />
+            </button>
+            <NotificationBell collapsed />
+            {onToggle && (
+              <button
+                onClick={onToggle}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+                className="sidebar-toggle"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: "100%", height: "30px", borderRadius: "8px",
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 150ms ease",
+                }}
+              >
+                <PanelLeftOpen size={16} />
+              </button>
+            )}
+          </div>
         )}
       </div>
 

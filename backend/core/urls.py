@@ -10,7 +10,7 @@ from .views import (
     AllNotesView, AllNoteDocumentsView, AllScreenshotsView, SubmitQuizView, UserProfileView, GitHubReposView, PortfolioView, PublicPortfolioView, ReviveStreakView, ResetProgressView,
     SendOTPView, VerifyOTPView, GoogleLoginView, GitHubLoginView, PublishGistView, GitHubConnectView, CreateGitHubRepoView, SyncPathToGitHubView, CommitWorkspaceToGitHubView, RequestAdminAccessView,
     AdminStatsView, AdminUserListView, AdminUserDetailView, AdminDataExportView, AdminRequestListView, AdminRequestDetailView, AdminRoadmapUploadView, AdminRoadmapListView, AdminRoadmapDetailView, AdminAnalyticsView, AdminContentView, AdminSettingsView, CustomPathViewSet, PathProgressView,
-    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView
+    GlobalReviewQueueView, ExploreRoadmapsView, TodayBriefingView, SearchView, NotificationView
 )
 
 # Strict throttle for login endpoint — max 5 attempts per minute per IP
@@ -102,6 +102,12 @@ urlpatterns = [
     path('admin/requests/', AdminRequestListView.as_view(), name='admin_requests'),
     path('admin/requests/<int:pk>/', AdminRequestDetailView.as_view(), name='admin_request_detail'),
     
+    # Search
+    path('search/', SearchView.as_view(), name='search'),
+
+    # Notifications
+    path('notifications/', NotificationView.as_view(), name='notifications'),
+
     # Router covers /paths/ and /bookmarks/
     path('', include(router.urls)),
 ]

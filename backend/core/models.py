@@ -364,3 +364,30 @@ class SiteSetting(models.Model):
 
     def __str__(self):
         return f"{self.key} = {self.value}"
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('topic_complete', 'Topic Complete'),
+        ('streak_milestone', 'Streak Milestone'),
+        ('flashcards_due', 'Flashcards Due'),
+        ('path_shared', 'Path Shared'),
+        ('quiz_ready', 'Quiz Ready'),
+        ('general', 'General'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='general')
+    message = models.CharField(max_length=300)
+    link = models.CharField(max_length=200, blank=True, default='')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read', 'created_at'], name='notif_user_read_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} — {self.type}: {self.message[:50]}"
