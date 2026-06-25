@@ -12,8 +12,12 @@ import {
   UserSquare2,
   Maximize,
   Type,
+  MousePointer2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { jsPDF } from "jspdf";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 type Point = { x: number; y: number };
 
@@ -346,7 +350,7 @@ function isBlocked(px: number, py: number, strokes: Stroke[]): boolean {
     if (stroke.type === "circle") {
       const d = Math.hypot(px - stroke.center.x, py - stroke.center.y);
       if (d < stroke.radius + pad) return true;
-    } else if (stroke.type === "rectangle") {
+    } else if (stroke.type === "rectangle" || stroke.type === "square") {
       const cx = stroke.x + stroke.width / 2;
       const cy = stroke.y + stroke.height / 2;
       const rp = inverseRotate(px, py, cx, cy, stroke.rotation || 0);
@@ -357,6 +361,12 @@ function isBlocked(px: number, py: number, strokes: Stroke[]): boolean {
         rp.y < stroke.y + stroke.height + pad
       )
         return true;
+    } else if (stroke.type === "connection") {
+      if (stroke.path.length === 0) continue;
+      for (let i = 0; i < stroke.path.length - 1; i++) {
+        const dist = distToSegment({ x: px, y: py }, stroke.path[i], stroke.path[i + 1]);
+        if (dist < pad) return true;
+      }
     } else if (stroke.type === "line") {
       const cx = (stroke.start.x + stroke.end.x) / 2;
       const cy = (stroke.start.y + stroke.end.y) / 2;
@@ -609,10 +619,37 @@ function AirDrawPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [color, setColor] = useState("#3b82f6"); // Default to blue since they clicked it
-  const [activeMode, setActiveMode] = useState<"draw" | "text" | "hover">("draw");
+  const [activeMode, setActiveMode] = useState<"draw" | "text" | "hover" | "erase">("draw");
   const [isFakeBgEnabled, setIsFakeBgEnabled] = useState(false);
   const [isTextEditing, setIsTextEditing] = useState(false);
   const [currentText, setCurrentText] = useState("");
+
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveTitle, setSaveTitle] = useState("");
+  const [saveTopicId, setSaveTopicId] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { data: paths = [] } = useQuery({
+    queryKey: ["paths"],
+    queryFn: async () => {
+      const res = await apiFetch("/paths/");
+      return res.ok ? res.json() : [];
+    },
+  });
+
+  const { data: customPaths = [] } = useQuery({
+    queryKey: ["custom-paths"],
+    queryFn: async () => {
+      const res = await apiFetch("/custom-paths/");
+      return res.ok ? res.json() : [];
+    },
+  });
+
+  const activeTopics = [
+    ...paths.map((p: any) => ({ ...p, uniqueId: `std-${p.id}` })),
+    ...customPaths.map((p: any) => ({ ...p, uniqueId: `cust-${p.id}` })),
+  ].flatMap((p: any) => (p.topics || []).map((t: any) => ({ ...t, pathTitle: p.title })))
+    .filter((t: any) => t.user_progress === "in_progress" || t.user_progress === "completed");
 
   // Use refs to ensure the requestAnimationFrame loop always sees the latest state
   const colorRef = useRef(color);
@@ -1177,6 +1214,21 @@ function AirDrawPage() {
                   redrawCanvas(canvasRef.current!);
                 }
               }
+            } else if (activeModeRef.current === "erase") {
+              if (pPinching && !isPinchingRef.current) {
+                let hitShapeIndex = -1;
+                for (let i = strokesRef.current.length - 1; i >= 0; i--) {
+                  if (isBlocked(pPx, pPy, [strokesRef.current[i]])) {
+                    hitShapeIndex = i;
+                    break;
+                  }
+                }
+                if (hitShapeIndex !== -1) {
+                  strokesRef.current.splice(hitShapeIndex, 1);
+                  redrawCanvas(canvasRef.current!);
+                  toast.success("Erased object");
+                }
+              }
             } else if (activeModeRef.current === "draw") {
               if (pPinching) {
                 if (!isPinchingRef.current) {
@@ -1539,6 +1591,64 @@ function AirDrawPage() {
 
   const COLORS = ["#22c55e", "#ef4444", "#3b82f6", "#eab308", "#a855f7", "#f97316", "#ffffff"];
 
+  const handleSaveToNotes = async () => {
+    if (!saveTitle.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    if (!saveTopicId) {
+      toast.error("Please select a topic");
+      return;
+    }
+    if (!canvasRef.current || !videoRef.current) return;
+
+    setIsSaving(true);
+    try {
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = canvasRef.current.width;
+      tempCanvas.height = canvasRef.current.height;
+      const ctx = tempCanvas.getContext("2d");
+      
+      if (ctx) {
+        ctx.save();
+        ctx.translate(tempCanvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
+        
+        ctx.drawImage(canvasRef.current, 0, 0);
+        ctx.restore();
+      }
+
+      const imgData = tempCanvas.toDataURL("image/jpeg", 0.9);
+      const pdf = new jsPDF({
+        orientation: tempCanvas.width > tempCanvas.height ? "landscape" : "portrait",
+        unit: "px",
+        format: [tempCanvas.width, tempCanvas.height]
+      });
+      pdf.addImage(imgData, "JPEG", 0, 0, tempCanvas.width, tempCanvas.height);
+      const pdfBlob = pdf.output("blob");
+
+      const formData = new FormData();
+      formData.append("file", pdfBlob, `${saveTitle.replace(/\s+/g, "_")}.pdf`);
+      formData.append("filename", saveTitle);
+
+      const res = await apiFetch(`/topics/${saveTopicId}/note-documents/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to save to notes");
+
+      toast.success("Saved to notes successfully!");
+      setShowSaveModal(false);
+      setHasStarted(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save to notes");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (hasStarted) {
     return (
       <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col w-screen h-screen overflow-hidden">
@@ -1632,6 +1742,74 @@ function AirDrawPage() {
             </div>
           )}
 
+          {/* Save Modal Overlay */}
+          {showSaveModal && (
+            <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="bg-[#1a1a1a] p-6 rounded-2xl shadow-2xl flex flex-col min-w-[350px] border border-white/10">
+                <h3 className="text-white font-bold mb-4 text-lg">Save to Notes</h3>
+                
+                <div className="flex flex-col gap-4 mb-6">
+                  <div>
+                    <label className="text-xs text-white/50 uppercase font-semibold mb-1 block">Title</label>
+                    <input
+                      autoFocus
+                      value={saveTitle}
+                      onChange={(e) => setSaveTitle(e.target.value)}
+                      className="w-full bg-black/50 border border-white/10 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-green-500 outline-none"
+                      placeholder="e.g. My Flowchart"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-white/50 uppercase font-semibold mb-1 block">Select Topic</label>
+                    <select
+                      value={saveTopicId}
+                      onChange={(e) => setSaveTopicId(e.target.value)}
+                      className="w-full bg-black/50 border border-white/10 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-green-500 outline-none"
+                    >
+                      <option value="" disabled>Choose a topic...</option>
+                      {activeTopics.map((t: any) => (
+                        <option key={t.id} value={t.id}>
+                          {t.pathTitle}: {t.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Btn
+                    variant="outline"
+                    tone="neutral"
+                    onClick={() => setShowSaveModal(false)}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Btn>
+                  <Btn
+                    variant="outline"
+                    tone="red"
+                    onClick={() => {
+                      setShowSaveModal(false);
+                      setHasStarted(false);
+                    }}
+                    disabled={isSaving}
+                  >
+                    Exit without Saving
+                  </Btn>
+                  <Btn
+                    variant="solid"
+                    tone="green"
+                    onClick={handleSaveToNotes}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                    Save & Exit
+                  </Btn>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Floating Controls Panel */}
           <div className="absolute right-4 top-4 bottom-4 w-48 bg-black/60 backdrop-blur-lg rounded-2xl border border-white/10 p-4 flex flex-col gap-6 overflow-y-auto z-30 shadow-2xl">
             <div className="flex flex-col gap-3">
@@ -1681,7 +1859,15 @@ function AirDrawPage() {
                 onClick={() => setActiveMode("hover")}
                 className="w-full justify-start"
               >
-                <Eraser size={16} className="mr-2" /> Hover
+                <MousePointer2 size={16} className="mr-2" /> Hover
+              </Btn>
+              <Btn
+                variant={activeMode === "erase" ? "solid" : "outline"}
+                tone={activeMode === "erase" ? "green" : "neutral"}
+                onClick={() => setActiveMode("erase")}
+                className="w-full justify-start"
+              >
+                <Eraser size={16} className="mr-2" /> Erase
               </Btn>
 
               <div className="h-px w-full bg-white/10 my-1" />
@@ -1702,7 +1888,7 @@ function AirDrawPage() {
 
               <Btn
                 variant="outline"
-                onClick={() => setHasStarted(false)}
+                onClick={() => setShowSaveModal(true)}
                 className="w-full justify-start"
               >
                 <Maximize size={16} className="mr-2" /> Exit Air Draw
