@@ -151,10 +151,10 @@ function GlobalGamificationWrapper({ children }: { children: ReactNode }) {
   // Initialize tutorial
   useAppTutorial();
 
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("sidebar_collapsed") === "true";
-  });
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    setCollapsed(localStorage.getItem("sidebar_collapsed") === "true");
+  }, []);
   const toggleSidebar = () => {
     setCollapsed((v) => {
       const next = !v;

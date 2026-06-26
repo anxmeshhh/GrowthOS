@@ -25,6 +25,8 @@ def groq_client():
         raise ValueError("GROQ_API_KEY is not set in environment")
     return Groq(api_key=key)
 
+GROQ_DEFAULT_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+
 # ── Admin-editable system settings ──────────────────────────────────────────
 # Known settings with type + default. SiteSetting rows override these.
 SETTINGS_SCHEMA = [
@@ -757,7 +759,7 @@ Generate between 5 to 10 topics. Return ONLY the JSON, nothing else."""
 
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": ai_prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -809,7 +811,7 @@ class VerifyMaterialView(views.APIView):
                         "content": f"Topic: {material.topic.title}\n\nUser's Submission Text:\n{text}"
                     }
                 ],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1077,7 +1079,7 @@ Your goal is to aggressively motivate the user, answer their technical questions
 
             chat_completion = client.chat.completions.create(
                 messages=chat_messages,
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.7,
                 max_tokens=250,
             )
@@ -1140,7 +1142,7 @@ class TopicQuizView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1242,7 +1244,7 @@ class GenerateFlashcardsView(views.APIView):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.4,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1295,7 +1297,7 @@ class ProjectIdeasView(views.APIView):
             prompt = f"Generate exactly 3 project ideas for a student learning '{topic.title}'. Return ONLY a JSON array where each object has: 'title' (short project name), 'description' (2-3 sentence description of what to build and what skills it demonstrates)."
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -1367,7 +1369,7 @@ Reply with EXACTLY this JSON format:
 {{"passed": true/false, "score": integer_0_to_100, "feedback": "your detailed feedback"}}"""
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -3430,7 +3432,7 @@ Return ONLY a JSON object with this exact structure:
 """
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.3,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -3706,7 +3708,7 @@ Generate 3-5 milestones and 1-3 projects. Return ONLY the JSON, nothing else."""
 
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": ai_prompt}],
-                model="llama-3.1-8b-instant",
+                model=GROQ_DEFAULT_MODEL,
                 temperature=0.7,
             )
             response_content = chat_completion.choices[0].message.content.strip()
@@ -3822,7 +3824,7 @@ Text:
 {text[:4000]}"""
     resp = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama-3.1-8b-instant",
+        model=GROQ_DEFAULT_MODEL,
         temperature=0.2,
         max_tokens=800,
     )
@@ -3857,7 +3859,7 @@ def _score_resume_quality(text):
     )
     resp = client.chat.completions.create(
         messages=[{'role': 'user', 'content': prompt}],
-        model='llama-3.1-8b-instant',
+        model=GROQ_DEFAULT_MODEL,
         temperature=0.2,
         max_tokens=300,
         response_format={"type": "json_object"},
@@ -4249,7 +4251,7 @@ def _generate_focus_message(user, profile, job_pct, weak_topics):
     try:
         resp = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
+            model=GROQ_DEFAULT_MODEL,
             temperature=0.7,
             max_tokens=60,
         )
@@ -4609,7 +4611,7 @@ def _generate_interview_questions(job_title, required_skills, weak_topics, level
 
     resp = client.chat.completions.create(
         messages=[{'role': 'user', 'content': prompt}],
-        model='llama-3.1-8b-instant',
+        model=GROQ_DEFAULT_MODEL,
         temperature=0.3,
         max_tokens=2000,
         response_format={"type": "json_object"},
@@ -4636,7 +4638,7 @@ def _generate_questions_from_notes(topic_title, notes_content):
     )
     resp = client.chat.completions.create(
         messages=[{'role': 'user', 'content': prompt}],
-        model='llama-3.1-8b-instant',
+        model=GROQ_DEFAULT_MODEL,
         temperature=0.3,
         max_tokens=2000,
         response_format={"type": "json_object"},
@@ -4669,7 +4671,7 @@ Return ONLY valid JSON:
 
     resp = client.chat.completions.create(
         messages=[{'role': 'user', 'content': prompt}],
-        model='llama-3.1-8b-instant',
+        model=GROQ_DEFAULT_MODEL,
         temperature=0.2,
         max_tokens=300,
         response_format={"type": "json_object"},

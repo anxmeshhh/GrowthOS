@@ -11,6 +11,7 @@ from django.db.models import Sum
 from groq import Groq
 from core.emails import send_motivation_email
 from core.models import Contribution, TopicProgress, UserProfile, Flashcard
+from core.views import GROQ_DEFAULT_MODEL
 import os, logging
 
 logger = logging.getLogger("core")
@@ -88,7 +89,7 @@ Rules:
 
     resp = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
-        model="llama-3.1-8b-instant",
+        model=GROQ_DEFAULT_MODEL,
         temperature=0.8,
         max_tokens=400,
     )
