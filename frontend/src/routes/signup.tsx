@@ -79,14 +79,18 @@ function LeftPanel() {
   const steps = [
     {
       icon: "01",
-      title: "Pick a learning path",
-      body: "Structured, opinionated tracks built for depth.",
+      title: "Build your roadmap",
+      body: "AI generates a structured path or pick from curated tracks — your call.",
     },
-    { icon: "02", title: "Build in public", body: "Ship real projects as you learn each concept." },
+    {
+      icon: "02",
+      title: "Study the smart way",
+      body: "Flashcards, Feynman mode, quizzes, and an AI tutor inside every topic.",
+    },
     {
       icon: "03",
-      title: "Track your velocity",
-      body: "See compounding growth across every skill.",
+      title: "Know your readiness",
+      body: "Match any job listing to your skill level and get a weeks-to-ready estimate.",
     },
   ];
 
@@ -137,21 +141,11 @@ function LeftPanel() {
           ))}
         </div>
 
-        {/* Avatars / social proof */}
-        <div className="flex items-center gap-3 pt-2">
-          <div className="flex -space-x-2">
-            {["#00FF66", "#00CC52", "#15803d", "#14532d"].map((c, i) => (
-              <div
-                key={i}
-                className="w-7 h-7 rounded-full border-2 border-[#050505] flex items-center justify-center text-xs font-bold text-[#000]"
-                style={{ backgroundColor: c }}
-              >
-                {String.fromCharCode(65 + i)}
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-[#555]">
-            <span className="text-[#888]">12,400+ learners</span> already inside
+        {/* Real feature callout */}
+        <div className="flex items-start gap-3 pt-2 border border-[#1a1a1a] rounded-xl px-4 py-3 bg-[#0a0a0a]/80">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse mt-1 shrink-0" />
+          <p className="text-xs text-[#555] leading-relaxed">
+            Air Draw, spaced repetition, streak tracking, career match score, automated study emails — all included.
           </p>
         </div>
 
@@ -166,7 +160,7 @@ function LeftPanel() {
       {/* Bottom tag */}
       <div className="relative z-10 flex items-center gap-2 text-[#666] text-xs font-mono">
         <div className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
-        Free to start, no credit card
+        No credit card, no fluff
       </div>
     </div>
   );
@@ -238,7 +232,7 @@ function SignupPage() {
             </div>
             <p className="text-xs uppercase tracking-[0.3em] font-mono text-[#666]">Get started</p>
             <h2 className="text-3xl font-bold tracking-tight text-white">Create your account</h2>
-            <p className="text-base text-[#888]">Free forever on core features.</p>
+            <p className="text-base text-[#888]">Your personal learning OS.</p>
           </div>
 
           <div className="space-y-3">
@@ -429,7 +423,7 @@ function SignupPage() {
                       name="name"
                       type="text"
                       required
-                      placeholder="John Doe"
+                      placeholder="Your full name"
                       className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#252525] bg-[#0d0d0d] text-white text-sm placeholder-[#3a3a3a] transition-all duration-200 focus:outline-none focus:border-[#00FF66]/60 focus:ring-1 focus:ring-[#00FF66]/25 focus:bg-[#0f0f0f]"
                     />
                   </div>

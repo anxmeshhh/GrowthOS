@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Github, Mail, ArrowRight, Zap } from "lucide-react";
+import { Github, Mail, ArrowRight, BookOpen, Target, Mic } from "lucide-react";
 import { Btn, Card } from "@/components/growth-ui";
 import { Logo } from "@/components/logo";
 import { useState, useEffect } from "react";
@@ -52,24 +52,36 @@ function LeftPanel() {
 
       {/* Center feature block */}
       <div className="relative z-10 space-y-8">
-        {/* Stat cards */}
+        {/* Feature cards */}
         <div className="space-y-3">
           {[
-            { label: "Active learners", value: "12,400+", sub: "across 60+ countries" },
-            { label: "Paths completed", value: "98,000+", sub: "this quarter" },
-            { label: "Avg. skill velocity", value: "3.2×", sub: "faster than solo study" },
+            {
+              icon: <BookOpen className="w-4 h-4 text-[#00FF66]" />,
+              title: "Topic workspaces",
+              sub: "Notes, flashcards, Feynman mode, quizzes — all in one place per topic.",
+            },
+            {
+              icon: <Target className="w-4 h-4 text-[#00FF66]" />,
+              title: "Career intelligence",
+              sub: "Paste any job listing. Get your match score and skill gaps instantly.",
+            },
+            {
+              icon: <Mic className="w-4 h-4 text-[#00FF66]" />,
+              title: "AI interview prep",
+              sub: "Voice-enabled mock sessions with instant feedback and an email summary after.",
+            },
           ].map((item) => (
             <div
-              key={item.label}
-              className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm"
+              key={item.title}
+              className="flex items-start gap-3 px-4 py-3 rounded-xl border border-[#1a1a1a] bg-[#0a0a0a]/80 backdrop-blur-sm"
             >
-              <div>
-                <p className="text-sm uppercase tracking-widest text-[#555] font-mono">
-                  {item.label}
-                </p>
-                <p className="text-sm text-[#777] mt-0.5">{item.sub}</p>
+              <div className="mt-0.5 shrink-0 w-7 h-7 rounded-lg border border-[#1e1e1e] bg-[#111] flex items-center justify-center">
+                {item.icon}
               </div>
-              <span className="text-xl font-bold text-[#00FF66] tabular-nums">{item.value}</span>
+              <div>
+                <p className="text-sm font-semibold text-[#ddd]">{item.title}</p>
+                <p className="text-xs text-[#555] mt-0.5 leading-relaxed">{item.sub}</p>
+              </div>
             </div>
           ))}
         </div>
